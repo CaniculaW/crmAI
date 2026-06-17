@@ -39,15 +39,16 @@ class DatabaseMigrationTest {
                 where table_name in (
                   'sys_departments', 'sys_users', 'sys_roles', 'sys_user_roles',
                   'sys_login_accounts', 'sys_user_credentials', 'sys_permissions',
-                  'sys_role_permissions', 'sys_data_scopes', 'sys_role_data_scopes'
+                  'sys_role_permissions', 'sys_data_scopes', 'sys_role_data_scopes',
+                  'sys_sessions'
                 )
                 """,
                 Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(4);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(5);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
-        assertThat(identityTableCount).isEqualTo(10);
+        assertThat(identityTableCount).isEqualTo(11);
     }
 }

@@ -1,6 +1,7 @@
 package com.canicula.crmai.api;
 
 import jakarta.servlet.http.HttpServletRequest;
+import com.canicula.crmai.auth.UnauthorizedException;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -41,6 +42,19 @@ public class ApiExceptionHandler {
                         "VALIDATION_ERROR",
                         "请求体格式错误",
                         Map.of("field_errors", List.of()),
+                        TraceIdFilter.currentTraceId(request)));
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    ResponseEntity<ApiResponse<Map<String, Object>>> handleUnauthorized(
+            UnauthorizedException exception,
+            HttpServletRequest request) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(
+                        "UNAUTHORIZED",
+                        exception.getMessage(),
+                        Map.of(),
                         TraceIdFilter.currentTraceId(request)));
     }
 

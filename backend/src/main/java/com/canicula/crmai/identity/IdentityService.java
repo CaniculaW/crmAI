@@ -124,6 +124,21 @@ public class IdentityService {
                 roleId);
     }
 
+    @Transactional
+    public void updateLoginAccountStatus(String loginType, String loginIdentifier, String status) {
+        jdbcTemplate.update(
+                """
+                update sys_login_accounts
+                set status = ?,
+                    updated_at = current_timestamp
+                where login_type = ?
+                  and login_identifier = ?
+                """,
+                status,
+                loginType,
+                loginIdentifier);
+    }
+
     private Long insertAndReturnId(String sql, Object... parameters) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {

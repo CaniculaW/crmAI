@@ -113,6 +113,8 @@
 - 修改密码需校验旧密码和密码强度。
 - 管理员重置密码后应标记 `force_password_change = true`。
 
+当前认证基线已落地：`POST /api/auth/login` 使用用户名密码登录，成功后返回 `access_token` 和当前用户；`GET /api/auth/me` 使用 `Authorization: Bearer <token>` 返回角色和权限点；`POST /api/auth/logout` 撤销服务端session。密码凭据使用 PBKDF2WithHmacSHA256 哈希保存。
+
 ## 3. 系统管理API
 
 | 方法 | 路径 | 说明 | 权限 |
