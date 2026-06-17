@@ -127,8 +127,16 @@ class PostgresMigrationIT {
                 where permission_code in ('activity.update', 'activity.complete')
                 """,
                 Integer.class);
+        Integer weeklyProgressViewCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.views
+                where table_schema = 'public'
+                  and table_name = 'v_opportunity_weekly_progress'
+                """,
+                Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("11");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("12");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -141,6 +149,7 @@ class PostgresMigrationIT {
         assertThat(opportunityLifecyclePermissionCount).isEqualTo(2);
         assertThat(activityTableCount).isEqualTo(4);
         assertThat(activityUpdatePermissionCount).isEqualTo(2);
+        assertThat(weeklyProgressViewCount).isEqualTo(1);
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type

@@ -94,9 +94,16 @@ class DatabaseMigrationTest {
                 where permission_code in ('activity.update', 'activity.complete')
                 """,
                 Integer.class);
+        Integer weeklyProgressViewCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.views
+                where table_name = 'v_opportunity_weekly_progress'
+                """,
+                Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(11);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(12);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -107,5 +114,6 @@ class DatabaseMigrationTest {
         assertThat(opportunityLifecyclePermissionCount).isEqualTo(2);
         assertThat(activityTableCount).isEqualTo(4);
         assertThat(activityUpdatePermissionCount).isEqualTo(2);
+        assertThat(weeklyProgressViewCount).isEqualTo(1);
     }
 }

@@ -315,6 +315,8 @@
 - 展示行动时间、行动主题、形成结论、下一步计划、风险说明。
 - 不提供新增、编辑、删除周进展接口。
 
+当前周进展基线已落地：`v_opportunity_weekly_progress` 从已完成、已关联商机且进入周进展的销售行动按自然周聚合；`GET /api/weekly-progress/opportunities` 支持按商机、负责人、客户、自然周/月度和风险过滤；`GET /api/opportunities/{id}/weekly-progress` 返回单商机周进展，响应保留同周多条行动明细。周进展不写入商机主表。
+
 ## 9. 附件与提醒API预留
 
 V1如开发资源允许，建议补充：

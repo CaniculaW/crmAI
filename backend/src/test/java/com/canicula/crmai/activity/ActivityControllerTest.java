@@ -282,6 +282,104 @@ class ActivityControllerTest {
         assertThat(auditCount).isEqualTo(1);
     }
 
+    @Test
+    void weeklyProgressIncludesOnlyCompletedOpportunityActivitiesAndKeepsDetails() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("activity-weekly-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "activity_weekly_" + suffix,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "contact.create",
+                        "opportunity.create",
+                        "activity.create",
+                        "activity.read",
+                        "activity.complete",
+                        "weekly_progress.read"),
+                List.of("global"));
+        String token = login("activity_weekly_" + suffix);
+        Long accountId = createAccount(token, "周进展客户-" + suffix, departmentId, userId);
+        Long contactId = createContact(token, accountId, "周进展联系人-" + suffix);
+        Long opportunityId = createOpportunity(token, accountId, "周进展商机-" + suffix, departmentId, userId);
+        Long firstActivityId = createActivity(
+                token,
+                accountId,
+                opportunityId,
+                "周进展行动一-" + suffix,
+                departmentId,
+                userId,
+                List.of(contactId),
+                List.of(Map.of("user_id", userId, "participant_role", "owner")),
+                List.of());
+        Long secondActivityId = createActivity(
+                token,
+                accountId,
+                opportunityId,
+                "周进展行动二-" + suffix,
+                departmentId,
+                userId,
+                List.of(contactId),
+                List.of(Map.of("user_id", userId, "participant_role", "owner")),
+                List.of());
+        Long excludedActivityId = createActivity(
+                token,
+                accountId,
+                opportunityId,
+                "不进周进展行动-" + suffix,
+                departmentId,
+                userId,
+                List.of(contactId),
+                List.of(Map.of("user_id", userId, "participant_role", "owner")),
+                List.of(),
+                false);
+        Long customerOnlyActivityId = createActivity(
+                token,
+                accountId,
+                null,
+                "客户经营周进展外行动-" + suffix,
+                departmentId,
+                userId,
+                List.of(contactId),
+                List.of(Map.of("user_id", userId, "participant_role", "owner")),
+                List.of());
+        createActivity(
+                token,
+                accountId,
+                opportunityId,
+                "未完成周进展外行动-" + suffix,
+                departmentId,
+                userId,
+                List.of(contactId),
+                List.of(Map.of("user_id", userId, "participant_role", "owner")),
+                List.of());
+        completeActivity(token, firstActivityId, "第一条周进展结论", "继续跟进方案", null);
+        completeActivity(token, secondActivityId, "第二条周进展结论", "推进报价", null);
+        completeActivity(token, excludedActivityId, "不应出现的结论", "内部记录", null);
+        completeActivity(token, customerOnlyActivityId, "客户经营行动结论", "客户关系维护", null);
+
+        ResponseEntity<JsonNode> weeklyResponse = restTemplate.exchange(
+                "/api/opportunities/" + opportunityId + "/weekly-progress",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "activity-weekly-progress-trace-001")),
+                JsonNode.class);
+
+        assertThat(weeklyResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode rows = weeklyResponse.getBody().path("data");
+        assertThat(rows).hasSize(1);
+        JsonNode row = rows.get(0);
+        assertThat(row.path("opportunity_id").asLong()).isEqualTo(opportunityId);
+        assertThat(row.path("activity_count").asInt()).isEqualTo(2);
+        assertThat(row.path("progress_items")).anySatisfy(item ->
+                assertThat(item.path("conclusion").asText()).isEqualTo("第一条周进展结论"));
+        assertThat(row.path("progress_items")).anySatisfy(item ->
+                assertThat(item.path("conclusion").asText()).isEqualTo("第二条周进展结论"));
+        assertThat(row.path("progress_items")).noneSatisfy(item ->
+                assertThat(item.path("conclusion").asText()).isEqualTo("不应出现的结论"));
+        assertThat(row.path("progress_items")).noneSatisfy(item ->
+                assertThat(item.path("conclusion").asText()).isEqualTo("客户经营行动结论"));
+    }
+
     private Long createActivity(
             String accessToken,
             Long accountId,
@@ -292,6 +390,30 @@ class ActivityControllerTest {
             List<Long> contactIds,
             List<Map<String, Object>> participants,
             List<String> riskTypes) {
+        return createActivity(
+                accessToken,
+                accountId,
+                opportunityId,
+                subject,
+                departmentId,
+                ownerUserId,
+                contactIds,
+                participants,
+                riskTypes,
+                true);
+    }
+
+    private Long createActivity(
+            String accessToken,
+            Long accountId,
+            Long opportunityId,
+            String subject,
+            Long departmentId,
+            Long ownerUserId,
+            List<Long> contactIds,
+            List<Map<String, Object>> participants,
+            List<String> riskTypes,
+            boolean includeInWeeklyProgress) {
         Map<String, Object> request = new LinkedHashMap<>();
         request.put("account_id", accountId);
         request.put("opportunity_id", opportunityId);
@@ -303,7 +425,7 @@ class ActivityControllerTest {
         request.put("next_follow_up_at", OffsetDateTime.now().plusDays(7).withNano(0).toString());
         request.put("owner_department_id", departmentId);
         request.put("owner_user_id", ownerUserId);
-        request.put("include_in_weekly_progress", true);
+        request.put("include_in_weekly_progress", includeInWeeklyProgress);
         request.put("communication_content", "沟通客户需求");
         request.put("next_plan", "安排方案评审");
         request.put("contact_ids", contactIds);
@@ -317,6 +439,28 @@ class ActivityControllerTest {
                 JsonNode.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         return response.getBody().path("data").path("id").asLong();
+    }
+
+    private void completeActivity(
+            String accessToken,
+            Long activityId,
+            String conclusion,
+            String nextPlan,
+            String riskDescription) {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("activity_result", riskDescription == null ? "milestone_completed" : "risk_found");
+        request.put("conclusion", conclusion);
+        request.put("next_plan", nextPlan);
+        if (riskDescription != null) {
+            request.put("risk_description", riskDescription);
+            request.put("risk_types", List.of("budget"));
+        }
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/activities/" + activityId + "/complete",
+                HttpMethod.POST,
+                new HttpEntity<>(request, authHeaders(accessToken, "activity-helper-complete-trace-001")),
+                JsonNode.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     private Long createAccount(String accessToken, String accountName, Long departmentId, Long ownerUserId) {
