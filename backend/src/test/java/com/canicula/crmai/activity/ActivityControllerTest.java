@@ -1,0 +1,382 @@
+package com.canicula.crmai.activity;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.canicula.crmai.auth.PasswordCredentialService;
+import com.canicula.crmai.identity.DepartmentCreateRequest;
+import com.canicula.crmai.identity.IdentityService;
+import com.canicula.crmai.identity.LoginAccountCreateRequest;
+import com.canicula.crmai.identity.RoleCreateRequest;
+import com.canicula.crmai.identity.UserCreateRequest;
+import com.fasterxml.jackson.databind.JsonNode;
+import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class ActivityControllerTest {
+
+    @Autowired
+    private IdentityService identityService;
+
+    @Autowired
+    private PasswordCredentialService passwordCredentialService;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Test
+    void createsCustomerActivityWithoutOpportunityAndReadsByAccount() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("activity-customer-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "activity_customer_" + suffix,
+                departmentId,
+                List.of("account.create", "activity.create", "activity.read"),
+                List.of("global"));
+        String token = login("activity_customer_" + suffix);
+        Long accountId = createAccount(token, "客户经营行动客户-" + suffix, departmentId, userId);
+
+        Long activityId = createActivity(
+                token,
+                accountId,
+                null,
+                "客户经营拜访-" + suffix,
+                departmentId,
+                userId,
+                List.of(),
+                List.of(Map.of("user_id", userId, "participant_role", "owner")),
+                List.of());
+        ResponseEntity<JsonNode> detailResponse = restTemplate.exchange(
+                "/api/activities/" + activityId,
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "activity-detail-trace-001")),
+                JsonNode.class);
+        ResponseEntity<JsonNode> accountActivitiesResponse = restTemplate.exchange(
+                "/api/accounts/" + accountId + "/activities",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "activity-account-list-trace-001")),
+                JsonNode.class);
+        Integer auditCount = jdbcTemplate.queryForObject(
+                "select count(*) from sys_audit_logs where action_code = 'activity.create' and object_id = ?",
+                Integer.class,
+                activityId);
+
+        assertThat(detailResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode detail = detailResponse.getBody().path("data");
+        assertThat(detail.path("subject").asText()).isEqualTo("客户经营拜访-" + suffix);
+        assertThat(detail.path("opportunity_id").isNull()).isTrue();
+        assertThat(accountActivitiesResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(accountActivitiesResponse.getBody().path("data")).anySatisfy(activity ->
+                assertThat(activity.path("id").asLong()).isEqualTo(activityId));
+        assertThat(auditCount).isEqualTo(1);
+    }
+
+    @Test
+    void createsOpportunityActivityWithContactsParticipantsAndRiskTypes() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("activity-project-dept-" + suffix);
+        Long ownerUserId = createLoginReadyUser(
+                "activity_project_owner_" + suffix,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "contact.create",
+                        "opportunity.create",
+                        "activity.create",
+                        "activity.read"),
+                List.of("global"));
+        Long participantUserId = createLoginReadyUser(
+                "activity_project_participant_" + suffix,
+                departmentId,
+                List.of("activity.read"),
+                List.of("collaborated"));
+        String token = login("activity_project_owner_" + suffix);
+        Long accountId = createAccount(token, "项目行动客户-" + suffix, departmentId, ownerUserId);
+        Long contactId = createContact(token, accountId, "项目行动联系人-" + suffix);
+        Long opportunityId = createOpportunity(token, accountId, "项目行动商机-" + suffix, departmentId, ownerUserId);
+
+        Long activityId = createActivity(
+                token,
+                accountId,
+                opportunityId,
+                "项目推进会-" + suffix,
+                departmentId,
+                ownerUserId,
+                List.of(contactId),
+                List.of(
+                        Map.of("user_id", ownerUserId, "participant_role", "owner"),
+                        Map.of("user_id", participantUserId, "participant_role", "presales")),
+                List.of("budget", "technical"));
+        ResponseEntity<JsonNode> participantDetailResponse = restTemplate.exchange(
+                "/api/activities/" + activityId,
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(login("activity_project_participant_" + suffix), "activity-participant-detail-trace-001")),
+                JsonNode.class);
+
+        assertThat(participantDetailResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode detail = participantDetailResponse.getBody().path("data");
+        assertThat(detail.path("opportunity_id").asLong()).isEqualTo(opportunityId);
+        assertThat(detail.path("contact_ids")).anySatisfy(contact ->
+                assertThat(contact.asLong()).isEqualTo(contactId));
+        assertThat(detail.path("participants")).anySatisfy(participant ->
+                assertThat(participant.path("user_id").asLong()).isEqualTo(participantUserId));
+        assertThat(detail.path("risk_types")).anySatisfy(risk ->
+                assertThat(risk.asText()).isEqualTo("budget"));
+    }
+
+    @Test
+    void listsActivitiesByOwnerParticipantAndFilters() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("activity-list-dept-" + suffix);
+        Long creatorUserId = createLoginReadyUser(
+                "activity_list_creator_" + suffix,
+                departmentId,
+                List.of("account.create", "activity.create"),
+                List.of("global"));
+        Long viewerUserId = createLoginReadyUser(
+                "activity_list_viewer_" + suffix,
+                departmentId,
+                List.of("activity.read"),
+                List.of("own", "collaborated"));
+        Long otherUserId = createLoginReadyUser(
+                "activity_list_other_" + suffix,
+                departmentId,
+                List.of("activity.read"),
+                List.of("own"));
+        String creatorToken = login("activity_list_creator_" + suffix);
+        String viewerToken = login("activity_list_viewer_" + suffix);
+        Long viewerAccountId = createAccount(creatorToken, "可见行动客户-" + suffix, departmentId, viewerUserId);
+        Long otherAccountId = createAccount(creatorToken, "不可见行动客户-" + suffix, departmentId, otherUserId);
+
+        createActivity(
+                creatorToken,
+                viewerAccountId,
+                null,
+                "本人负责行动-" + suffix,
+                departmentId,
+                viewerUserId,
+                List.of(),
+                List.of(),
+                List.of());
+        createActivity(
+                creatorToken,
+                otherAccountId,
+                null,
+                "本人参与行动-" + suffix,
+                departmentId,
+                otherUserId,
+                List.of(),
+                List.of(Map.of("user_id", viewerUserId, "participant_role", "presales")),
+                List.of());
+        createActivity(
+                creatorToken,
+                otherAccountId,
+                null,
+                "不可见行动-" + suffix,
+                departmentId,
+                otherUserId,
+                List.of(),
+                List.of(),
+                List.of());
+
+        ResponseEntity<JsonNode> listResponse = restTemplate.exchange(
+                "/api/activities?activity_status=planned&participant_user_id=" + viewerUserId,
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(viewerToken, "activity-list-trace-001")),
+                JsonNode.class);
+
+        assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(listResponse.getBody().path("data")).anySatisfy(activity ->
+                assertThat(activity.path("subject").asText()).isEqualTo("本人参与行动-" + suffix));
+        assertThat(listResponse.getBody().path("data")).noneSatisfy(activity ->
+                assertThat(activity.path("subject").asText()).isEqualTo("不可见行动-" + suffix));
+    }
+
+    private Long createActivity(
+            String accessToken,
+            Long accountId,
+            Long opportunityId,
+            String subject,
+            Long departmentId,
+            Long ownerUserId,
+            List<Long> contactIds,
+            List<Map<String, Object>> participants,
+            List<String> riskTypes) {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("account_id", accountId);
+        request.put("opportunity_id", opportunityId);
+        request.put("subject", subject);
+        request.put("activity_type", "customer_visit");
+        request.put("activity_status", "planned");
+        request.put("activity_result", "pending");
+        request.put("activity_time", OffsetDateTime.now().plusDays(1).withNano(0).toString());
+        request.put("next_follow_up_at", OffsetDateTime.now().plusDays(7).withNano(0).toString());
+        request.put("owner_department_id", departmentId);
+        request.put("owner_user_id", ownerUserId);
+        request.put("include_in_weekly_progress", true);
+        request.put("communication_content", "沟通客户需求");
+        request.put("next_plan", "安排方案评审");
+        request.put("contact_ids", contactIds);
+        request.put("participants", participants);
+        request.put("risk_types", riskTypes);
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/activities",
+                HttpMethod.POST,
+                new HttpEntity<>(request, authHeaders(accessToken, "activity-helper-create-trace-001")),
+                JsonNode.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return response.getBody().path("data").path("id").asLong();
+    }
+
+    private Long createAccount(String accessToken, String accountName, Long departmentId, Long ownerUserId) {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("account_name", accountName);
+        request.put("account_type", "enterprise");
+        request.put("account_status", "following");
+        request.put("owner_department_id", departmentId);
+        request.put("owner_user_id", ownerUserId);
+        request.put("collaborators", List.of());
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/accounts",
+                HttpMethod.POST,
+                new HttpEntity<>(request, authHeaders(accessToken, "activity-helper-account-trace-001")),
+                JsonNode.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return response.getBody().path("data").path("id").asLong();
+    }
+
+    private Long createContact(String accessToken, Long accountId, String name) {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("account_id", accountId);
+        request.put("name", name);
+        request.put("contact_type", "decision_maker");
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/contacts",
+                HttpMethod.POST,
+                new HttpEntity<>(request, authHeaders(accessToken, "activity-helper-contact-trace-001")),
+                JsonNode.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return response.getBody().path("data").path("id").asLong();
+    }
+
+    private Long createOpportunity(String accessToken, Long accountId, String name, Long departmentId, Long ownerUserId) {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("account_id", accountId);
+        request.put("opportunity_name", name);
+        request.put("stage", "lead");
+        request.put("status", "following");
+        request.put("owner_department_id", departmentId);
+        request.put("owner_user_id", ownerUserId);
+        request.put("collaborators", List.of());
+        request.put("contact_relations", List.of());
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/opportunities",
+                HttpMethod.POST,
+                new HttpEntity<>(request, authHeaders(accessToken, "activity-helper-opportunity-trace-001")),
+                JsonNode.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return response.getBody().path("data").path("id").asLong();
+    }
+
+    private Long createDepartment(String code) {
+        return identityService.createDepartment(new DepartmentCreateRequest(
+                null,
+                code,
+                "行动测试部",
+                "CN-31",
+                "active"));
+    }
+
+    private Long createLoginReadyUser(
+            String username,
+            Long departmentId,
+            List<String> permissions,
+            List<String> dataScopes) {
+        Long roleId = identityService.createRole(new RoleCreateRequest(
+                "activity_role_" + username,
+                "行动测试角色",
+                "行动测试角色"));
+        Long userId = identityService.createUser(new UserCreateRequest(
+                departmentId,
+                "行动测试用户",
+                null,
+                username + "@example.com",
+                "sales_rep",
+                "active"));
+        identityService.createLoginAccount(new LoginAccountCreateRequest(
+                userId,
+                "username",
+                username,
+                true,
+                "active"));
+        identityService.assignRole(userId, roleId);
+        permissions.forEach(permission ->
+                identityService.grantPermission(roleId, identityService.findPermissionIdByCode(permission)));
+        dataScopes.forEach(scope -> {
+            grantDataScope(roleId, "account", scope);
+            grantDataScope(roleId, "contact", scope);
+            grantDataScope(roleId, "opportunity", scope);
+            grantDataScope(roleId, "activity", scope);
+        });
+        passwordCredentialService.createPasswordCredential(userId, "S3cure!123");
+        return userId;
+    }
+
+    private void grantDataScope(Long roleId, String moduleCode, String scopeCode) {
+        Long dataScopeId = jdbcTemplate.queryForObject(
+                "select id from sys_data_scopes where scope_code = ?",
+                Long.class,
+                scopeCode);
+        jdbcTemplate.update(
+                """
+                insert into sys_role_data_scopes (role_id, module_code, data_scope_id)
+                values (?, ?, ?)
+                """,
+                roleId,
+                moduleCode,
+                dataScopeId);
+    }
+
+    private String login(String username) {
+        ResponseEntity<JsonNode> loginResponse = restTemplate.exchange(
+                "/api/auth/login",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "username", username,
+                        "password", "S3cure!123"), traceHeaders("activity-login-trace-001")),
+                JsonNode.class);
+        return loginResponse.getBody().path("data").path("access_token").asText();
+    }
+
+    private static HttpHeaders traceHeaders(String traceId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Trace-Id", traceId);
+        return headers;
+    }
+
+    private static HttpHeaders authHeaders(String accessToken, String traceId) {
+        HttpHeaders headers = traceHeaders(traceId);
+        headers.setBearerAuth(accessToken);
+        return headers;
+    }
+}

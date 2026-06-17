@@ -289,6 +289,8 @@
 - 行动结果为发现风险时，可更新商机风险状态并记录审计。
 - 下次跟进时间不为空时生成提醒。
 
+当前销售行动基线已落地：`POST /api/activities` 支持创建客户经营行动和项目推进行动，可选关联商机，支持联系人、我方参与人和风险类型写入，并记录 `activity.create` 审计；`GET /api/activities` 按登录用户数据范围返回行动列表，支持 `keyword`、`account_id`、`opportunity_id`、`owner_user_id`、`participant_user_id`、`activity_type`、`activity_status`、`activity_result`、`risk_type`、`activity_from`、`activity_to`、`overdue`、`include_in_weekly_progress` 筛选；`GET /api/accounts/{id}/activities` 和 `GET /api/opportunities/{id}/activities` 返回对象下可见行动；`GET /api/activities/{id}` 校验行动数据权限后返回详情；`PATCH /api/activities/{id}` 支持编辑行动基础字段、联系人、参与人和风险类型，并记录 `activity.update` 审计。行动完成、最近跟进回写和提醒生成进入 BE-015/BE-018。
+
 ## 8. 周进展API
 
 | 方法 | 路径 | 说明 | 权限 |

@@ -77,9 +77,22 @@ class DatabaseMigrationTest {
                 where permission_code in ('opportunity.close', 'opportunity.reopen')
                 """,
                 Integer.class);
+        Integer activityTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name in (
+                  'crm_sales_activities', 'crm_activity_contacts',
+                  'crm_activity_participants', 'crm_activity_risk_types'
+                )
+                """,
+                Integer.class);
+        Integer activityUpdatePermissionCount = jdbcTemplate.queryForObject(
+                "select count(*) from sys_permissions where permission_code = 'activity.update'",
+                Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(9);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(10);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -88,5 +101,7 @@ class DatabaseMigrationTest {
         assertThat(contactUpdatePermissionCount).isEqualTo(1);
         assertThat(opportunityTableCount).isEqualTo(3);
         assertThat(opportunityLifecyclePermissionCount).isEqualTo(2);
+        assertThat(activityTableCount).isEqualTo(4);
+        assertThat(activityUpdatePermissionCount).isEqualTo(1);
     }
 }

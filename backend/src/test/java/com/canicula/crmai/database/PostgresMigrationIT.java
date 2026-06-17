@@ -109,8 +109,22 @@ class PostgresMigrationIT {
                 where permission_code in ('opportunity.close', 'opportunity.reopen')
                 """,
                 Integer.class);
+        Integer activityTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name in (
+                    'crm_sales_activities', 'crm_activity_contacts',
+                    'crm_activity_participants', 'crm_activity_risk_types'
+                  )
+                """,
+                Integer.class);
+        Integer activityUpdatePermissionCount = jdbcTemplate.queryForObject(
+                "select count(*) from sys_permissions where permission_code = 'activity.update'",
+                Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("9");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("10");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -121,6 +135,8 @@ class PostgresMigrationIT {
         assertThat(opportunityTableCount).isEqualTo(3);
         assertThat(activeOpportunityNameIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(opportunityLifecyclePermissionCount).isEqualTo(2);
+        assertThat(activityTableCount).isEqualTo(4);
+        assertThat(activityUpdatePermissionCount).isEqualTo(1);
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type
