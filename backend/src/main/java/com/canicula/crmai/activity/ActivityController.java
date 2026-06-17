@@ -104,6 +104,18 @@ public class ActivityController {
         return response;
     }
 
+    @RequirePermission("activity.complete")
+    @PostMapping("/api/activities/{activityId}/complete")
+    ActivityResponse complete(
+            @PathVariable Long activityId,
+            @Valid @RequestBody ActivityCompleteRequest request,
+            HttpServletRequest httpRequest) {
+        Long actorUserId = currentUserId(httpRequest);
+        ActivityResponse response = activityService.complete(activityId, request, actorUserId);
+        audit(actorUserId, "activity.complete", response, httpRequest);
+        return response;
+    }
+
     private void audit(Long actorUserId, String actionCode, ActivityResponse response, HttpServletRequest request) {
         auditLogService.record(new AuditLogEntry(
                 actorUserId,

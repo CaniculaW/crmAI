@@ -88,11 +88,15 @@ class DatabaseMigrationTest {
                 """,
                 Integer.class);
         Integer activityUpdatePermissionCount = jdbcTemplate.queryForObject(
-                "select count(*) from sys_permissions where permission_code = 'activity.update'",
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in ('activity.update', 'activity.complete')
+                """,
                 Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(10);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(11);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -102,6 +106,6 @@ class DatabaseMigrationTest {
         assertThat(opportunityTableCount).isEqualTo(3);
         assertThat(opportunityLifecyclePermissionCount).isEqualTo(2);
         assertThat(activityTableCount).isEqualTo(4);
-        assertThat(activityUpdatePermissionCount).isEqualTo(1);
+        assertThat(activityUpdatePermissionCount).isEqualTo(2);
     }
 }

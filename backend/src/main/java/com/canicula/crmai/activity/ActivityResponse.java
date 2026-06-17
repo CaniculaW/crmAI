@@ -23,6 +23,8 @@ public record ActivityResponse(
         Boolean include_in_weekly_progress,
         String weekly_period,
         String source_type,
+        OffsetDateTime completed_at,
+        Long completed_by,
         String remark,
         List<Long> contact_ids,
         List<ActivityParticipantResponse> participants,

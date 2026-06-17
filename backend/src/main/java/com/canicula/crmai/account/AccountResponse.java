@@ -1,5 +1,6 @@
 package com.canicula.crmai.account;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public record AccountResponse(
@@ -20,6 +21,9 @@ public record AccountResponse(
         Long owner_user_id,
         String background,
         String key_needs,
+        OffsetDateTime last_activity_at,
+        String last_activity_summary,
+        OffsetDateTime next_follow_up_at,
         String remark,
         List<AccountCollaboratorResponse> collaborators) {
 }

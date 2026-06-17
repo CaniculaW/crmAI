@@ -175,6 +175,52 @@ public class ActivityService {
         return findById(activityId);
     }
 
+    @Transactional
+    public ActivityResponse complete(Long activityId, ActivityCompleteRequest request, Long actorUserId) {
+        ActivityResponse current = readableDetail(activityId, actorUserId);
+        String conclusion = coalesceText(request.conclusion(), current.conclusion(), current.subject());
+        String nextPlan = coalesceText(request.next_plan(), current.next_plan(), null);
+        String riskDescription = coalesceText(request.risk_description(), current.risk_description(), null);
+        String activityResult = coalesceText(request.activity_result(), current.activity_result(), "milestone_completed");
+        jdbcTemplate.update(
+                """
+                update crm_sales_activities
+                set activity_status = 'completed',
+                    activity_result = ?,
+                    conclusion = ?,
+                    next_plan = coalesce(?, next_plan),
+                    risk_description = coalesce(?, risk_description),
+                    completed_at = current_timestamp,
+                    completed_by = ?,
+                    updated_by = ?,
+                    updated_at = current_timestamp,
+                    version = version + 1
+                where id = ?
+                  and deleted_at is null
+                """,
+                activityResult,
+                conclusion,
+                nextPlan,
+                riskDescription,
+                actorUserId,
+                actorUserId,
+                activityId);
+        if (request.risk_types() != null) {
+            replaceRiskTypes(activityId, request.risk_types());
+        }
+        backfillAccountLastActivity(current.account_id(), current.activity_time(), conclusion, current.next_follow_up_at(), actorUserId);
+        if (current.opportunity_id() != null) {
+            backfillOpportunityLastActivity(
+                    current.opportunity_id(),
+                    current.activity_time(),
+                    conclusion,
+                    activityResult,
+                    riskDescription,
+                    actorUserId);
+        }
+        return findById(activityId);
+    }
+
     private Long insertActivity(ActivityCreateRequest request, Long actorUserId) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
@@ -246,11 +292,67 @@ public class ActivityService {
                         rs.getBoolean("include_in_weekly_progress"),
                         rs.getString("weekly_period"),
                         rs.getString("source_type"),
+                        nullableOffsetDateTime(rs.getObject("completed_at")),
+                        nullableLong(rs.getObject("completed_by")),
                         rs.getString("remark"),
                         contactIds(activityId),
                         participants(activityId),
                         riskTypes(activityId)),
                 activityId);
+    }
+
+    private void backfillAccountLastActivity(
+            Long accountId,
+            OffsetDateTime activityTime,
+            String summary,
+            OffsetDateTime nextFollowUpAt,
+            Long actorUserId) {
+        jdbcTemplate.update(
+                """
+                update crm_accounts
+                set last_activity_at = ?,
+                    last_activity_summary = ?,
+                    next_follow_up_at = coalesce(?, next_follow_up_at),
+                    updated_by = ?,
+                    updated_at = current_timestamp,
+                    version = version + 1
+                where id = ?
+                  and deleted_at is null
+                """,
+                activityTime,
+                summary,
+                nextFollowUpAt,
+                actorUserId,
+                accountId);
+    }
+
+    private void backfillOpportunityLastActivity(
+            Long opportunityId,
+            OffsetDateTime activityTime,
+            String summary,
+            String activityResult,
+            String riskDescription,
+            Long actorUserId) {
+        jdbcTemplate.update(
+                """
+                update crm_opportunities
+                set last_activity_at = ?,
+                    last_activity_summary = ?,
+                    risk_status = case when ? = 'risk_found' then 'risk' else risk_status end,
+                    risk_description = case when ? = 'risk_found' then coalesce(?, risk_description) else risk_description end,
+                    updated_by = ?,
+                    updated_at = current_timestamp,
+                    version = version + 1
+                where id = ?
+                  and deleted_at is null
+                """,
+                activityTime,
+                summary,
+                activityResult,
+                activityResult,
+                riskDescription,
+                actorUserId,
+                opportunityId);
     }
 
     private void validateOpportunity(Long opportunityId, Long accountId, Long actorUserId) {
@@ -432,6 +534,16 @@ public class ActivityService {
 
     private static Long nullableLong(Object value) {
         return value == null ? null : ((Number) value).longValue();
+    }
+
+    private static String coalesceText(String first, String second, String third) {
+        if (hasText(first)) {
+            return first.trim();
+        }
+        if (hasText(second)) {
+            return second.trim();
+        }
+        return hasText(third) ? third.trim() : null;
     }
 
     private static OffsetDateTime nullableOffsetDateTime(Object value) {

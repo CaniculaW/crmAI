@@ -4,6 +4,7 @@ import com.canicula.crmai.identity.DataPermissionColumns;
 import com.canicula.crmai.identity.DataPermissionCondition;
 import com.canicula.crmai.identity.DataPermissionService;
 import java.sql.PreparedStatement;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -152,6 +153,9 @@ public class AccountService {
                         rs.getLong("owner_user_id"),
                         rs.getString("background"),
                         rs.getString("key_needs"),
+                        nullableOffsetDateTime(rs.getObject("last_activity_at")),
+                        rs.getString("last_activity_summary"),
+                        nullableOffsetDateTime(rs.getObject("next_follow_up_at")),
                         rs.getString("remark"),
                         collaborators(accountId)),
                 accountId);
@@ -219,6 +223,19 @@ public class AccountService {
 
     private static Long nullableLong(Object value) {
         return value == null ? null : ((Number) value).longValue();
+    }
+
+    private static OffsetDateTime nullableOffsetDateTime(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof OffsetDateTime offsetDateTime) {
+            return offsetDateTime;
+        }
+        if (value instanceof java.sql.Timestamp timestamp) {
+            return timestamp.toInstant().atOffset(OffsetDateTime.now().getOffset());
+        }
+        return null;
     }
 
     private static void appendKeywordFilter(StringBuilder sql, List<Object> parameters, String keyword) {

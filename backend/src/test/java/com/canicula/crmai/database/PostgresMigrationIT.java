@@ -121,10 +121,14 @@ class PostgresMigrationIT {
                 """,
                 Integer.class);
         Integer activityUpdatePermissionCount = jdbcTemplate.queryForObject(
-                "select count(*) from sys_permissions where permission_code = 'activity.update'",
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in ('activity.update', 'activity.complete')
+                """,
                 Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("10");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("11");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -136,7 +140,7 @@ class PostgresMigrationIT {
         assertThat(activeOpportunityNameIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(opportunityLifecyclePermissionCount).isEqualTo(2);
         assertThat(activityTableCount).isEqualTo(4);
-        assertThat(activityUpdatePermissionCount).isEqualTo(1);
+        assertThat(activityUpdatePermissionCount).isEqualTo(2);
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type

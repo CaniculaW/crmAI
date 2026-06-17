@@ -208,6 +208,80 @@ class ActivityControllerTest {
                 assertThat(activity.path("subject").asText()).isEqualTo("不可见行动-" + suffix));
     }
 
+    @Test
+    void completesActivityAndBackfillsAccountAndOpportunityWithRiskUpgrade() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("activity-complete-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "activity_complete_" + suffix,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "account.read",
+                        "contact.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "activity.create",
+                        "activity.read",
+                        "activity.complete"),
+                List.of("global"));
+        String token = login("activity_complete_" + suffix);
+        Long accountId = createAccount(token, "行动完成客户-" + suffix, departmentId, userId);
+        Long contactId = createContact(token, accountId, "行动完成联系人-" + suffix);
+        Long opportunityId = createOpportunity(token, accountId, "行动完成商机-" + suffix, departmentId, userId);
+        Long activityId = createActivity(
+                token,
+                accountId,
+                opportunityId,
+                "风险推进会-" + suffix,
+                departmentId,
+                userId,
+                List.of(contactId),
+                List.of(Map.of("user_id", userId, "participant_role", "owner")),
+                List.of());
+
+        ResponseEntity<JsonNode> completeResponse = restTemplate.exchange(
+                "/api/activities/" + activityId + "/complete",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "activity_result", "risk_found",
+                        "conclusion", "客户预算存在审批风险",
+                        "next_plan", "拉通财务负责人确认预算路径",
+                        "risk_description", "预算审批链路未明确",
+                        "risk_types", List.of("budget")), authHeaders(token, "activity-complete-trace-001")),
+                JsonNode.class);
+        ResponseEntity<JsonNode> accountDetailResponse = restTemplate.exchange(
+                "/api/accounts/" + accountId,
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "activity-complete-account-trace-001")),
+                JsonNode.class);
+        ResponseEntity<JsonNode> opportunityDetailResponse = restTemplate.exchange(
+                "/api/opportunities/" + opportunityId,
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "activity-complete-opportunity-trace-001")),
+                JsonNode.class);
+        Integer auditCount = jdbcTemplate.queryForObject(
+                "select count(*) from sys_audit_logs where action_code = 'activity.complete' and object_id = ?",
+                Integer.class,
+                activityId);
+
+        assertThat(completeResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode completed = completeResponse.getBody().path("data");
+        assertThat(completed.path("activity_status").asText()).isEqualTo("completed");
+        assertThat(completed.path("activity_result").asText()).isEqualTo("risk_found");
+        assertThat(completed.path("completed_by").asLong()).isEqualTo(userId);
+        assertThat(completed.path("completed_at").isMissingNode()).isFalse();
+        assertThat(accountDetailResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode account = accountDetailResponse.getBody().path("data");
+        assertThat(account.path("last_activity_summary").asText()).isEqualTo("客户预算存在审批风险");
+        assertThat(opportunityDetailResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode opportunity = opportunityDetailResponse.getBody().path("data");
+        assertThat(opportunity.path("last_activity_summary").asText()).isEqualTo("客户预算存在审批风险");
+        assertThat(opportunity.path("risk_status").asText()).isEqualTo("risk");
+        assertThat(opportunity.path("risk_description").asText()).isEqualTo("预算审批链路未明确");
+        assertThat(auditCount).isEqualTo(1);
+    }
+
     private Long createActivity(
             String accessToken,
             Long accountId,
