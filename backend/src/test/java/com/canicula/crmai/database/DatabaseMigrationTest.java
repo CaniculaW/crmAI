@@ -25,9 +25,17 @@ class DatabaseMigrationTest {
         Integer dictionaryTypeCount = jdbcTemplate.queryForObject(
                 "select count(*) from sys_dict_types",
                 Integer.class);
+        Integer auditTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name in ('sys_login_logs', 'sys_audit_logs')
+                """,
+                Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(1);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(2);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
+        assertThat(auditTableCount).isEqualTo(2);
     }
 }

@@ -28,7 +28,9 @@ class PostgresMigrationIT {
         Flyway flyway = Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
                 .locations("classpath:db/migration")
-                .placeholders(Map.of("activeRecordFilter", "where deleted_at is null"))
+                .placeholders(Map.of(
+                        "activeRecordFilter", "where deleted_at is null",
+                        "jsonDataType", "jsonb"))
                 .load();
 
         flyway.migrate();
@@ -48,9 +50,17 @@ class PostgresMigrationIT {
                 """,
                 String.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("1");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                select data_type
+                from information_schema.columns
+                where table_name = 'sys_audit_logs'
+                  and column_name = 'before_data'
+                """,
+                String.class)).isEqualTo("jsonb");
 
         assertThatThrownBy(() -> jdbcTemplate.update(
                 "insert into sys_dict_types (dict_code, dict_name) values (?, ?)",

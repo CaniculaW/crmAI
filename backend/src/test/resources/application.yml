@@ -11,6 +11,7 @@ spring:
     locations: classpath:db/migration
     placeholders:
       activeRecordFilter:
+      jsonDataType: json
 
 server:
   port: 0

@@ -11,6 +11,7 @@ spring:
     locations: classpath:db/migration
     placeholders:
       activeRecordFilter: where deleted_at is null
+      jsonDataType: jsonb
 
 server:
   port: 8080
