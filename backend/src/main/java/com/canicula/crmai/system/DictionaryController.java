@@ -1,5 +1,6 @@
 package com.canicula.crmai.system;
 
+import com.canicula.crmai.auth.RequirePermission;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,11 +27,13 @@ public class DictionaryController {
         return dictionaryService.list(dictCode, includeInactive);
     }
 
+    @RequirePermission("system.dict.manage")
     @PostMapping("/api/system/dicts/types")
     DictionaryTypeResponse createType(@Valid @RequestBody DictionaryTypeRequest request) {
         return dictionaryService.createType(request);
     }
 
+    @RequirePermission("system.dict.manage")
     @PostMapping("/api/system/dicts/types/{dictTypeId}/items")
     DictionaryItemResponse createItem(
             @PathVariable Long dictTypeId,
@@ -38,6 +41,7 @@ public class DictionaryController {
         return dictionaryService.createItem(dictTypeId, request);
     }
 
+    @RequirePermission("system.dict.manage")
     @PatchMapping("/api/system/dicts/items/{itemId}")
     DictionaryItemResponse updateItem(
             @PathVariable Long itemId,

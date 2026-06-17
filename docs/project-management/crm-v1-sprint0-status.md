@@ -22,7 +22,7 @@
 | 数据库 | `docs/database/v1-ddl-plan.md` | 已形成 | 覆盖 V1 表、约束、索引、视图原则 |
 | 数据库 | `docs/database/v1-seed-data.md` | 已形成 | 覆盖字典、角色、权限、数据范围和试点数据 |
 | API | `docs/api/crm-v1-api-list.md` | 已形成 | 覆盖认证、系统、CRM、周进展和接口规范 |
-| 后端 | `docs/backend/crm-v1-backend-task-list.md` | 执行中 | BE-001至BE-008已实现，当前具备登录态、密码管理、字典、权限基础和审计基线 |
+| 后端 | `docs/backend/crm-v1-backend-task-list.md` | 执行中 | BE-001至BE-009已实现，当前具备登录态、密码管理、权限拦截、数据权限条件、字典和审计基线 |
 | 前端 | `docs/frontend/crm-v1-frontend-task-list.md` | 执行中 | FE工程骨架、基础导航、登录态和请求层已实现，请求层已兼容后端统一响应 |
 | 测试 | `docs/testing/crm-v1-test-cases.md` | 已形成 | 覆盖 V1 功能、权限、集成、回归和异常用例 |
 | 测试 | `docs/testing/crm-v1-acceptance-checklist.md` | 已形成 | 覆盖上线验收、业务验收、试点验收 |
@@ -36,7 +36,7 @@
 | 页面与原型 | 已形成评审稿 | 产品评审后锁定 P0 页面 |
 | DDL 与初始化数据 | 执行中 | 已建立Flyway迁移框架、系统字典基础迁移、审计/登录日志迁移、核心字典项seed、身份权限基础表，已通过PostgreSQL空库迁移验证；后续按DDL计划继续补CRM业务表 |
 | API 清单 | 已形成评审稿 | 技术评审后转为 OpenAPI 或接口契约 |
-| 后端任务池 | 执行中 | BE-001至BE-008已完成；下一步进入权限拦截和CRM业务基础表 |
+| 后端任务池 | 执行中 | BE-001至BE-009已完成；下一步进入客户池服务和CRM业务基础表 |
 | 前端任务池 | 执行中 | 已完成工程骨架、路由、登录态和请求层基线；等待认证和系统API后继续页面化 |
 | 测试与验收 | 已形成 | 建立自动化测试基线和验收数据 |
 

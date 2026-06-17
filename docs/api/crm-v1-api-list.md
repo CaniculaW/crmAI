@@ -117,6 +117,8 @@
 
 当前密码管理已落地：`POST /api/auth/change-password` 校验旧密码后更新本人密码；`POST /api/auth/reset-password` 支持管理员重置目标用户密码并设置 `force_password_change = true`，同时写入密码重置审计日志。
 
+当前权限基线已落地：后端支持 `@RequirePermission` 服务端权限点拦截，缺少登录态返回 `UNAUTHORIZED`，登录但缺少权限点返回 `FORBIDDEN`。字典管理接口要求 `system.dict.manage`，密码重置接口要求 `system.user.manage`。数据权限服务可按 `own`、`department`、`department_tree`、`collaborated`、`global` 组装列表查询条件。
+
 ## 3. 系统管理API
 
 | 方法 | 路径 | 说明 | 权限 |

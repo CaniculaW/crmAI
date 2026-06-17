@@ -49,6 +49,7 @@ public class PasswordManagementController {
         return Map.of("changed", true);
     }
 
+    @RequirePermission("system.user.manage")
     @PostMapping("/api/auth/reset-password")
     Map<String, Boolean> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request,

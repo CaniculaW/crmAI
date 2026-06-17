@@ -1,7 +1,8 @@
 package com.canicula.crmai.api;
 
-import jakarta.servlet.http.HttpServletRequest;
+import com.canicula.crmai.auth.ForbiddenException;
 import com.canicula.crmai.auth.UnauthorizedException;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -53,6 +54,19 @@ public class ApiExceptionHandler {
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.error(
                         "UNAUTHORIZED",
+                        exception.getMessage(),
+                        Map.of(),
+                        TraceIdFilter.currentTraceId(request)));
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    ResponseEntity<ApiResponse<Map<String, Object>>> handleForbidden(
+            ForbiddenException exception,
+            HttpServletRequest request) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error(
+                        "FORBIDDEN",
                         exception.getMessage(),
                         Map.of(),
                         TraceIdFilter.currentTraceId(request)));

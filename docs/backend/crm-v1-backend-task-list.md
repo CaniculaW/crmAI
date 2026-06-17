@@ -48,6 +48,7 @@
 | BE-006 | 已完成 | 用户、组织、角色、登录账号、凭据、权限、角色权限、数据范围基础表与身份服务 | `mvn test`、`mvn verify -Ppostgres-it` |
 | BE-007 | 已完成 | PBKDF2密码凭据、服务端session、登录/当前用户/登出接口、登录成功/失败日志、401统一响应 | `mvn test`、`mvn verify -Ppostgres-it` |
 | BE-008 | 已完成 | 修改本人密码、管理员重置密码、强制改密标记、密码变更审计 | `mvn test`、`mvn verify -Ppostgres-it` |
+| BE-009 | 已完成 | `@RequirePermission` 权限点拦截、403统一响应、字典管理与密码重置权限保护、数据权限SQL条件组装服务 | `mvn test`、`mvn verify -Ppostgres-it` |
 
 ## 3. 模块验收口径
 

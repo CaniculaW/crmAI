@@ -75,13 +75,16 @@ class PasswordManagementControllerTest {
         String username = "reset_pwd_" + UUID.randomUUID().toString().substring(0, 8);
         Long userId = createLoginReadyUser(username);
         passwordCredentialService.createPasswordCredential(userId, "OldPass!123");
+        String managerToken = createAndLoginUserWithPermission(
+                "reset_manager_" + UUID.randomUUID().toString().substring(0, 8),
+                "system.user.manage");
 
         ResponseEntity<JsonNode> resetResponse = restTemplate.exchange(
                 "/api/auth/reset-password",
                 HttpMethod.POST,
                 new HttpEntity<>(Map.of(
                         "user_id", userId,
-                        "new_password", "ResetPass!123"), traceHeaders("password-reset-trace-001")),
+                        "new_password", "ResetPass!123"), authHeaders(managerToken, "password-reset-trace-001")),
                 JsonNode.class);
         HttpJsonResponse loginResponse = loginResponse(username, "ResetPass!123");
 
@@ -100,6 +103,27 @@ class PasswordManagementControllerTest {
         assertThat(auditCount).isEqualTo(1);
     }
 
+    @Test
+    void rejectsPasswordResetWithoutUserManagePermission() {
+        String targetUsername = "reset_denied_target_" + UUID.randomUUID().toString().substring(0, 8);
+        Long targetUserId = createLoginReadyUser(targetUsername);
+        passwordCredentialService.createPasswordCredential(targetUserId, "OldPass!123");
+        String lowPrivilegeToken = createAndLoginUserWithPermission(
+                "reset_denied_actor_" + UUID.randomUUID().toString().substring(0, 8),
+                "account.create");
+
+        ResponseEntity<JsonNode> resetResponse = restTemplate.exchange(
+                "/api/auth/reset-password",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "user_id", targetUserId,
+                        "new_password", "ResetPass!123"), authHeaders(lowPrivilegeToken, "password-reset-denied-trace-001")),
+                JsonNode.class);
+
+        assertThat(resetResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(resetResponse.getBody().path("code").asText()).isEqualTo("FORBIDDEN");
+    }
+
     private Long createLoginReadyUser(String username) {
         Long departmentId = identityService.createDepartment(new DepartmentCreateRequest(
                 null,
@@ -112,6 +136,42 @@ class PasswordManagementControllerTest {
                 "密码测试角色",
                 "密码测试角色"));
         Long permissionId = identityService.findPermissionIdByCode("account.create");
+        Long userId = identityService.createUser(new UserCreateRequest(
+                departmentId,
+                "密码用户",
+                null,
+                username + "@example.com",
+                "sales_rep",
+                "active"));
+        identityService.createLoginAccount(new LoginAccountCreateRequest(
+                userId,
+                "username",
+                username,
+                true,
+                "active"));
+        identityService.assignRole(userId, roleId);
+        identityService.grantPermission(roleId, permissionId);
+        return userId;
+    }
+
+    private String createAndLoginUserWithPermission(String username, String permissionCode) {
+        Long userId = createLoginReadyUser(username, permissionCode);
+        passwordCredentialService.createPasswordCredential(userId, "S3cure!123");
+        return login(username, "S3cure!123");
+    }
+
+    private Long createLoginReadyUser(String username, String permissionCode) {
+        Long departmentId = identityService.createDepartment(new DepartmentCreateRequest(
+                null,
+                "pwd-" + username,
+                "密码测试部",
+                "CN-31",
+                "active"));
+        Long roleId = identityService.createRole(new RoleCreateRequest(
+                "pwd_role_" + username,
+                "密码测试角色",
+                "密码测试角色"));
+        Long permissionId = identityService.findPermissionIdByCode(permissionCode);
         Long userId = identityService.createUser(new UserCreateRequest(
                 departmentId,
                 "密码用户",
