@@ -45,6 +45,7 @@
 | BE-003 | 已完成 | `/api`统一响应包裹、`X-Trace-Id`透传/生成、参数校验错误字段明细、前端请求层拆包兼容 | `mvn test`、`npm test` |
 | BE-004 | 已完成 | `sys_login_logs`、`sys_audit_logs`迁移，登录日志服务，操作审计服务，JSON快照写入 | `mvn test`、`mvn verify -Ppostgres-it` |
 | BE-005 | 已完成 | 核心字典项seed，字典查询接口，字典类型/项创建，字典项停用默认隐藏 | `mvn test`、`mvn verify -Ppostgres-it` |
+| BE-006 | 已完成 | 用户、组织、角色、登录账号、凭据、权限、角色权限、数据范围基础表与身份服务 | `mvn test`、`mvn verify -Ppostgres-it` |
 
 ## 3. 模块验收口径
 
