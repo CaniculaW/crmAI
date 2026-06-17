@@ -38,6 +38,29 @@ public class PasswordCredentialService {
                 hash(rawPassword));
     }
 
+    @Transactional
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        String currentHash = jdbcTemplate.queryForObject(
+                """
+                select password_hash
+                from sys_user_credentials
+                where user_id = ?
+                  and credential_type = 'password'
+                  and status = 'active'
+                """,
+                String.class,
+                userId);
+        if (!matches(oldPassword, currentHash)) {
+            throw new UnauthorizedException("旧密码不正确");
+        }
+        updatePassword(userId, newPassword, false);
+    }
+
+    @Transactional
+    public void resetPassword(Long userId, String newPassword) {
+        updatePassword(userId, newPassword, true);
+    }
+
     boolean matches(String rawPassword, String encodedPassword) {
         String[] parts = encodedPassword.split("\\$");
         if (parts.length != 4 || !"pbkdf2".equals(parts[0])) {
@@ -58,6 +81,29 @@ public class PasswordCredentialService {
         return "pbkdf2$" + ITERATIONS + "$"
                 + Base64.getEncoder().encodeToString(salt) + "$"
                 + Base64.getEncoder().encodeToString(pbkdf2(rawPassword.toCharArray(), salt, ITERATIONS));
+    }
+
+    private void updatePassword(Long userId, String rawPassword, boolean forcePasswordChange) {
+        int updated = jdbcTemplate.update(
+                """
+                update sys_user_credentials
+                set password_hash = ?,
+                    password_algo = 'PBKDF2WithHmacSHA256',
+                    password_updated_at = current_timestamp,
+                    status = 'active',
+                    updated_at = current_timestamp
+                where user_id = ?
+                  and credential_type = 'password'
+                """,
+                hash(rawPassword),
+                userId);
+        if (updated == 0) {
+            createPasswordCredential(userId, rawPassword);
+        }
+        jdbcTemplate.update(
+                "update sys_users set force_password_change = ? where id = ?",
+                forcePasswordChange,
+                userId);
     }
 
     private byte[] pbkdf2(char[] password, byte[] salt, int iterations) {

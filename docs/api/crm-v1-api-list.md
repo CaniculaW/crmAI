@@ -115,6 +115,8 @@
 
 当前认证基线已落地：`POST /api/auth/login` 使用用户名密码登录，成功后返回 `access_token` 和当前用户；`GET /api/auth/me` 使用 `Authorization: Bearer <token>` 返回角色和权限点；`POST /api/auth/logout` 撤销服务端session。密码凭据使用 PBKDF2WithHmacSHA256 哈希保存。
 
+当前密码管理已落地：`POST /api/auth/change-password` 校验旧密码后更新本人密码；`POST /api/auth/reset-password` 支持管理员重置目标用户密码并设置 `force_password_change = true`，同时写入密码重置审计日志。
+
 ## 3. 系统管理API
 
 | 方法 | 路径 | 说明 | 权限 |

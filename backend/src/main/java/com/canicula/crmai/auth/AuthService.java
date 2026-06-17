@@ -111,6 +111,10 @@ public class AuthService {
         return currentUserById(userId);
     }
 
+    public Long currentUserId(String accessToken) {
+        return userIdFromActiveSession(accessToken);
+    }
+
     @Transactional
     public void logout(String accessToken, HttpServletRequest request) {
         SessionSubject session = sessionSubject(accessToken)
