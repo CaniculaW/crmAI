@@ -12,6 +12,13 @@ type ErrorPayload = {
   message?: string;
 };
 
+type ApiEnvelope<T> = {
+  code?: string;
+  message?: string;
+  data?: T;
+  trace_id?: string;
+};
+
 export async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
   const response = await fetch(input, {
     headers: {
@@ -31,5 +38,10 @@ export async function requestJson<T>(input: RequestInfo | URL, init?: RequestIni
     throw new ApiError(payload.message ?? "请求失败", response.status);
   }
 
-  return (await response.json()) as T;
+  const payload = (await response.json()) as ApiEnvelope<T> | T;
+  if (payload && typeof payload === "object" && "code" in payload && "data" in payload) {
+    return (payload as ApiEnvelope<T>).data as T;
+  }
+
+  return payload as T;
 }

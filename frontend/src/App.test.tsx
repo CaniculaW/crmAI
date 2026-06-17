@@ -50,4 +50,29 @@ describe("CRM frontend shell", () => {
     expect(await screen.findByText("服务暂不可用")).toBeInTheDocument();
     fetchMock.mockRestore();
   });
+
+  it("unwraps successful unified API responses", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: "OK",
+          message: "success",
+          data: { service: "crm-ai-backend", status: "UP" },
+          trace_id: "frontend-trace-001"
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }
+      )
+    );
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "检查后端" }));
+
+    expect(await screen.findByText("crm-ai-backend: UP")).toBeInTheDocument();
+    fetchMock.mockRestore();
+  });
 });

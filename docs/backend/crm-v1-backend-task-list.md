@@ -42,7 +42,7 @@
 |---|---|---|---|
 | BE-001 | 已完成 | Spring Boot工程骨架、健康检查接口、基础测试 | `mvn test` |
 | BE-002 | 已完成 | Flyway迁移配置、PostgreSQL数据源配置、V1系统字典基础迁移、H2测试迁移基线、PostgreSQL空库迁移验证 | `mvn test`、`mvn verify -Ppostgres-it` |
-| BE-003 | 下一步 | 统一响应、错误码、异常处理、trace_id | 待执行 |
+| BE-003 | 已完成 | `/api`统一响应包裹、`X-Trace-Id`透传/生成、参数校验错误字段明细、前端请求层拆包兼容 | `mvn test`、`npm test` |
 
 ## 3. 模块验收口径
 
