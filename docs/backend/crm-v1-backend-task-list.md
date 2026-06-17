@@ -51,6 +51,7 @@
 | BE-009 | 已完成 | `@RequirePermission` 权限点拦截、403统一响应、字典管理与密码重置权限保护、数据权限SQL条件组装服务 | `mvn test`、`mvn verify -Ppostgres-it` |
 | BE-010 | 已完成 | 客户表与协同人员表迁移、客户新增/详情/列表/编辑接口、列表筛选、客户数据权限、创建与编辑审计 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
 | BE-011 | 已完成 | 联系人与项目角色表迁移、联系人新增/详情/列表/客户下列表/编辑接口、列表筛选、联系人数据权限、创建与编辑审计 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
+| BE-012 | 已完成 | 商机主表、协同人员、商机关联联系人迁移，商机新增/详情/列表/客户下列表/编辑接口，阶段状态维护，数据权限与审计 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
 
 ## 3. 模块验收口径
 
@@ -91,6 +92,7 @@
 
 - 商机可新增、编辑、查询、详情查看。
 - 阶段和状态独立维护。
+- 支持协同人员、商机关联联系人和默认跟进列表筛选。
 - 关闭和取消跟进必须填写原因。
 - 关闭和取消跟进商机不进入默认跟进列表。
 

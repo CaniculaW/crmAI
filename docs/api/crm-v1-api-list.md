@@ -253,6 +253,8 @@
 - 关闭和取消跟进商机不进入默认跟进列表。
 - 重启需 `can_reopen = true` 或具备专项权限，具体规则待确认。
 
+当前商机基线已落地：`POST /api/opportunities` 支持商机新增、协同人员和联系人关系写入，并记录 `opportunity.create` 审计；`GET /api/opportunities` 按登录用户数据范围返回商机列表，支持 `keyword`、`account_id`、`stage`、`status`、`level`、`source`、`owner_user_id`、`owner_department_id`、`risk_status`、`amount_min`、`amount_max`、`expected_close_from`、`expected_close_to`、`default_following` 筛选；`GET /api/accounts/{id}/opportunities` 返回客户下可见商机；`GET /api/opportunities/{id}` 校验商机数据权限后返回详情；`PATCH /api/opportunities/{id}` 支持阶段、状态、风险和进展等字段维护，并记录 `opportunity.update` 审计。关闭、取消跟进和重启接口进入 BE-013。
+
 ## 7. 销售行动API
 
 | 方法 | 路径 | 说明 | 权限 | 审计 |
