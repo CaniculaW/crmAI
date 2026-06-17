@@ -72,6 +72,19 @@ public class ApiExceptionHandler {
                         TraceIdFilter.currentTraceId(request)));
     }
 
+    @ExceptionHandler(BusinessRuleException.class)
+    ResponseEntity<ApiResponse<Map<String, Object>>> handleBusinessRule(
+            BusinessRuleException exception,
+            HttpServletRequest request) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(
+                        "BUSINESS_RULE_FAILED",
+                        exception.getMessage(),
+                        Map.of(),
+                        TraceIdFilter.currentTraceId(request)));
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiResponse<Map<String, Object>>> handleUnexpected(
             HttpServletRequest request) {

@@ -99,6 +99,30 @@ public class OpportunityController {
         return response;
     }
 
+    @RequirePermission("opportunity.close")
+    @PostMapping("/api/opportunities/{opportunityId}/close")
+    OpportunityResponse close(
+            @PathVariable Long opportunityId,
+            @Valid @RequestBody OpportunityCloseRequest request,
+            HttpServletRequest httpRequest) {
+        Long actorUserId = currentUserId(httpRequest);
+        OpportunityResponse response = opportunityService.close(opportunityId, request, actorUserId);
+        audit(actorUserId, "opportunity.close", response, httpRequest);
+        return response;
+    }
+
+    @RequirePermission("opportunity.reopen")
+    @PostMapping("/api/opportunities/{opportunityId}/reopen")
+    OpportunityResponse reopen(
+            @PathVariable Long opportunityId,
+            @Valid @RequestBody OpportunityReopenRequest request,
+            HttpServletRequest httpRequest) {
+        Long actorUserId = currentUserId(httpRequest);
+        OpportunityResponse response = opportunityService.reopen(opportunityId, request, actorUserId);
+        audit(actorUserId, "opportunity.reopen", response, httpRequest);
+        return response;
+    }
+
     private void audit(Long actorUserId, String actionCode, OpportunityResponse response, HttpServletRequest request) {
         auditLogService.record(new AuditLogEntry(
                 actorUserId,

@@ -251,9 +251,9 @@
 - 商机关联联系人必须属于同一客户，或具备明确跨客户关联权限；V1 默认只允许同一客户联系人。
 - 关闭或取消跟进必须提交 close_type、close_reason、close_description。
 - 关闭和取消跟进商机不进入默认跟进列表。
-- 重启需 `can_reopen = true` 或具备专项权限，具体规则待确认。
+- 重启需具备 `opportunity.reopen` 权限，且商机满足 `can_reopen = true` 并处于 `closed` 或 `cancelled` 状态。
 
-当前商机基线已落地：`POST /api/opportunities` 支持商机新增、协同人员和联系人关系写入，并记录 `opportunity.create` 审计；`GET /api/opportunities` 按登录用户数据范围返回商机列表，支持 `keyword`、`account_id`、`stage`、`status`、`level`、`source`、`owner_user_id`、`owner_department_id`、`risk_status`、`amount_min`、`amount_max`、`expected_close_from`、`expected_close_to`、`default_following` 筛选；`GET /api/accounts/{id}/opportunities` 返回客户下可见商机；`GET /api/opportunities/{id}` 校验商机数据权限后返回详情；`PATCH /api/opportunities/{id}` 支持阶段、状态、风险和进展等字段维护，并记录 `opportunity.update` 审计。关闭、取消跟进和重启接口进入 BE-013。
+当前商机基线已落地：`POST /api/opportunities` 支持商机新增、协同人员和联系人关系写入，并记录 `opportunity.create` 审计；`GET /api/opportunities` 按登录用户数据范围返回商机列表，支持 `keyword`、`account_id`、`stage`、`status`、`level`、`source`、`owner_user_id`、`owner_department_id`、`risk_status`、`amount_min`、`amount_max`、`expected_close_from`、`expected_close_to`、`default_following` 筛选；`GET /api/accounts/{id}/opportunities` 返回客户下可见商机；`GET /api/opportunities/{id}` 校验商机数据权限后返回详情；`PATCH /api/opportunities/{id}` 支持阶段、状态、风险和进展等字段维护，并记录 `opportunity.update` 审计；`POST /api/opportunities/{id}/close` 支持关闭、输单和取消跟进，要求填写类型、原因和说明，成功后不再进入默认跟进列表并记录 `opportunity.close` 审计；`POST /api/opportunities/{id}/reopen` 支持按规则重启商机，恢复为 `following` 状态并记录 `opportunity.reopen` 审计。
 
 ## 7. 销售行动API
 

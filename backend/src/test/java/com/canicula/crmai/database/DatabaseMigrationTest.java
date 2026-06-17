@@ -70,9 +70,16 @@ class DatabaseMigrationTest {
                 )
                 """,
                 Integer.class);
+        Integer opportunityLifecyclePermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in ('opportunity.close', 'opportunity.reopen')
+                """,
+                Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(8);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(9);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -80,5 +87,6 @@ class DatabaseMigrationTest {
         assertThat(contactTableCount).isEqualTo(2);
         assertThat(contactUpdatePermissionCount).isEqualTo(1);
         assertThat(opportunityTableCount).isEqualTo(3);
+        assertThat(opportunityLifecyclePermissionCount).isEqualTo(2);
     }
 }

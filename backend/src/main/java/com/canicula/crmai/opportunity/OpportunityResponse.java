@@ -2,6 +2,7 @@ package com.canicula.crmai.opportunity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public record OpportunityResponse(
@@ -21,6 +22,12 @@ public record OpportunityResponse(
         String risk_status,
         String current_progress,
         String next_plan,
+        String close_type,
+        String close_reason,
+        String close_description,
+        OffsetDateTime closed_at,
+        Long closed_by,
+        Boolean can_reopen,
         String remark,
         List<OpportunityCollaboratorResponse> collaborators,
         List<OpportunityContactRelationResponse> contact_relations) {

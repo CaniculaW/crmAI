@@ -248,6 +248,179 @@ class OpportunityControllerTest {
         assertThat(auditCount).isEqualTo(1);
     }
 
+    @Test
+    void closeRequiresReason() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("opportunity-close-rule-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "opportunity_close_rule_" + suffix,
+                departmentId,
+                List.of("account.create", "opportunity.create", "opportunity.close"),
+                List.of("global"));
+        String token = login("opportunity_close_rule_" + suffix);
+        Long accountId = createAccount(token, "缺少关闭原因客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(
+                token,
+                accountId,
+                "缺少关闭原因商机-" + suffix,
+                "lead",
+                "following",
+                departmentId,
+                userId,
+                List.of(),
+                List.of());
+
+        HttpJsonResponse closeResponse = postJson(
+                "/api/opportunities/" + opportunityId + "/close",
+                Map.of(
+                        "close_type", "cancelled",
+                        "close_reason", " ",
+                        "close_description", "客户明确暂停预算"),
+                authHeaders(token, "opportunity-close-rule-trace-001"));
+
+        assertThat(closeResponse.status()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(closeResponse.body().path("code").asText()).isEqualTo("BUSINESS_RULE_FAILED");
+    }
+
+    @Test
+    void closesAndCancelsOpportunityAndDefaultFollowingListExcludesThem() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("opportunity-close-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "opportunity_close_" + suffix,
+                departmentId,
+                List.of("account.create", "opportunity.create", "opportunity.read", "opportunity.close"),
+                List.of("global"));
+        String token = login("opportunity_close_" + suffix);
+        Long accountId = createAccount(token, "关闭商机客户-" + suffix, departmentId, userId);
+        Long wonOpportunityId = createOpportunity(
+                token,
+                accountId,
+                "已赢单商机-" + suffix,
+                "proposal",
+                "following",
+                departmentId,
+                userId,
+                List.of(),
+                List.of());
+        Long cancelledOpportunityId = createOpportunity(
+                token,
+                accountId,
+                "取消跟进商机-" + suffix,
+                "validation",
+                "following",
+                departmentId,
+                userId,
+                List.of(),
+                List.of());
+        createOpportunity(
+                token,
+                accountId,
+                "仍在跟进商机-" + suffix,
+                "lead",
+                "following",
+                departmentId,
+                userId,
+                List.of(),
+                List.of());
+
+        HttpJsonResponse wonCloseResponse = postJson(
+                "/api/opportunities/" + wonOpportunityId + "/close",
+                Map.of(
+                        "close_type", "won",
+                        "close_reason", "客户已确认签约",
+                        "close_description", "合同进入用印流程"),
+                authHeaders(token, "opportunity-close-won-trace-001"));
+        HttpJsonResponse cancelledCloseResponse = postJson(
+                "/api/opportunities/" + cancelledOpportunityId + "/close",
+                Map.of(
+                        "close_type", "cancelled",
+                        "close_reason", "客户预算取消",
+                        "close_description", "下一财年重新评估"),
+                authHeaders(token, "opportunity-close-cancelled-trace-001"));
+        ResponseEntity<JsonNode> listResponse = restTemplate.exchange(
+                "/api/opportunities?default_following=true",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "opportunity-close-list-trace-001")),
+                JsonNode.class);
+        String wonStatus = jdbcTemplate.queryForObject(
+                "select status from crm_opportunities where id = ?",
+                String.class,
+                wonOpportunityId);
+        String cancelledStatus = jdbcTemplate.queryForObject(
+                "select status from crm_opportunities where id = ?",
+                String.class,
+                cancelledOpportunityId);
+
+        assertThat(wonCloseResponse.status()).isEqualTo(HttpStatus.OK.value());
+        assertThat(cancelledCloseResponse.status()).isEqualTo(HttpStatus.OK.value());
+        assertThat(wonStatus).isEqualTo("closed");
+        assertThat(cancelledStatus).isEqualTo("cancelled");
+        assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(listResponse.getBody().path("data")).noneSatisfy(opportunity ->
+                assertThat(opportunity.path("opportunity_name").asText()).isEqualTo("已赢单商机-" + suffix));
+        assertThat(listResponse.getBody().path("data")).noneSatisfy(opportunity ->
+                assertThat(opportunity.path("opportunity_name").asText()).isEqualTo("取消跟进商机-" + suffix));
+        assertThat(listResponse.getBody().path("data")).anySatisfy(opportunity ->
+                assertThat(opportunity.path("opportunity_name").asText()).isEqualTo("仍在跟进商机-" + suffix));
+    }
+
+    @Test
+    void reopensClosedOpportunityByRuleAndRecordsAuditLog() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("opportunity-reopen-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "opportunity_reopen_" + suffix,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "opportunity.close",
+                        "opportunity.reopen"),
+                List.of("global"));
+        String token = login("opportunity_reopen_" + suffix);
+        Long accountId = createAccount(token, "重启商机客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(
+                token,
+                accountId,
+                "待重启商机-" + suffix,
+                "proposal",
+                "following",
+                departmentId,
+                userId,
+                List.of(),
+                List.of());
+        postJson(
+                "/api/opportunities/" + opportunityId + "/close",
+                Map.of(
+                        "close_type", "lost",
+                        "close_reason", "价格未达成一致",
+                        "close_description", "客户要求三个月后重新评估"),
+                authHeaders(token, "opportunity-reopen-close-trace-001"));
+
+        HttpJsonResponse reopenResponse = postJson(
+                "/api/opportunities/" + opportunityId + "/reopen",
+                Map.of("reopen_reason", "客户预算恢复"),
+                authHeaders(token, "opportunity-reopen-trace-001"));
+        Integer closeAuditCount = jdbcTemplate.queryForObject(
+                "select count(*) from sys_audit_logs where action_code = 'opportunity.close' and object_id = ?",
+                Integer.class,
+                opportunityId);
+        Integer reopenAuditCount = jdbcTemplate.queryForObject(
+                "select count(*) from sys_audit_logs where action_code = 'opportunity.reopen' and object_id = ?",
+                Integer.class,
+                opportunityId);
+
+        assertThat(reopenResponse.status()).isEqualTo(HttpStatus.OK.value());
+        JsonNode reopened = reopenResponse.body().path("data");
+        assertThat(reopened.path("status").asText()).isEqualTo("following");
+        assertThat(reopened.path("can_reopen").asBoolean()).isFalse();
+        assertThat(reopened.path("close_type").isNull()).isTrue();
+        assertThat(closeAuditCount).isEqualTo(1);
+        assertThat(reopenAuditCount).isEqualTo(1);
+    }
+
     private Long createAccount(String accessToken, String accountName, Long departmentId, Long ownerUserId) {
         Map<String, Object> request = new LinkedHashMap<>();
         request.put("account_name", accountName);
@@ -412,6 +585,22 @@ class OpportunityControllerTest {
             return new HttpJsonResponse(response.statusCode(), objectMapper.readTree(response.body()));
         } catch (Exception exception) {
             throw new IllegalStateException("PATCH request failed", exception);
+        }
+    }
+
+    private HttpJsonResponse postJson(String path, Map<String, Object> body, HttpHeaders headers) {
+        try {
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:" + port + path))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)));
+            headers.forEach((name, values) -> values.forEach(value -> builder.header(name, value)));
+            HttpResponse<String> response = HttpClient.newHttpClient().send(
+                    builder.build(),
+                    HttpResponse.BodyHandlers.ofString());
+            return new HttpJsonResponse(response.statusCode(), objectMapper.readTree(response.body()));
+        } catch (Exception exception) {
+            throw new IllegalStateException("POST request failed", exception);
         }
     }
 

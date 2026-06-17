@@ -1,5 +1,6 @@
 package com.canicula.crmai.opportunity;
 
+import com.canicula.crmai.api.BusinessRuleException;
 import com.canicula.crmai.account.AccountResponse;
 import com.canicula.crmai.account.AccountService;
 import com.canicula.crmai.identity.DataPermissionColumns;
@@ -7,6 +8,7 @@ import com.canicula.crmai.identity.DataPermissionCondition;
 import com.canicula.crmai.identity.DataPermissionService;
 import java.sql.PreparedStatement;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -157,6 +159,67 @@ public class OpportunityService {
         return findById(opportunityId);
     }
 
+    @Transactional
+    public OpportunityResponse close(Long opportunityId, OpportunityCloseRequest request, Long actorUserId) {
+        readableDetail(opportunityId, actorUserId);
+        validateCloseRequest(request);
+        String closeType = request.close_type().trim();
+        jdbcTemplate.update(
+                """
+                update crm_opportunities
+                set status = ?,
+                    close_type = ?,
+                    close_reason = ?,
+                    close_description = ?,
+                    closed_at = current_timestamp,
+                    closed_by = ?,
+                    can_reopen = true,
+                    updated_by = ?,
+                    updated_at = current_timestamp,
+                    version = version + 1
+                where id = ?
+                  and deleted_at is null
+                """,
+                closeStatus(closeType),
+                closeType,
+                request.close_reason().trim(),
+                request.close_description().trim(),
+                actorUserId,
+                actorUserId,
+                opportunityId);
+        return findById(opportunityId);
+    }
+
+    @Transactional
+    public OpportunityResponse reopen(Long opportunityId, OpportunityReopenRequest request, Long actorUserId) {
+        OpportunityResponse current = readableDetail(opportunityId, actorUserId);
+        if (!Boolean.TRUE.equals(current.can_reopen())
+                || !List.of("closed", "cancelled").contains(current.status())) {
+            throw new BusinessRuleException("当前商机不满足重启规则");
+        }
+        jdbcTemplate.update(
+                """
+                update crm_opportunities
+                set status = 'following',
+                    close_type = null,
+                    close_reason = null,
+                    close_description = null,
+                    closed_at = null,
+                    closed_by = null,
+                    can_reopen = false,
+                    current_progress = coalesce(?, current_progress),
+                    updated_by = ?,
+                    updated_at = current_timestamp,
+                    version = version + 1
+                where id = ?
+                  and deleted_at is null
+                """,
+                normalizeText(request.reopen_reason()),
+                actorUserId,
+                opportunityId);
+        return findById(opportunityId);
+    }
+
     private Long insertOpportunity(OpportunityCreateRequest request, AccountResponse account, Long actorUserId) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
@@ -219,6 +282,12 @@ public class OpportunityService {
                         rs.getString("risk_status"),
                         rs.getString("current_progress"),
                         rs.getString("next_plan"),
+                        rs.getString("close_type"),
+                        rs.getString("close_reason"),
+                        rs.getString("close_description"),
+                        nullableOffsetDateTime(rs.getObject("closed_at")),
+                        nullableLong(rs.getObject("closed_by"), rs.getLong("closed_by")),
+                        rs.getBoolean("can_reopen"),
                         rs.getString("remark"),
                         collaborators(opportunityId),
                         contactRelations(opportunityId)),
@@ -348,6 +417,43 @@ public class OpportunityService {
 
     private static LocalDate nullableLocalDate(Object value) {
         return value == null ? null : ((java.sql.Date) value).toLocalDate();
+    }
+
+    private static OffsetDateTime nullableOffsetDateTime(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof OffsetDateTime offsetDateTime) {
+            return offsetDateTime;
+        }
+        if (value instanceof java.sql.Timestamp timestamp) {
+            return timestamp.toInstant().atOffset(OffsetDateTime.now().getOffset());
+        }
+        return null;
+    }
+
+    private static Long nullableLong(Object value, long longValue) {
+        return value == null ? null : longValue;
+    }
+
+    private static void validateCloseRequest(OpportunityCloseRequest request) {
+        if (!hasText(request.close_type())) {
+            throw new BusinessRuleException("关闭或取消商机必须填写关闭类型");
+        }
+        if (!hasText(request.close_reason())) {
+            throw new BusinessRuleException("关闭或取消商机必须填写原因");
+        }
+        if (!hasText(request.close_description())) {
+            throw new BusinessRuleException("关闭或取消商机必须填写说明");
+        }
+    }
+
+    private static String closeStatus(String closeType) {
+        return "cancelled".equals(closeType) ? "cancelled" : "closed";
+    }
+
+    private static String normalizeText(String value) {
+        return hasText(value) ? value.trim() : null;
     }
 
     private static boolean hasText(String value) {

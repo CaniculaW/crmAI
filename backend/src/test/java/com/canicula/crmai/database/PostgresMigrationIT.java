@@ -102,8 +102,15 @@ class PostgresMigrationIT {
                   and indexname = 'uk_crm_opportunities_name_active'
                 """,
                 String.class);
+        Integer opportunityLifecyclePermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in ('opportunity.close', 'opportunity.reopen')
+                """,
+                Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("8");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("9");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -113,6 +120,7 @@ class PostgresMigrationIT {
         assertThat(contactUpdatePermissionCount).isEqualTo(1);
         assertThat(opportunityTableCount).isEqualTo(3);
         assertThat(activeOpportunityNameIndex).contains("WHERE", "deleted_at IS NULL");
+        assertThat(opportunityLifecyclePermissionCount).isEqualTo(2);
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type
