@@ -529,7 +529,7 @@ V1需要的表：
 
 - 新增：`docs/frontend/crm-v1-frontend-task-list.md`
 
-- [ ] **Step 1: 建立前端工程骨架**
+- [x] **Step 1: 建立前端工程骨架**
 
 验收口径：
 

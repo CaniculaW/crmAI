@@ -20,3 +20,28 @@ mvn test
 ```text
 GET /api/health
 ```
+
+## 前端
+
+前端工程位于 `frontend/`，当前采用 React + TypeScript + Vite + Ant Design。
+
+运行测试：
+
+```bash
+cd frontend
+npm test
+```
+
+生产构建：
+
+```bash
+cd frontend
+npm run build
+```
+
+本地启动：
+
+```bash
+cd frontend
+npm run dev
+```
