@@ -128,8 +128,9 @@
 | PATCH | /api/system/roles/{id} | 编辑角色 | system.role.manage |
 | GET | /api/system/permissions | 权限点列表 | system.role.manage 或系统只读 |
 | GET | /api/system/dicts | 字典类型和字典项 | 登录用户 |
-| POST | /api/system/dicts | 新建字典类型或字典项 | system.dict.manage |
-| PATCH | /api/system/dicts/{id} | 编辑字典类型或字典项 | system.dict.manage |
+| POST | /api/system/dicts/types | 新建字典类型 | system.dict.manage |
+| POST | /api/system/dicts/types/{dictTypeId}/items | 新建字典项 | system.dict.manage |
+| PATCH | /api/system/dicts/items/{itemId} | 编辑、启停字典项 | system.dict.manage |
 | GET | /api/system/audit-logs | 审计日志查询 | system.audit.read |
 
 过滤建议：
@@ -137,6 +138,8 @@
 - 用户：`keyword`、`department_id`、`status`、`role_id`
 - 审计日志：`actor_user_id`、`module_code`、`object_type`、`object_id`、`action_code`、`occurred_from`、`occurred_to`
 - 字典：`dict_code`、`is_active`
+
+字典查询已落地：`GET /api/system/dicts?dict_code=account_type` 默认仅返回启用类型和启用字典项；如需管理端查看停用项，可传 `include_inactive=true`。
 
 ## 4. 客户API
 
