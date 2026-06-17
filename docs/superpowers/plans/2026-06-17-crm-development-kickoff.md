@@ -457,7 +457,7 @@ V1需要的表：
 
 - 新增：`docs/backend/crm-v1-backend-task-list.md`
 
-- [ ] **Step 1: 建立后端工程骨架**
+- [x] **Step 1: 建立后端工程骨架**
 
 验收口径：
 
