@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+target/
+build/
+dist/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# IDE and OS
+.DS_Store
+.idea/
+.vscode/
+
+# Generated
+coverage/
+tmp/
+temp/
