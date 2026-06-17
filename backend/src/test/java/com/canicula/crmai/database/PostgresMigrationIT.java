@@ -65,12 +65,34 @@ class PostgresMigrationIT {
                   and indexname = 'uk_crm_accounts_name_active'
                 """,
                 String.class);
+        Integer contactTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name in ('crm_contacts', 'crm_contact_project_roles')
+                """,
+                Integer.class);
+        String activeContactMobileIndex = jdbcTemplate.queryForObject(
+                """
+                select indexdef
+                from pg_indexes
+                where schemaname = 'public'
+                  and indexname = 'uk_crm_contacts_mobile_active'
+                """,
+                String.class);
+        Integer contactUpdatePermissionCount = jdbcTemplate.queryForObject(
+                "select count(*) from sys_permissions where permission_code = 'contact.update'",
+                Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("6");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("7");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
         assertThat(activeAccountNameIndex).contains("WHERE", "deleted_at IS NULL");
+        assertThat(contactTableCount).isEqualTo(2);
+        assertThat(activeContactMobileIndex).contains("WHERE", "deleted_at IS NULL");
+        assertThat(contactUpdatePermissionCount).isEqualTo(1);
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type

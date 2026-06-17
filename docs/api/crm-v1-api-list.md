@@ -209,6 +209,8 @@
 - 项目角色使用 `project_roles` 数组写入 `crm_contact_project_roles`。
 - 联系人关联商机通过商机联系人接口或商机保存时维护。
 
+当前联系人基线已落地：`POST /api/contacts` 支持联系人新增和项目角色写入并记录 `contact.create` 审计；`GET /api/contacts` 按登录用户的数据范围返回联系人列表，并支持 `keyword`、`account_id`、`contact_type`、`attitude`、`relationship_heat`、`importance_level`、`project_role`、`last_communication_from`、`last_communication_to` 筛选；`GET /api/accounts/{id}/contacts` 返回客户下可见联系人；`GET /api/contacts/{id}` 校验联系人数据权限后返回详情；`PATCH /api/contacts/{id}` 支持更新关系字段、联系方式、项目角色等，并记录 `contact.update` 审计。
+
 ## 6. 商机API
 
 | 方法 | 路径 | 说明 | 权限 | 审计 |

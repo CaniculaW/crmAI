@@ -50,6 +50,7 @@
 | BE-008 | 已完成 | 修改本人密码、管理员重置密码、强制改密标记、密码变更审计 | `mvn test`、`mvn verify -Ppostgres-it` |
 | BE-009 | 已完成 | `@RequirePermission` 权限点拦截、403统一响应、字典管理与密码重置权限保护、数据权限SQL条件组装服务 | `mvn test`、`mvn verify -Ppostgres-it` |
 | BE-010 | 已完成 | 客户表与协同人员表迁移、客户新增/详情/列表/编辑接口、列表筛选、客户数据权限、创建与编辑审计 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
+| BE-011 | 已完成 | 联系人与项目角色表迁移、联系人新增/详情/列表/客户下列表/编辑接口、列表筛选、联系人数据权限、创建与编辑审计 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
 
 ## 3. 模块验收口径
 
@@ -83,6 +84,7 @@
 - 联系人可新增、编辑、查询、详情查看。
 - 支持关联客户和商机。
 - 支持项目角色、影响力、态度、关系热度。
+- 支持按客户、类型、态度、关系热度、关键程度和项目角色筛选。
 - 支持商机决策链查询。
 
 ### 3.5 商机
