@@ -44,11 +44,19 @@ class DatabaseMigrationTest {
                 )
                 """,
                 Integer.class);
+        Integer accountTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name in ('crm_accounts', 'crm_account_collaborators')
+                """,
+                Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(5);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(6);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
+        assertThat(accountTableCount).isEqualTo(2);
     }
 }

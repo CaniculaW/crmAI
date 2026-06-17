@@ -49,6 +49,7 @@
 | BE-007 | 已完成 | PBKDF2密码凭据、服务端session、登录/当前用户/登出接口、登录成功/失败日志、401统一响应 | `mvn test`、`mvn verify -Ppostgres-it` |
 | BE-008 | 已完成 | 修改本人密码、管理员重置密码、强制改密标记、密码变更审计 | `mvn test`、`mvn verify -Ppostgres-it` |
 | BE-009 | 已完成 | `@RequirePermission` 权限点拦截、403统一响应、字典管理与密码重置权限保护、数据权限SQL条件组装服务 | `mvn test`、`mvn verify -Ppostgres-it` |
+| BE-010 | 已完成 | 客户表与协同人员表迁移、客户新增/详情/列表/编辑接口、列表筛选、客户数据权限、创建与编辑审计 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
 
 ## 3. 模块验收口径
 
@@ -74,6 +75,7 @@
 - 客户可新增、编辑、查询、详情查看。
 - 支持上级客户。
 - 支持负责人、归属部门、协同人员。
+- 支持按关键字、类型、等级、状态、来源、行业、区域、负责人和归属部门筛选。
 - 支持最近跟进回写。
 
 ### 3.4 联系人与干系人

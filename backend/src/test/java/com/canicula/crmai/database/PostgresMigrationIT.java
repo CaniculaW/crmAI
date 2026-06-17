@@ -49,10 +49,28 @@ class PostgresMigrationIT {
                   and indexname = 'uk_sys_dict_types_code_active'
                 """,
                 String.class);
+        Integer accountTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name in ('crm_accounts', 'crm_account_collaborators')
+                """,
+                Integer.class);
+        String activeAccountNameIndex = jdbcTemplate.queryForObject(
+                """
+                select indexdef
+                from pg_indexes
+                where schemaname = 'public'
+                  and indexname = 'uk_crm_accounts_name_active'
+                """,
+                String.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("6");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
+        assertThat(accountTableCount).isEqualTo(2);
+        assertThat(activeAccountNameIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type

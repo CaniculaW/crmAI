@@ -180,6 +180,8 @@
 - 上级客户使用 `parent_id`。
 - 协同人员可通过客户写接口一并提交，或后续扩展独立协同接口。
 
+当前客户池基线已落地：`POST /api/accounts` 支持客户新增和协同人员写入并记录 `account.create` 审计；`GET /api/accounts` 按登录用户的数据范围返回客户列表，并支持 `keyword`、`account_type`、`account_level`、`account_status`、`account_source`、`industry`、`region_province`、`region_city`、`owner_user_id`、`owner_department_id` 筛选；`GET /api/accounts/{id}` 校验客户数据权限后返回详情；`PATCH /api/accounts/{id}` 支持更新等级、状态和备注并记录 `account.update` 审计。
+
 ## 5. 联系人API
 
 | 方法 | 路径 | 说明 | 权限 | 审计 |
