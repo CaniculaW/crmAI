@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: ${CRM_DB_URL:jdbc:postgresql://localhost:5432/crm_ai}
+    username: ${CRM_DB_USERNAME:crm_ai}
+    password: ${CRM_DB_PASSWORD:crm_ai}
