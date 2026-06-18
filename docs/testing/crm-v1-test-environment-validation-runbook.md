@@ -13,6 +13,7 @@
 配套模板：
 
 - `docs/testing/crm-v1-uat-evidence-pack-template.md`：用于汇总验收证据、缺陷状态、Go/No-Go 判定和签署记录。
+- `scripts/v1-uat-evidence-pack.mjs`：用于按具名测试环境参数生成 UAT 证据包草稿，不写入明文密码或 API Token。
 
 不适用范围：
 
@@ -77,6 +78,21 @@ npm run smoke:v1:browser
 ```
 
 若测试环境通过本地端口或跳板机访问，可以把 `CRM_SMOKE_URL` 指向实际可访问地址。
+
+生成 UAT 证据包草稿：
+
+```bash
+node scripts/v1-uat-evidence-pack.mjs \
+  --environment <test-env-name> \
+  --frontend-url <test-frontend-url> \
+  --backend-url <test-backend-url> \
+  --git-commit <git-sha> \
+  --rc <release-candidate> \
+  --username <masked-admin-user> \
+  > crm-v1-uat-evidence-pack.md
+```
+
+注意：不要向生成器传入明文密码、生产密钥或 API Token。
 
 ## 3. 测试环境 Smoke 步骤
 

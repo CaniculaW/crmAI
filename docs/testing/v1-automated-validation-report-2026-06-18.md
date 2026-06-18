@@ -37,10 +37,12 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `docker compose -f compose.v1-test.yml config` | Compose config validation passed |
 | `docker compose -f compose.v1-test.yml build` | 未完成；当前机器访问 Docker Hub token 接口超时，未进入 Dockerfile 执行阶段 |
 | `node scripts/v1-uat-readiness-check.mjs` | RC/UAT readiness check passed |
-| `node --test scripts/v1-uat-readiness-check.test.mjs` | 3 tests passed |
-| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 3 tests passed；覆盖CI前端job相对路径 |
+| `node --test scripts/v1-uat-readiness-check.test.mjs` | 4 tests passed |
+| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 4 tests passed；覆盖CI前端job相对路径 |
+| `node --test scripts/v1-uat-evidence-pack.test.mjs` | 3 tests passed |
+| `node scripts/v1-uat-evidence-pack.mjs ...` | 可生成不含明文密码/API Token 的 UAT 证据包草稿 |
 | GitHub Actions `V1 Validation` | 已配置，push/PR自动运行Compose部署配置校验、后端、PostgreSQL集成、前端测试和构建 |
-| V1候选版本 | `v1.0.0-rc.4` 作为包含RC/UAT就绪审计、本地具名验证环境证据和证据版本一致性检查的候选版本 |
+| V1候选版本 | `v1.0.0-rc.5` 作为包含RC/UAT就绪审计、本地具名验证环境证据、证据版本一致性检查和 UAT 证据包生成器的候选版本 |
 | `npm run smoke:v1:browser` | `http://127.0.0.1:5175/system` 登录后展示 `V1演示销售部`、`V1演示管理员`、`v1_demo_admin`；console 0 warning/error |
 | 本地API Smoke | `POST /api/auth/login` + `GET /api/bootstrap` 返回 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25） |
 

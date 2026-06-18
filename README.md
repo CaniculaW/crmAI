@@ -54,7 +54,7 @@ http://127.0.0.1:5174/
 当前候选版本记录：
 
 ```text
-docs/releases/v1.0.0-rc.4.md
+docs/releases/v1.0.0-rc.5.md
 ```
 
 RC/UAT 就绪审计：
@@ -67,6 +67,18 @@ node scripts/v1-uat-readiness-check.mjs
 
 ```bash
 node --test scripts/v1-uat-readiness-check.test.mjs
+```
+
+UAT 证据包草稿生成：
+
+```bash
+node scripts/v1-uat-evidence-pack.mjs \
+  --environment <test-env-name> \
+  --frontend-url <test-frontend-url> \
+  --backend-url <test-backend-url> \
+  --git-commit <git-sha> \
+  --rc <release-candidate> \
+  --username <masked-admin-user>
 ```
 
 ## 后端
