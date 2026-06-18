@@ -141,6 +141,15 @@ class V1DemoDataSeederTest {
     }
 
     @Test
+    void demoBusinessSeedIsIdempotent() {
+        Map<String, Integer> countsBefore = demoBusinessCounts();
+
+        seeder.run(null);
+
+        assertThat(demoBusinessCounts()).isEqualTo(countsBefore);
+    }
+
+    @Test
     void refusesToRunWhenProdProfileIsActive() {
         MockEnvironment environment = new MockEnvironment();
         environment.setActiveProfiles("prod");
@@ -195,5 +204,19 @@ class V1DemoDataSeederTest {
         HttpHeaders headers = traceHeaders(traceId);
         headers.setBearerAuth(accessToken);
         return headers;
+    }
+
+    private Map<String, Integer> demoBusinessCounts() {
+        return Map.of(
+                "accounts", count("select count(*) from crm_accounts where account_source = 'v1_demo_seed'"),
+                "contacts", count("select count(*) from crm_contacts where remark = 'V1演示联系人。'"),
+                "opportunities", count("select count(*) from crm_opportunities where source = 'v1_demo_seed'"),
+                "activities", count("select count(*) from crm_sales_activities where source_type = 'v1_demo_seed'"),
+                "weeklyProgress", count("select count(*) from v_opportunity_weekly_progress"));
+    }
+
+    private int count(String sql) {
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
+        return count == null ? 0 : count;
     }
 }

@@ -32,7 +32,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `mvn verify -Ppostgres-it` | 56 surefire tests passed；1 PostgreSQL integration test passed |
 | `mvn -Dtest=IdentityAdminControllerTest test` | 5 tests passed |
 | `mvn -Dtest=OpenApiContractCoverageTest test` | 1 test passed |
-| `mvn -Dtest=V1DemoDataSeederTest test` | 4 tests passed；演示管理员、权限、V1演示业务数据和周进展聚合探针通过 |
+| `mvn -Dtest=V1DemoDataSeederTest test` | 5 tests passed；演示管理员、权限、V1演示业务数据、seed幂等性和周进展聚合探针通过 |
 | `npm test` | 16 tests passed |
 | `npm run build` | Build succeeded；保留 antd vendor chunk 体积提示 |
 | `docker compose -f compose.v1-test.yml config` | Compose config validation passed |
@@ -41,8 +41,8 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 3 tests passed |
 | `node scripts/v1-uat-readiness-check.mjs` | RC/UAT readiness check passed |
-| `node --test scripts/v1-uat-readiness-check.test.mjs` | 6 tests passed |
-| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 6 tests passed；覆盖CI前端job相对路径 |
+| `node --test scripts/v1-uat-readiness-check.test.mjs` | 8 tests passed |
+| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 8 tests passed；覆盖CI前端job相对路径 |
 | `node --test scripts/v1-uat-evidence-pack.test.mjs` | 3 tests passed |
 | `node scripts/v1-uat-evidence-pack.mjs ...` | 可生成不含明文密码/API Token、包含 validator 留痕区的 UAT 证据包草稿 |
 | GitHub Actions `V1 Validation` | `v1.0.0-rc.8` 所属提交推送后以远端 run 为权威记录，准出要求为 `success`；上一轮 `rc.7` 基线 run `27774139423` 已通过 |

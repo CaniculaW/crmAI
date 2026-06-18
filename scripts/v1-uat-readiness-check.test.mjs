@@ -86,6 +86,30 @@ test("fails when local UAT evidence points to an older release candidate", () =>
   assert.ok(result.failed.some((check) => check.id === "local-uat-evidence"));
 });
 
+test("passes when local UAT business demo counts are greater than one", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "docs/testing/evidence/v1-local-uat-2026-06-18.md": "V1-local-uat-20260618\nv1.0.0-rc.8\nFlyway\n14\n/api/health\n/api/bootstrap\nBrowser Use URL policy\nUAT evidence pack validator\nV1演示业务数据\n\"accounts\": 2\n\"contacts\": 2\n\"opportunities\": 2\n\"activities\": 2\n"
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, true);
+  assert.equal(result.failed.length, 0);
+});
+
+test("fails when local UAT business demo counts are empty", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "docs/testing/evidence/v1-local-uat-2026-06-18.md": "V1-local-uat-20260618\nv1.0.0-rc.8\nFlyway\n14\n/api/health\n/api/bootstrap\nBrowser Use URL policy\nUAT evidence pack validator\nV1演示业务数据\n\"accounts\": 0\n\"contacts\": 1\n\"opportunities\": 1\n\"activities\": 1\n"
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "local-uat-evidence"));
+});
+
 test("fails when V1 deployment config checker is not wired into readiness materials", () => {
   const snapshot = {
     ...completeSnapshot,

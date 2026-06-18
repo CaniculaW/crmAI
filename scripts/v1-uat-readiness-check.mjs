@@ -31,6 +31,16 @@ function includesAll(content, needles) {
   return needles.every((needle) => content.includes(needle));
 }
 
+function businessCountAtLeastOne(content, key) {
+  const match = content.match(new RegExp(`"${key}"\\s*:\\s*(\\d+)`));
+  return match !== null && Number(match[1]) >= 1;
+}
+
+function hasNonEmptyBusinessCounts(content) {
+  return ["accounts", "contacts", "opportunities", "activities"]
+    .every((key) => businessCountAtLeastOne(content, key));
+}
+
 function makeCheck(id, ok, message, severity = "fail") {
   return { id, ok, message, severity };
 }
@@ -135,12 +145,8 @@ export function evaluateReadinessSnapshot(snapshot) {
       "/api/bootstrap",
       "Browser Use URL policy",
       "UAT evidence pack validator",
-      "V1演示业务数据",
-      "\"accounts\": 1",
-      "\"contacts\": 1",
-      "\"opportunities\": 1",
-      "\"activities\": 1"
-    ]),
+      "V1演示业务数据"
+    ]) && hasNonEmptyBusinessCounts(localEvidence),
     "Local named validation evidence captures service checks, browser/Docker limitations, and non-empty V1 demo business data."
   ));
 
