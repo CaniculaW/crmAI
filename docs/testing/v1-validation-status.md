@@ -1,7 +1,7 @@
 # CRM V1 Validation Status
 
-Generated at: 2026-06-18T19:36:01.871Z
-Git commit: 549dd6295b4bf0105ead6e0bd41aafc611d09135
+Generated at: 2026-06-18T19:52:53.369Z
+Git commit: ce6c06389fbde5cb5910d54b840a9afd6f7127f9
 
 Overall: No-Go
 
@@ -9,24 +9,30 @@ Overall: No-Go
 
 | Gate | Result | Decision | Failed checks |
 |---|---|---|---:|
-| Readiness | PASS | - | 0 |
+| Readiness | FAIL | - | 1 |
+| UAT Environment Evidence | FAIL | No-Go | 3 |
 | UAT Evidence Pack | FAIL | No-Go | 7 |
 | UAT Evidence Manifest | FAIL | No-Go | 2 |
 | UAT Execution Tracker | FAIL | No-Go | 7 |
 | UAT Defect Register | FAIL | No-Go | 3 |
-| Release Gate | FAIL | No-Go | 5 |
+| Release Gate | FAIL | No-Go | 7 |
 
 ## Verification Commands
 
 - `node scripts/v1-uat-readiness-check.mjs`
+- `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md`
 - `node scripts/v1-uat-evidence-pack-validate.mjs docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`
 - `node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md`
 - `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md`
 - `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md`
-- `node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md`
+- `node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md`
 
 ## Open Blockers
 
+- FAIL Readiness/uat-environment-evidence: UAT environment evidence inventories named environment metadata, smoke checks, account checks, and permission checks without secrets.
+- FAIL UAT Environment Evidence/environment-summary: Invalid environment summary items: 测试环境名称, 前端访问地址, 后端 API 地址, Git 提交号
+- FAIL UAT Environment Evidence/environment-checks: Incomplete environment checks: ENV-001, ENV-002, ENV-003, ENV-004, ENV-005, ENV-006, ENV-007, ENV-008
+- FAIL UAT Environment Evidence/go-decision: Environment evidence decision is No-Go; V1 validation requires Go.
 - FAIL UAT Evidence Pack/no-placeholders: Evidence pack still contains draft placeholders.
 - FAIL UAT Evidence Pack/environment-results: Missing passed environment evidence: 销售个人账号, 销售负责人账号, 权限样本账号
 - FAIL UAT Evidence Pack/uat-business-cases: Missing passed UAT evidence: UAT-001, UAT-002, UAT-003, UAT-004, UAT-005, UAT-006, UAT-007, UAT-008, UAT-009, UAT-010
@@ -34,7 +40,7 @@ Overall: No-Go
 - FAIL UAT Evidence Pack/p1-defects: P1/S2 defect row is missing or invalid.
 - FAIL UAT Evidence Pack/go-criteria: Unsatisfied Go/No-Go criteria: 测试环境 Smoke, P0 缺陷, P1 缺陷, 业务验收, 上线风险
 - FAIL UAT Evidence Pack/signoff-complete: Incomplete signoff rows: 销售侧验收人, 管理侧验收人, 产品负责人, 测试负责人, 研发负责人, 项目负责人
-- FAIL UAT Evidence Manifest/evidence-complete: Evidence rows not marked PASS: PRE-001, PRE-002, PRE-003, PRE-004, PRE-005, PRE-006, SMK-001, SMK-002, SMK-003, SMK-004, SMK-005, UAT-001, UAT-002, UAT-003, UAT-004, UAT-005, UAT-006, UAT-007, UAT-008, UAT-009, UAT-010, DEF-REGISTER, DEF-P0, DEF-P1, SIGNOFF-SALES, SIGNOFF-MANAGER, SIGNOFF-PRODUCT, SIGNOFF-TEST, SIGNOFF-DEV, SIGNOFF-PM, GO-NOGO
+- FAIL UAT Evidence Manifest/evidence-complete: Evidence rows not marked PASS: ENV-EVIDENCE, PRE-001, PRE-002, PRE-003, PRE-004, PRE-005, PRE-006, SMK-001, SMK-002, SMK-003, SMK-004, SMK-005, UAT-001, UAT-002, UAT-003, UAT-004, UAT-005, UAT-006, UAT-007, UAT-008, UAT-009, UAT-010, DEF-REGISTER, DEF-P0, DEF-P1, SIGNOFF-SALES, SIGNOFF-MANAGER, SIGNOFF-PRODUCT, SIGNOFF-TEST, SIGNOFF-DEV, SIGNOFF-PM, GO-NOGO
 - FAIL UAT Evidence Manifest/go-decision: Manifest decision is No-Go; V1 validation requires Go.
 - FAIL UAT Execution Tracker/roles-assigned: Roles pending assignment or status: 销售侧验收人, 管理侧验收人, 产品负责人, 测试负责人, 项目负责人
 - FAIL UAT Execution Tracker/pre-checks: Incomplete PRE checks: PRE-001, PRE-002, PRE-003, PRE-004, PRE-005, PRE-006
@@ -46,6 +52,8 @@ Overall: No-Go
 - FAIL UAT Defect Register/p0-p1-summary: Invalid P0/P1 summary rows: P0 / S1 阻断, P1 / S2 严重
 - FAIL UAT Defect Register/defect-details: Incomplete defect details: DEF-DRAFT
 - FAIL UAT Defect Register/go-decision: Defect register decision is No-Go; V1 validation requires Go.
+- FAIL Release Gate/rc-uat-readiness: RC/UAT readiness failed: uat-environment-evidence
+- FAIL Release Gate/uat-environment: UAT environment evidence failed: environment-summary, environment-checks, go-decision
 - FAIL Release Gate/uat-evidence-pack: UAT evidence pack failed: no-placeholders, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete
 - FAIL Release Gate/uat-evidence-manifest: UAT evidence manifest failed: evidence-complete, go-decision
 - FAIL Release Gate/uat-defect-register: UAT defect register failed: p0-p1-summary, defect-details, go-decision
@@ -54,4 +62,4 @@ Overall: No-Go
 
 ## Completion Rule
 
-V1验证通过必须同时满足：readiness PASS、UAT证据包 validator PASS、UAT证据清单 validator PASS、UAT执行追踪表 validator PASS、UAT缺陷台账 validator PASS、最终 release gate PASS，且项目负责人结论为 `Go`。
+V1验证通过必须同时满足：readiness PASS、UAT具名环境证据 validator PASS、UAT证据包 validator PASS、UAT证据清单 validator PASS、UAT执行追踪表 validator PASS、UAT缺陷台账 validator PASS、最终 release gate PASS，且项目负责人结论为 `Go`。

@@ -15,6 +15,7 @@ Rules:
 
 | Evidence ID | Type | Owner | Status | Evidence reference | Notes |
 |---|---|---|---|---|---|
+| ENV-EVIDENCE | 具名环境 | 测试负责人 | PENDING | 待补充 | 具名测试环境证据和 Smoke 结果待补充 |
 | PRE-001 | 前置检查 | 研发/运维 | PENDING | 待补充 | 测试环境域名、前端和 `/api/health` 待确认 |
 | PRE-002 | 前置检查 | 研发/运维 | PENDING | 待补充 | Flyway迁移证据待补充 |
 | PRE-003 | 前置检查 | 研发/测试 | PENDING | 待补充 | 管理员、销售个人、销售负责人账号清单待脱敏记录 |

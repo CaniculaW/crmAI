@@ -34,6 +34,16 @@ const failingManifestResult = {
   failed: [{ id: "evidence-complete" }, { id: "go-decision" }]
 };
 
+const passingEnvironmentResult = {
+  ok: true,
+  failed: []
+};
+
+const failingEnvironmentResult = {
+  ok: false,
+  failed: [{ id: "environment-summary" }, { id: "environment-checks" }]
+};
+
 const passingDefectRegisterResult = {
   ok: true,
   failed: []
@@ -133,10 +143,11 @@ Go/No-Go 结论：
 `;
 }
 
-test("passes only when readiness, UAT evidence, defect register, and project Go are all complete", () => {
+test("passes only when readiness, UAT environment, UAT evidence, defect register, and project Go are all complete", () => {
   const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
   const result = evaluateV1ReleaseGate({
     readinessResult: passingReadinessResult,
+    environmentResult: passingEnvironmentResult,
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
     evidenceManifestResult: passingManifestResult,
@@ -152,6 +163,7 @@ test("fails when RC/UAT readiness has a failed check", () => {
   const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
   const result = evaluateV1ReleaseGate({
     readinessResult: failingReadinessResult,
+    environmentResult: passingEnvironmentResult,
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
     evidenceManifestResult: passingManifestResult,
@@ -166,6 +178,7 @@ test("fails when UAT evidence is still a No-Go draft", () => {
   const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("No-Go"));
   const result = evaluateV1ReleaseGate({
     readinessResult: passingReadinessResult,
+    environmentResult: passingEnvironmentResult,
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
     evidenceManifestResult: passingManifestResult,
@@ -180,6 +193,7 @@ test("fails when the project decision is Conditional Go", () => {
   const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Conditional Go"));
   const result = evaluateV1ReleaseGate({
     readinessResult: passingReadinessResult,
+    environmentResult: passingEnvironmentResult,
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
     evidenceManifestResult: passingManifestResult,
@@ -194,6 +208,7 @@ test("fails when UAT evidence is Go but the execution tracker remains incomplete
   const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
   const result = evaluateV1ReleaseGate({
     readinessResult: passingReadinessResult,
+    environmentResult: passingEnvironmentResult,
     uatEvidenceResult,
     trackerResult: failingTrackerResult,
     evidenceManifestResult: passingManifestResult,
@@ -208,6 +223,7 @@ test("fails when the UAT evidence manifest remains incomplete", () => {
   const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
   const result = evaluateV1ReleaseGate({
     readinessResult: passingReadinessResult,
+    environmentResult: passingEnvironmentResult,
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
     evidenceManifestResult: failingManifestResult,
@@ -218,10 +234,26 @@ test("fails when the UAT evidence manifest remains incomplete", () => {
   assert.ok(result.failed.some((check) => check.id === "uat-evidence-manifest"));
 });
 
+test("fails when the named UAT environment evidence remains incomplete", () => {
+  const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    environmentResult: failingEnvironmentResult,
+    uatEvidenceResult,
+    trackerResult: passingTrackerResult,
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-environment"));
+});
+
 test("fails when the UAT defect register remains incomplete", () => {
   const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
   const result = evaluateV1ReleaseGate({
     readinessResult: passingReadinessResult,
+    environmentResult: passingEnvironmentResult,
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
     evidenceManifestResult: passingManifestResult,

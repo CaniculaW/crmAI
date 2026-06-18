@@ -15,6 +15,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-deployment-config-check.test.mjs",
   "scripts/v1-uat-evidence-pack.mjs",
   "scripts/v1-uat-evidence-pack.test.mjs",
+  "scripts/v1-uat-environment-validate.mjs",
+  "scripts/v1-uat-environment-validate.test.mjs",
   "scripts/v1-uat-evidence-pack-validate.mjs",
   "scripts/v1-uat-evidence-pack-validate.test.mjs",
   "scripts/v1-uat-defect-register-validate.mjs",
@@ -40,6 +42,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
   "docs/testing/crm-v1-uat-execution-tracker.md",
+  "docs/testing/v1-uat-environment-evidence.md",
   "docs/testing/v1-uat-defect-register.md",
   "docs/testing/v1-uat-evidence-manifest.md",
   "docs/testing/evidence/v1-local-uat-2026-06-18.md",
@@ -159,6 +162,7 @@ function hasUatEvidenceManifest(content) {
     "Decision: No-Go",
     "Evidence ID",
     "Evidence reference",
+    "ENV-EVIDENCE",
     "DEF-REGISTER",
     "DEF-P0",
     "DEF-P1",
@@ -174,6 +178,27 @@ function hasUatEvidenceManifest(content) {
   ]) && includesAll(content, requiredPreChecks)
     && includesAll(content, requiredSmokeChecks)
     && includesAll(content, requiredUatCases);
+}
+
+function hasUatEnvironmentEvidence(content) {
+  const requiredChecks = Array.from(
+    { length: 8 },
+    (_, index) => `ENV-${String(index + 1).padStart(3, "0")}`
+  );
+
+  return includesAll(content, [
+    "CRM V1 UAT Environment Evidence",
+    "v1.0.0-rc.8",
+    "Decision: No-Go",
+    "Environment Summary",
+    "测试环境名称",
+    "前端访问地址",
+    "后端 API 地址",
+    "候选版本",
+    "Git 提交号",
+    "不记录明文密码",
+    "node scripts/v1-uat-environment-validate.mjs"
+  ]) && includesAll(content, requiredChecks);
 }
 
 function hasUatDefectRegister(content) {
@@ -276,6 +301,21 @@ export function evaluateReadinessSnapshot(snapshot) {
     "UAT evidence pack validator is covered by tests and enforces Go/No-Go hard gates."
   ));
 
+  const environmentValidator = snapshot["scripts/v1-uat-environment-validate.mjs"] ?? "";
+  const environmentValidatorTest = snapshot["scripts/v1-uat-environment-validate.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "uat-environment-validator",
+    includesAll(workflow + environmentValidator + environmentValidatorTest, [
+      "node --test scripts/v1-uat-environment-validate.test.mjs",
+      "evaluateUatEnvironmentEvidence",
+      "environment-summary",
+      "environment-checks",
+      "no-secret-material",
+      "fails a draft environment record when named environment evidence is pending"
+    ]),
+    "UAT environment evidence validator is tested and enforces named environment metadata, smoke evidence, account evidence, and secret redaction."
+  ));
+
   const defectRegisterValidator = snapshot["scripts/v1-uat-defect-register-validate.mjs"] ?? "";
   const defectRegisterValidatorTest = snapshot["scripts/v1-uat-defect-register-validate.test.mjs"] ?? "";
   checks.push(makeCheck(
@@ -329,6 +369,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "evaluateV1ReleaseGate",
       "evaluateV1ReleaseGateFromFiles",
       "V1 release gate requires Go",
+      "uat-environment",
       "fails when the project decision is Conditional Go"
     ]),
     "Final V1 release gate is tested and requires readiness, formal UAT evidence, and an explicit Go decision."
@@ -342,6 +383,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node --test scripts/v1-validation-status.test.mjs",
       "generateV1ValidationStatusMarkdown",
       "Overall: No-Go",
+      "UAT Environment Evidence",
       "UAT Execution Tracker",
       "summarizes a No-Go V1 status with concrete blocker commands"
     ]),
@@ -357,6 +399,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "generateV1UatActionPlanMarkdown",
       "Overall: No-Go",
       "Role Workstreams",
+      "UAT Environment Evidence",
       "generates a No-Go UAT action plan grouped by project, test, business, and engineering workstreams"
     ]),
     "V1 UAT action plan is tested and turns validator blockers into role-based execution workstreams."
@@ -371,6 +414,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "generateV1GoNoGoMeetingMarkdown",
       "Decision Recommendation: No-Go",
       "Final Signoff Table",
+      "UAT Environment Evidence",
       "generates a No-Go meeting pack that blocks approval until validators pass"
     ]),
     "V1 Go/No-Go meeting pack is tested and keeps final approval tied to validator PASS plus project Go."
@@ -458,6 +502,13 @@ export function evaluateReadinessSnapshot(snapshot) {
     "UAT execution tracker assigns pre-checks, smoke checks, UAT-001 through UAT-010, signoffs, and final release-gate evidence."
   ));
 
+  const uatEnvironmentEvidence = snapshot["docs/testing/v1-uat-environment-evidence.md"] ?? "";
+  checks.push(makeCheck(
+    "uat-environment-evidence",
+    hasUatEnvironmentEvidence(uatEnvironmentEvidence),
+    "UAT environment evidence inventories named environment metadata, smoke checks, account checks, and permission checks without secrets."
+  ));
+
   const uatDefectRegister = snapshot["docs/testing/v1-uat-defect-register.md"] ?? "";
   checks.push(makeCheck(
     "uat-defect-register",
@@ -475,7 +526,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-go-no-go-meeting.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-go-no-go-meeting.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 

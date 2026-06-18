@@ -10,11 +10,13 @@ import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
 import { evaluateUatEvidenceManifest } from "./v1-uat-evidence-manifest-validate.mjs";
 import { evaluateUatExecutionTracker } from "./v1-uat-execution-tracker-validate.mjs";
 import { evaluateUatDefectRegister } from "./v1-uat-defect-register-validate.mjs";
+import { evaluateUatEnvironmentEvidence } from "./v1-uat-environment-validate.mjs";
 
 const DEFAULT_EVIDENCE_PATH = "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md";
 const DEFAULT_TRACKER_PATH = "docs/testing/crm-v1-uat-execution-tracker.md";
 const DEFAULT_MANIFEST_PATH = "docs/testing/v1-uat-evidence-manifest.md";
 const DEFAULT_DEFECT_REGISTER_PATH = "docs/testing/v1-uat-defect-register.md";
+const DEFAULT_ENVIRONMENT_PATH = "docs/testing/v1-uat-environment-evidence.md";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-go-no-go-meeting.md";
 
 const SIGNOFF_ROLES = [
@@ -30,15 +32,17 @@ function gateCommands(
   evidencePath = DEFAULT_EVIDENCE_PATH,
   trackerPath = DEFAULT_TRACKER_PATH,
   manifestPath = DEFAULT_MANIFEST_PATH,
-  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH
+  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH
 ) {
   return [
     `node scripts/v1-uat-readiness-check.mjs`,
+    `node scripts/v1-uat-environment-validate.mjs ${environmentPath}`,
     `node scripts/v1-uat-evidence-pack-validate.mjs ${evidencePath}`,
     `node scripts/v1-uat-evidence-manifest-validate.mjs ${manifestPath}`,
     `node scripts/v1-uat-execution-tracker-validate.mjs ${trackerPath}`,
     `node scripts/v1-uat-defect-register-validate.mjs ${defectRegisterPath}`,
-    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath}`
+    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath} ${environmentPath}`
   ];
 }
 
@@ -53,6 +57,7 @@ function recommendation(releaseGateResult) {
 export function generateV1GoNoGoMeetingMarkdown({
   generatedAt,
   readinessResult,
+  environmentResult,
   evidenceResult,
   manifestResult,
   trackerResult,
@@ -61,11 +66,13 @@ export function generateV1GoNoGoMeetingMarkdown({
   evidencePath = DEFAULT_EVIDENCE_PATH,
   trackerPath = DEFAULT_TRACKER_PATH,
   manifestPath = DEFAULT_MANIFEST_PATH,
-  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH
+  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH
 }) {
   const decisionRecommendation = recommendation(releaseGateResult);
   const blockers = [
     ...failedLines("Readiness", readinessResult),
+    ...failedLines("UAT Environment Evidence", environmentResult),
     ...failedLines("UAT Evidence Pack", evidenceResult),
     ...failedLines("UAT Evidence Manifest", manifestResult),
     ...failedLines("UAT Execution Tracker", trackerResult),
@@ -86,7 +93,7 @@ export function generateV1GoNoGoMeetingMarkdown({
     "",
     "## Required Gate Commands",
     "",
-    ...gateCommands(evidencePath, trackerPath, manifestPath, defectRegisterPath).map((command) => `- \`${command}\``),
+    ...gateCommands(evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath).map((command) => `- \`${command}\``),
     "",
     "## Meeting Agenda",
     "",
@@ -119,7 +126,7 @@ export function generateV1GoNoGoMeetingMarkdown({
   }
 
   lines.push("");
-  lines.push("Note: This meeting pack organizes final approval evidence. It does not replace UAT execution, defect closure, evidence-pack validation, evidence-manifest validation, tracker validation, defect-register validation, or the final release gate.");
+  lines.push("Note: This meeting pack organizes final approval evidence. It does not replace UAT execution, named-environment validation, defect closure, evidence-pack validation, evidence-manifest validation, tracker validation, defect-register validation, or the final release gate.");
 
   return `${lines.join("\n")}\n`;
 }
@@ -130,15 +137,18 @@ export function generateV1GoNoGoMeetingFromFiles({
   trackerPath = DEFAULT_TRACKER_PATH,
   manifestPath = DEFAULT_MANIFEST_PATH,
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH,
   generatedAt = new Date().toISOString()
 } = {}) {
   const readinessResult = evaluateReadinessSnapshot(readSnapshot(rootDir));
+  const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(path.join(rootDir, environmentPath), "utf8"));
   const evidenceResult = evaluateUatEvidencePack(readFileSync(path.join(rootDir, evidencePath), "utf8"));
   const trackerResult = evaluateUatExecutionTracker(readFileSync(path.join(rootDir, trackerPath), "utf8"));
   const manifestResult = evaluateUatEvidenceManifest(readFileSync(path.join(rootDir, manifestPath), "utf8"));
   const defectRegisterResult = evaluateUatDefectRegister(readFileSync(path.join(rootDir, defectRegisterPath), "utf8"));
   const releaseGateResult = evaluateV1ReleaseGate({
     readinessResult,
+    environmentResult,
     uatEvidenceResult: evidenceResult,
     trackerResult,
     evidenceManifestResult: manifestResult,
@@ -148,6 +158,7 @@ export function generateV1GoNoGoMeetingFromFiles({
   return generateV1GoNoGoMeetingMarkdown({
     generatedAt,
     readinessResult,
+    environmentResult,
     evidenceResult,
     manifestResult,
     trackerResult,
@@ -156,7 +167,8 @@ export function generateV1GoNoGoMeetingFromFiles({
     evidencePath,
     trackerPath,
     manifestPath,
-    defectRegisterPath
+    defectRegisterPath,
+    environmentPath
   });
 }
 
@@ -167,6 +179,7 @@ function parseArgs(argv) {
     trackerPath: DEFAULT_TRACKER_PATH,
     manifestPath: DEFAULT_MANIFEST_PATH,
     defectRegisterPath: DEFAULT_DEFECT_REGISTER_PATH,
+    environmentPath: DEFAULT_ENVIRONMENT_PATH,
     outputPath: null
   };
 
@@ -186,6 +199,9 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--defects") {
       parsed.defectRegisterPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--environment") {
+      parsed.environmentPath = argv[index + 1];
       index += 1;
     } else if (arg === "--output") {
       parsed.outputPath = argv[index + 1] ?? DEFAULT_OUTPUT_PATH;

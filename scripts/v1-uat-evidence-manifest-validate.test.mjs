@@ -4,6 +4,7 @@ import test from "node:test";
 import { evaluateUatEvidenceManifest } from "./v1-uat-evidence-manifest-validate.mjs";
 
 const requiredIds = [
+  "ENV-EVIDENCE",
   ...Array.from({ length: 6 }, (_, index) => `PRE-${String(index + 1).padStart(3, "0")}`),
   ...Array.from({ length: 5 }, (_, index) => `SMK-${String(index + 1).padStart(3, "0")}`),
   ...Array.from({ length: 10 }, (_, index) => `UAT-${String(index + 1).padStart(3, "0")}`),

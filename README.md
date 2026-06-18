@@ -101,6 +101,18 @@ node scripts/v1-uat-evidence-pack.mjs \
   --username <masked-admin-user>
 ```
 
+UAT 具名测试环境证据：
+
+```text
+docs/testing/v1-uat-environment-evidence.md
+```
+
+UAT 具名测试环境证据校验：
+
+```bash
+node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md
+```
+
 UAT 证据包填写后校验：
 
 ```bash
@@ -150,7 +162,8 @@ node scripts/v1-release-gate.mjs . \
   <crm-v1-uat-evidence-pack.md> \
   docs/testing/crm-v1-uat-execution-tracker.md \
   docs/testing/v1-uat-evidence-manifest.md \
-  docs/testing/v1-uat-defect-register.md
+  docs/testing/v1-uat-defect-register.md \
+  docs/testing/v1-uat-environment-evidence.md
 ```
 
 V1 聚合状态报告：

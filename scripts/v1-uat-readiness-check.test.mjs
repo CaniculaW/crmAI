@@ -11,6 +11,7 @@ jobs:
       - run: docker compose -f compose.v1-test.yml config
       - run: node scripts/v1-deployment-config-check.mjs
       - run: node --test scripts/v1-deployment-config-check.test.mjs
+      - run: node --test scripts/v1-uat-environment-validate.test.mjs
       - run: node --test scripts/v1-uat-evidence-pack-validate.test.mjs
       - run: node --test scripts/v1-uat-defect-register-validate.test.mjs
       - run: node --test scripts/v1-uat-evidence-manifest-validate.test.mjs
@@ -35,6 +36,8 @@ jobs:
   "frontend/nginx.conf": "location /api/ { proxy_pass http://backend:8080/api/; }\n",
   "scripts/v1-uat-evidence-pack.mjs": "generateEvidencePackMarkdown\nUAT-001\nUAT-010\nGo / Conditional Go / No-Go\n不记录明文密码\n",
   "scripts/v1-uat-evidence-pack.test.mjs": "generates a V1 UAT evidence pack\n",
+  "scripts/v1-uat-environment-validate.mjs": "evaluateUatEnvironmentEvidence\nenvironment-summary\nenvironment-checks\nno-secret-material\n",
+  "scripts/v1-uat-environment-validate.test.mjs": "fails a draft environment record when named environment evidence is pending\n",
   "scripts/v1-uat-evidence-pack-validate.mjs": "evaluateUatEvidencePack\np0-defects\nsignoff-complete\ngo-hard-gates\n",
   "scripts/v1-uat-evidence-pack-validate.test.mjs": "fails a Go evidence pack when a P0 defect remains open\n",
   "scripts/v1-uat-defect-register-validate.mjs": "evaluateUatDefectRegister\np0-p1-summary\nregression-evidence\nno-secret-material\n",
@@ -43,21 +46,21 @@ jobs:
   "scripts/v1-uat-evidence-manifest-validate.test.mjs": "fails the current draft manifest because external UAT evidence is pending\n",
   "scripts/v1-uat-execution-tracker-validate.mjs": "evaluateUatExecutionTracker\nrequired-items\nrelease-gates\n",
   "scripts/v1-uat-execution-tracker-validate.test.mjs": "fails the current rc8 tracker because external UAT remains pending\n",
-  "scripts/v1-release-gate.mjs": "evaluateV1ReleaseGate\nevaluateV1ReleaseGateFromFiles\nV1 release gate requires Go\n",
+  "scripts/v1-release-gate.mjs": "evaluateV1ReleaseGate\nevaluateV1ReleaseGateFromFiles\nV1 release gate requires Go\nuat-environment\n",
   "scripts/v1-release-gate.test.mjs": "fails when the project decision is Conditional Go\n",
-  "scripts/v1-validation-status.mjs": "generateV1ValidationStatusMarkdown\nOverall: No-Go\nUAT Execution Tracker\n",
+  "scripts/v1-validation-status.mjs": "generateV1ValidationStatusMarkdown\nOverall: No-Go\nUAT Environment Evidence\nUAT Execution Tracker\n",
   "scripts/v1-validation-status.test.mjs": "summarizes a No-Go V1 status with concrete blocker commands\n",
-  "scripts/v1-uat-action-plan.mjs": "generateV1UatActionPlanMarkdown\nOverall: No-Go\nRole Workstreams\n",
+  "scripts/v1-uat-action-plan.mjs": "generateV1UatActionPlanMarkdown\nOverall: No-Go\nRole Workstreams\nUAT Environment Evidence\n",
   "scripts/v1-uat-action-plan.test.mjs": "generates a No-Go UAT action plan grouped by project, test, business, and engineering workstreams\n",
-  "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\n",
+  "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nUAT Environment Evidence\n",
   "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\n",
   "scripts/v1-deployment-config-check.mjs": "evaluateDeploymentConfigSnapshot\nCRM_BACKEND_BUILD_IMAGE\nCRM_FRONTEND_RUNTIME_IMAGE\n",
   "scripts/v1-deployment-config-check.test.mjs": "configurable for mirrored registries\n",
   "docs/releases/v1.0.0-rc.8.md": "v1.0.0-rc.8\nGitHub Actions `V1 Validation`\nsuccess\nUAT\nGo/No-Go\nV1-local-uat-20260618\nCRM_BACKEND_BUILD_IMAGE\nv1-uat-evidence-pack-validate\nV1演示业务数据\n仍需在具名测试环境完成验收签署\n",
   "docs/testing/v1-automated-validation-report-2026-06-18.md": "代码级、接口级、迁移级、本地部署态\nGitHub Actions\n具名测试环境部署态验收\n业务验收签署\n",
-  "docs/testing/v1-validation-status.md": "CRM V1 Validation Status\nOverall: No-Go\nUAT Execution Tracker\nRelease Gate\n具名测试环境\n业务验收签署\n仍需\n",
-  "docs/testing/v1-uat-action-plan.md": "CRM V1 UAT Action Plan\nOverall: No-Go\nRole Workstreams\n具名测试环境\n业务验收签署\n仍需\n",
-  "docs/testing/v1-go-no-go-meeting.md": "CRM V1 Go/No-Go Meeting Pack\nDecision Recommendation: No-Go\nFinal Signoff Table\n具名测试环境\n业务验收签署\n仍需\n",
+  "docs/testing/v1-validation-status.md": "CRM V1 Validation Status\nOverall: No-Go\nUAT Environment Evidence\nUAT Execution Tracker\nRelease Gate\n具名测试环境\n业务验收签署\n仍需\n",
+  "docs/testing/v1-uat-action-plan.md": "CRM V1 UAT Action Plan\nOverall: No-Go\nRole Workstreams\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
+  "docs/testing/v1-go-no-go-meeting.md": "CRM V1 Go/No-Go Meeting Pack\nDecision Recommendation: No-Go\nFinal Signoff Table\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
   "docs/testing/crm-v1-validation-traceability.md": "研发验证通过\n若目标口径是“项目 V1 验收通过”，仍需完成具名测试环境验证和业务验收签署。\n",
   "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\n",
   "docs/testing/crm-v1-uat-evidence-pack-template.md": "Go/No-Go\n签署\n缺陷\n",
@@ -78,6 +81,26 @@ crm-v1-uat-evidence-pack-rc8-draft.md
 No-Go
 具名测试环境待确认
 `,
+  "docs/testing/v1-uat-environment-evidence.md": `CRM V1 UAT Environment Evidence
+v1.0.0-rc.8
+Decision: No-Go
+Environment Summary
+测试环境名称
+前端访问地址
+后端 API 地址
+候选版本
+Git 提交号
+ENV-001
+ENV-002
+ENV-003
+ENV-004
+ENV-005
+ENV-006
+ENV-007
+ENV-008
+不记录明文密码
+node scripts/v1-uat-environment-validate.mjs
+`,
   "docs/testing/v1-uat-defect-register.md": `CRM V1 UAT Defect Register
 v1.0.0-rc.8
 Decision: No-Go
@@ -94,6 +117,7 @@ v1.0.0-rc.8
 Decision: No-Go
 Evidence ID
 Evidence reference
+ENV-EVIDENCE
 ${Array.from({ length: 6 }, (_, index) => `PRE-${String(index + 1).padStart(3, "0")}`).join("\n")}
 ${Array.from({ length: 5 }, (_, index) => `SMK-${String(index + 1).padStart(3, "0")}`).join("\n")}
 ${Array.from({ length: 10 }, (_, index) => `UAT-${String(index + 1).padStart(3, "0")}`).join("\n")}
@@ -117,7 +141,7 @@ node scripts/v1-uat-evidence-manifest-validate.mjs
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-go-no-go-meeting.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-go-no-go-meeting.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -246,6 +270,22 @@ test("fails when UAT evidence pack validator is missing from readiness materials
   assert.ok(result.failed.some((check) => check.id === "uat-evidence-validator"));
 });
 
+test("fails when the UAT environment validator is missing from readiness materials", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-environment-validate.mjs": "",
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"].replace(
+      "      - run: node --test scripts/v1-uat-environment-validate.test.mjs\n",
+      ""
+    )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-environment-validator"));
+});
+
 test("fails when the UAT defect register validator is missing from readiness materials", () => {
   const snapshot = {
     ...completeSnapshot,
@@ -366,6 +406,28 @@ test("fails when the UAT execution tracker is missing", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the UAT environment evidence is missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["docs/testing/v1-uat-environment-evidence.md"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the UAT environment evidence omits required ENV checks", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "docs/testing/v1-uat-environment-evidence.md": "CRM V1 UAT Environment Evidence\nDecision: No-Go\n测试环境名称\nENV-001\n"
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-environment-evidence"));
 });
 
 test("fails when the UAT defect register is missing", () => {

@@ -10,11 +10,13 @@ import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
 import { evaluateUatEvidenceManifest } from "./v1-uat-evidence-manifest-validate.mjs";
 import { evaluateUatExecutionTracker } from "./v1-uat-execution-tracker-validate.mjs";
 import { evaluateUatDefectRegister } from "./v1-uat-defect-register-validate.mjs";
+import { evaluateUatEnvironmentEvidence } from "./v1-uat-environment-validate.mjs";
 
 const DEFAULT_EVIDENCE_PATH = "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md";
 const DEFAULT_TRACKER_PATH = "docs/testing/crm-v1-uat-execution-tracker.md";
 const DEFAULT_MANIFEST_PATH = "docs/testing/v1-uat-evidence-manifest.md";
 const DEFAULT_DEFECT_REGISTER_PATH = "docs/testing/v1-uat-defect-register.md";
+const DEFAULT_ENVIRONMENT_PATH = "docs/testing/v1-uat-environment-evidence.md";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-validation-status.md";
 
 function statusLabel(ok) {
@@ -25,15 +27,17 @@ function commandList(
   evidencePath = DEFAULT_EVIDENCE_PATH,
   trackerPath = DEFAULT_TRACKER_PATH,
   manifestPath = DEFAULT_MANIFEST_PATH,
-  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH
+  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH
 ) {
   return [
     "node scripts/v1-uat-readiness-check.mjs",
+    `node scripts/v1-uat-environment-validate.mjs ${environmentPath}`,
     `node scripts/v1-uat-evidence-pack-validate.mjs ${evidencePath}`,
     `node scripts/v1-uat-evidence-manifest-validate.mjs ${manifestPath}`,
     `node scripts/v1-uat-execution-tracker-validate.mjs ${trackerPath}`,
     `node scripts/v1-uat-defect-register-validate.mjs ${defectRegisterPath}`,
-    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath}`
+    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath} ${environmentPath}`
   ];
 }
 
@@ -57,6 +61,7 @@ export function generateV1ValidationStatusMarkdown({
   generatedAt,
   gitCommit,
   readinessResult,
+  environmentResult,
   evidenceResult,
   manifestResult,
   trackerResult,
@@ -65,11 +70,13 @@ export function generateV1ValidationStatusMarkdown({
   evidencePath = DEFAULT_EVIDENCE_PATH,
   trackerPath = DEFAULT_TRACKER_PATH,
   manifestPath = DEFAULT_MANIFEST_PATH,
-  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH
+  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH
 }) {
   const overall = releaseGateResult.ok && releaseGateResult.decision === "Go" ? "Go" : "No-Go";
   const blockers = [
     ...collectFailedChecks("Readiness", readinessResult),
+    ...collectFailedChecks("UAT Environment Evidence", environmentResult),
     ...collectFailedChecks("UAT Evidence Pack", evidenceResult),
     ...collectFailedChecks("UAT Evidence Manifest", manifestResult),
     ...collectFailedChecks("UAT Execution Tracker", trackerResult),
@@ -90,6 +97,7 @@ export function generateV1ValidationStatusMarkdown({
     "| Gate | Result | Decision | Failed checks |",
     "|---|---|---|---:|",
     resultRow("Readiness", readinessResult),
+    resultRow("UAT Environment Evidence", environmentResult),
     resultRow("UAT Evidence Pack", evidenceResult),
     resultRow("UAT Evidence Manifest", manifestResult),
     resultRow("UAT Execution Tracker", trackerResult),
@@ -100,7 +108,7 @@ export function generateV1ValidationStatusMarkdown({
     ""
   ];
 
-  for (const command of commandList(evidencePath, trackerPath, manifestPath, defectRegisterPath)) {
+  for (const command of commandList(evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath)) {
     lines.push(`- \`${command}\``);
   }
 
@@ -119,7 +127,7 @@ export function generateV1ValidationStatusMarkdown({
   lines.push("");
   lines.push("## Completion Rule");
   lines.push("");
-  lines.push("V1验证通过必须同时满足：readiness PASS、UAT证据包 validator PASS、UAT证据清单 validator PASS、UAT执行追踪表 validator PASS、UAT缺陷台账 validator PASS、最终 release gate PASS，且项目负责人结论为 `Go`。");
+  lines.push("V1验证通过必须同时满足：readiness PASS、UAT具名环境证据 validator PASS、UAT证据包 validator PASS、UAT证据清单 validator PASS、UAT执行追踪表 validator PASS、UAT缺陷台账 validator PASS、最终 release gate PASS，且项目负责人结论为 `Go`。");
 
   return `${lines.join("\n")}\n`;
 }
@@ -143,16 +151,19 @@ export function generateV1ValidationStatusFromFiles({
   trackerPath = DEFAULT_TRACKER_PATH,
   manifestPath = DEFAULT_MANIFEST_PATH,
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH,
   generatedAt = new Date().toISOString(),
   gitCommit = readGitCommit(rootDir)
 } = {}) {
   const readinessResult = evaluateReadinessSnapshot(readSnapshot(rootDir));
+  const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(path.join(rootDir, environmentPath), "utf8"));
   const evidenceResult = evaluateUatEvidencePack(readFileSync(path.join(rootDir, evidencePath), "utf8"));
   const trackerResult = evaluateUatExecutionTracker(readFileSync(path.join(rootDir, trackerPath), "utf8"));
   const manifestResult = evaluateUatEvidenceManifest(readFileSync(path.join(rootDir, manifestPath), "utf8"));
   const defectRegisterResult = evaluateUatDefectRegister(readFileSync(path.join(rootDir, defectRegisterPath), "utf8"));
   const releaseGateResult = evaluateV1ReleaseGate({
     readinessResult,
+    environmentResult,
     uatEvidenceResult: evidenceResult,
     trackerResult,
     evidenceManifestResult: manifestResult,
@@ -163,6 +174,7 @@ export function generateV1ValidationStatusFromFiles({
     generatedAt,
     gitCommit,
     readinessResult,
+    environmentResult,
     evidenceResult,
     manifestResult,
     trackerResult,
@@ -171,7 +183,8 @@ export function generateV1ValidationStatusFromFiles({
     evidencePath,
     trackerPath,
     manifestPath,
-    defectRegisterPath
+    defectRegisterPath,
+    environmentPath
   });
 }
 
@@ -182,6 +195,7 @@ function parseArgs(argv) {
     trackerPath: DEFAULT_TRACKER_PATH,
     manifestPath: DEFAULT_MANIFEST_PATH,
     defectRegisterPath: DEFAULT_DEFECT_REGISTER_PATH,
+    environmentPath: DEFAULT_ENVIRONMENT_PATH,
     outputPath: null
   };
 
@@ -201,6 +215,9 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--defects") {
       parsed.defectRegisterPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--environment") {
+      parsed.environmentPath = argv[index + 1];
       index += 1;
     } else if (arg === "--output") {
       parsed.outputPath = argv[index + 1] ?? DEFAULT_OUTPUT_PATH;
