@@ -53,6 +53,16 @@ CRM_FRONTEND_BUILD_IMAGE=registry.example.com/library/node:22-alpine
 CRM_FRONTEND_RUNTIME_IMAGE=registry.example.com/library/nginx:1.27-alpine
 ```
 
+本地已验证的公开镜像代理示例：
+
+```text
+CRM_POSTGRES_IMAGE=docker.1ms.run/library/postgres:16
+CRM_BACKEND_BUILD_IMAGE=docker.1ms.run/library/maven:3.9-eclipse-temurin-17
+CRM_BACKEND_RUNTIME_IMAGE=docker.1ms.run/library/eclipse-temurin:17-jre
+CRM_FRONTEND_BUILD_IMAGE=docker.1ms.run/library/node:22-alpine
+CRM_FRONTEND_RUNTIME_IMAGE=docker.1ms.run/library/nginx:1.27-alpine
+```
+
 覆盖后继续使用同一条启动命令。该配置只改变镜像来源，不改变应用运行参数。
 
 ## 4. 启动

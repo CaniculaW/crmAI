@@ -42,6 +42,17 @@ cp .env.example .env
 docker compose -f compose.v1-test.yml up -d --build
 ```
 
+若测试机访问 Docker Hub token 接口超时，可通过环境变量覆盖基础镜像来源。本地已验证的镜像代理示例：
+
+```bash
+CRM_POSTGRES_IMAGE=docker.1ms.run/library/postgres:16 \
+CRM_BACKEND_BUILD_IMAGE=docker.1ms.run/library/maven:3.9-eclipse-temurin-17 \
+CRM_BACKEND_RUNTIME_IMAGE=docker.1ms.run/library/eclipse-temurin:17-jre \
+CRM_FRONTEND_BUILD_IMAGE=docker.1ms.run/library/node:22-alpine \
+CRM_FRONTEND_RUNTIME_IMAGE=docker.1ms.run/library/nginx:1.27-alpine \
+docker compose -f compose.v1-test.yml up -d --build
+```
+
 默认访问：
 
 ```text
@@ -49,6 +60,7 @@ http://127.0.0.1:5174/
 ```
 
 详细说明见 `docs/deployment/v1-test-environment-compose.md`。
+Compose部署态验证证据见 `docs/testing/evidence/v1-compose-uat-2026-06-19.md`。
 
 ## V1 候选版本
 

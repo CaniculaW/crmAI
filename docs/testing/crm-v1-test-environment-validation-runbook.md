@@ -61,7 +61,7 @@ node scripts/v1-deployment-config-check.mjs
 docker compose -f compose.v1-test.yml config
 ```
 
-若测试机访问 Docker Hub token 接口超时，先按 `docs/deployment/v1-test-environment-compose.md` 在 `.env` 中配置 `CRM_BACKEND_BUILD_IMAGE`、`CRM_BACKEND_RUNTIME_IMAGE`、`CRM_FRONTEND_BUILD_IMAGE`、`CRM_FRONTEND_RUNTIME_IMAGE` 和 `CRM_POSTGRES_IMAGE`，再执行完整 Compose 启动。
+若测试机访问 Docker Hub token 接口超时，先按 `docs/deployment/v1-test-environment-compose.md` 在 `.env` 中配置 `CRM_BACKEND_BUILD_IMAGE`、`CRM_BACKEND_RUNTIME_IMAGE`、`CRM_FRONTEND_BUILD_IMAGE`、`CRM_FRONTEND_RUNTIME_IMAGE` 和 `CRM_POSTGRES_IMAGE`，再执行完整 Compose 启动。本地已使用 `docker.1ms.run/library/*` 镜像代理完成过 Compose 构建、启动和 Smoke，证据见 `docs/testing/evidence/v1-compose-uat-2026-06-19.md`。
 
 ```bash
 cd backend

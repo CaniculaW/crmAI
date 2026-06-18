@@ -23,6 +23,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
   "docs/testing/evidence/v1-local-uat-2026-06-18.md",
+  "docs/testing/evidence/v1-compose-uat-2026-06-19.md",
   "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md",
   "docs/testing/crm-v1-acceptance-checklist.md",
   "README.md"
@@ -55,6 +56,33 @@ function hasRc8NoGoHandoffDraft(content) {
     "P0/P1缺陷汇总未填写",
     "销售侧、管理侧、产品、测试、研发和项目负责人签署未完成",
     "不能作为 `Go` 准出记录"
+  ]);
+}
+
+function hasComposeDeploymentEvidence(content) {
+  return includesAll(content, [
+    "V1-compose-uat-20260619",
+    "v1.0.0-rc.8",
+    "8e9efba2ea50bfe32304ec488cde72ee5262f86b",
+    "docker.1ms.run/library/postgres:16",
+    "CRM_BACKEND_BUILD_IMAGE=docker.1ms.run/library/maven:3.9-eclipse-temurin-17",
+    "CRM_BACKEND_RUNTIME_IMAGE=docker.1ms.run/library/eclipse-temurin:17-jre",
+    "CRM_FRONTEND_BUILD_IMAGE=docker.1ms.run/library/node:22-alpine",
+    "CRM_FRONTEND_RUNTIME_IMAGE=docker.1ms.run/library/nginx:1.27-alpine",
+    "docker compose -f compose.v1-test.yml up -d --build",
+    "crm-ai-v1-test-db-1",
+    "crm-ai-v1-test-backend-1",
+    "crm-ai-v1-test-frontend-1",
+    "/api/health",
+    "\"status\":\"UP\"",
+    "/api/bootstrap",
+    "\"permissions_count\":25",
+    "\"accounts\":1",
+    "\"contacts\":1",
+    "\"opportunities\":1",
+    "\"activities\":1",
+    "npm run smoke:v1:browser",
+    "v1-rc8-compose-browser-smoke-20260619.png"
   ]);
 }
 
@@ -165,6 +193,13 @@ export function evaluateReadinessSnapshot(snapshot) {
       "V1演示业务数据"
     ]) && hasNonEmptyBusinessCounts(localEvidence),
     "Local named validation evidence captures service checks, browser/Docker limitations, and non-empty V1 demo business data."
+  ));
+
+  const composeEvidence = snapshot["docs/testing/evidence/v1-compose-uat-2026-06-19.md"] ?? "";
+  checks.push(makeCheck(
+    "compose-uat-evidence",
+    hasComposeDeploymentEvidence(composeEvidence),
+    "Compose V1 test environment evidence captures mirrored image build, container status, API bootstrap counts, and browser smoke."
   ));
 
   const uatHandoffDraft = snapshot["docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md"] ?? "";
