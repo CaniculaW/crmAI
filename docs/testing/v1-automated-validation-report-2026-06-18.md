@@ -6,7 +6,7 @@ V1 当前代码分支已通过自动化验证、本地 PostgreSQL 部署态 API 
 
 本报告仅确认代码级、接口级、迁移级、本地部署态和前端交互级自动化验证结果。业务验收签署、试点演示确认和具名测试环境账号仍需由项目/测试/业务侧在正式测试环境中执行。
 
-具名测试环境执行步骤、证据包结构和验收会议模板见 `docs/testing/crm-v1-test-environment-validation-runbook.md`。
+具名测试环境执行步骤、证据包结构和验收会议模板见 `docs/testing/crm-v1-test-environment-validation-runbook.md`；验收结果汇总和 Go/No-Go 记录模板见 `docs/testing/crm-v1-uat-evidence-pack-template.md`。
 
 ## 2. 验证范围
 

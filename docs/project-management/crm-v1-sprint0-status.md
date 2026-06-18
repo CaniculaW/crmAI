@@ -28,6 +28,7 @@
 | 测试 | `docs/testing/crm-v1-acceptance-checklist.md` | 已形成 | 覆盖上线验收、业务验收、试点验收；已补充本地部署态 Smoke 和演示账号种子准入状态 |
 | 测试 | `docs/testing/crm-v1-validation-traceability.md` | 已形成 | 逐项映射 AC-001 至 AC-017 的研发验证证据、业务待验收动作和外部环境依赖 |
 | 测试 | `docs/testing/crm-v1-test-environment-validation-runbook.md` | 已形成 | 覆盖具名测试环境前置条件、自动化命令、浏览器Smoke、业务演示脚本、证据包结构和签署模板 |
+| 测试 | `docs/testing/crm-v1-uat-evidence-pack-template.md` | 已形成 | 覆盖UAT证据汇总、缺陷状态、上线观察、Go/No-Go判定和验收签署 |
 
 ## 3. Sprint 0 工作包状态
 
@@ -40,7 +41,7 @@
 | API 清单 | 已形成接口契约 | 已落地 OpenAPI 契约与运行时覆盖校验 |
 | 后端任务池 | 执行中 | BE-001至BE-020已完成；下一步进入全量回归、前端页面化和试点问题修复 |
 | 前端任务池 | 执行中 | 已完成工程骨架、路由、登录态、权限菜单、修改密码、管理员重置密码、组织列表/新建、用户列表/新增/编辑、角色权限授权、字典维护、最近审计日志、工作台、V1核心对象基础页面、列表筛选、详情入口、主要编辑操作、联系人关系分组视图和周进展负责人/自然周筛选；下一步进入端到端联调和试点验收准备 |
-| 测试与验收 | 自动化和本地部署态验证已通过 | 已建立并通过后端核心链路、OpenAPI契约、数据库迁移、PostgreSQL迁移集成、前端基础交互自动化测试、本地 API Smoke 和浏览器 Smoke；验证报告见 `docs/testing/v1-automated-validation-report-2026-06-18.md`，逐项证据见 `docs/testing/crm-v1-validation-traceability.md`，具名测试环境执行路径见 `docs/testing/crm-v1-test-environment-validation-runbook.md`；业务验收仍待指定验收人后执行 |
+| 测试与验收 | 自动化和本地部署态验证已通过 | 已建立并通过后端核心链路、OpenAPI契约、数据库迁移、PostgreSQL迁移集成、前端基础交互自动化测试、本地 API Smoke 和浏览器 Smoke；验证报告见 `docs/testing/v1-automated-validation-report-2026-06-18.md`，逐项证据见 `docs/testing/crm-v1-validation-traceability.md`，具名测试环境执行路径见 `docs/testing/crm-v1-test-environment-validation-runbook.md`，验收记录模板见 `docs/testing/crm-v1-uat-evidence-pack-template.md`；业务验收仍待指定验收人后执行 |
 
 ## 4. 默认工程实施边界
 

@@ -698,6 +698,7 @@ V1需要的表：
 执行准备：
 
 - 2026-06-18 已形成 `docs/testing/crm-v1-test-environment-validation-runbook.md`，覆盖具名测试环境前置条件、自动化命令、浏览器Smoke、业务演示脚本、证据包结构和签署模板。
+- 2026-06-18 已形成 `docs/testing/crm-v1-uat-evidence-pack-template.md`，覆盖自动化结果、环境账号、业务演示、缺陷汇总、上线观察、Go/No-Go判定和签署记录。
 - 业务验收签署仍需销售侧和管理侧验收人在具名测试环境执行后确认。
 
 ## 8. V2/V3/V4衔接计划

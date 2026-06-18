@@ -10,6 +10,10 @@
 - 销售侧和管理侧业务验收演示。
 - 上线前准出复核。
 
+配套模板：
+
+- `docs/testing/crm-v1-uat-evidence-pack-template.md`：用于汇总验收证据、缺陷状态、Go/No-Go 判定和签署记录。
+
 不适用范围：
 
 - 生产环境开通审批。
@@ -115,7 +119,7 @@ curl -s https://<test-backend-domain>/api/bootstrap \
 
 ## 5. 证据包目录建议
 
-建议测试侧按以下结构归档，不提交明文密码：
+建议测试侧按以下结构归档，并使用 `crm-v1-uat-evidence-pack-template.md` 形成可签署的汇总记录。不提交明文密码：
 
 ```text
 v1-uat-evidence/
@@ -134,6 +138,7 @@ v1-uat-evidence/
     uat-008-opportunity-close.png
     uat-010-audit-log.png
   04-signoff/
+    crm-v1-uat-evidence-pack.md
     meeting-minutes.md
     defect-summary.md
     go-no-go.md
