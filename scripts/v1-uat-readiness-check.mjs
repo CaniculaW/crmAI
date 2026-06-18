@@ -11,11 +11,12 @@ const REQUIRED_ARTIFACTS = [
   "backend/Dockerfile",
   "frontend/Dockerfile",
   "frontend/nginx.conf",
-  "docs/releases/v1.0.0-rc.2.md",
+  "docs/releases/v1.0.0-rc.3.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
+  "docs/testing/evidence/v1-local-uat-2026-06-18.md",
   "docs/testing/crm-v1-acceptance-checklist.md",
   "README.md"
 ];
@@ -70,11 +71,18 @@ export function evaluateReadinessSnapshot(snapshot) {
     ".env.example documents V1 demo seed and database settings."
   ));
 
-  const release = snapshot["docs/releases/v1.0.0-rc.2.md"] ?? "";
+  const release = snapshot["docs/releases/v1.0.0-rc.3.md"] ?? "";
   checks.push(makeCheck(
     "rc-release-record",
-    includesAll(release, ["v1.0.0-rc.2", "GitHub Actions", "success", "UAT", "Go/No-Go"]),
+    includesAll(release, ["v1.0.0-rc.3", "GitHub Actions", "success", "UAT", "Go/No-Go", "V1-local-uat-20260618"]),
     "V1 RC record captures tag, CI evidence, UAT, and Go/No-Go context."
+  ));
+
+  const localEvidence = snapshot["docs/testing/evidence/v1-local-uat-2026-06-18.md"] ?? "";
+  checks.push(makeCheck(
+    "local-uat-evidence",
+    includesAll(localEvidence, ["V1-local-uat-20260618", "Flyway", "14", "/api/health", "/api/bootstrap", "Browser Use URL policy"]),
+    "Local named validation evidence captures service checks and browser/Docker limitations."
   ));
 
   const acceptance = snapshot["docs/testing/crm-v1-acceptance-checklist.md"] ?? "";
@@ -114,7 +122,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.2.md"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.3.md"]),
     "README links the test environment and V1 RC record."
   ));
 
