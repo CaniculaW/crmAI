@@ -306,14 +306,22 @@ body {
 }
 
 @media (max-width: 860px) {
-  .app-shell {
+  .app-shell,
+  .app-shell.ant-layout-has-sider {
     display: block;
+  }
+
+  .app-shell > .ant-layout {
+    display: block;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   .app-sidebar {
     width: 100% !important;
     max-width: none !important;
     min-width: 0 !important;
+    flex: none !important;
   }
 
   .app-header,
@@ -324,8 +332,17 @@ body {
     padding: 16px;
   }
 
+  .app-header {
+    line-height: 1.4;
+  }
+
   .app-content {
     padding: 16px;
+  }
+
+  .workspace {
+    max-width: none;
+    min-width: 0;
   }
 
   .summary-grid {
@@ -334,7 +351,8 @@ body {
 
   .dashboard-grid,
   .dictionary-grid,
-  .relationship-grid {
+  .relationship-grid,
+  .system-grid {
     grid-template-columns: 1fr;
   }
 

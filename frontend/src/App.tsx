@@ -1317,12 +1317,13 @@ function SystemPage() {
   };
 
   const userColumns: ColumnsType<SystemUser> = [
-    { title: "姓名", dataIndex: "name" },
-    { title: "部门ID", dataIndex: "department_id", render: textOrDash },
-    { title: "邮箱", dataIndex: "email", render: textOrDash },
-    { title: "状态", dataIndex: "status", render: statusTag },
+    { title: "姓名", dataIndex: "name", width: 140 },
+    { title: "部门ID", dataIndex: "department_id", width: 90, render: textOrDash },
+    { title: "邮箱", dataIndex: "email", width: 220, render: textOrDash },
+    { title: "状态", dataIndex: "status", width: 100, render: statusTag },
     {
       title: "角色",
+      width: 160,
       render: (_, record) => (
         <Space wrap>
           {record.roles.map((role) => (
@@ -1333,6 +1334,7 @@ function SystemPage() {
     },
     {
       title: "操作",
+      width: 96,
       render: (_, record) => (
         <Button aria-label="编辑用户" size="small" onClick={() => editUser(record)}>
           编辑
@@ -1342,19 +1344,20 @@ function SystemPage() {
   ];
 
   const departmentColumns: ColumnsType<SystemDepartment> = [
-    { title: "组织", dataIndex: "name" },
-    { title: "编码", dataIndex: "code" },
-    { title: "上级ID", dataIndex: "parent_id", render: textOrDash },
-    { title: "区域", dataIndex: "region_code", render: textOrDash },
-    { title: "状态", dataIndex: "status", render: statusTag }
+    { title: "组织", dataIndex: "name", width: 160 },
+    { title: "编码", dataIndex: "code", width: 180 },
+    { title: "上级ID", dataIndex: "parent_id", width: 100, render: textOrDash },
+    { title: "区域", dataIndex: "region_code", width: 100, render: textOrDash },
+    { title: "状态", dataIndex: "status", width: 100, render: statusTag }
   ];
 
   const roleColumns: ColumnsType<SystemRole> = [
-    { title: "角色", dataIndex: "name" },
-    { title: "编码", dataIndex: "code" },
-    { title: "权限数", render: (_, record) => record.permission_codes.length },
+    { title: "角色", dataIndex: "name", width: 160 },
+    { title: "编码", dataIndex: "code", width: 180 },
+    { title: "权限数", width: 100, render: (_, record) => record.permission_codes.length },
     {
       title: "操作",
+      width: 96,
       render: (_, record) => (
         <Button aria-label="授权" size="small" onClick={() => editRolePermissions(record)}>
           授权
@@ -1404,6 +1407,7 @@ function SystemPage() {
             dataSource={departments.data}
             columns={departmentColumns}
             pagination={{ pageSize: 5 }}
+            scroll={{ x: 640 }}
           />
         </Card>
         <Card size="small" title="用户列表">
@@ -1414,6 +1418,7 @@ function SystemPage() {
             dataSource={users.data}
             columns={userColumns}
             pagination={{ pageSize: 5 }}
+            scroll={{ x: 806 }}
           />
         </Card>
         <Card size="small" title="角色权限">
@@ -1424,6 +1429,7 @@ function SystemPage() {
             dataSource={roles.data}
             columns={roleColumns}
             pagination={{ pageSize: 5 }}
+            scroll={{ x: 536 }}
           />
         </Card>
       </div>

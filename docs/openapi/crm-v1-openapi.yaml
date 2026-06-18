@@ -26,6 +26,17 @@ paths:
       responses:
         '200':
           description: Service is alive.
+  /api/bootstrap:
+    get:
+      tags: [System]
+      summary: Current session bootstrap and V1 smoke counts
+      responses:
+        '200':
+          description: Current user permissions and key V1 entity counts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BootstrapResponse'
   /api/auth/login:
     post:
       tags: [Auth]
@@ -858,6 +869,55 @@ components:
         password:
           type: string
           format: password
+    BootstrapResponse:
+      type: object
+      required: [user, permissions_count, v1_counts]
+      properties:
+        user:
+          $ref: '#/components/schemas/CurrentUser'
+        permissions_count:
+          type: integer
+        v1_counts:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            departments: 1
+            users: 1
+            roles: 1
+            accounts: 0
+            contacts: 0
+            opportunities: 0
+            activities: 0
+    CurrentUser:
+      type: object
+      required: [id, name, email, roles, permissions]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        roles:
+          type: array
+          items:
+            type: object
+            required: [id, code, name]
+            properties:
+              id:
+                type: integer
+                format: int64
+              code:
+                type: string
+              name:
+                type: string
+        permissions:
+          type: array
+          items:
+            type: string
     AccountCreateRequest:
       type: object
       required: [account_name, account_type, account_status, owner_department_id, owner_user_id]

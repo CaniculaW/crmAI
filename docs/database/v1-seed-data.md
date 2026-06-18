@@ -290,6 +290,24 @@ API权限可按模块映射到操作权限，V1不建议为每个接口维护独
 
 仅测试环境建议初始化：
 
+### 8.0 已实现的V1演示管理员种子
+
+研发侧已实现可选本地/测试环境演示管理员种子，由 Spring Boot 配置 `crm.seed.v1-demo.enabled=true` 启用。该种子仅用于本地部署态验证和测试环境Smoke，不应用于试点生产环境。
+
+| 项目 | 值 |
+|---|---|
+| 登录账号 | `demo_admin` |
+| 初始密码 | `S3cure!123` |
+| 用户邮箱 | `demo_admin@example.com` |
+| 组织编码 | `v1-demo-sales` |
+| 组织名称 | `V1演示销售部` |
+| 角色编码 | `v1_demo_admin` |
+| 角色名称 | `V1演示管理员` |
+| 默认权限 | 当前全部启用权限点 |
+| 默认数据范围 | account、contact、opportunity、activity、weekly_progress、attachment、reminder 模块全局范围 |
+
+配套部署态探针：登录后调用 `GET /api/bootstrap` 可返回当前用户、权限数量和 V1 核心实体计数，用于自动化冒烟和测试环境准入检查。
+
 ### 8.1 客户样例
 
 - A重点集团客户：用于验证集团/子公司、重点客户筛选、客户详情Tab。
