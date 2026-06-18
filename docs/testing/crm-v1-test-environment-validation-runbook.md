@@ -112,6 +112,14 @@ node scripts/v1-uat-evidence-pack-validate.mjs crm-v1-uat-evidence-pack.md
 
 要求：若选择 `Go`，validator 必须返回 `PASS`；若返回 `FAIL`，需先补齐证据、关闭阻断缺陷或把结论调整为符合实际的 `Conditional Go` / `No-Go`。
 
+UAT执行追踪表填写后执行状态校验：
+
+```bash
+node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md
+```
+
+要求：正式准出前，tracker validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐角色、PRE、SMK、UAT、P0/P1、签署或 release gate 状态。
+
 ## 3. 测试环境 Smoke 步骤
 
 | 编号 | 步骤 | 通过标准 | 证据 |

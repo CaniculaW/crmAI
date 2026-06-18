@@ -14,6 +14,16 @@ const failingReadinessResult = {
   failed: [{ id: "compose-uat-evidence" }]
 };
 
+const passingTrackerResult = {
+  ok: true,
+  failed: []
+};
+
+const failingTrackerResult = {
+  ok: false,
+  failed: [{ id: "uat-cases" }, { id: "release-gates" }]
+};
+
 function goEvidencePack(decision = "Go") {
   const projectDecision = decision === "Conditional Go" ? "Conditional Go" : decision;
 
@@ -105,7 +115,7 @@ Go/No-Go 结论：
 
 test("passes only when readiness, UAT evidence, and project Go are all complete", () => {
   const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
-  const result = evaluateV1ReleaseGate({ readinessResult: passingReadinessResult, uatEvidenceResult });
+  const result = evaluateV1ReleaseGate({ readinessResult: passingReadinessResult, uatEvidenceResult, trackerResult: passingTrackerResult });
 
   assert.equal(result.ok, true);
   assert.equal(result.decision, "Go");
@@ -114,7 +124,7 @@ test("passes only when readiness, UAT evidence, and project Go are all complete"
 
 test("fails when RC/UAT readiness has a failed check", () => {
   const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
-  const result = evaluateV1ReleaseGate({ readinessResult: failingReadinessResult, uatEvidenceResult });
+  const result = evaluateV1ReleaseGate({ readinessResult: failingReadinessResult, uatEvidenceResult, trackerResult: passingTrackerResult });
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "rc-uat-readiness"));
@@ -122,7 +132,7 @@ test("fails when RC/UAT readiness has a failed check", () => {
 
 test("fails when UAT evidence is still a No-Go draft", () => {
   const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("No-Go"));
-  const result = evaluateV1ReleaseGate({ readinessResult: passingReadinessResult, uatEvidenceResult });
+  const result = evaluateV1ReleaseGate({ readinessResult: passingReadinessResult, uatEvidenceResult, trackerResult: passingTrackerResult });
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "go-decision"));
@@ -130,8 +140,16 @@ test("fails when UAT evidence is still a No-Go draft", () => {
 
 test("fails when the project decision is Conditional Go", () => {
   const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Conditional Go"));
-  const result = evaluateV1ReleaseGate({ readinessResult: passingReadinessResult, uatEvidenceResult });
+  const result = evaluateV1ReleaseGate({ readinessResult: passingReadinessResult, uatEvidenceResult, trackerResult: passingTrackerResult });
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "go-decision"));
+});
+
+test("fails when UAT evidence is Go but the execution tracker remains incomplete", () => {
+  const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
+  const result = evaluateV1ReleaseGate({ readinessResult: passingReadinessResult, uatEvidenceResult, trackerResult: failingTrackerResult });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-execution-tracker"));
 });

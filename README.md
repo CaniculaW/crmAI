@@ -113,13 +113,19 @@ UAT 执行派工与证据追踪：
 docs/testing/crm-v1-uat-execution-tracker.md
 ```
 
+UAT 执行追踪表校验：
+
+```bash
+node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md
+```
+
 V1 最终放行门禁：
 
 ```bash
-node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md>
+node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md> docs/testing/crm-v1-uat-execution-tracker.md
 ```
 
-当前 rc.8 草稿仍是 `No-Go`，因此最终放行门禁会失败；待具名测试环境 UAT、缺陷闭环和签署完成并形成 `Go` 证据包后，该命令才应通过。
+当前 rc.8 草稿和 UAT 执行追踪表仍是 `No-Go`，因此最终放行门禁会失败；待具名测试环境 UAT、缺陷闭环、追踪表和签署完成并形成 `Go` 证据包后，该命令才应通过。
 
 ## 后端
 

@@ -10,14 +10,15 @@
 - UAT证据包模板：`docs/testing/crm-v1-uat-evidence-pack-template.md`
 - rc.8交接草稿：`docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`
 - Compose部署态证据：`docs/testing/evidence/v1-compose-uat-2026-06-19.md`
-- 最终放行门禁：`node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md>`
+- 最终放行门禁：`node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md> docs/testing/crm-v1-uat-execution-tracker.md`
 
 ## 1. 执行原则
 
 - 不记录明文密码、生产密钥、API Token 或个人敏感信息。
 - 每个通过项必须有截图、命令输出、缺陷单或会议纪要之一作为证据。
 - UAT证据包填写后必须执行 `node scripts/v1-uat-evidence-pack-validate.mjs <crm-v1-uat-evidence-pack.md>`。
-- V1最终验证通过必须执行 `node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md>` 并返回 `PASS`。
+- 本追踪表填写后必须执行 `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md`。
+- V1最终验证通过必须执行 `node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md> docs/testing/crm-v1-uat-execution-tracker.md` 并返回 `PASS`。
 - 当前 rc.8 草稿为 `No-Go`；具名测试环境、业务验收、缺陷闭环和签署完成前，不得改写为 `Go`。
 
 ## 2. 角色与签署责任
@@ -81,7 +82,7 @@
 | 门禁 | 命令或证据 | 通过条件 | 当前状态 |
 |---|---|---|---|
 | UAT证据包一致性 | `node scripts/v1-uat-evidence-pack-validate.mjs <crm-v1-uat-evidence-pack.md>` | 返回 `PASS` | 当前rc.8草稿为 `FAIL / No-Go` |
-| V1最终放行门禁 | `node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md>` | 返回 `PASS`，且项目负责人选择 `Go` | 当前rc.8草稿为 `FAIL / No-Go` |
+| V1最终放行门禁 | `node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md> docs/testing/crm-v1-uat-execution-tracker.md` | 返回 `PASS`，且项目负责人选择 `Go` | 当前rc.8草稿为 `FAIL / No-Go` |
 | 项目签署 | 销售侧验收人、管理侧验收人、产品负责人、测试负责人、研发负责人、项目负责人 | 全部签署完成 | 待执行 |
 
 ## 8. 当前结论
@@ -98,3 +99,11 @@
 - 销售侧验收人、管理侧验收人、产品负责人、测试负责人、研发负责人和项目负责人签署未完成。
 
 完成上述事项并形成正式 UAT 证据包后，重新运行 UAT证据包 validator 和 V1最终放行门禁。
+
+当前追踪表 validator：
+
+```bash
+node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md
+```
+
+当前预期结果：`FAIL / No-Go`。该结果用于持续暴露具名测试环境、UAT执行、P0/P1缺陷闭环、签署和最终 release gate 阻塞项。

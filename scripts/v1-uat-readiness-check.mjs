@@ -17,6 +17,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-uat-evidence-pack.test.mjs",
   "scripts/v1-uat-evidence-pack-validate.mjs",
   "scripts/v1-uat-evidence-pack-validate.test.mjs",
+  "scripts/v1-uat-execution-tracker-validate.mjs",
+  "scripts/v1-uat-execution-tracker-validate.test.mjs",
   "scripts/v1-release-gate.mjs",
   "scripts/v1-release-gate.test.mjs",
   "docs/releases/v1.0.0-rc.8.md",
@@ -205,6 +207,20 @@ export function evaluateReadinessSnapshot(snapshot) {
       "fails a Go evidence pack when a P0 defect remains open"
     ]),
     "UAT evidence pack validator is covered by tests and enforces Go/No-Go hard gates."
+  ));
+
+  const executionTrackerValidator = snapshot["scripts/v1-uat-execution-tracker-validate.mjs"] ?? "";
+  const executionTrackerValidatorTest = snapshot["scripts/v1-uat-execution-tracker-validate.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "uat-execution-tracker-validator",
+    includesAll(workflow + executionTrackerValidator + executionTrackerValidatorTest, [
+      "node --test scripts/v1-uat-execution-tracker-validate.test.mjs",
+      "evaluateUatExecutionTracker",
+      "required-items",
+      "release-gates",
+      "fails the current rc8 tracker because external UAT remains pending"
+    ]),
+    "UAT execution tracker validator is tested and reports pending external UAT, defects, signoff, and release-gate blockers."
   ));
 
   const releaseGate = snapshot["scripts/v1-release-gate.mjs"] ?? "";

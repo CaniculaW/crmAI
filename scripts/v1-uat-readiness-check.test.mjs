@@ -12,6 +12,7 @@ jobs:
       - run: node scripts/v1-deployment-config-check.mjs
       - run: node --test scripts/v1-deployment-config-check.test.mjs
       - run: node --test scripts/v1-uat-evidence-pack-validate.test.mjs
+      - run: node --test scripts/v1-uat-execution-tracker-validate.test.mjs
       - run: node --test scripts/v1-release-gate.test.mjs
   backend:
     steps:
@@ -31,6 +32,8 @@ jobs:
   "scripts/v1-uat-evidence-pack.test.mjs": "generates a V1 UAT evidence pack\n",
   "scripts/v1-uat-evidence-pack-validate.mjs": "evaluateUatEvidencePack\np0-defects\nsignoff-complete\ngo-hard-gates\n",
   "scripts/v1-uat-evidence-pack-validate.test.mjs": "fails a Go evidence pack when a P0 defect remains open\n",
+  "scripts/v1-uat-execution-tracker-validate.mjs": "evaluateUatExecutionTracker\nrequired-items\nrelease-gates\n",
+  "scripts/v1-uat-execution-tracker-validate.test.mjs": "fails the current rc8 tracker because external UAT remains pending\n",
   "scripts/v1-release-gate.mjs": "evaluateV1ReleaseGate\nevaluateV1ReleaseGateFromFiles\nV1 release gate requires Go\n",
   "scripts/v1-release-gate.test.mjs": "fails when the project decision is Conditional Go\n",
   "scripts/v1-deployment-config-check.mjs": "evaluateDeploymentConfigSnapshot\nCRM_BACKEND_BUILD_IMAGE\nCRM_FRONTEND_RUNTIME_IMAGE\n",
@@ -191,6 +194,22 @@ test("fails when UAT evidence pack validator is missing from readiness materials
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "uat-evidence-validator"));
+});
+
+test("fails when the UAT execution tracker validator is missing from readiness materials", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-execution-tracker-validate.mjs": "",
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"].replace(
+      "      - run: node --test scripts/v1-uat-execution-tracker-validate.test.mjs\n",
+      ""
+    )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-execution-tracker-validator"));
 });
 
 test("fails when the final V1 release gate is missing from readiness materials", () => {
