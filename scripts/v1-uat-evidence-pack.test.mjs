@@ -28,6 +28,7 @@ test("generates a V1 UAT evidence pack with all required business demo cases", (
   }
   assert.match(markdown, /Go \/ Conditional Go \/ No-Go/);
   assert.match(markdown, /不记录明文密码/);
+  assert.match(markdown, /v1-uat-evidence-pack-validate\.mjs/);
 });
 
 test("does not copy password-like inputs into the evidence pack", () => {

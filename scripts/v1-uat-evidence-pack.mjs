@@ -199,6 +199,16 @@ export function generateEvidencePackMarkdown(model) {
     "结论说明：",
     "```",
     "",
+    "证据包 validator：",
+    "",
+    "```bash",
+    "node scripts/v1-uat-evidence-pack-validate.mjs crm-v1-uat-evidence-pack.md",
+    "```",
+    "",
+    "```text",
+    "填写 validator 输出摘要。若选择 Go，结果必须为 PASS。",
+    "```",
+    "",
     "## 8. 签署",
     "",
     "| 角色 | 姓名 | 结论 | 日期 |",
@@ -220,6 +230,7 @@ export function generateEvidencePackMarkdown(model) {
     "| 业务演示截图 | UAT-001 至 UAT-010 关键截图 | 待填写 |",
     "| 缺陷列表 | 缺陷平台导出或汇总表 | 待填写 |",
     "| 会议纪要 | 验收会纪要 | 待填写 |",
+    "| 证据包 validator 输出 | Go/No-Go 一致性校验结果 | 待填写 |",
     ""
   );
 

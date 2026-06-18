@@ -700,6 +700,7 @@ V1需要的表：
 - 2026-06-18 已形成 `docs/testing/crm-v1-test-environment-validation-runbook.md`，覆盖具名测试环境前置条件、自动化命令、浏览器Smoke、业务演示脚本、证据包结构和签署模板。
 - 2026-06-18 已形成 `docs/testing/crm-v1-uat-evidence-pack-template.md`，覆盖自动化结果、环境账号、业务演示、缺陷汇总、上线观察、Go/No-Go判定和签署记录。
 - 2026-06-18 已形成 `scripts/v1-deployment-config-check.mjs`，检查 Dockerfile、Compose、`.env.example` 和部署手册是否支持企业镜像代理或内网镜像仓库覆盖基础镜像，降低 Docker Hub token 超时对具名测试环境完整构建的影响。
+- 2026-06-19 已形成 `scripts/v1-uat-evidence-pack-validate.mjs`，用于在 UAT 证据包填写完成后校验 Go/No-Go、P0/P1缺陷、UAT用例、自动化结果和签署记录一致性，防止证据缺失时误判 V1 准出。
 - 业务验收签署仍需销售侧和管理侧验收人在具名测试环境执行后确认。
 
 ## 8. V2/V3/V4衔接计划

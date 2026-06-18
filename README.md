@@ -25,6 +25,7 @@ GitHub Actions 已配置 V1 自动验证工作流：
 - 前端：`npm test`
 - 前端生产构建：`npm run build`
 - 部署配置：`docker compose -f compose.v1-test.yml config`
+- UAT 准出材料：RC/UAT readiness、UAT 证据包生成器和 UAT 证据包 Go/No-Go validator 测试
 
 ## V1 测试环境部署
 
@@ -54,7 +55,7 @@ http://127.0.0.1:5174/
 当前候选版本记录：
 
 ```text
-docs/releases/v1.0.0-rc.6.md
+docs/releases/v1.0.0-rc.7.md
 ```
 
 RC/UAT 就绪审计：
@@ -85,6 +86,12 @@ node scripts/v1-uat-evidence-pack.mjs \
   --git-commit <git-sha> \
   --rc <release-candidate> \
   --username <masked-admin-user>
+```
+
+UAT 证据包填写后校验：
+
+```bash
+node scripts/v1-uat-evidence-pack-validate.mjs <crm-v1-uat-evidence-pack.md>
 ```
 
 ## 后端

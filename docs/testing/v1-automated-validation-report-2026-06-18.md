@@ -8,7 +8,7 @@ V1 当前代码分支已通过自动化验证、本地 PostgreSQL 部署态 API 
 
 具名测试环境执行步骤、证据包结构和验收会议模板见 `docs/testing/crm-v1-test-environment-validation-runbook.md`；验收结果汇总和 Go/No-Go 记录模板见 `docs/testing/crm-v1-uat-evidence-pack-template.md`。
 
-GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compose部署配置校验、RC/UAT readiness 审计、UAT 证据包生成器、后端测试、PostgreSQL 集成验证、前端测试和前端生产构建。
+GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compose部署配置校验、RC/UAT readiness 审计、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、后端测试、PostgreSQL 集成验证、前端测试和前端生产构建。
 
 ## 2. 验证范围
 
@@ -20,7 +20,8 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | 前端交互自动化 | 登录、统一响应解包、客户维护、修改密码、字典维护、审计展示、组织新建、用户新增/编辑、角色授权、周进展筛选、联系人关系分组 | 通过 |
 | 前端生产构建 | TypeScript 编译与 Vite 生产构建 | 通过 |
 | 测试环境部署配置 | Docker Compose 配置可展开，覆盖 PostgreSQL、后端和前端生产包服务；支持企业镜像代理或内网镜像仓库覆盖基础镜像 | 通过 |
-| RC/UAT就绪审计 | 候选版本记录、自动化验证报告、验收清单、追踪矩阵、Runbook、UAT证据模板、Compose部署入口和CI质量门齐备性检查 | 通过 |
+| RC/UAT就绪审计 | 候选版本记录、自动化验证报告、验收清单、追踪矩阵、Runbook、UAT证据模板、证据包 validator、Compose部署入口和CI质量门齐备性检查 | 通过 |
+| UAT证据包准出校验 | 已提供 `scripts/v1-uat-evidence-pack-validate.mjs`，校验 Go/No-Go、P0/P1缺陷、UAT用例、自动化结果和签署记录一致性 | 通过 |
 | 本地部署态冒烟 | PostgreSQL 16 + Spring Boot + Vite dev proxy，演示管理员登录、`/api/bootstrap`、系统管理页组织/用户/角色展示 | 通过 |
 
 ## 3. 执行命令与结果
@@ -38,13 +39,14 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `docker compose -f compose.v1-test.yml build` | 未完成；当前机器访问 Docker Hub token 接口超时，未进入 Dockerfile 执行阶段 |
 | `node scripts/v1-deployment-config-check.mjs` | V1 deployment config check passed；Dockerfile/Compose 支持可配置基础镜像 |
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
+| `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 3 tests passed |
 | `node scripts/v1-uat-readiness-check.mjs` | RC/UAT readiness check passed |
-| `node --test scripts/v1-uat-readiness-check.test.mjs` | 5 tests passed |
-| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 5 tests passed；覆盖CI前端job相对路径 |
+| `node --test scripts/v1-uat-readiness-check.test.mjs` | 6 tests passed |
+| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 6 tests passed；覆盖CI前端job相对路径 |
 | `node --test scripts/v1-uat-evidence-pack.test.mjs` | 3 tests passed |
-| `node scripts/v1-uat-evidence-pack.mjs ...` | 可生成不含明文密码/API Token 的 UAT 证据包草稿 |
-| GitHub Actions `V1 Validation` | run `27745883608`，提交 `285df9a5c784ca7692294b316f26dcf1f82cbec8`，3 个 job 全部 `success` |
-| V1候选版本 | `v1.0.0-rc.6` 作为包含RC/UAT就绪审计、本地具名验证环境证据、证据版本一致性检查、UAT 证据包生成器和镜像源覆盖配置检查的候选版本 |
+| `node scripts/v1-uat-evidence-pack.mjs ...` | 可生成不含明文密码/API Token、包含 validator 留痕区的 UAT 证据包草稿 |
+| GitHub Actions `V1 Validation` | `v1.0.0-rc.7` 所属提交推送后以远端 run 为权威记录，准出要求为 `success`；上一轮 `rc.6` 基线 run `27747151121` 已通过 |
+| V1候选版本 | `v1.0.0-rc.7` 作为包含RC/UAT就绪审计、本地具名验证环境证据、证据版本一致性检查、UAT 证据包生成器、证据包 Go/No-Go validator 和镜像源覆盖配置检查的候选版本 |
 | `npm run smoke:v1:browser` | `http://127.0.0.1:5175/system` 通过；截图归档至 `docs/testing/evidence/artifacts/v1-rc6-local-browser-smoke-20260618.png` |
 | 本地API Smoke | `POST /api/auth/login` + `GET /api/bootstrap` 返回 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25） |
 
@@ -70,5 +72,5 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | 项目 | 原因 | 建议动作 |
 |---|---|---|
 | 具名测试环境部署态验收 | 本地部署态已通过；测试环境域名、账号和样例业务数据仍需由项目/测试侧确认；若 Docker Hub token 超时，可通过 `.env` 镜像源覆盖使用企业镜像代理 | 按 `docs/testing/crm-v1-test-environment-validation-runbook.md` 执行环境Smoke、证据归档和业务演示 |
-| 业务验收签署 | 销售侧和管理侧验收人尚未在文档中具名 | 项目侧指定验收人，并按 Runbook 会议纪要模板形成签署记录 |
+| 业务验收签署 | 销售侧和管理侧验收人尚未在文档中具名 | 项目侧指定验收人，填写 UAT 证据包，并执行 `node scripts/v1-uat-evidence-pack-validate.mjs <证据包>` 后形成签署记录 |
 | V1范围冻结确认 | 产品/业务侧仍需确认最终试点范围和TBD项 | 在验收会中确认范围、字典、风险映射和审计抽样标准 |

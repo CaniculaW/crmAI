@@ -50,13 +50,14 @@
 | `npm run build` | TypeScript 编译与 Vite 生产构建 | Build succeeded |
 | 本地 API Smoke | 演示账号登录和 `/api/bootstrap` 部署态探针 | HTTP 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25） |
 | `npm run smoke:v1:browser` | 登录后系统管理页展示演示组织、用户、角色 | console 0 warning/error |
+| `node scripts/v1-uat-evidence-pack-validate.mjs <证据包>` | UAT 证据包 Go/No-Go、P0/P1缺陷、业务签署和证据完整性准出校验 | 待具名测试环境 UAT 证据包填写后执行 |
 
 ## 4. 不应由研发侧伪造的完成项
 
 | 项目 | 为什么不能伪造 | 需要谁完成 |
 |---|---|---|
 | 销售侧和管理侧验收人签署 | 需要真实业务代表确认试点可用性 | 项目/业务 |
-| 具名测试环境部署态验收 | 需要真实域名、账号、环境配置和网络链路；执行步骤见 `crm-v1-test-environment-validation-runbook.md` | 研发/运维/测试 |
+| 具名测试环境部署态验收 | 需要真实域名、账号、环境配置和网络链路；执行步骤见 `crm-v1-test-environment-validation-runbook.md`，证据包填写后需通过 validator | 研发/运维/测试 |
 | 试点组织、角色和样例业务数据确认 | 需要客户真实组织与试点策略 | 产品/业务/测试 |
 
 ## 5. 结论

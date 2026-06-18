@@ -15,7 +15,9 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-deployment-config-check.test.mjs",
   "scripts/v1-uat-evidence-pack.mjs",
   "scripts/v1-uat-evidence-pack.test.mjs",
-  "docs/releases/v1.0.0-rc.6.md",
+  "scripts/v1-uat-evidence-pack-validate.mjs",
+  "scripts/v1-uat-evidence-pack-validate.test.mjs",
+  "docs/releases/v1.0.0-rc.7.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
@@ -99,17 +101,32 @@ export function evaluateReadinessSnapshot(snapshot) {
     "UAT evidence pack generator covers business demo cases, Go/No-Go, and secret handling guidance."
   ));
 
-  const release = snapshot["docs/releases/v1.0.0-rc.6.md"] ?? "";
+  const evidenceValidator = snapshot["scripts/v1-uat-evidence-pack-validate.mjs"] ?? "";
+  const evidenceValidatorTest = snapshot["scripts/v1-uat-evidence-pack-validate.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "uat-evidence-validator",
+    includesAll(workflow + evidenceValidator + evidenceValidatorTest, [
+      "node --test scripts/v1-uat-evidence-pack-validate.test.mjs",
+      "evaluateUatEvidencePack",
+      "p0-defects",
+      "signoff-complete",
+      "go-hard-gates",
+      "fails a Go evidence pack when a P0 defect remains open"
+    ]),
+    "UAT evidence pack validator is covered by tests and enforces Go/No-Go hard gates."
+  ));
+
+  const release = snapshot["docs/releases/v1.0.0-rc.7.md"] ?? "";
   checks.push(makeCheck(
     "rc-release-record",
-    includesAll(release, ["v1.0.0-rc.6", "GitHub Actions", "success", "UAT", "Go/No-Go", "V1-local-uat-20260618", "CRM_BACKEND_BUILD_IMAGE"]),
+    includesAll(release, ["v1.0.0-rc.7", "GitHub Actions", "success", "UAT", "Go/No-Go", "V1-local-uat-20260618", "CRM_BACKEND_BUILD_IMAGE", "v1-uat-evidence-pack-validate"]),
     "V1 RC record captures tag, CI evidence, UAT, and Go/No-Go context."
   ));
 
   const localEvidence = snapshot["docs/testing/evidence/v1-local-uat-2026-06-18.md"] ?? "";
   checks.push(makeCheck(
     "local-uat-evidence",
-    includesAll(localEvidence, ["V1-local-uat-20260618", "v1.0.0-rc.6", "Flyway", "14", "/api/health", "/api/bootstrap", "Browser Use URL policy"]),
+    includesAll(localEvidence, ["V1-local-uat-20260618", "v1.0.0-rc.7", "Flyway", "14", "/api/health", "/api/bootstrap", "Browser Use URL policy", "UAT evidence pack validator"]),
     "Local named validation evidence captures service checks and browser/Docker limitations."
   ));
 
@@ -150,7 +167,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.6.md"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.7.md", "v1-uat-evidence-pack-validate.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 

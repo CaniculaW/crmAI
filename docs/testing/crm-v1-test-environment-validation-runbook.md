@@ -14,6 +14,7 @@
 
 - `docs/testing/crm-v1-uat-evidence-pack-template.md`：用于汇总验收证据、缺陷状态、Go/No-Go 判定和签署记录。
 - `scripts/v1-uat-evidence-pack.mjs`：用于按具名测试环境参数生成 UAT 证据包草稿，不写入明文密码或 API Token。
+- `scripts/v1-uat-evidence-pack-validate.mjs`：用于在证据包填写完成后校验 Go/No-Go 条件、P0/P1 缺陷和签署是否一致。
 - `scripts/v1-deployment-config-check.mjs`：用于确认 Compose、Dockerfile 和部署手册支持企业镜像代理或内网镜像仓库覆盖基础镜像。
 
 不适用范围：
@@ -102,6 +103,14 @@ node scripts/v1-uat-evidence-pack.mjs \
 
 注意：不要向生成器传入明文密码、生产密钥或 API Token。
 
+证据包填写完成后执行准出一致性校验：
+
+```bash
+node scripts/v1-uat-evidence-pack-validate.mjs crm-v1-uat-evidence-pack.md
+```
+
+要求：若选择 `Go`，validator 必须返回 `PASS`；若返回 `FAIL`，需先补齐证据、关闭阻断缺陷或把结论调整为符合实际的 `Conditional Go` / `No-Go`。
+
 ## 3. 测试环境 Smoke 步骤
 
 | 编号 | 步骤 | 通过标准 | 证据 |
@@ -178,6 +187,7 @@ v1-uat-evidence/
 | P1 用例 | P1 完成执行，遗留问题有项目/业务确认 | 形成规避方案或延期单 |
 | 业务验收 | 销售侧、管理侧验收人完成演示或试用确认 | 安排补验 |
 | 上线风险 | 遗留缺陷、观察项、回滚条件已记录 | 补充上线风险清单 |
+| 证据包 validator | `node scripts/v1-uat-evidence-pack-validate.mjs <证据包>` 返回 PASS | 修正证据包、缺陷状态或准出结论 |
 
 ## 7. 验收会议纪要模板
 
