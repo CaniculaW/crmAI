@@ -1,0 +1,720 @@
+openapi: 3.0.3
+info:
+  title: Canicula CRM V1 API
+  version: 0.1.0
+  description: Project-based key account CRM V1 interface contract.
+servers:
+  - url: /api
+security:
+  - bearerAuth: []
+tags:
+  - name: Auth
+  - name: System
+  - name: Accounts
+  - name: Contacts
+  - name: Opportunities
+  - name: Activities
+  - name: WeeklyProgress
+  - name: Attachments
+  - name: Reminders
+paths:
+  /api/health:
+    get:
+      tags: [System]
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Service is alive.
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with username and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Access token and current user.
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Current user profile, roles, and permissions
+      responses:
+        '200':
+          description: Current user.
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout current session
+      responses:
+        '200':
+          description: Logout result.
+  /api/auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Change current user's password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Password changed.
+  /api/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset a user's password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Password reset.
+  /api/system/dicts:
+    get:
+      tags: [System]
+      summary: List dictionary types and items
+      parameters:
+        - $ref: '#/components/parameters/DictCode'
+        - name: include_inactive
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Dictionary list.
+  /api/system/dicts/types:
+    post:
+      tags: [System]
+      summary: Create dictionary type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Dictionary type.
+  /api/system/dicts/types/{dictTypeId}/items:
+    post:
+      tags: [System]
+      summary: Create dictionary item
+      parameters:
+        - name: dictTypeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Dictionary item.
+  /api/system/dicts/items/{itemId}:
+    patch:
+      tags: [System]
+      summary: Update dictionary item
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Dictionary item.
+  /api/accounts:
+    get:
+      tags: [Accounts]
+      summary: List readable accounts
+      parameters:
+        - $ref: '#/components/parameters/Keyword'
+        - name: account_type
+          in: query
+          schema:
+            type: string
+        - name: account_level
+          in: query
+          schema:
+            type: string
+        - name: account_status
+          in: query
+          schema:
+            type: string
+        - name: account_source
+          in: query
+          schema:
+            type: string
+        - name: owner_user_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Account list.
+    post:
+      tags: [Accounts]
+      summary: Create account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountCreateRequest'
+      responses:
+        '200':
+          description: Account detail.
+  /api/accounts/{accountId}:
+    get:
+      tags: [Accounts]
+      summary: Get account detail
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+      responses:
+        '200':
+          description: Account detail.
+    patch:
+      tags: [Accounts]
+      summary: Update account
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Account detail.
+  /api/accounts/{accountId}/contacts:
+    get:
+      tags: [Contacts]
+      summary: List readable contacts under account
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+      responses:
+        '200':
+          description: Contact list.
+  /api/accounts/{accountId}/opportunities:
+    get:
+      tags: [Opportunities]
+      summary: List readable opportunities under account
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+      responses:
+        '200':
+          description: Opportunity list.
+  /api/accounts/{accountId}/activities:
+    get:
+      tags: [Activities]
+      summary: List readable activities under account
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+      responses:
+        '200':
+          description: Activity list.
+  /api/contacts:
+    get:
+      tags: [Contacts]
+      summary: List readable contacts
+      parameters:
+        - $ref: '#/components/parameters/Keyword'
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: project_role
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Contact list.
+    post:
+      tags: [Contacts]
+      summary: Create contact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactCreateRequest'
+      responses:
+        '200':
+          description: Contact detail.
+  /api/contacts/{contactId}:
+    get:
+      tags: [Contacts]
+      summary: Get contact detail
+      parameters:
+        - $ref: '#/components/parameters/ContactId'
+      responses:
+        '200':
+          description: Contact detail.
+    patch:
+      tags: [Contacts]
+      summary: Update contact
+      parameters:
+        - $ref: '#/components/parameters/ContactId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Contact detail.
+  /api/opportunities:
+    get:
+      tags: [Opportunities]
+      summary: List readable opportunities
+      parameters:
+        - $ref: '#/components/parameters/Keyword'
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: default_following
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Opportunity list.
+    post:
+      tags: [Opportunities]
+      summary: Create opportunity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpportunityCreateRequest'
+      responses:
+        '200':
+          description: Opportunity detail.
+  /api/opportunities/{opportunityId}:
+    get:
+      tags: [Opportunities]
+      summary: Get opportunity detail
+      parameters:
+        - $ref: '#/components/parameters/OpportunityId'
+      responses:
+        '200':
+          description: Opportunity detail.
+    patch:
+      tags: [Opportunities]
+      summary: Update opportunity
+      parameters:
+        - $ref: '#/components/parameters/OpportunityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Opportunity detail.
+  /api/opportunities/{opportunityId}/close:
+    post:
+      tags: [Opportunities]
+      summary: Close, lose, or cancel opportunity
+      parameters:
+        - $ref: '#/components/parameters/OpportunityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Opportunity detail.
+  /api/opportunities/{opportunityId}/reopen:
+    post:
+      tags: [Opportunities]
+      summary: Reopen closed opportunity
+      parameters:
+        - $ref: '#/components/parameters/OpportunityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Opportunity detail.
+  /api/opportunities/{opportunityId}/activities:
+    get:
+      tags: [Activities]
+      summary: List readable activities under opportunity
+      parameters:
+        - $ref: '#/components/parameters/OpportunityId'
+      responses:
+        '200':
+          description: Activity list.
+  /api/opportunities/{opportunityId}/weekly-progress:
+    get:
+      tags: [WeeklyProgress]
+      summary: List weekly progress for one opportunity
+      parameters:
+        - $ref: '#/components/parameters/OpportunityId'
+        - name: week_start
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: week_end
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Weekly progress list.
+  /api/activities:
+    get:
+      tags: [Activities]
+      summary: List readable activities
+      parameters:
+        - $ref: '#/components/parameters/Keyword'
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: overdue
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Activity list.
+    post:
+      tags: [Activities]
+      summary: Create activity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityCreateRequest'
+      responses:
+        '200':
+          description: Activity detail.
+  /api/activities/{activityId}:
+    get:
+      tags: [Activities]
+      summary: Get activity detail
+      parameters:
+        - $ref: '#/components/parameters/ActivityId'
+      responses:
+        '200':
+          description: Activity detail.
+    patch:
+      tags: [Activities]
+      summary: Update activity
+      parameters:
+        - $ref: '#/components/parameters/ActivityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Activity detail.
+  /api/activities/{activityId}/complete:
+    post:
+      tags: [Activities]
+      summary: Complete activity and backfill account or opportunity progress
+      parameters:
+        - $ref: '#/components/parameters/ActivityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Activity detail.
+  /api/weekly-progress/opportunities:
+    get:
+      tags: [WeeklyProgress]
+      summary: List opportunity weekly progress
+      parameters:
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: month
+          in: query
+          schema:
+            type: string
+            example: '2026-06'
+      responses:
+        '200':
+          description: Weekly progress list.
+  /api/attachments:
+    get:
+      tags: [Attachments]
+      summary: List attachments by business object
+      parameters:
+        - name: object_type
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: object_id
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Attachment list.
+    post:
+      tags: [Attachments]
+      summary: Create attachment metadata
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Attachment metadata.
+  /api/attachments/{attachmentId}:
+    delete:
+      tags: [Attachments]
+      summary: Delete attachment metadata
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Deletion result.
+  /api/reminders:
+    get:
+      tags: [Reminders]
+      summary: List current user's reminders
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, completed, cancelled]
+        - name: overdue
+          in: query
+          schema:
+            type: boolean
+        - name: object_type
+          in: query
+          schema:
+            type: string
+        - name: object_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Reminder list.
+  /api/reminders/{reminderId}:
+    patch:
+      tags: [Reminders]
+      summary: Complete or cancel reminder
+      parameters:
+        - name: reminderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [completed, cancelled]
+      responses:
+        '200':
+          description: Reminder detail.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    Keyword:
+      name: keyword
+      in: query
+      schema:
+        type: string
+    DictCode:
+      name: dict_code
+      in: query
+      schema:
+        type: string
+    AccountId:
+      name: accountId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    ContactId:
+      name: contactId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    OpportunityId:
+      name: opportunityId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    ActivityId:
+      name: activityId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  schemas:
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+    AccountCreateRequest:
+      type: object
+      required: [account_name, account_type, account_status, owner_department_id, owner_user_id]
+      properties:
+        account_name:
+          type: string
+        account_type:
+          type: string
+        account_status:
+          type: string
+        owner_department_id:
+          type: integer
+          format: int64
+        owner_user_id:
+          type: integer
+          format: int64
+        collaborators:
+          type: array
+          items:
+            type: object
+    ContactCreateRequest:
+      type: object
+      required: [account_id, name]
+      properties:
+        account_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        project_roles:
+          type: array
+          items:
+            type: string
+    OpportunityCreateRequest:
+      type: object
+      required: [account_id, opportunity_name, stage, status, owner_department_id, owner_user_id]
+      properties:
+        account_id:
+          type: integer
+          format: int64
+        opportunity_name:
+          type: string
+        stage:
+          type: string
+        status:
+          type: string
+        contact_relations:
+          type: array
+          items:
+            type: object
+    ActivityCreateRequest:
+      type: object
+      required: [account_id, subject, activity_type, activity_status, activity_result, activity_time, owner_department_id, owner_user_id]
+      properties:
+        account_id:
+          type: integer
+          format: int64
+        opportunity_id:
+          type: integer
+          format: int64
+        subject:
+          type: string
+        activity_type:
+          type: string
+        activity_status:
+          type: string
+        activity_result:
+          type: string
+        activity_time:
+          type: string
+          format: date-time
+        next_follow_up_at:
+          type: string
+          format: date-time

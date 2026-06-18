@@ -1,8 +1,10 @@
 # CRM V1 API接口清单
 
-日期：2026-06-17
+日期：2026-06-18
 
-适用范围：CRM V1认证与系统API、客户、联系人、商机、销售行动、周进展API。
+适用范围：CRM V1认证与系统API、客户、联系人、商机、销售行动、周进展、附件、提醒API。
+
+OpenAPI契约文件：`docs/openapi/crm-v1-openapi.yaml`。当前已建立 `OpenApiContractCoverageTest`，用于校验运行时 Spring MVC 暴露的 `/api` 路径均被 OpenAPI 文档覆盖。
 
 ## 1. 通用接口规范
 
