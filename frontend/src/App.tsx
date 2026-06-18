@@ -1,6 +1,7 @@
 import {
   Button,
   Card,
+  Checkbox,
   Drawer,
   Form,
   Input,
@@ -38,6 +39,9 @@ import {
   type DictionaryType,
   type Opportunity,
   type Reminder,
+  type SystemPermission,
+  type SystemRole,
+  type SystemUser,
   type WeeklyProgress,
   changePassword,
   crmApi,
@@ -1077,13 +1081,18 @@ function WeeklyProgressPage() {
 function SystemPage() {
   const dictionaries = useResource(crmApi.dictionaries.list, []);
   const auditLogs = useResource(() => crmApi.auditLogs.list({ limit: 20 }), []);
+  const users = useResource(crmApi.users.list, []);
+  const roles = useResource(crmApi.roles.list, []);
+  const permissions = useResource(crmApi.permissions.list, []);
   const [typeOpen, setTypeOpen] = useState(false);
   const [itemTarget, setItemTarget] = useState<DictionaryType | null>(null);
   const [editingItem, setEditingItem] = useState<DictionaryType["items"][number] | null>(null);
+  const [editingRole, setEditingRole] = useState<SystemRole | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
   const [typeForm] = Form.useForm();
   const [itemForm] = Form.useForm();
   const [itemEditForm] = Form.useForm();
+  const [permissionForm] = Form.useForm();
   const [resetForm] = Form.useForm();
 
   const createType = async (values: Record<string, unknown>) => {
@@ -1119,6 +1128,62 @@ function SystemPage() {
     setResetOpen(false);
   };
 
+  const refreshSystem = async () => {
+    await Promise.all([
+      dictionaries.refresh(),
+      users.refresh(),
+      roles.refresh(),
+      permissions.refresh(),
+      auditLogs.refresh()
+    ]);
+  };
+
+  const editRolePermissions = (role: SystemRole) => {
+    setEditingRole(role);
+    permissionForm.setFieldsValue({ permission_codes: role.permission_codes });
+  };
+
+  const saveRolePermissions = async (values: { permission_codes?: string[] }) => {
+    if (!editingRole) {
+      return;
+    }
+    await crmApi.roles.replacePermissions(editingRole.id, values.permission_codes ?? []);
+    permissionForm.resetFields();
+    setEditingRole(null);
+    await roles.refresh();
+    await auditLogs.refresh();
+  };
+
+  const userColumns: ColumnsType<SystemUser> = [
+    { title: "姓名", dataIndex: "name" },
+    { title: "邮箱", dataIndex: "email", render: textOrDash },
+    { title: "状态", dataIndex: "status", render: statusTag },
+    {
+      title: "角色",
+      render: (_, record) => (
+        <Space wrap>
+          {record.roles.map((role) => (
+            <Tag key={role.id}>{role.name}</Tag>
+          ))}
+        </Space>
+      )
+    }
+  ];
+
+  const roleColumns: ColumnsType<SystemRole> = [
+    { title: "角色", dataIndex: "name" },
+    { title: "编码", dataIndex: "code" },
+    { title: "权限数", render: (_, record) => record.permission_codes.length },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Button aria-label="授权" size="small" onClick={() => editRolePermissions(record)}>
+          授权
+        </Button>
+      )
+    }
+  ];
+
   const auditColumns: ColumnsType<AuditLog> = [
     { title: "时间", dataIndex: "occurred_at", render: dateText },
     { title: "模块", dataIndex: "module_code" },
@@ -1132,10 +1197,10 @@ function SystemPage() {
   return (
     <DataWorkspace
       title="系统管理"
-      description="V1 当前接入字典配置维护和管理员重置密码，用户、组织、角色权限继续沿用后端权限模型推进。"
-      loading={dictionaries.loading}
-      error={dictionaries.error}
-      refresh={dictionaries.refresh}
+      description="V1 当前接入用户、角色权限、字典配置、密码重置和审计日志基础维护。"
+      loading={dictionaries.loading || users.loading || roles.loading || permissions.loading}
+      error={dictionaries.error || users.error || roles.error || permissions.error}
+      refresh={refreshSystem}
       action={
         <Space>
           <Button icon={<Plus size={16} />} onClick={() => setTypeOpen(true)}>
@@ -1145,6 +1210,28 @@ function SystemPage() {
         </Space>
       }
     >
+      <div className="system-grid">
+        <Card size="small" title="用户列表">
+          <Table
+            rowKey="id"
+            size="small"
+            loading={users.loading}
+            dataSource={users.data}
+            columns={userColumns}
+            pagination={{ pageSize: 5 }}
+          />
+        </Card>
+        <Card size="small" title="角色权限">
+          <Table
+            rowKey="id"
+            size="small"
+            loading={roles.loading}
+            dataSource={roles.data}
+            columns={roleColumns}
+            pagination={{ pageSize: 5 }}
+          />
+        </Card>
+      </div>
       <div className="dictionary-grid">
         {dictionaries.data.map((dict) => (
           <Card
@@ -1230,6 +1317,22 @@ function SystemPage() {
           </Form.Item>
           <Button type="primary" htmlType="submit" block>
             保存字典项
+          </Button>
+        </Form>
+      </Modal>
+      <Modal title={editingRole ? `角色授权：${editingRole.name}` : "角色授权"} open={!!editingRole} onCancel={() => setEditingRole(null)} footer={null}>
+        <Form form={permissionForm} layout="vertical" onFinish={saveRolePermissions}>
+          <Form.Item name="permission_codes" label="权限点">
+            <Checkbox.Group className="permission-check-list">
+              {permissions.data.map((permission: SystemPermission) => (
+                <Checkbox key={permission.id} value={permission.permission_code}>
+                  {permission.permission_name}
+                </Checkbox>
+              ))}
+            </Checkbox.Group>
+          </Form.Item>
+          <Button aria-label="保存授权" type="primary" htmlType="submit" block>
+            保存授权
           </Button>
         </Form>
       </Modal>

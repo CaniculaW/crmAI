@@ -152,6 +152,40 @@ export type AuditLog = {
   occurred_at: string;
 };
 
+export type SystemRoleSummary = {
+  id: number;
+  code: string;
+  name: string;
+};
+
+export type SystemUser = {
+  id: number;
+  department_id?: number;
+  name: string;
+  mobile?: string;
+  email?: string;
+  role_code?: string;
+  status: string;
+  last_login_at?: string;
+  roles: SystemRoleSummary[];
+};
+
+export type SystemRole = {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+  permission_codes: string[];
+};
+
+export type SystemPermission = {
+  id: number;
+  permission_code: string;
+  permission_name: string;
+  permission_type: string;
+  module_code: string;
+};
+
 function withQuery(path: string, query?: QueryParams) {
   if (!query) {
     return path;
@@ -265,5 +299,19 @@ export const crmApi = {
   },
   auditLogs: {
     list: (query?: QueryParams) => requestJson<AuditLog[]>(withQuery("/api/system/audit-logs", query))
+  },
+  users: {
+    list: () => requestJson<SystemUser[]>("/api/system/users")
+  },
+  roles: {
+    list: () => requestJson<SystemRole[]>("/api/system/roles"),
+    replacePermissions: (roleId: number, permissionCodes: string[]) =>
+      requestJson<SystemRole>(`/api/system/roles/${roleId}/permissions`, {
+        method: "PUT",
+        body: JSON.stringify({ permission_codes: permissionCodes })
+      })
+  },
+  permissions: {
+    list: () => requestJson<SystemPermission[]>("/api/system/permissions")
   }
 };

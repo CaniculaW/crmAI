@@ -125,16 +125,17 @@ OpenAPI契约文件：`docs/openapi/crm-v1-openapi.yaml`。当前已建立 `Open
 
 | 方法 | 路径 | 说明 | 权限 |
 |---|---|---|---|
-| GET | /api/system/users | 用户列表 | system.user.manage 或系统只读 |
+| GET | /api/system/users | 用户列表 | system.user.manage |
 | POST | /api/system/users | 新建用户 | system.user.manage |
 | PATCH | /api/system/users/{id} | 编辑、启停、绑定部门角色 | system.user.manage |
 | GET | /api/system/departments | 组织树 | 登录用户 |
 | POST | /api/system/departments | 新建组织 | system.user.manage |
 | PATCH | /api/system/departments/{id} | 编辑组织 | system.user.manage |
-| GET | /api/system/roles | 角色列表 | system.role.manage 或系统只读 |
+| GET | /api/system/roles | 角色列表 | system.role.manage |
 | POST | /api/system/roles | 新建角色 | system.role.manage |
 | PATCH | /api/system/roles/{id} | 编辑角色 | system.role.manage |
-| GET | /api/system/permissions | 权限点列表 | system.role.manage 或系统只读 |
+| GET | /api/system/permissions | 权限点列表 | system.role.manage |
+| PUT | /api/system/roles/{roleId}/permissions | 替换角色权限点 | system.role.manage |
 | GET | /api/system/dicts | 字典类型和字典项 | 登录用户 |
 | POST | /api/system/dicts/types | 新建字典类型 | system.dict.manage |
 | POST | /api/system/dicts/types/{dictTypeId}/items | 新建字典项 | system.dict.manage |
@@ -148,6 +149,8 @@ OpenAPI契约文件：`docs/openapi/crm-v1-openapi.yaml`。当前已建立 `Open
 - 字典：`dict_code`、`is_active`
 
 字典查询已落地：`GET /api/system/dicts?dict_code=account_type` 默认仅返回启用类型和启用字典项；如需管理端查看停用项，可传 `include_inactive=true`。
+
+身份管理基础接口已落地：`GET /api/system/users` 返回用户及已分配角色；`GET /api/system/roles` 返回角色及权限点；`GET /api/system/permissions` 返回启用权限点；`PUT /api/system/roles/{roleId}/permissions` 支持替换角色权限并写入 `system.role.permissions.replace` 审计。用户新增/编辑、组织树维护和角色新增/编辑仍作为后续管理端增强。
 
 ## 4. 客户API
 

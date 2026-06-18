@@ -182,6 +182,53 @@ paths:
       responses:
         '200':
           description: Audit log list.
+  /api/system/users:
+    get:
+      tags: [System]
+      summary: List system users with assigned roles
+      responses:
+        '200':
+          description: User list.
+  /api/system/roles:
+    get:
+      tags: [System]
+      summary: List roles with granted permission codes
+      responses:
+        '200':
+          description: Role list.
+  /api/system/permissions:
+    get:
+      tags: [System]
+      summary: List active permissions
+      responses:
+        '200':
+          description: Permission list.
+  /api/system/roles/{roleId}/permissions:
+    put:
+      tags: [System]
+      summary: Replace a role's granted permissions
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [permission_codes]
+              properties:
+                permission_codes:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Updated role.
   /api/accounts:
     get:
       tags: [Accounts]

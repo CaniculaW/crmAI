@@ -21,7 +21,8 @@ const apiData = {
       "weekly_progress.read",
       "system.audit.read",
       "system.dict.manage",
-      "system.user.manage"
+      "system.user.manage",
+      "system.role.manage"
     ]
   },
   accounts: [
@@ -70,6 +71,47 @@ const apiData = {
       result: "success",
       trace_id: "trace-001",
       occurred_at: "2026-06-18T10:00:00+08:00"
+    }
+  ],
+  users: [
+    {
+      id: 1001,
+      name: "销售一号",
+      email: "sales@example.com",
+      status: "active",
+      roles: [{ id: 3001, code: "sales_admin", name: "销售管理员" }]
+    }
+  ],
+  roles: [
+    {
+      id: 3001,
+      code: "sales_admin",
+      name: "销售管理员",
+      description: "V1 销售管理员",
+      permission_codes: ["account.read"]
+    }
+  ],
+  permissions: [
+    {
+      id: 4101,
+      permission_code: "account.read",
+      permission_name: "查看客户",
+      permission_type: "operation",
+      module_code: "account"
+    },
+    {
+      id: 4102,
+      permission_code: "account.create",
+      permission_name: "新建客户",
+      permission_type: "operation",
+      module_code: "account"
+    },
+    {
+      id: 4103,
+      permission_code: "system.audit.read",
+      permission_name: "查看审计日志",
+      permission_type: "operation",
+      module_code: "system"
     }
   ]
 };
@@ -236,13 +278,40 @@ describe("CRM frontend V1 workflow", () => {
       );
     });
   });
+
+  it("shows system users and updates role permissions", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "系统管理" }));
+    expect((await screen.findAllByText("销售一号")).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("销售管理员")).length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: "授权" }));
+    await user.click(await screen.findByLabelText("新建客户"));
+    await user.click(screen.getByLabelText("查看审计日志"));
+    await user.click(screen.getByRole("button", { name: "保存授权" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/system/roles/3001/permissions",
+        expect.objectContaining({
+          method: "PUT",
+          body: expect.stringContaining("system.audit.read")
+        })
+      );
+    });
+  });
 });
 
 async function loginThroughUi(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText("用户名"), "sales");
   await user.type(screen.getByLabelText("密码"), "S3cure!123");
   await user.click(screen.getByRole("button", { name: /登\s*录/ }));
-  await screen.findByText("销售一号");
+  await screen.findByRole("link", { name: "工作台" });
 }
 
 function mockCrmFetch() {
@@ -294,6 +363,24 @@ function mockCrmFetch() {
     }
     if (path.endsWith("/api/system/audit-logs")) {
       return jsonResponse({ code: "OK", data: apiData.auditLogs });
+    }
+    if (path.endsWith("/api/system/users")) {
+      return jsonResponse({ code: "OK", data: apiData.users });
+    }
+    if (path.endsWith("/api/system/roles")) {
+      return jsonResponse({ code: "OK", data: apiData.roles });
+    }
+    if (path.endsWith("/api/system/permissions")) {
+      return jsonResponse({ code: "OK", data: apiData.permissions });
+    }
+    if (path.endsWith("/api/system/roles/3001/permissions") && method === "PUT") {
+      return jsonResponse({
+        code: "OK",
+        data: {
+          ...apiData.roles[0],
+          permission_codes: ["account.read", "account.create", "system.audit.read"]
+        }
+      });
     }
     if (path.endsWith("/api/system/dicts/types") && method === "POST") {
       return jsonResponse({ code: "OK", data: { id: 502, dict_code: "risk_level", dict_name: "风险等级", items: [] } });
