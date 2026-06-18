@@ -26,6 +26,7 @@ GitHub Actions 已配置 V1 自动验证工作流：
 - 前端生产构建：`npm run build`
 - 部署配置：`docker compose -f compose.v1-test.yml config`
 - UAT 准出材料：RC/UAT readiness、UAT 证据包生成器和 UAT 证据包 Go/No-Go validator 测试
+- 最终放行门禁：`v1-release-gate` 规则测试
 
 ## V1 测试环境部署
 
@@ -105,6 +106,14 @@ UAT 证据包填写后校验：
 ```bash
 node scripts/v1-uat-evidence-pack-validate.mjs <crm-v1-uat-evidence-pack.md>
 ```
+
+V1 最终放行门禁：
+
+```bash
+node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md>
+```
+
+当前 rc.8 草稿仍是 `No-Go`，因此最终放行门禁会失败；待具名测试环境 UAT、缺陷闭环和签署完成并形成 `Go` 证据包后，该命令才应通过。
 
 ## 后端
 

@@ -17,6 +17,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-uat-evidence-pack.test.mjs",
   "scripts/v1-uat-evidence-pack-validate.mjs",
   "scripts/v1-uat-evidence-pack-validate.test.mjs",
+  "scripts/v1-release-gate.mjs",
+  "scripts/v1-release-gate.test.mjs",
   "docs/releases/v1.0.0-rc.8.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/crm-v1-validation-traceability.md",
@@ -169,6 +171,20 @@ export function evaluateReadinessSnapshot(snapshot) {
       "fails a Go evidence pack when a P0 defect remains open"
     ]),
     "UAT evidence pack validator is covered by tests and enforces Go/No-Go hard gates."
+  ));
+
+  const releaseGate = snapshot["scripts/v1-release-gate.mjs"] ?? "";
+  const releaseGateTest = snapshot["scripts/v1-release-gate.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "v1-release-gate",
+    includesAll(workflow + releaseGate + releaseGateTest, [
+      "node --test scripts/v1-release-gate.test.mjs",
+      "evaluateV1ReleaseGate",
+      "evaluateV1ReleaseGateFromFiles",
+      "V1 release gate requires Go",
+      "fails when the project decision is Conditional Go"
+    ]),
+    "Final V1 release gate is tested and requires readiness, formal UAT evidence, and an explicit Go decision."
   ));
 
   const release = snapshot["docs/releases/v1.0.0-rc.8.md"] ?? "";

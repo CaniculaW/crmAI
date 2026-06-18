@@ -131,6 +131,18 @@ Decision: No-Go。
 失败项：草稿占位符未清理；销售个人账号、销售负责人账号、权限样本账号未在具名测试环境验证；UAT-001 至 UAT-010 未执行业务验收；P0/P1缺陷汇总未填写；Go/No-Go 硬门未满足；销售侧、管理侧、产品、测试、研发和项目负责人签署未完成。
 ```
 
+最终 V1 放行门禁：
+
+```bash
+node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md
+```
+
+```text
+实测结果：FAIL。
+Decision: No-Go。
+失败项：当前证据包未通过正式 UAT validator，且项目决策不是 Go。该结果符合草稿态预期。
+```
+
 ## 8. 签署
 
 | 角色 | 姓名 | 结论 | 日期 |
