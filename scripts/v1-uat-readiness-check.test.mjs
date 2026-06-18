@@ -23,7 +23,7 @@ jobs:
   "backend/Dockerfile": "FROM maven:3.9-eclipse-temurin-17 AS build\n",
   "frontend/Dockerfile": "FROM node:22-alpine AS build\nFROM nginx:1.27-alpine\n",
   "frontend/nginx.conf": "location /api/ { proxy_pass http://backend:8080/api/; }\n",
-  "docs/releases/v1.0.0-rc.1.md": "v1.0.0-rc.1\nGitHub Actions `V1 Validation`\nsuccess\nUAT\nGo/No-Go\n仍需在具名测试环境完成验收签署\n",
+  "docs/releases/v1.0.0-rc.2.md": "v1.0.0-rc.2\nGitHub Actions `V1 Validation`\nsuccess\nUAT\nGo/No-Go\n仍需在具名测试环境完成验收签署\n",
   "docs/testing/v1-automated-validation-report-2026-06-18.md": "代码级、接口级、迁移级、本地部署态\nGitHub Actions\n具名测试环境部署态验收\n业务验收签署\n",
   "docs/testing/crm-v1-validation-traceability.md": "研发验证通过\n若目标口径是“项目 V1 验收通过”，仍需完成具名测试环境验证和业务验收签署。\n",
   "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\n",
@@ -32,10 +32,10 @@ jobs:
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.1.md\ncompose.v1-test.yml\n"
+  "README.md": "docs/releases/v1.0.0-rc.2.md\ncompose.v1-test.yml\n"
 };
 
-test("passes when V1 RC and UAT readiness artifacts are documented", () => {
+test("passes when V1 rc2 and UAT readiness artifacts are documented", () => {
   const result = evaluateReadinessSnapshot(completeSnapshot);
 
   assert.equal(result.ok, true);

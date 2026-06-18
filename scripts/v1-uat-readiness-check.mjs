@@ -11,7 +11,7 @@ const REQUIRED_ARTIFACTS = [
   "backend/Dockerfile",
   "frontend/Dockerfile",
   "frontend/nginx.conf",
-  "docs/releases/v1.0.0-rc.1.md",
+  "docs/releases/v1.0.0-rc.2.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
@@ -70,10 +70,10 @@ export function evaluateReadinessSnapshot(snapshot) {
     ".env.example documents V1 demo seed and database settings."
   ));
 
-  const release = snapshot["docs/releases/v1.0.0-rc.1.md"] ?? "";
+  const release = snapshot["docs/releases/v1.0.0-rc.2.md"] ?? "";
   checks.push(makeCheck(
     "rc-release-record",
-    includesAll(release, ["v1.0.0-rc.1", "GitHub Actions", "success", "UAT", "Go/No-Go"]),
+    includesAll(release, ["v1.0.0-rc.2", "GitHub Actions", "success", "UAT", "Go/No-Go"]),
     "V1 RC record captures tag, CI evidence, UAT, and Go/No-Go context."
   ));
 
@@ -114,7 +114,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.1.md"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.2.md"]),
     "README links the test environment and V1 RC record."
   ));
 
