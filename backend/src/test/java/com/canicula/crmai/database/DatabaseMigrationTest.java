@@ -115,9 +115,23 @@ class DatabaseMigrationTest {
                 where permission_code in ('attachment.read', 'attachment.create', 'attachment.delete')
                 """,
                 Integer.class);
+        Integer reminderTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name = 'crm_reminders'
+                """,
+                Integer.class);
+        Integer reminderPermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in ('reminder.read', 'reminder.update')
+                """,
+                Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(13);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(14);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -131,5 +145,7 @@ class DatabaseMigrationTest {
         assertThat(weeklyProgressViewCount).isEqualTo(1);
         assertThat(attachmentTableCount).isEqualTo(1);
         assertThat(attachmentPermissionCount).isEqualTo(3);
+        assertThat(reminderTableCount).isEqualTo(1);
+        assertThat(reminderPermissionCount).isEqualTo(2);
     }
 }

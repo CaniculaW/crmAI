@@ -289,7 +289,7 @@
 - 行动结果为发现风险时，可更新商机风险状态并记录审计。
 - 下次跟进时间不为空时生成提醒。
 
-当前销售行动基线已落地：`POST /api/activities` 支持创建客户经营行动和项目推进行动，可选关联商机，支持联系人、我方参与人和风险类型写入，并记录 `activity.create` 审计；`GET /api/activities` 按登录用户数据范围返回行动列表，支持 `keyword`、`account_id`、`opportunity_id`、`owner_user_id`、`participant_user_id`、`activity_type`、`activity_status`、`activity_result`、`risk_type`、`activity_from`、`activity_to`、`overdue`、`include_in_weekly_progress` 筛选；`GET /api/accounts/{id}/activities` 和 `GET /api/opportunities/{id}/activities` 返回对象下可见行动；`GET /api/activities/{id}` 校验行动数据权限后返回详情；`PATCH /api/activities/{id}` 支持编辑行动基础字段、联系人、参与人和风险类型，并记录 `activity.update` 审计；`POST /api/activities/{id}/complete` 支持完成行动、写入完成时间和完成人、回写客户及商机最近跟进，风险行动同步升级商机风险状态并记录 `activity.complete` 审计。提醒生成进入 BE-018。
+当前销售行动基线已落地：`POST /api/activities` 支持创建客户经营行动和项目推进行动，可选关联商机，支持联系人、我方参与人和风险类型写入；下次跟进时间不为空时自动生成跟进提醒，并记录 `activity.create` 审计；`GET /api/activities` 按登录用户数据范围返回行动列表，支持 `keyword`、`account_id`、`opportunity_id`、`owner_user_id`、`participant_user_id`、`activity_type`、`activity_status`、`activity_result`、`risk_type`、`activity_from`、`activity_to`、`overdue`、`include_in_weekly_progress` 筛选；`GET /api/accounts/{id}/activities` 和 `GET /api/opportunities/{id}/activities` 返回对象下可见行动；`GET /api/activities/{id}` 校验行动数据权限后返回详情；`PATCH /api/activities/{id}` 支持编辑行动基础字段、联系人、参与人和风险类型，并同步更新跟进提醒，记录 `activity.update` 审计；`POST /api/activities/{id}/complete` 支持完成行动、写入完成时间和完成人、回写客户及商机最近跟进，风险行动同步升级商机风险状态，待处理跟进提醒自动完成，并记录 `activity.complete` 审计。
 
 ## 8. 周进展API
 
@@ -327,7 +327,9 @@
 | GET | /api/reminders | 我的提醒 |
 | PATCH | /api/reminders/{id} | 完成或取消提醒 |
 
-当前附件元数据基线已落地：`crm_attachments` 统一保存 `object_type + object_id`、文件名、文件地址/对象Key、类型、大小、MIME、上传人和上传时间；支持 account、contact、opportunity、activity 四类 V1 对象；写入、查询、删除均先校验业务对象访问权限。真实文件上传链路、下载审计和提醒通知方式待后续确认。
+当前附件元数据基线已落地：`crm_attachments` 统一保存 `object_type + object_id`、文件名、文件地址/对象Key、类型、大小、MIME、上传人和上传时间；支持 account、contact、opportunity、activity 四类 V1 对象；写入、查询、删除均先校验业务对象访问权限。
+
+当前提醒基线已落地：`crm_reminders` 支持销售行动下次跟进自动生成 `activity/follow_up` 提醒；`GET /api/reminders` 返回当前用户待办，支持 `status`、`overdue`、`object_type`、`object_id` 筛选，逾期待办在响应中标识为 `overdue`；`PATCH /api/reminders/{id}` 支持将本人提醒更新为 `completed` 或 `cancelled` 并记录 `reminder.update` 审计；完成销售行动会自动完成该行动待处理跟进提醒。真实文件上传链路、下载审计和提醒通知方式待后续确认。
 
 ## 10. 待确认项
 

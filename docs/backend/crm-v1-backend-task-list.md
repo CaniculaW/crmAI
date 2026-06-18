@@ -57,6 +57,7 @@
 | BE-015 | 已完成 | 行动完成接口、完成时间/完成人写入、客户与商机最近跟进回写、风险行动升级商机风险状态、完成审计 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
 | BE-016 | 已完成 | 周进展聚合视图、按商机/负责人/客户/自然周查询接口、单商机周进展接口、同周行动明细保留 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
 | BE-017 | 已完成 | 通用附件元数据表、附件新增/按对象查询/逻辑删除接口、对象访问权限校验、附件操作审计 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
+| BE-018 | 已完成 | 提醒表、行动下次跟进自动生成提醒、我的提醒/逾期筛选、完成/取消提醒、行动完成自动完成待办 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
 
 ## 3. 模块验收口径
 

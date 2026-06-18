@@ -7,6 +7,7 @@ import com.canicula.crmai.identity.DataPermissionCondition;
 import com.canicula.crmai.identity.DataPermissionService;
 import com.canicula.crmai.opportunity.OpportunityResponse;
 import com.canicula.crmai.opportunity.OpportunityService;
+import com.canicula.crmai.reminder.ReminderService;
 import java.sql.PreparedStatement;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -31,16 +32,19 @@ public class ActivityService {
     private final DataPermissionService dataPermissionService;
     private final AccountService accountService;
     private final OpportunityService opportunityService;
+    private final ReminderService reminderService;
 
     ActivityService(
             JdbcTemplate jdbcTemplate,
             DataPermissionService dataPermissionService,
             AccountService accountService,
-            OpportunityService opportunityService) {
+            OpportunityService opportunityService,
+            ReminderService reminderService) {
         this.jdbcTemplate = jdbcTemplate;
         this.dataPermissionService = dataPermissionService;
         this.accountService = accountService;
         this.opportunityService = opportunityService;
+        this.reminderService = reminderService;
     }
 
     @Transactional
@@ -51,6 +55,12 @@ public class ActivityService {
         replaceContacts(activityId, account.id(), request.contact_ids());
         replaceParticipants(activityId, request.participants());
         replaceRiskTypes(activityId, request.risk_types());
+        reminderService.syncActivityFollowUpReminder(
+                activityId,
+                request.subject(),
+                request.owner_user_id(),
+                request.next_follow_up_at(),
+                actorUserId);
         return findById(activityId);
     }
 
@@ -172,7 +182,16 @@ public class ActivityService {
         if (request.risk_types() != null) {
             replaceRiskTypes(activityId, request.risk_types());
         }
-        return findById(activityId);
+        ActivityResponse updated = findById(activityId);
+        if (request.next_follow_up_at() != null || request.subject() != null) {
+            reminderService.syncActivityFollowUpReminder(
+                    activityId,
+                    updated.subject(),
+                    updated.owner_user_id(),
+                    updated.next_follow_up_at(),
+                    actorUserId);
+        }
+        return updated;
     }
 
     @Transactional
@@ -218,6 +237,7 @@ public class ActivityService {
                     riskDescription,
                     actorUserId);
         }
+        reminderService.completePendingActivityReminder(activityId, actorUserId);
         return findById(activityId);
     }
 
