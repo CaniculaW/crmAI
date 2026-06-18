@@ -42,9 +42,11 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node scripts/v1-deployment-config-check.mjs` | V1 deployment config check passed；Dockerfile/Compose 支持可配置基础镜像 |
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 4 tests passed |
+| `node --test scripts/v1-uat-evidence-manifest-validate.test.mjs` | 4 tests passed；覆盖完整证据清单、当前草稿 No-Go、PASS项缺证据和敏感材料拦截 |
+| `node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md` | FAIL as expected；当前证据清单仍为 No-Go |
 | `node scripts/v1-uat-readiness-check.mjs` | RC/UAT readiness check passed |
-| `node --test scripts/v1-uat-readiness-check.test.mjs` | 19 tests passed；包含UAT执行派工追踪表、tracker validator gate、聚合状态报告gate、UAT行动计划gate和Go/No-Go会议包gate |
-| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 19 tests passed；覆盖CI前端job相对路径 |
+| `node --test scripts/v1-uat-readiness-check.test.mjs` | 22 tests passed；包含UAT执行派工追踪表、UAT证据清单、tracker validator gate、聚合状态报告gate、UAT行动计划gate和Go/No-Go会议包gate |
+| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 22 tests passed；覆盖CI前端job相对路径 |
 | `node --test scripts/v1-uat-execution-tracker-validate.test.mjs` | 3 tests passed；覆盖完整 Go 追踪表、当前 No-Go 追踪表和缺失证据 |
 | `node --test scripts/v1-validation-status.test.mjs` | 2 tests passed；覆盖 No-Go 聚合状态和全量 Go 状态 |
 | `node scripts/v1-validation-status.mjs --output docs/testing/v1-validation-status.md` | 生成当前 `No-Go` 聚合状态报告 |
@@ -53,7 +55,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node --test scripts/v1-go-no-go-meeting.test.mjs` | 2 tests passed；覆盖 No-Go 会议包和全量 Go 状态 |
 | `node scripts/v1-go-no-go-meeting.mjs --output docs/testing/v1-go-no-go-meeting.md` | 生成当前 `No-Go` Go/No-Go会议包 |
 | `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md` | FAIL as expected；当前追踪表仍缺具名环境、UAT执行、P0/P1、签署和Go |
-| `node --test scripts/v1-release-gate.test.mjs` | 5 tests passed；覆盖完整 Go、readiness 失败、No-Go、Conditional Go 和 tracker 未完成 |
+| `node --test scripts/v1-release-gate.test.mjs` | 6 tests passed；覆盖完整 Go、readiness 失败、No-Go、Conditional Go、tracker 未完成和证据清单未完成 |
 | `node scripts/v1-release-gate.mjs` | FAIL as expected；当前 rc.8 草稿不是正式 Go 证据包 |
 | `node --test scripts/v1-uat-evidence-pack.test.mjs` | 4 tests passed |
 | `node scripts/v1-uat-evidence-pack.mjs ...` | 可生成不含明文密码/API Token、包含 validator 留痕区的 UAT 证据包草稿 |

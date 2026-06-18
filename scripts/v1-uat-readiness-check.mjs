@@ -17,6 +17,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-uat-evidence-pack.test.mjs",
   "scripts/v1-uat-evidence-pack-validate.mjs",
   "scripts/v1-uat-evidence-pack-validate.test.mjs",
+  "scripts/v1-uat-evidence-manifest-validate.mjs",
+  "scripts/v1-uat-evidence-manifest-validate.test.mjs",
   "scripts/v1-uat-execution-tracker-validate.mjs",
   "scripts/v1-uat-execution-tracker-validate.test.mjs",
   "scripts/v1-release-gate.mjs",
@@ -36,6 +38,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
   "docs/testing/crm-v1-uat-execution-tracker.md",
+  "docs/testing/v1-uat-evidence-manifest.md",
   "docs/testing/evidence/v1-local-uat-2026-06-18.md",
   "docs/testing/evidence/v1-compose-uat-2026-06-19.md",
   "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md",
@@ -133,6 +136,42 @@ function hasUatExecutionTracker(content) {
     && includesAll(content, requiredUatCases);
 }
 
+function hasUatEvidenceManifest(content) {
+  const requiredPreChecks = Array.from(
+    { length: 6 },
+    (_, index) => `PRE-${String(index + 1).padStart(3, "0")}`
+  );
+  const requiredSmokeChecks = Array.from(
+    { length: 5 },
+    (_, index) => `SMK-${String(index + 1).padStart(3, "0")}`
+  );
+  const requiredUatCases = Array.from(
+    { length: 10 },
+    (_, index) => `UAT-${String(index + 1).padStart(3, "0")}`
+  );
+
+  return includesAll(content, [
+    "CRM V1 UAT Evidence Manifest",
+    "v1.0.0-rc.8",
+    "Decision: No-Go",
+    "Evidence ID",
+    "Evidence reference",
+    "DEF-P0",
+    "DEF-P1",
+    "SIGNOFF-SALES",
+    "SIGNOFF-MANAGER",
+    "SIGNOFF-PRODUCT",
+    "SIGNOFF-TEST",
+    "SIGNOFF-DEV",
+    "SIGNOFF-PM",
+    "GO-NOGO",
+    "不记录明文密码",
+    "node scripts/v1-uat-evidence-manifest-validate.mjs"
+  ]) && includesAll(content, requiredPreChecks)
+    && includesAll(content, requiredSmokeChecks)
+    && includesAll(content, requiredUatCases);
+}
+
 function makeCheck(id, ok, message, severity = "fail") {
   return { id, ok, message, severity };
 }
@@ -216,6 +255,21 @@ export function evaluateReadinessSnapshot(snapshot) {
       "fails a Go evidence pack when a P0 defect remains open"
     ]),
     "UAT evidence pack validator is covered by tests and enforces Go/No-Go hard gates."
+  ));
+
+  const evidenceManifestValidator = snapshot["scripts/v1-uat-evidence-manifest-validate.mjs"] ?? "";
+  const evidenceManifestValidatorTest = snapshot["scripts/v1-uat-evidence-manifest-validate.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "uat-evidence-manifest-validator",
+    includesAll(workflow + evidenceManifestValidator + evidenceManifestValidatorTest, [
+      "node --test scripts/v1-uat-evidence-manifest-validate.test.mjs",
+      "evaluateUatEvidenceManifest",
+      "required-items",
+      "evidence-complete",
+      "no-secret-material",
+      "fails the current draft manifest because external UAT evidence is pending"
+    ]),
+    "UAT evidence manifest validator is tested and enforces evidence inventory completeness, concrete references, and secret redaction."
   ));
 
   const executionTrackerValidator = snapshot["scripts/v1-uat-execution-tracker-validate.mjs"] ?? "";
@@ -370,10 +424,17 @@ export function evaluateReadinessSnapshot(snapshot) {
     "UAT execution tracker assigns pre-checks, smoke checks, UAT-001 through UAT-010, signoffs, and final release-gate evidence."
   ));
 
+  const uatEvidenceManifest = snapshot["docs/testing/v1-uat-evidence-manifest.md"] ?? "";
+  checks.push(makeCheck(
+    "uat-evidence-manifest",
+    hasUatEvidenceManifest(uatEvidenceManifest),
+    "UAT evidence manifest inventories PRE, SMK, UAT, defect, signoff, and Go/No-Go evidence references without secrets."
+  ));
+
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-evidence-pack-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-go-no-go-meeting.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-evidence-pack-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-go-no-go-meeting.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 

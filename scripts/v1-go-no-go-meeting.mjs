@@ -7,10 +7,12 @@ import { fileURLToPath } from "node:url";
 import { evaluateV1ReleaseGate } from "./v1-release-gate.mjs";
 import { evaluateReadinessSnapshot, readSnapshot } from "./v1-uat-readiness-check.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
+import { evaluateUatEvidenceManifest } from "./v1-uat-evidence-manifest-validate.mjs";
 import { evaluateUatExecutionTracker } from "./v1-uat-execution-tracker-validate.mjs";
 
 const DEFAULT_EVIDENCE_PATH = "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md";
 const DEFAULT_TRACKER_PATH = "docs/testing/crm-v1-uat-execution-tracker.md";
+const DEFAULT_MANIFEST_PATH = "docs/testing/v1-uat-evidence-manifest.md";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-go-no-go-meeting.md";
 
 const SIGNOFF_ROLES = [
@@ -22,12 +24,17 @@ const SIGNOFF_ROLES = [
   "项目负责人"
 ];
 
-function gateCommands(evidencePath = DEFAULT_EVIDENCE_PATH, trackerPath = DEFAULT_TRACKER_PATH) {
+function gateCommands(
+  evidencePath = DEFAULT_EVIDENCE_PATH,
+  trackerPath = DEFAULT_TRACKER_PATH,
+  manifestPath = DEFAULT_MANIFEST_PATH
+) {
   return [
     `node scripts/v1-uat-readiness-check.mjs`,
     `node scripts/v1-uat-evidence-pack-validate.mjs ${evidencePath}`,
+    `node scripts/v1-uat-evidence-manifest-validate.mjs ${manifestPath}`,
     `node scripts/v1-uat-execution-tracker-validate.mjs ${trackerPath}`,
-    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath}`
+    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath}`
   ];
 }
 
@@ -43,15 +50,18 @@ export function generateV1GoNoGoMeetingMarkdown({
   generatedAt,
   readinessResult,
   evidenceResult,
+  manifestResult,
   trackerResult,
   releaseGateResult,
   evidencePath = DEFAULT_EVIDENCE_PATH,
-  trackerPath = DEFAULT_TRACKER_PATH
+  trackerPath = DEFAULT_TRACKER_PATH,
+  manifestPath = DEFAULT_MANIFEST_PATH
 }) {
   const decisionRecommendation = recommendation(releaseGateResult);
   const blockers = [
     ...failedLines("Readiness", readinessResult),
     ...failedLines("UAT Evidence Pack", evidenceResult),
+    ...failedLines("UAT Evidence Manifest", manifestResult),
     ...failedLines("UAT Execution Tracker", trackerResult),
     ...failedLines("Release Gate", releaseGateResult)
   ];
@@ -69,7 +79,7 @@ export function generateV1GoNoGoMeetingMarkdown({
     "",
     "## Required Gate Commands",
     "",
-    ...gateCommands(evidencePath, trackerPath).map((command) => `- \`${command}\``),
+    ...gateCommands(evidencePath, trackerPath, manifestPath).map((command) => `- \`${command}\``),
     "",
     "## Meeting Agenda",
     "",
@@ -102,7 +112,7 @@ export function generateV1GoNoGoMeetingMarkdown({
   }
 
   lines.push("");
-  lines.push("Note: This meeting pack organizes final approval evidence. It does not replace UAT execution, defect closure, evidence-pack validation, tracker validation, or the final release gate.");
+  lines.push("Note: This meeting pack organizes final approval evidence. It does not replace UAT execution, defect closure, evidence-pack validation, evidence-manifest validation, tracker validation, or the final release gate.");
 
   return `${lines.join("\n")}\n`;
 }
@@ -111,21 +121,30 @@ export function generateV1GoNoGoMeetingFromFiles({
   rootDir = process.cwd(),
   evidencePath = DEFAULT_EVIDENCE_PATH,
   trackerPath = DEFAULT_TRACKER_PATH,
+  manifestPath = DEFAULT_MANIFEST_PATH,
   generatedAt = new Date().toISOString()
 } = {}) {
   const readinessResult = evaluateReadinessSnapshot(readSnapshot(rootDir));
   const evidenceResult = evaluateUatEvidencePack(readFileSync(path.join(rootDir, evidencePath), "utf8"));
   const trackerResult = evaluateUatExecutionTracker(readFileSync(path.join(rootDir, trackerPath), "utf8"));
-  const releaseGateResult = evaluateV1ReleaseGate({ readinessResult, uatEvidenceResult: evidenceResult, trackerResult });
+  const manifestResult = evaluateUatEvidenceManifest(readFileSync(path.join(rootDir, manifestPath), "utf8"));
+  const releaseGateResult = evaluateV1ReleaseGate({
+    readinessResult,
+    uatEvidenceResult: evidenceResult,
+    trackerResult,
+    evidenceManifestResult: manifestResult
+  });
 
   return generateV1GoNoGoMeetingMarkdown({
     generatedAt,
     readinessResult,
     evidenceResult,
+    manifestResult,
     trackerResult,
     releaseGateResult,
     evidencePath,
-    trackerPath
+    trackerPath,
+    manifestPath
   });
 }
 
@@ -134,6 +153,7 @@ function parseArgs(argv) {
     rootDir: process.cwd(),
     evidencePath: DEFAULT_EVIDENCE_PATH,
     trackerPath: DEFAULT_TRACKER_PATH,
+    manifestPath: DEFAULT_MANIFEST_PATH,
     outputPath: null
   };
 
@@ -147,6 +167,9 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--tracker") {
       parsed.trackerPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--manifest") {
+      parsed.manifestPath = argv[index + 1];
       index += 1;
     } else if (arg === "--output") {
       parsed.outputPath = argv[index + 1] ?? DEFAULT_OUTPUT_PATH;
