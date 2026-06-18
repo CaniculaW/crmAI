@@ -32,6 +32,7 @@ import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from "react
 import {
   type Account,
   type Activity,
+  type AuditLog,
   type Contact as CrmContact,
   type CurrentUser,
   type DictionaryType,
@@ -64,7 +65,7 @@ const navItems: NavItem[] = [
   { key: "/opportunities", label: "商机", icon: <BriefcaseBusiness size={18} />, permission: "opportunity.read" },
   { key: "/activities", label: "销售行动", icon: <CalendarCheck size={18} />, permission: "activity.read" },
   { key: "/weekly-progress", label: "周进展", icon: <BarChart3 size={18} />, permission: "weekly_progress.read" },
-  { key: "/system", label: "系统管理", icon: <ShieldCheck size={18} /> }
+  { key: "/system", label: "系统管理", icon: <ShieldCheck size={18} />, permission: "system.dict.manage" }
 ];
 
 type SelectOption = {
@@ -1075,6 +1076,7 @@ function WeeklyProgressPage() {
 
 function SystemPage() {
   const dictionaries = useResource(crmApi.dictionaries.list, []);
+  const auditLogs = useResource(() => crmApi.auditLogs.list({ limit: 20 }), []);
   const [typeOpen, setTypeOpen] = useState(false);
   const [itemTarget, setItemTarget] = useState<DictionaryType | null>(null);
   const [editingItem, setEditingItem] = useState<DictionaryType["items"][number] | null>(null);
@@ -1116,6 +1118,16 @@ function SystemPage() {
     resetForm.resetFields();
     setResetOpen(false);
   };
+
+  const auditColumns: ColumnsType<AuditLog> = [
+    { title: "时间", dataIndex: "occurred_at", render: dateText },
+    { title: "模块", dataIndex: "module_code" },
+    { title: "动作", dataIndex: "action_code" },
+    { title: "对象", render: (_, record) => `${record.object_type ?? "-"} #${record.object_id ?? "-"}` },
+    { title: "操作人", dataIndex: "actor_user_id", render: textOrDash },
+    { title: "结果", dataIndex: "result", render: statusTag },
+    { title: "Trace", dataIndex: "trace_id", render: textOrDash }
+  ];
 
   return (
     <DataWorkspace
@@ -1162,6 +1174,17 @@ function SystemPage() {
           </Card>
         ))}
       </div>
+      <Card className="section-card" size="small" title="最近审计日志">
+        {auditLogs.error ? <div className="error-banner">{auditLogs.error}</div> : null}
+        <Table
+          rowKey="id"
+          size="small"
+          loading={auditLogs.loading}
+          dataSource={auditLogs.data}
+          columns={auditColumns}
+          pagination={{ pageSize: 8 }}
+        />
+      </Card>
       <Modal title="新建字典" open={typeOpen} onCancel={() => setTypeOpen(false)} footer={null}>
         <Form form={typeForm} layout="vertical" onFinish={createType}>
           <Form.Item name="dict_code" label="字典编码" rules={[{ required: true }]}>

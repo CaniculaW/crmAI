@@ -181,6 +181,10 @@ body {
   gap: 14px;
 }
 
+.section-card {
+  margin-top: 16px;
+}
+
 .filter-bar {
   gap: 12px 8px;
   align-items: flex-end;

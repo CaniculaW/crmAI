@@ -140,6 +140,18 @@ export type DictionaryType = {
   items: Array<{ id: number; item_code: string; item_name: string; is_active: boolean }>;
 };
 
+export type AuditLog = {
+  id: number;
+  actor_user_id?: number;
+  module_code: string;
+  action_code: string;
+  object_type?: string;
+  object_id?: number;
+  result: string;
+  trace_id?: string;
+  occurred_at: string;
+};
+
 function withQuery(path: string, query?: QueryParams) {
   if (!query) {
     return path;
@@ -250,5 +262,8 @@ export const crmApi = {
         method: "PATCH",
         body: JSON.stringify(body)
       })
+  },
+  auditLogs: {
+    list: (query?: QueryParams) => requestJson<AuditLog[]>(withQuery("/api/system/audit-logs", query))
   }
 };

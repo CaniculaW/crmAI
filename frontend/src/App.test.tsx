@@ -18,7 +18,10 @@ const apiData = {
       "activity.create",
       "activity.complete",
       "reminder.read",
-      "weekly_progress.read"
+      "weekly_progress.read",
+      "system.audit.read",
+      "system.dict.manage",
+      "system.user.manage"
     ]
   },
   accounts: [
@@ -54,6 +57,19 @@ const apiData = {
       dict_code: "account_level",
       dict_name: "客户等级",
       items: [{ id: 9001, item_code: "A", item_name: "A级", is_active: true }]
+    }
+  ],
+  auditLogs: [
+    {
+      id: 7001,
+      actor_user_id: 1001,
+      module_code: "account",
+      action_code: "account.create",
+      object_type: "crm_account",
+      object_id: 1,
+      result: "success",
+      trace_id: "trace-001",
+      occurred_at: "2026-06-18T10:00:00+08:00"
     }
   ]
 };
@@ -204,6 +220,7 @@ describe("CRM frontend V1 workflow", () => {
 
     await user.click(screen.getByRole("link", { name: "系统管理" }));
     expect(await screen.findByText("客户等级 (account_level)")).toBeInTheDocument();
+    expect(await screen.findByText("account.create")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "新建字典" }));
     await user.type(screen.getByLabelText("字典编码"), "risk_level");
     await user.type(screen.getByLabelText("字典名称"), "风险等级");
@@ -274,6 +291,9 @@ function mockCrmFetch() {
     }
     if (path.endsWith("/api/system/dicts")) {
       return jsonResponse({ code: "OK", data: apiData.dictionaries });
+    }
+    if (path.endsWith("/api/system/audit-logs")) {
+      return jsonResponse({ code: "OK", data: apiData.auditLogs });
     }
     if (path.endsWith("/api/system/dicts/types") && method === "POST") {
       return jsonResponse({ code: "OK", data: { id: 502, dict_code: "risk_level", dict_name: "风险等级", items: [] } });

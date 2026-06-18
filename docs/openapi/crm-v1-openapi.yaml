@@ -147,6 +147,41 @@ paths:
       responses:
         '200':
           description: Dictionary item.
+  /api/system/audit-logs:
+    get:
+      tags: [System]
+      summary: List audit logs
+      parameters:
+        - name: module_code
+          in: query
+          schema:
+            type: string
+        - name: action_code
+          in: query
+          schema:
+            type: string
+        - name: object_type
+          in: query
+          schema:
+            type: string
+        - name: object_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: actor_user_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Audit log list.
   /api/accounts:
     get:
       tags: [Accounts]
