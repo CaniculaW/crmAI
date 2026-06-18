@@ -21,14 +21,14 @@ V1 当前代码分支已通过自动化验证、本地 PostgreSQL 部署态 API 
 
 | 命令 | 结果 |
 |---|---|
-| `mvn test` | 53 tests passed |
-| `mvn verify -Ppostgres-it` | 53 surefire tests passed；1 PostgreSQL integration test passed |
+| `mvn test` | 56 tests passed |
+| `mvn verify -Ppostgres-it` | 56 surefire tests passed；1 PostgreSQL integration test passed |
 | `mvn -Dtest=IdentityAdminControllerTest test` | 5 tests passed |
 | `mvn -Dtest=OpenApiContractCoverageTest test` | 1 test passed |
 | `mvn -Dtest=V1DemoDataSeederTest test` | 1 test passed |
-| `npm test` | 12 tests passed |
+| `npm test` | 16 tests passed |
 | `npm run build` | Build succeeded；保留 antd vendor chunk 体积提示 |
-| 本地浏览器Smoke | `http://127.0.0.1:5175/system` 登录后展示 `V1演示销售部`、`V1演示管理员`、`v1_demo_admin`；console 0 warning/error |
+| `npm run smoke:v1:browser` | `http://127.0.0.1:5175/system` 登录后展示 `V1演示销售部`、`V1演示管理员`、`v1_demo_admin`；console 0 warning/error |
 | 本地API Smoke | `POST /api/auth/login` + `GET /api/bootstrap` 返回 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25） |
 
 ## 4. 已验证的V1核心链路

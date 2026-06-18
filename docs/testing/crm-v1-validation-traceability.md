@@ -42,12 +42,12 @@
 
 | 命令 | 覆盖目的 | 最近结果 |
 |---|---|---|
-| `mvn test` | 后端单元、接口集成、核心闭环、OpenAPI 覆盖 | 53 tests passed |
-| `mvn verify -Ppostgres-it` | 后端全量测试、打包、PostgreSQL 迁移集成 | 53 surefire tests passed；1 PostgreSQL IT passed |
-| `npm test` | 前端登录、权限菜单、系统管理、CRM页面基础交互 | 12 tests passed |
+| `mvn test` | 后端单元、接口集成、核心闭环、OpenAPI 覆盖 | 56 tests passed |
+| `mvn verify -Ppostgres-it` | 后端全量测试、打包、PostgreSQL 迁移集成 | 56 surefire tests passed；1 PostgreSQL IT passed |
+| `npm test` | 前端登录、权限菜单、系统管理、CRM页面基础交互、浏览器Smoke脚本辅助逻辑 | 16 tests passed |
 | `npm run build` | TypeScript 编译与 Vite 生产构建 | Build succeeded |
 | 本地 API Smoke | 演示账号登录和 `/api/bootstrap` 部署态探针 | HTTP 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25） |
-| 本地浏览器 Smoke | 登录后系统管理页展示演示组织、用户、角色 | console 0 warning/error |
+| `npm run smoke:v1:browser` | 登录后系统管理页展示演示组织、用户、角色 | console 0 warning/error |
 
 ## 4. 不应由研发侧伪造的完成项
 

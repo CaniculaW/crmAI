@@ -39,6 +39,13 @@ cd frontend
 npm run build
 ```
 
+V1 本地浏览器冒烟（需先启动后端和 Vite，并启用 V1 demo seed）：
+
+```bash
+cd frontend
+npm run smoke:v1:browser
+```
+
 本地启动：
 
 ```bash
