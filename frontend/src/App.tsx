@@ -34,13 +34,16 @@ import {
   type Activity,
   type Contact as CrmContact,
   type CurrentUser,
+  type DictionaryType,
   type Opportunity,
   type Reminder,
   type WeeklyProgress,
+  changePassword,
   crmApi,
   currentUser,
   login as loginApi,
-  logout as logoutApi
+  logout as logoutApi,
+  resetPassword
 } from "./api/crm";
 import { getAuthToken } from "./api/client";
 import "./styles.css";
@@ -81,7 +84,9 @@ function CrmShell() {
   const location = useLocation();
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+  const [passwordForm] = Form.useForm();
 
   const restoreSession = useCallback(async () => {
     if (!getAuthToken()) {
@@ -111,6 +116,13 @@ function CrmShell() {
     await logoutApi();
     setUser(null);
     messageApi.info("已退出");
+  };
+
+  const handleChangePassword = async (values: Record<string, unknown>) => {
+    await changePassword(values);
+    passwordForm.resetFields();
+    setPasswordOpen(false);
+    messageApi.success("密码已修改");
   };
 
   if (loadingSession) {
@@ -157,6 +169,9 @@ function CrmShell() {
           </div>
           <div className="header-actions">
             <Tag color="blue">{user.permissions.length} 个权限点</Tag>
+            <Button aria-label="修改密码" onClick={() => setPasswordOpen(true)}>
+              修改密码
+            </Button>
             <Button aria-label="退出" onClick={handleLogout}>
               退出
             </Button>
@@ -175,6 +190,19 @@ function CrmShell() {
           </Routes>
         </Content>
       </Layout>
+      <Modal title="修改密码" open={passwordOpen} onCancel={() => setPasswordOpen(false)} footer={null}>
+        <Form form={passwordForm} layout="vertical" onFinish={handleChangePassword}>
+          <Form.Item name="old_password" label="原密码" rules={[{ required: true }]}>
+            <Input.Password autoComplete="current-password" />
+          </Form.Item>
+          <Form.Item name="new_password" label="新密码" rules={[{ required: true }]}>
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            保存密码
+          </Button>
+        </Form>
+      </Modal>
     </Layout>
   );
 }
@@ -1047,20 +1075,86 @@ function WeeklyProgressPage() {
 
 function SystemPage() {
   const dictionaries = useResource(crmApi.dictionaries.list, []);
+  const [typeOpen, setTypeOpen] = useState(false);
+  const [itemTarget, setItemTarget] = useState<DictionaryType | null>(null);
+  const [editingItem, setEditingItem] = useState<DictionaryType["items"][number] | null>(null);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [typeForm] = Form.useForm();
+  const [itemForm] = Form.useForm();
+  const [itemEditForm] = Form.useForm();
+  const [resetForm] = Form.useForm();
+
+  const createType = async (values: Record<string, unknown>) => {
+    await crmApi.dictionaries.createType(values);
+    typeForm.resetFields();
+    setTypeOpen(false);
+    await dictionaries.refresh();
+  };
+
+  const createItem = async (values: Record<string, unknown>) => {
+    if (!itemTarget) {
+      return;
+    }
+    await crmApi.dictionaries.createItem(itemTarget.id, values);
+    itemForm.resetFields();
+    setItemTarget(null);
+    await dictionaries.refresh();
+  };
+
+  const updateItem = async (values: Record<string, unknown>) => {
+    if (!editingItem) {
+      return;
+    }
+    await crmApi.dictionaries.updateItem(editingItem.id, values);
+    itemEditForm.resetFields();
+    setEditingItem(null);
+    await dictionaries.refresh();
+  };
+
+  const resetUserPassword = async (values: Record<string, unknown>) => {
+    await resetPassword(values);
+    resetForm.resetFields();
+    setResetOpen(false);
+  };
+
   return (
     <DataWorkspace
       title="系统管理"
-      description="V1 当前接入字典配置查询，用户、组织、角色权限页面继续沿用后端权限模型推进。"
+      description="V1 当前接入字典配置维护和管理员重置密码，用户、组织、角色权限继续沿用后端权限模型推进。"
       loading={dictionaries.loading}
       error={dictionaries.error}
       refresh={dictionaries.refresh}
+      action={
+        <Space>
+          <Button icon={<Plus size={16} />} onClick={() => setTypeOpen(true)}>
+            新建字典
+          </Button>
+          <Button onClick={() => setResetOpen(true)}>重置密码</Button>
+        </Space>
+      }
     >
       <div className="dictionary-grid">
         {dictionaries.data.map((dict) => (
-          <Card key={dict.id} size="small" title={`${dict.dict_name} (${dict.dict_code})`}>
+          <Card
+            key={dict.id}
+            size="small"
+            title={`${dict.dict_name} (${dict.dict_code})`}
+            extra={
+              <Button size="small" onClick={() => setItemTarget(dict)}>
+                新增项
+              </Button>
+            }
+          >
             <Space wrap>
               {dict.items.map((item) => (
-                <Tag key={item.id} color={item.is_active ? "blue" : "default"}>
+                <Tag
+                  key={item.id}
+                  color={item.is_active ? "blue" : "default"}
+                  onClick={() => {
+                    setEditingItem(item);
+                    itemEditForm.setFieldsValue(item);
+                  }}
+                >
                   {item.item_name}
                 </Tag>
               ))}
@@ -1068,6 +1162,67 @@ function SystemPage() {
           </Card>
         ))}
       </div>
+      <Modal title="新建字典" open={typeOpen} onCancel={() => setTypeOpen(false)} footer={null}>
+        <Form form={typeForm} layout="vertical" onFinish={createType}>
+          <Form.Item name="dict_code" label="字典编码" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="dict_name" label="字典名称" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="description" label="说明">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            保存字典
+          </Button>
+        </Form>
+      </Modal>
+      <Modal title={`新增字典项${itemTarget ? `：${itemTarget.dict_name}` : ""}`} open={!!itemTarget} onCancel={() => setItemTarget(null)} footer={null}>
+        <Form form={itemForm} layout="vertical" onFinish={createItem}>
+          <Form.Item name="item_code" label="项编码" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="item_name" label="项名称" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="sort_order" label="排序">
+            <InputNumber className="full-width" min={0} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            保存字典项
+          </Button>
+        </Form>
+      </Modal>
+      <Modal title="编辑字典项" open={!!editingItem} onCancel={() => setEditingItem(null)} footer={null}>
+        <Form form={itemEditForm} layout="vertical" onFinish={updateItem}>
+          <Form.Item name="item_name" label="项名称" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="sort_order" label="排序">
+            <InputNumber className="full-width" min={0} />
+          </Form.Item>
+          <Form.Item name="is_active" label="是否启用">
+            <Select options={[{ label: "启用", value: true }, { label: "停用", value: false }]} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            保存字典项
+          </Button>
+        </Form>
+      </Modal>
+      <Modal title="管理员重置密码" open={resetOpen} onCancel={() => setResetOpen(false)} footer={null}>
+        <Form form={resetForm} layout="vertical" onFinish={resetUserPassword}>
+          <Form.Item name="user_id" label="用户ID" rules={[{ required: true }]}>
+            <InputNumber className="full-width" min={1} />
+          </Form.Item>
+          <Form.Item name="new_password" label="新密码" rules={[{ required: true }]}>
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            重置密码
+          </Button>
+        </Form>
+      </Modal>
     </DataWorkspace>
   );
 }

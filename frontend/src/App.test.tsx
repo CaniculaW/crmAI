@@ -48,7 +48,14 @@ const apiData = {
   activities: [],
   reminders: [],
   weeklyProgress: [],
-  dictionaries: []
+  dictionaries: [
+    {
+      id: 501,
+      dict_code: "account_level",
+      dict_name: "客户等级",
+      items: [{ id: 9001, item_code: "A", item_name: "A级", is_active: true }]
+    }
+  ]
 };
 
 describe("CRM frontend V1 workflow", () => {
@@ -164,6 +171,54 @@ describe("CRM frontend V1 workflow", () => {
       );
     });
   });
+
+  it("changes the current user's password", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("button", { name: "修改密码" }));
+    await user.type(screen.getByLabelText("原密码"), "Old!23456");
+    await user.type(screen.getByLabelText("新密码"), "New!23456");
+    await user.click(screen.getByRole("button", { name: "保存密码" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/auth/change-password",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("New!23456")
+        })
+      );
+    });
+  });
+
+  it("creates a dictionary type from system management", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "系统管理" }));
+    expect(await screen.findByText("客户等级 (account_level)")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "新建字典" }));
+    await user.type(screen.getByLabelText("字典编码"), "risk_level");
+    await user.type(screen.getByLabelText("字典名称"), "风险等级");
+    await user.click(screen.getByRole("button", { name: "保存字典" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/system/dicts/types",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("risk_level")
+        })
+      );
+    });
+  });
 });
 
 async function loginThroughUi(user: ReturnType<typeof userEvent.setup>) {
@@ -186,6 +241,12 @@ function mockCrmFetch() {
     }
     if (path.endsWith("/api/auth/me")) {
       return jsonResponse({ code: "OK", data: apiData.user });
+    }
+    if (path.endsWith("/api/auth/change-password")) {
+      return jsonResponse({ code: "OK", data: { password_changed: true } });
+    }
+    if (path.endsWith("/api/auth/reset-password")) {
+      return jsonResponse({ code: "OK", data: { force_password_change: true } });
     }
     if (path.endsWith("/api/accounts/1") && method === "PATCH") {
       return jsonResponse({ code: "OK", data: { ...apiData.accounts[0], remark: "重点推进" } });
@@ -213,6 +274,15 @@ function mockCrmFetch() {
     }
     if (path.endsWith("/api/system/dicts")) {
       return jsonResponse({ code: "OK", data: apiData.dictionaries });
+    }
+    if (path.endsWith("/api/system/dicts/types") && method === "POST") {
+      return jsonResponse({ code: "OK", data: { id: 502, dict_code: "risk_level", dict_name: "风险等级", items: [] } });
+    }
+    if (path.includes("/api/system/dicts/types/") && path.endsWith("/items") && method === "POST") {
+      return jsonResponse({ code: "OK", data: apiData.dictionaries[0] });
+    }
+    if (path.includes("/api/system/dicts/items/") && method === "PATCH") {
+      return jsonResponse({ code: "OK", data: apiData.dictionaries[0] });
     }
     return jsonResponse({ code: "NOT_FOUND", message: "not found" }, 404);
   });

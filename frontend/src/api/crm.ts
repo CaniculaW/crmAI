@@ -175,6 +175,20 @@ export function currentUser() {
   return requestJson<CurrentUser>("/api/auth/me");
 }
 
+export function changePassword(body: Record<string, unknown>) {
+  return requestJson<{ password_changed: boolean }>("/api/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify(body)
+  });
+}
+
+export function resetPassword(body: Record<string, unknown>) {
+  return requestJson<{ force_password_change: boolean }>("/api/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(body)
+  });
+}
+
 export const crmApi = {
   accounts: {
     list: (query?: QueryParams) => requestJson<Account[]>(withQuery("/api/accounts", query)),
@@ -223,6 +237,18 @@ export const crmApi = {
     list: (query?: QueryParams) => requestJson<WeeklyProgress[]>(withQuery("/api/weekly-progress/opportunities", query))
   },
   dictionaries: {
-    list: (query?: QueryParams) => requestJson<DictionaryType[]>(withQuery("/api/system/dicts", query))
+    list: (query?: QueryParams) => requestJson<DictionaryType[]>(withQuery("/api/system/dicts", query)),
+    createType: (body: Record<string, unknown>) =>
+      requestJson<DictionaryType>("/api/system/dicts/types", { method: "POST", body: JSON.stringify(body) }),
+    createItem: (dictTypeId: number, body: Record<string, unknown>) =>
+      requestJson<DictionaryType>(`/api/system/dicts/types/${dictTypeId}/items`, {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    updateItem: (itemId: number, body: Record<string, unknown>) =>
+      requestJson<DictionaryType>(`/api/system/dicts/items/${itemId}`, {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      })
   }
 };
