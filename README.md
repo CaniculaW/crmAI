@@ -49,6 +49,14 @@ http://127.0.0.1:5174/
 
 详细说明见 `docs/deployment/v1-test-environment-compose.md`。
 
+## V1 候选版本
+
+当前候选版本记录：
+
+```text
+docs/releases/v1.0.0-rc.1.md
+```
+
 ## 后端
 
 后端工程位于 `backend/`，当前采用 Java 17 + Spring Boot + Maven。
