@@ -40,6 +40,23 @@ jobs:
   "docs/testing/crm-v1-validation-traceability.md": "研发验证通过\n若目标口径是“项目 V1 验收通过”，仍需完成具名测试环境验证和业务验收签署。\n",
   "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\n",
   "docs/testing/crm-v1-uat-evidence-pack-template.md": "Go/No-Go\n签署\n缺陷\n",
+  "docs/testing/crm-v1-uat-execution-tracker.md": `CRM V1 UAT执行派工与证据追踪表
+v1.0.0-rc.8
+${Array.from({ length: 6 }, (_, index) => `PRE-${String(index + 1).padStart(3, "0")}`).join("\n")}
+${Array.from({ length: 5 }, (_, index) => `SMK-${String(index + 1).padStart(3, "0")}`).join("\n")}
+${Array.from({ length: 10 }, (_, index) => `UAT-${String(index + 1).padStart(3, "0")}`).join("\n")}
+销售侧验收人
+管理侧验收人
+产品负责人
+测试负责人
+研发负责人
+项目负责人
+node scripts/v1-uat-evidence-pack-validate.mjs
+node scripts/v1-release-gate.mjs
+crm-v1-uat-evidence-pack-rc8-draft.md
+No-Go
+具名测试环境待确认
+`,
   "docs/testing/evidence/v1-local-uat-2026-06-18.md": "V1-local-uat-20260618\nv1.0.0-rc.8\nFlyway\n14\n/api/health\n/api/bootstrap\nBrowser Use URL policy\nUAT evidence pack validator\nV1演示业务数据\n\"accounts\": 1\n\"contacts\": 1\n\"opportunities\": 1\n\"activities\": 1\n",
   "docs/testing/evidence/v1-compose-uat-2026-06-19.md": "V1-compose-uat-20260619\nv1.0.0-rc.8\n8e9efba2ea50bfe32304ec488cde72ee5262f86b\ndocker.1ms.run/library/postgres:16\nCRM_BACKEND_BUILD_IMAGE=docker.1ms.run/library/maven:3.9-eclipse-temurin-17\nCRM_BACKEND_RUNTIME_IMAGE=docker.1ms.run/library/eclipse-temurin:17-jre\nCRM_FRONTEND_BUILD_IMAGE=docker.1ms.run/library/node:22-alpine\nCRM_FRONTEND_RUNTIME_IMAGE=docker.1ms.run/library/nginx:1.27-alpine\ndocker compose -f compose.v1-test.yml up -d --build\ncrm-ai-v1-test-db-1\ncrm-ai-v1-test-backend-1\ncrm-ai-v1-test-frontend-1\n/api/health\n\"status\":\"UP\"\n/api/bootstrap\n\"permissions_count\":25\n\"accounts\":1\n\"contacts\":1\n\"opportunities\":1\n\"activities\":1\nnpm run smoke:v1:browser\nv1-rc8-compose-browser-smoke-20260619.png\n",
   "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md": "v1.0.0-rc.8\n0c9db47b0df8a0b05e63b66bdaa09f46222d9f0c\n27776171025\nNo-Go\nFAIL\n具名测试环境\nUAT-001\nUAT-010\nP0/P1缺陷汇总未填写\n销售侧、管理侧、产品、测试、研发和项目负责人签署未完成\n不能作为 `Go` 准出记录\n",
@@ -190,6 +207,28 @@ test("fails when the final V1 release gate is missing from readiness materials",
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "v1-release-gate"));
+});
+
+test("fails when the UAT execution tracker is missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["docs/testing/crm-v1-uat-execution-tracker.md"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the UAT execution tracker omits external UAT tasks or signoff roles", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "docs/testing/crm-v1-uat-execution-tracker.md": "CRM V1 UAT执行派工与证据追踪表\nv1.0.0-rc.8\nPRE-001\nUAT-001\n"
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-execution-tracker"));
 });
 
 test("fails when the rc8 UAT handoff draft does not preserve No-Go blockers", () => {

@@ -107,6 +107,12 @@ UAT 证据包填写后校验：
 node scripts/v1-uat-evidence-pack-validate.mjs <crm-v1-uat-evidence-pack.md>
 ```
 
+UAT 执行派工与证据追踪：
+
+```text
+docs/testing/crm-v1-uat-execution-tracker.md
+```
+
 V1 最终放行门禁：
 
 ```bash

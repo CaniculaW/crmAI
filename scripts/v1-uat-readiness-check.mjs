@@ -24,6 +24,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
+  "docs/testing/crm-v1-uat-execution-tracker.md",
   "docs/testing/evidence/v1-local-uat-2026-06-18.md",
   "docs/testing/evidence/v1-compose-uat-2026-06-19.md",
   "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md",
@@ -86,6 +87,39 @@ function hasComposeDeploymentEvidence(content) {
     "npm run smoke:v1:browser",
     "v1-rc8-compose-browser-smoke-20260619.png"
   ]);
+}
+
+function hasUatExecutionTracker(content) {
+  const requiredPreChecks = Array.from(
+    { length: 6 },
+    (_, index) => `PRE-${String(index + 1).padStart(3, "0")}`
+  );
+  const requiredSmokeChecks = Array.from(
+    { length: 5 },
+    (_, index) => `SMK-${String(index + 1).padStart(3, "0")}`
+  );
+  const requiredUatCases = Array.from(
+    { length: 10 },
+    (_, index) => `UAT-${String(index + 1).padStart(3, "0")}`
+  );
+
+  return includesAll(content, [
+    "CRM V1 UAT执行派工与证据追踪表",
+    "v1.0.0-rc.8",
+    "具名测试环境待确认",
+    "crm-v1-uat-evidence-pack-rc8-draft.md",
+    "node scripts/v1-uat-evidence-pack-validate.mjs",
+    "node scripts/v1-release-gate.mjs",
+    "No-Go",
+    "销售侧验收人",
+    "管理侧验收人",
+    "产品负责人",
+    "测试负责人",
+    "研发负责人",
+    "项目负责人"
+  ]) && includesAll(content, requiredPreChecks)
+    && includesAll(content, requiredSmokeChecks)
+    && includesAll(content, requiredUatCases);
 }
 
 function makeCheck(id, ok, message, severity = "fail") {
@@ -257,6 +291,13 @@ export function evaluateReadinessSnapshot(snapshot) {
     "uat-execution-materials",
     includesAll(uatTemplate + runbook, ["Go/No-Go", "签署", "证据"]),
     "UAT runbook and evidence template include evidence, signature, and Go/No-Go sections."
+  ));
+
+  const uatExecutionTracker = snapshot["docs/testing/crm-v1-uat-execution-tracker.md"] ?? "";
+  checks.push(makeCheck(
+    "uat-execution-tracker",
+    hasUatExecutionTracker(uatExecutionTracker),
+    "UAT execution tracker assigns pre-checks, smoke checks, UAT-001 through UAT-010, signoffs, and final release-gate evidence."
   ));
 
   const readme = snapshot["README.md"] ?? "";

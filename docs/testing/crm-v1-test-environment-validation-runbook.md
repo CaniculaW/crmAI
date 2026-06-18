@@ -13,6 +13,7 @@
 配套模板：
 
 - `docs/testing/crm-v1-uat-evidence-pack-template.md`：用于汇总验收证据、缺陷状态、Go/No-Go 判定和签署记录。
+- `docs/testing/crm-v1-uat-execution-tracker.md`：用于把 PRE、SMK、UAT-001 至 UAT-010、缺陷和签署逐项派工、追踪和归档。
 - `scripts/v1-uat-evidence-pack.mjs`：用于按具名测试环境参数生成 UAT 证据包草稿，不写入明文密码或 API Token。
 - `scripts/v1-uat-evidence-pack-validate.mjs`：用于在证据包填写完成后校验 Go/No-Go 条件、P0/P1 缺陷和签署是否一致。
 - `scripts/v1-deployment-config-check.mjs`：用于确认 Compose、Dockerfile 和部署手册支持企业镜像代理或内网镜像仓库覆盖基础镜像。
@@ -176,6 +177,8 @@ v1-uat-evidence/
     defect-summary.md
     go-no-go.md
 ```
+
+执行派工和逐项状态先维护在 `docs/testing/crm-v1-uat-execution-tracker.md`，正式证据包只收敛最终结果、缺陷状态和签署记录。
 
 ## 6. 准出判定
 
