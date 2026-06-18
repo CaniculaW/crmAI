@@ -135,8 +135,23 @@ class PostgresMigrationIT {
                   and table_name = 'v_opportunity_weekly_progress'
                 """,
                 Integer.class);
+        Integer attachmentTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name = 'crm_attachments'
+                """,
+                Integer.class);
+        Integer attachmentPermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in ('attachment.read', 'attachment.create', 'attachment.delete')
+                """,
+                Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("12");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("13");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -150,6 +165,8 @@ class PostgresMigrationIT {
         assertThat(activityTableCount).isEqualTo(4);
         assertThat(activityUpdatePermissionCount).isEqualTo(2);
         assertThat(weeklyProgressViewCount).isEqualTo(1);
+        assertThat(attachmentTableCount).isEqualTo(1);
+        assertThat(attachmentPermissionCount).isEqualTo(3);
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type

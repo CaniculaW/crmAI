@@ -317,19 +317,17 @@
 
 当前周进展基线已落地：`v_opportunity_weekly_progress` 从已完成、已关联商机且进入周进展的销售行动按自然周聚合；`GET /api/weekly-progress/opportunities` 支持按商机、负责人、客户、自然周/月度和风险过滤；`GET /api/opportunities/{id}/weekly-progress` 返回单商机周进展，响应保留同周多条行动明细。周进展不写入商机主表。
 
-## 9. 附件与提醒API预留
-
-V1如开发资源允许，建议补充：
+## 9. 附件与提醒API
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| GET | /api/attachments | 按对象查询附件 |
-| POST | /api/attachments | 创建附件元数据或获取上传凭证 |
+| GET | /api/attachments | 按对象查询附件元数据 |
+| POST | /api/attachments | 创建附件元数据 |
 | DELETE | /api/attachments/{id} | 删除附件元数据 |
 | GET | /api/reminders | 我的提醒 |
 | PATCH | /api/reminders/{id} | 完成或取消提醒 |
 
-待确认：文件上传链路、附件下载审计、提醒通知方式。
+当前附件元数据基线已落地：`crm_attachments` 统一保存 `object_type + object_id`、文件名、文件地址/对象Key、类型、大小、MIME、上传人和上传时间；支持 account、contact、opportunity、activity 四类 V1 对象；写入、查询、删除均先校验业务对象访问权限。真实文件上传链路、下载审计和提醒通知方式待后续确认。
 
 ## 10. 待确认项
 

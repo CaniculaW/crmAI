@@ -101,9 +101,23 @@ class DatabaseMigrationTest {
                 where table_name = 'v_opportunity_weekly_progress'
                 """,
                 Integer.class);
+        Integer attachmentTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name = 'crm_attachments'
+                """,
+                Integer.class);
+        Integer attachmentPermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in ('attachment.read', 'attachment.create', 'attachment.delete')
+                """,
+                Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(12);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(13);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -115,5 +129,7 @@ class DatabaseMigrationTest {
         assertThat(activityTableCount).isEqualTo(4);
         assertThat(activityUpdatePermissionCount).isEqualTo(2);
         assertThat(weeklyProgressViewCount).isEqualTo(1);
+        assertThat(attachmentTableCount).isEqualTo(1);
+        assertThat(attachmentPermissionCount).isEqualTo(3);
     }
 }

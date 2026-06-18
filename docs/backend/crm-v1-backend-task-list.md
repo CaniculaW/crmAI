@@ -56,6 +56,7 @@
 | BE-014 | 已完成 | 销售行动表与联系人、参与人、风险类型关联表迁移，行动新增/详情/列表/客户下列表/商机下列表/编辑接口，行动数据权限与审计 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
 | BE-015 | 已完成 | 行动完成接口、完成时间/完成人写入、客户与商机最近跟进回写、风险行动升级商机风险状态、完成审计 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
 | BE-016 | 已完成 | 周进展聚合视图、按商机/负责人/客户/自然周查询接口、单商机周进展接口、同周行动明细保留 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
+| BE-017 | 已完成 | 通用附件元数据表、附件新增/按对象查询/逻辑删除接口、对象访问权限校验、附件操作审计 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` |
 
 ## 3. 模块验收口径
 
