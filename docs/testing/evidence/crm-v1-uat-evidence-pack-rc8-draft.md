@@ -134,13 +134,17 @@ Decision: No-Go。
 最终 V1 放行门禁：
 
 ```bash
-node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md
+node scripts/v1-release-gate.mjs . \
+  docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md \
+  docs/testing/crm-v1-uat-execution-tracker.md \
+  docs/testing/v1-uat-evidence-manifest.md \
+  docs/testing/v1-uat-defect-register.md
 ```
 
 ```text
 实测结果：FAIL。
 Decision: No-Go。
-失败项：当前证据包未通过正式 UAT validator，UAT执行追踪表和证据清单仍未完成，且项目决策不是 Go。该结果符合草稿态预期。
+失败项：当前证据包未通过正式 UAT validator，UAT执行追踪表、证据清单和缺陷台账仍未完成，且项目决策不是 Go。该结果符合草稿态预期。
 ```
 
 ## 8. 签署

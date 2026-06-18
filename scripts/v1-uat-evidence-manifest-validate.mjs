@@ -7,6 +7,7 @@ const REQUIRED_EVIDENCE_IDS = [
   ...Array.from({ length: 6 }, (_, index) => `PRE-${String(index + 1).padStart(3, "0")}`),
   ...Array.from({ length: 5 }, (_, index) => `SMK-${String(index + 1).padStart(3, "0")}`),
   ...Array.from({ length: 10 }, (_, index) => `UAT-${String(index + 1).padStart(3, "0")}`),
+  "DEF-REGISTER",
   "DEF-P0",
   "DEF-P1",
   "SIGNOFF-SALES",

@@ -34,6 +34,16 @@ const failingManifestResult = {
   failed: [{ id: "evidence-complete" }, { id: "go-decision" }]
 };
 
+const passingDefectRegisterResult = {
+  ok: true,
+  failed: []
+};
+
+const failingDefectRegisterResult = {
+  ok: false,
+  failed: [{ id: "p0-p1-summary" }, { id: "go-decision" }]
+};
+
 function goEvidencePack(decision = "Go") {
   const projectDecision = decision === "Conditional Go" ? "Conditional Go" : decision;
 
@@ -123,13 +133,14 @@ Go/No-Go 结论：
 `;
 }
 
-test("passes only when readiness, UAT evidence, and project Go are all complete", () => {
+test("passes only when readiness, UAT evidence, defect register, and project Go are all complete", () => {
   const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
   const result = evaluateV1ReleaseGate({
     readinessResult: passingReadinessResult,
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
-    evidenceManifestResult: passingManifestResult
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult
   });
 
   assert.equal(result.ok, true);
@@ -143,7 +154,8 @@ test("fails when RC/UAT readiness has a failed check", () => {
     readinessResult: failingReadinessResult,
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
-    evidenceManifestResult: passingManifestResult
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult
   });
 
   assert.equal(result.ok, false);
@@ -156,7 +168,8 @@ test("fails when UAT evidence is still a No-Go draft", () => {
     readinessResult: passingReadinessResult,
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
-    evidenceManifestResult: passingManifestResult
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult
   });
 
   assert.equal(result.ok, false);
@@ -169,7 +182,8 @@ test("fails when the project decision is Conditional Go", () => {
     readinessResult: passingReadinessResult,
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
-    evidenceManifestResult: passingManifestResult
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult
   });
 
   assert.equal(result.ok, false);
@@ -182,7 +196,8 @@ test("fails when UAT evidence is Go but the execution tracker remains incomplete
     readinessResult: passingReadinessResult,
     uatEvidenceResult,
     trackerResult: failingTrackerResult,
-    evidenceManifestResult: passingManifestResult
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult
   });
 
   assert.equal(result.ok, false);
@@ -195,9 +210,24 @@ test("fails when the UAT evidence manifest remains incomplete", () => {
     readinessResult: passingReadinessResult,
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
-    evidenceManifestResult: failingManifestResult
+    evidenceManifestResult: failingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult
   });
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "uat-evidence-manifest"));
+});
+
+test("fails when the UAT defect register remains incomplete", () => {
+  const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    uatEvidenceResult,
+    trackerResult: passingTrackerResult,
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: failingDefectRegisterResult
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-defect-register"));
 });

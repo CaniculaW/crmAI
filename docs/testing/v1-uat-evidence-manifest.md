@@ -36,6 +36,7 @@ Rules:
 | UAT-008 | 业务UAT | 销售侧验收人 | PENDING | 待补充 | 商机关闭或取消跟进待验收 |
 | UAT-009 | 业务UAT | 管理侧验收人 | PENDING | 待补充 | 团队查看和个人越权待验收 |
 | UAT-010 | 业务UAT | 测试负责人 | PENDING | 待补充 | 关键审计日志待验收 |
+| DEF-REGISTER | 缺陷闭环 | 测试负责人 | PENDING | 待补充 | 缺陷台账和回归证据待补充 |
 | DEF-P0 | 缺陷闭环 | 测试负责人 | PENDING | 待补充 | P0/S1缺陷汇总和回归证据待补充 |
 | DEF-P1 | 缺陷闭环 | 测试负责人 | PENDING | 待补充 | P1/S2缺陷汇总、关闭或规避方案待补充 |
 | SIGNOFF-SALES | 签署 | 销售侧验收人 | PENDING | 待补充 | 销售侧签署待完成 |

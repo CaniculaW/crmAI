@@ -29,6 +29,7 @@ const REQUIRED_UAT_CASES = Array.from(
 
 const REQUIRED_GATES = [
   "UAT证据包一致性",
+  "UAT缺陷台账一致性",
   "V1最终放行门禁",
   "项目签署"
 ];
@@ -169,7 +170,7 @@ export function evaluateUatExecutionTracker(markdown) {
     "release-gates",
     incompleteGates.length === 0,
     incompleteGates.length === 0
-      ? "Evidence-pack validator, final release gate, and project signoff are complete."
+      ? "Evidence-pack validator, defect-register validator, final release gate, and project signoff are complete."
       : `Incomplete release gates: ${incompleteGates.join(", ")}`
   ));
 

@@ -25,7 +25,7 @@ GitHub Actions 已配置 V1 自动验证工作流：
 - 前端：`npm test`
 - 前端生产构建：`npm run build`
 - 部署配置：`docker compose -f compose.v1-test.yml config`
-- UAT 准出材料：RC/UAT readiness、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT 证据清单 validator 测试
+- UAT 准出材料：RC/UAT readiness、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT 缺陷台账 validator、UAT 证据清单 validator 测试
 - 最终放行门禁：`v1-release-gate` 规则测试
 
 ## V1 测试环境部署
@@ -107,6 +107,18 @@ UAT 证据包填写后校验：
 node scripts/v1-uat-evidence-pack-validate.mjs <crm-v1-uat-evidence-pack.md>
 ```
 
+UAT 缺陷台账：
+
+```text
+docs/testing/v1-uat-defect-register.md
+```
+
+UAT 缺陷台账校验：
+
+```bash
+node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md
+```
+
 UAT 证据清单：
 
 ```text
@@ -134,7 +146,11 @@ node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execu
 V1 最终放行门禁：
 
 ```bash
-node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md> docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md
+node scripts/v1-release-gate.mjs . \
+  <crm-v1-uat-evidence-pack.md> \
+  docs/testing/crm-v1-uat-execution-tracker.md \
+  docs/testing/v1-uat-evidence-manifest.md \
+  docs/testing/v1-uat-defect-register.md
 ```
 
 V1 聚合状态报告：

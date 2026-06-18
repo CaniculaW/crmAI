@@ -17,6 +17,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-uat-evidence-pack.test.mjs",
   "scripts/v1-uat-evidence-pack-validate.mjs",
   "scripts/v1-uat-evidence-pack-validate.test.mjs",
+  "scripts/v1-uat-defect-register-validate.mjs",
+  "scripts/v1-uat-defect-register-validate.test.mjs",
   "scripts/v1-uat-evidence-manifest-validate.mjs",
   "scripts/v1-uat-evidence-manifest-validate.test.mjs",
   "scripts/v1-uat-execution-tracker-validate.mjs",
@@ -38,6 +40,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
   "docs/testing/crm-v1-uat-execution-tracker.md",
+  "docs/testing/v1-uat-defect-register.md",
   "docs/testing/v1-uat-evidence-manifest.md",
   "docs/testing/evidence/v1-local-uat-2026-06-18.md",
   "docs/testing/evidence/v1-compose-uat-2026-06-19.md",
@@ -156,6 +159,7 @@ function hasUatEvidenceManifest(content) {
     "Decision: No-Go",
     "Evidence ID",
     "Evidence reference",
+    "DEF-REGISTER",
     "DEF-P0",
     "DEF-P1",
     "SIGNOFF-SALES",
@@ -170,6 +174,21 @@ function hasUatEvidenceManifest(content) {
   ]) && includesAll(content, requiredPreChecks)
     && includesAll(content, requiredSmokeChecks)
     && includesAll(content, requiredUatCases);
+}
+
+function hasUatDefectRegister(content) {
+  return includesAll(content, [
+    "CRM V1 UAT Defect Register",
+    "v1.0.0-rc.8",
+    "Decision: No-Go",
+    "Severity Summary",
+    "P0 / S1 阻断",
+    "P1 / S2 严重",
+    "Defect Details",
+    "DEF-DRAFT",
+    "不记录明文密码",
+    "node scripts/v1-uat-defect-register-validate.mjs"
+  ]);
 }
 
 function makeCheck(id, ok, message, severity = "fail") {
@@ -255,6 +274,21 @@ export function evaluateReadinessSnapshot(snapshot) {
       "fails a Go evidence pack when a P0 defect remains open"
     ]),
     "UAT evidence pack validator is covered by tests and enforces Go/No-Go hard gates."
+  ));
+
+  const defectRegisterValidator = snapshot["scripts/v1-uat-defect-register-validate.mjs"] ?? "";
+  const defectRegisterValidatorTest = snapshot["scripts/v1-uat-defect-register-validate.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "uat-defect-register-validator",
+    includesAll(workflow + defectRegisterValidator + defectRegisterValidatorTest, [
+      "node --test scripts/v1-uat-defect-register-validate.test.mjs",
+      "evaluateUatDefectRegister",
+      "p0-p1-summary",
+      "regression-evidence",
+      "no-secret-material",
+      "fails the current draft defect register because P0 and P1 closure evidence is pending"
+    ]),
+    "UAT defect register validator is tested and enforces P0/P1 summary, closure, regression evidence, and secret redaction."
   ));
 
   const evidenceManifestValidator = snapshot["scripts/v1-uat-evidence-manifest-validate.mjs"] ?? "";
@@ -424,6 +458,13 @@ export function evaluateReadinessSnapshot(snapshot) {
     "UAT execution tracker assigns pre-checks, smoke checks, UAT-001 through UAT-010, signoffs, and final release-gate evidence."
   ));
 
+  const uatDefectRegister = snapshot["docs/testing/v1-uat-defect-register.md"] ?? "";
+  checks.push(makeCheck(
+    "uat-defect-register",
+    hasUatDefectRegister(uatDefectRegister),
+    "UAT defect register inventories P0/P1 closure and regression evidence without secrets."
+  ));
+
   const uatEvidenceManifest = snapshot["docs/testing/v1-uat-evidence-manifest.md"] ?? "";
   checks.push(makeCheck(
     "uat-evidence-manifest",
@@ -434,7 +475,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-evidence-pack-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-go-no-go-meeting.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-go-no-go-meeting.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 
