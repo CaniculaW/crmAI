@@ -220,6 +220,45 @@ body {
   padding: 0;
 }
 
+.relationship-view {
+  margin-bottom: 16px;
+}
+
+.relationship-view h3.ant-typography {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.relationship-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.relationship-buckets {
+  display: grid;
+  gap: 12px;
+}
+
+.relationship-bucket {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eef1f6;
+}
+
+.relationship-bucket:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.relationship-bucket > div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .record-details {
   display: grid;
   gap: 12px;
@@ -294,7 +333,8 @@ body {
   }
 
   .dashboard-grid,
-  .dictionary-grid {
+  .dictionary-grid,
+  .relationship-grid {
     grid-template-columns: 1fr;
   }
 

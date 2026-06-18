@@ -36,7 +36,26 @@ const apiData = {
       owner_user_id: 1001
     }
   ],
-  contacts: [],
+  contacts: [
+    {
+      id: 21,
+      account_id: 1,
+      name: "张决策",
+      title: "CIO",
+      attitude: "supporter",
+      relationship_heat: "trusted",
+      project_roles: ["decision_maker", "budget_promoter"]
+    },
+    {
+      id: 22,
+      account_id: 1,
+      name: "李采购",
+      title: "采购经理",
+      attitude: "neutral",
+      relationship_heat: "warm",
+      project_roles: ["procurement_executor"]
+    }
+  ],
   opportunities: [
     {
       id: 10,
@@ -238,6 +257,24 @@ describe("CRM frontend V1 workflow", () => {
         })
       );
     });
+  });
+
+  it("shows a grouped relationship view for contacts", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "联系人" }));
+
+    expect(await screen.findByText("关系视图")).toBeInTheDocument();
+    expect(screen.getByText("按项目角色")).toBeInTheDocument();
+    expect(screen.getByText("按态度")).toBeInTheDocument();
+    expect(screen.getByText("decision_maker")).toBeInTheDocument();
+    expect(screen.getByText("budget_promoter")).toBeInTheDocument();
+    expect(screen.getAllByText("supporter").length).toBeGreaterThan(1);
+    expect(screen.getAllByText("张决策").length).toBeGreaterThan(1);
   });
 
   it("filters weekly progress by owner and natural week", async () => {

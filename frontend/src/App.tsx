@@ -77,6 +77,11 @@ type SelectOption = {
   value: number;
 };
 
+type RelationshipBucket = {
+  key: string;
+  contacts: CrmContact[];
+};
+
 export function App() {
   return (
     <BrowserRouter>
@@ -453,6 +458,8 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
   const accountOptions = toAccountOptions(accounts.data);
+  const roleGroups = useMemo(() => groupContactsByRoles(contacts.data), [contacts.data]);
+  const attitudeGroups = useMemo(() => groupContactsByField(contacts.data, "attitude"), [contacts.data]);
 
   const columns: ColumnsType<CrmContact> = [
     {
@@ -547,6 +554,13 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
           <Select allowClear options={["cold", "warm", "familiar", "trusted"].map(option)} />
         </Form.Item>
       </FilterBar>
+      <section className="relationship-view">
+        <Typography.Title level={3}>关系视图</Typography.Title>
+        <div className="relationship-grid">
+          <RelationshipGroup title="按项目角色" groups={roleGroups} />
+          <RelationshipGroup title="按态度" groups={attitudeGroups} />
+        </div>
+      </section>
       <Table rowKey="id" dataSource={contacts.data} columns={columns} pagination={{ pageSize: 8 }} />
       <Drawer title="新建联系人" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
         <Form form={form} layout="vertical" onFinish={createContact}>
@@ -610,6 +624,73 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
       </Modal>
     </DataWorkspace>
   );
+}
+
+function RelationshipGroup({ title, groups }: { title: string; groups: RelationshipBucket[] }) {
+  return (
+    <Card size="small" title={title}>
+      {groups.length === 0 ? (
+        <span className="muted">暂无关系数据</span>
+      ) : (
+        <div className="relationship-buckets">
+          {groups.map((group) => (
+            <div key={group.key} className="relationship-bucket">
+              <div>
+                <strong>{group.key}</strong>
+                <Tag>{group.contacts.length} 人</Tag>
+              </div>
+              <Space wrap>
+                {group.contacts.map((contact) => (
+                  <Tag key={contact.id} color="blue">
+                    {contact.name}
+                  </Tag>
+                ))}
+              </Space>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function groupContactsByRoles(contacts: CrmContact[]): RelationshipBucket[] {
+  const buckets = new Map<string, CrmContact[]>();
+
+  contacts.forEach((contact) => {
+    const roles = contact.project_roles?.length ? contact.project_roles : ["未标记角色"];
+    roles.forEach((role) => addRelationshipBucket(buckets, role, contact));
+  });
+
+  return toRelationshipBuckets(buckets);
+}
+
+function groupContactsByField(
+  contacts: CrmContact[],
+  field: "attitude" | "relationship_heat"
+): RelationshipBucket[] {
+  const buckets = new Map<string, CrmContact[]>();
+
+  contacts.forEach((contact) => {
+    addRelationshipBucket(buckets, String(contact[field] ?? "未标记"), contact);
+  });
+
+  return toRelationshipBuckets(buckets);
+}
+
+function addRelationshipBucket(
+  buckets: Map<string, CrmContact[]>,
+  key: string,
+  contact: CrmContact
+) {
+  const normalizedKey = key.trim() || "未标记";
+  buckets.set(normalizedKey, [...(buckets.get(normalizedKey) ?? []), contact]);
+}
+
+function toRelationshipBuckets(buckets: Map<string, CrmContact[]>): RelationshipBucket[] {
+  return [...buckets.entries()]
+    .map(([key, contacts]) => ({ key, contacts }))
+    .sort((left, right) => right.contacts.length - left.contacts.length || left.key.localeCompare(right.key));
 }
 
 function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
