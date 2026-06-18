@@ -23,6 +23,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
   "docs/testing/evidence/v1-local-uat-2026-06-18.md",
+  "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md",
   "docs/testing/crm-v1-acceptance-checklist.md",
   "README.md"
 ];
@@ -39,6 +40,22 @@ function businessCountAtLeastOne(content, key) {
 function hasNonEmptyBusinessCounts(content) {
   return ["accounts", "contacts", "opportunities", "activities"]
     .every((key) => businessCountAtLeastOne(content, key));
+}
+
+function hasRc8NoGoHandoffDraft(content) {
+  return includesAll(content, [
+    "v1.0.0-rc.8",
+    "0c9db47b0df8a0b05e63b66bdaa09f46222d9f0c",
+    "27776171025",
+    "No-Go",
+    "FAIL",
+    "具名测试环境",
+    "UAT-001",
+    "UAT-010",
+    "P0/P1缺陷汇总未填写",
+    "销售侧、管理侧、产品、测试、研发和项目负责人签署未完成",
+    "不能作为 `Go` 准出记录"
+  ]);
 }
 
 function makeCheck(id, ok, message, severity = "fail") {
@@ -148,6 +165,13 @@ export function evaluateReadinessSnapshot(snapshot) {
       "V1演示业务数据"
     ]) && hasNonEmptyBusinessCounts(localEvidence),
     "Local named validation evidence captures service checks, browser/Docker limitations, and non-empty V1 demo business data."
+  ));
+
+  const uatHandoffDraft = snapshot["docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md"] ?? "";
+  checks.push(makeCheck(
+    "uat-handoff-draft",
+    hasRc8NoGoHandoffDraft(uatHandoffDraft),
+    "RC8 UAT handoff draft preserves No-Go status and external UAT/signoff blockers."
   ));
 
   const acceptance = snapshot["docs/testing/crm-v1-acceptance-checklist.md"] ?? "";

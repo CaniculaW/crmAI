@@ -8,7 +8,7 @@ V1 当前代码分支已通过自动化验证、本地 PostgreSQL 部署态 API 
 
 具名测试环境执行步骤、证据包结构和验收会议模板见 `docs/testing/crm-v1-test-environment-validation-runbook.md`；验收结果汇总和 Go/No-Go 记录模板见 `docs/testing/crm-v1-uat-evidence-pack-template.md`。
 
-GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compose部署配置校验、RC/UAT readiness 审计、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、后端测试、PostgreSQL 集成验证、前端测试和前端生产构建。
+GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compose部署配置校验、RC/UAT readiness 审计、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、后端测试、PostgreSQL 集成验证、前端测试和前端生产构建。readiness 审计同时校验 rc.8 UAT 交接草稿保留 `No-Go`、validator `FAIL` 和外部 UAT/签署阻塞项。
 
 ## 2. 验证范围
 
@@ -41,8 +41,8 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 3 tests passed |
 | `node scripts/v1-uat-readiness-check.mjs` | RC/UAT readiness check passed |
-| `node --test scripts/v1-uat-readiness-check.test.mjs` | 8 tests passed |
-| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 8 tests passed；覆盖CI前端job相对路径 |
+| `node --test scripts/v1-uat-readiness-check.test.mjs` | 10 tests passed |
+| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 10 tests passed；覆盖CI前端job相对路径 |
 | `node --test scripts/v1-uat-evidence-pack.test.mjs` | 4 tests passed |
 | `node scripts/v1-uat-evidence-pack.mjs ...` | 可生成不含明文密码/API Token、包含 validator 留痕区的 UAT 证据包草稿 |
 | GitHub Actions `V1 Validation` | `v1.0.0-rc.8` 所属提交 `0c9db47b0df8a0b05e63b66bdaa09f46222d9f0c` 的远端 run `27776171025` 已通过 |
@@ -67,7 +67,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 
 逐项验收证据见 `docs/testing/crm-v1-validation-traceability.md`。
 
-rc.8 UAT 交接草稿见 `docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`。该草稿已预填工程侧自动化和本地验证证据，validator 实测为 `FAIL / No-Go`，仍需测试/业务侧补齐具名测试环境账号、UAT-001 至 UAT-010、缺陷汇总和签署。
+rc.8 UAT 交接草稿见 `docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`。该草稿已预填工程侧自动化和本地验证证据，validator 实测为 `FAIL / No-Go`，仍需测试/业务侧补齐具名测试环境账号、UAT-001 至 UAT-010、缺陷汇总和签署；readiness 审计会防止该草稿在外部 UAT 完成前被误标为 Go/PASS。
 
 ## 5. 待外部完成项
 

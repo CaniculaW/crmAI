@@ -38,6 +38,7 @@ jobs:
   "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\n",
   "docs/testing/crm-v1-uat-evidence-pack-template.md": "Go/No-Go\n签署\n缺陷\n",
   "docs/testing/evidence/v1-local-uat-2026-06-18.md": "V1-local-uat-20260618\nv1.0.0-rc.8\nFlyway\n14\n/api/health\n/api/bootstrap\nBrowser Use URL policy\nUAT evidence pack validator\nV1演示业务数据\n\"accounts\": 1\n\"contacts\": 1\n\"opportunities\": 1\n\"activities\": 1\n",
+  "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md": "v1.0.0-rc.8\n0c9db47b0df8a0b05e63b66bdaa09f46222d9f0c\n27776171025\nNo-Go\nFAIL\n具名测试环境\nUAT-001\nUAT-010\nP0/P1缺陷汇总未填写\n销售侧、管理侧、产品、测试、研发和项目负责人签署未完成\n不能作为 `Go` 准出记录\n",
   "docs/testing/crm-v1-acceptance-checklist.md": Array.from({ length: 17 }, (_, index) => {
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
@@ -67,6 +68,16 @@ test("fails when a required readiness artifact is missing", () => {
 test("fails when the UAT evidence pack generator is missing", () => {
   const snapshot = { ...completeSnapshot };
   delete snapshot["scripts/v1-uat-evidence-pack.mjs"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the rc8 UAT handoff draft is missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md"];
 
   const result = evaluateReadinessSnapshot(snapshot);
 
@@ -149,4 +160,16 @@ test("fails when UAT evidence pack validator is missing from readiness materials
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "uat-evidence-validator"));
+});
+
+test("fails when the rc8 UAT handoff draft does not preserve No-Go blockers", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md": "v1.0.0-rc.8\n0c9db47b0df8a0b05e63b66bdaa09f46222d9f0c\n27776171025\nGo\nPASS\n"
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-handoff-draft"));
 });
