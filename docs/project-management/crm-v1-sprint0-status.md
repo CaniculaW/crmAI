@@ -22,7 +22,8 @@
 | 数据库 | `docs/database/v1-ddl-plan.md` | 已形成 | 覆盖 V1 表、约束、索引、视图原则 |
 | 数据库 | `docs/database/v1-seed-data.md` | 已形成 | 覆盖字典、角色、权限、数据范围和试点数据 |
 | API | `docs/api/crm-v1-api-list.md`、`docs/openapi/crm-v1-openapi.yaml` | 已形成 | 覆盖认证、系统、CRM、周进展、附件、提醒和运行时接口覆盖校验 |
-| DevOps | `.github/workflows/v1-validation.yml` | 已形成 | push/PR 自动执行后端测试、PostgreSQL集成验证、前端测试和前端生产构建 |
+| DevOps | `.github/workflows/v1-validation.yml` | 已形成 | push/PR 自动执行Compose部署配置校验、后端测试、PostgreSQL集成验证、前端测试和前端生产构建 |
+| DevOps | `compose.v1-test.yml`、`docs/deployment/v1-test-environment-compose.md` | 已形成 | 提供 PostgreSQL + 后端 + 前端生产包的容器化测试环境启动入口，支持具名测试环境部署验证 |
 | 后端 | `docs/backend/crm-v1-backend-task-list.md` | 执行中 | BE-001至BE-020已实现，当前具备登录态、密码管理、权限拦截、数据权限条件、客户池、联系人、商机生命周期、销售行动、行动完成回写、周进展、附件元数据、提醒待办、OpenAPI契约、核心闭环测试、字典和审计基线；新增 V1 演示管理员种子和 `/api/bootstrap` 部署态探针 |
 | 前端 | `docs/frontend/crm-v1-frontend-task-list.md` | 执行中 | 已接入真实登录态、权限菜单、修改密码、管理员重置密码、工作台、客户、联系人关系分组、商机、行动、周进展、组织列表/新建、用户列表/新增/编辑、角色权限授权、字典维护和最近审计日志页面；客户/联系人/商机/行动已具备筛选、详情入口和主要编辑操作，周进展已支持负责人和自然周筛选；本地浏览器登录和系统管理页Smoke已通过，正式测试环境端到端验收待执行 |
 | 测试 | `docs/testing/crm-v1-test-cases.md` | 已形成 | 覆盖 V1 功能、权限、集成、回归和异常用例 |
@@ -42,7 +43,7 @@
 | API 清单 | 已形成接口契约 | 已落地 OpenAPI 契约与运行时覆盖校验 |
 | 后端任务池 | 执行中 | BE-001至BE-020已完成；下一步进入全量回归、前端页面化和试点问题修复 |
 | 前端任务池 | 执行中 | 已完成工程骨架、路由、登录态、权限菜单、修改密码、管理员重置密码、组织列表/新建、用户列表/新增/编辑、角色权限授权、字典维护、最近审计日志、工作台、V1核心对象基础页面、列表筛选、详情入口、主要编辑操作、联系人关系分组视图和周进展负责人/自然周筛选；下一步进入端到端联调和试点验收准备 |
-| 测试与验收 | 自动化和本地部署态验证已通过 | 已建立并通过后端核心链路、OpenAPI契约、数据库迁移、PostgreSQL迁移集成、前端基础交互自动化测试、本地 API Smoke 和浏览器 Smoke；GitHub Actions `V1 Validation` 质量门已配置；验证报告见 `docs/testing/v1-automated-validation-report-2026-06-18.md`，逐项证据见 `docs/testing/crm-v1-validation-traceability.md`，具名测试环境执行路径见 `docs/testing/crm-v1-test-environment-validation-runbook.md`，验收记录模板见 `docs/testing/crm-v1-uat-evidence-pack-template.md`；业务验收仍待指定验收人后执行 |
+| 测试与验收 | 自动化和本地部署态验证已通过 | 已建立并通过后端核心链路、OpenAPI契约、数据库迁移、PostgreSQL迁移集成、前端基础交互自动化测试、本地 API Smoke 和浏览器 Smoke；GitHub Actions `V1 Validation` 质量门已配置并覆盖Compose部署配置校验；Docker Compose 测试环境入口已形成；验证报告见 `docs/testing/v1-automated-validation-report-2026-06-18.md`，逐项证据见 `docs/testing/crm-v1-validation-traceability.md`，具名测试环境执行路径见 `docs/testing/crm-v1-test-environment-validation-runbook.md`，验收记录模板见 `docs/testing/crm-v1-uat-evidence-pack-template.md`；业务验收仍待指定验收人后执行 |
 
 ## 4. 默认工程实施边界
 
@@ -86,4 +87,4 @@
 18. 推进周进展视图与查询。已完成
 19. 推进附件元数据服务。已完成
 20. 建立核心链路自动化测试基线。已完成
-21. 进入全量回归、前端页面化和试点问题修复。进行中，已完成前端V1基础页面化、核心对象筛选/详情/编辑、联系人关系分组视图、修改密码、管理员重置密码、组织列表/新建、用户列表/新增/编辑、角色权限授权、字典维护、最近审计日志、周进展负责人/自然周筛选、演示管理员种子、`/api/bootstrap` 探针和本地浏览器Smoke；`mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` 已通过
+21. 进入全量回归、前端页面化和试点问题修复。进行中，已完成前端V1基础页面化、核心对象筛选/详情/编辑、联系人关系分组视图、修改密码、管理员重置密码、组织列表/新建、用户列表/新增/编辑、角色权限授权、字典维护、最近审计日志、周进展负责人/自然周筛选、演示管理员种子、`/api/bootstrap` 探针、本地浏览器Smoke、GitHub Actions质量门和Docker Compose测试环境入口；`mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` 已通过

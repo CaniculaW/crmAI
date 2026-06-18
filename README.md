@@ -24,6 +24,30 @@ GitHub Actions 已配置 V1 自动验证工作流：
 - 后端 PostgreSQL 集成验证：`mvn -B verify -Ppostgres-it`
 - 前端：`npm test`
 - 前端生产构建：`npm run build`
+- 部署配置：`docker compose -f compose.v1-test.yml config`
+
+## V1 测试环境部署
+
+仓库提供 Docker Compose 测试环境：
+
+```text
+compose.v1-test.yml
+```
+
+复制环境变量并启动：
+
+```bash
+cp .env.example .env
+docker compose -f compose.v1-test.yml up -d --build
+```
+
+默认访问：
+
+```text
+http://127.0.0.1:5174/
+```
+
+详细说明见 `docs/deployment/v1-test-environment-compose.md`。
 
 ## 后端
 

@@ -1,0 +1,43 @@
+name: crm-ai-v1-test
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${CRM_POSTGRES_DB:-crm_ai}
+      POSTGRES_USER: ${CRM_DB_USERNAME:-crm_ai}
+      POSTGRES_PASSWORD: ${CRM_DB_PASSWORD:-crm_ai}
+    ports:
+      - "${CRM_DB_PORT:-55432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - crm-postgres-data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      CRM_DB_URL: jdbc:postgresql://db:5432/${CRM_POSTGRES_DB:-crm_ai}
+      CRM_DB_USERNAME: ${CRM_DB_USERNAME:-crm_ai}
+      CRM_DB_PASSWORD: ${CRM_DB_PASSWORD:-crm_ai}
+      CRM_SEED_V1_DEMO_ENABLED: ${CRM_SEED_V1_DEMO_ENABLED:-true}
+    ports:
+      - "${CRM_BACKEND_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "${CRM_FRONTEND_PORT:-5174}:80"
+    depends_on:
+      - backend
+
+volumes:
+  crm-postgres-data:
