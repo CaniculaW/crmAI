@@ -31,7 +31,31 @@ password: S3cure!123
 
 正式试点或生产环境不得启用演示种子，应将 `CRM_SEED_V1_DEMO_ENABLED` 改为 `false`，并由管理员在系统管理中创建真实账号。
 
-## 3. 启动
+## 3. 镜像源配置
+
+若测试机出现 Docker Hub token 超时、访问 Docker Hub token 接口超时，或企业网络要求使用内网镜像仓库，可在 `.env` 中覆盖基础镜像。默认值如下：
+
+```text
+CRM_POSTGRES_IMAGE=postgres:16
+CRM_BACKEND_BUILD_IMAGE=maven:3.9-eclipse-temurin-17
+CRM_BACKEND_RUNTIME_IMAGE=eclipse-temurin:17-jre
+CRM_FRONTEND_BUILD_IMAGE=node:22-alpine
+CRM_FRONTEND_RUNTIME_IMAGE=nginx:1.27-alpine
+```
+
+使用企业镜像代理时示例：
+
+```text
+CRM_POSTGRES_IMAGE=registry.example.com/library/postgres:16
+CRM_BACKEND_BUILD_IMAGE=registry.example.com/library/maven:3.9-eclipse-temurin-17
+CRM_BACKEND_RUNTIME_IMAGE=registry.example.com/library/eclipse-temurin:17-jre
+CRM_FRONTEND_BUILD_IMAGE=registry.example.com/library/node:22-alpine
+CRM_FRONTEND_RUNTIME_IMAGE=registry.example.com/library/nginx:1.27-alpine
+```
+
+覆盖后继续使用同一条启动命令。该配置只改变镜像来源，不改变应用运行参数。
+
+## 4. 启动
 
 ```bash
 docker compose -f compose.v1-test.yml up -d --build
@@ -49,7 +73,7 @@ http://127.0.0.1:5174/
 http://127.0.0.1:8080/api/health
 ```
 
-## 4. 验证
+## 5. 验证
 
 后端容器启动时会执行 Flyway 迁移。测试环境验证建议按以下顺序执行：
 
@@ -66,7 +90,7 @@ cd frontend
 npm run smoke:v1:browser
 ```
 
-## 5. 停止与清理
+## 6. 停止与清理
 
 停止容器但保留数据库数据：
 
@@ -80,7 +104,7 @@ docker compose -f compose.v1-test.yml down
 docker compose -f compose.v1-test.yml down -v
 ```
 
-## 6. 纳入V1验收证据
+## 7. 纳入V1验收证据
 
 执行具名测试环境验收时，应在 UAT 证据包中记录：
 

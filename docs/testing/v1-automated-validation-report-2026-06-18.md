@@ -19,7 +19,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | OpenAPI契约覆盖 | Spring MVC运行时 `/api/**` 操作均已纳入 `docs/openapi/crm-v1-openapi.yaml` | 通过 |
 | 前端交互自动化 | 登录、统一响应解包、客户维护、修改密码、字典维护、审计展示、组织新建、用户新增/编辑、角色授权、周进展筛选、联系人关系分组 | 通过 |
 | 前端生产构建 | TypeScript 编译与 Vite 生产构建 | 通过 |
-| 测试环境部署配置 | Docker Compose 配置可展开，覆盖 PostgreSQL、后端和前端生产包服务 | 通过 |
+| 测试环境部署配置 | Docker Compose 配置可展开，覆盖 PostgreSQL、后端和前端生产包服务；支持企业镜像代理或内网镜像仓库覆盖基础镜像 | 通过 |
 | RC/UAT就绪审计 | 候选版本记录、自动化验证报告、验收清单、追踪矩阵、Runbook、UAT证据模板、Compose部署入口和CI质量门齐备性检查 | 通过 |
 | 本地部署态冒烟 | PostgreSQL 16 + Spring Boot + Vite dev proxy，演示管理员登录、`/api/bootstrap`、系统管理页组织/用户/角色展示 | 通过 |
 
@@ -36,14 +36,16 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `npm run build` | Build succeeded；保留 antd vendor chunk 体积提示 |
 | `docker compose -f compose.v1-test.yml config` | Compose config validation passed |
 | `docker compose -f compose.v1-test.yml build` | 未完成；当前机器访问 Docker Hub token 接口超时，未进入 Dockerfile 执行阶段 |
+| `node scripts/v1-deployment-config-check.mjs` | V1 deployment config check passed；Dockerfile/Compose 支持可配置基础镜像 |
+| `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
 | `node scripts/v1-uat-readiness-check.mjs` | RC/UAT readiness check passed |
-| `node --test scripts/v1-uat-readiness-check.test.mjs` | 4 tests passed |
-| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 4 tests passed；覆盖CI前端job相对路径 |
+| `node --test scripts/v1-uat-readiness-check.test.mjs` | 5 tests passed |
+| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 5 tests passed；覆盖CI前端job相对路径 |
 | `node --test scripts/v1-uat-evidence-pack.test.mjs` | 3 tests passed |
 | `node scripts/v1-uat-evidence-pack.mjs ...` | 可生成不含明文密码/API Token 的 UAT 证据包草稿 |
 | GitHub Actions `V1 Validation` | run `27745883608`，提交 `285df9a5c784ca7692294b316f26dcf1f82cbec8`，3 个 job 全部 `success` |
-| V1候选版本 | `v1.0.0-rc.5` 作为包含RC/UAT就绪审计、本地具名验证环境证据、证据版本一致性检查和 UAT 证据包生成器的候选版本 |
-| `npm run smoke:v1:browser` | `http://127.0.0.1:5175/system` 通过；截图归档至 `docs/testing/evidence/artifacts/v1-rc5-local-browser-smoke-20260618.png` |
+| V1候选版本 | `v1.0.0-rc.6` 作为包含RC/UAT就绪审计、本地具名验证环境证据、证据版本一致性检查、UAT 证据包生成器和镜像源覆盖配置检查的候选版本 |
+| `npm run smoke:v1:browser` | `http://127.0.0.1:5175/system` 通过；截图归档至 `docs/testing/evidence/artifacts/v1-rc6-local-browser-smoke-20260618.png` |
 | 本地API Smoke | `POST /api/auth/login` + `GET /api/bootstrap` 返回 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25） |
 
 ## 4. 已验证的V1核心链路
@@ -67,6 +69,6 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 
 | 项目 | 原因 | 建议动作 |
 |---|---|---|
-| 具名测试环境部署态验收 | 本地部署态已通过；测试环境域名、账号和样例业务数据仍需由项目/测试侧确认 | 按 `docs/testing/crm-v1-test-environment-validation-runbook.md` 执行环境Smoke、证据归档和业务演示 |
+| 具名测试环境部署态验收 | 本地部署态已通过；测试环境域名、账号和样例业务数据仍需由项目/测试侧确认；若 Docker Hub token 超时，可通过 `.env` 镜像源覆盖使用企业镜像代理 | 按 `docs/testing/crm-v1-test-environment-validation-runbook.md` 执行环境Smoke、证据归档和业务演示 |
 | 业务验收签署 | 销售侧和管理侧验收人尚未在文档中具名 | 项目侧指定验收人，并按 Runbook 会议纪要模板形成签署记录 |
 | V1范围冻结确认 | 产品/业务侧仍需确认最终试点范围和TBD项 | 在验收会中确认范围、字典、风险映射和审计抽样标准 |

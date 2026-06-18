@@ -14,6 +14,7 @@
 
 - `docs/testing/crm-v1-uat-evidence-pack-template.md`：用于汇总验收证据、缺陷状态、Go/No-Go 判定和签署记录。
 - `scripts/v1-uat-evidence-pack.mjs`：用于按具名测试环境参数生成 UAT 证据包草稿，不写入明文密码或 API Token。
+- `scripts/v1-deployment-config-check.mjs`：用于确认 Compose、Dockerfile 和部署手册支持企业镜像代理或内网镜像仓库覆盖基础镜像。
 
 不适用范围：
 
@@ -53,6 +54,13 @@ CRM_SEED_V1_DEMO_ENABLED=true
 ### 2.2 自动化验证命令
 
 在代码仓库中执行：
+
+```bash
+node scripts/v1-deployment-config-check.mjs
+docker compose -f compose.v1-test.yml config
+```
+
+若测试机访问 Docker Hub token 接口超时，先按 `docs/deployment/v1-test-environment-compose.md` 在 `.env` 中配置 `CRM_BACKEND_BUILD_IMAGE`、`CRM_BACKEND_RUNTIME_IMAGE`、`CRM_FRONTEND_BUILD_IMAGE`、`CRM_FRONTEND_RUNTIME_IMAGE` 和 `CRM_POSTGRES_IMAGE`，再执行完整 Compose 启动。
 
 ```bash
 cd backend

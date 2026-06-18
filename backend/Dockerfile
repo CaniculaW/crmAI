@@ -1,4 +1,7 @@
-FROM maven:3.9-eclipse-temurin-17 AS build
+ARG BACKEND_BUILD_IMAGE=maven:3.9-eclipse-temurin-17
+ARG BACKEND_RUNTIME_IMAGE=eclipse-temurin:17-jre
+
+FROM ${BACKEND_BUILD_IMAGE} AS build
 
 WORKDIR /workspace
 
@@ -8,7 +11,7 @@ RUN mvn -B -DskipTests dependency:go-offline
 COPY src ./src
 RUN mvn -B -DskipTests package
 
-FROM eclipse-temurin:17-jre
+FROM ${BACKEND_RUNTIME_IMAGE}
 
 WORKDIR /app
 

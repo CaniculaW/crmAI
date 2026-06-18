@@ -2,7 +2,7 @@ name: crm-ai-v1-test
 
 services:
   db:
-    image: postgres:16
+    image: ${CRM_POSTGRES_IMAGE:-postgres:16}
     environment:
       POSTGRES_DB: ${CRM_POSTGRES_DB:-crm_ai}
       POSTGRES_USER: ${CRM_DB_USERNAME:-crm_ai}
@@ -20,6 +20,9 @@ services:
   backend:
     build:
       context: ./backend
+      args:
+        BACKEND_BUILD_IMAGE: ${CRM_BACKEND_BUILD_IMAGE:-maven:3.9-eclipse-temurin-17}
+        BACKEND_RUNTIME_IMAGE: ${CRM_BACKEND_RUNTIME_IMAGE:-eclipse-temurin:17-jre}
     environment:
       CRM_DB_URL: jdbc:postgresql://db:5432/${CRM_POSTGRES_DB:-crm_ai}
       CRM_DB_USERNAME: ${CRM_DB_USERNAME:-crm_ai}
@@ -34,6 +37,9 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        FRONTEND_BUILD_IMAGE: ${CRM_FRONTEND_BUILD_IMAGE:-node:22-alpine}
+        FRONTEND_RUNTIME_IMAGE: ${CRM_FRONTEND_RUNTIME_IMAGE:-nginx:1.27-alpine}
     ports:
       - "${CRM_FRONTEND_PORT:-5174}:80"
     depends_on:
