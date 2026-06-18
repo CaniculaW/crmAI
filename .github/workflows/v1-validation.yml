@@ -20,8 +20,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Validate V1 test environment compose file
         run: docker compose -f compose.v1-test.yml config
+
+      - name: Validate V1 RC/UAT readiness evidence
+        run: node scripts/v1-uat-readiness-check.mjs
 
   backend:
     name: Backend tests and PostgreSQL migration
@@ -68,6 +76,9 @@ jobs:
 
       - name: Run frontend test suite
         run: npm test
+
+      - name: Run V1 readiness checker tests
+        run: node --test ../scripts/v1-uat-readiness-check.test.mjs
 
       - name: Build frontend
         run: npm run build

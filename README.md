@@ -57,6 +57,18 @@ http://127.0.0.1:5174/
 docs/releases/v1.0.0-rc.1.md
 ```
 
+RC/UAT 就绪审计：
+
+```bash
+node scripts/v1-uat-readiness-check.mjs
+```
+
+审计器测试：
+
+```bash
+node --test scripts/v1-uat-readiness-check.test.mjs
+```
+
 ## 后端
 
 后端工程位于 `backend/`，当前采用 Java 17 + Spring Boot + Maven。

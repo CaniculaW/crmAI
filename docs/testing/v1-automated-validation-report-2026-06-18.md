@@ -20,6 +20,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | 前端交互自动化 | 登录、统一响应解包、客户维护、修改密码、字典维护、审计展示、组织新建、用户新增/编辑、角色授权、周进展筛选、联系人关系分组 | 通过 |
 | 前端生产构建 | TypeScript 编译与 Vite 生产构建 | 通过 |
 | 测试环境部署配置 | Docker Compose 配置可展开，覆盖 PostgreSQL、后端和前端生产包服务 | 通过 |
+| RC/UAT就绪审计 | 候选版本记录、自动化验证报告、验收清单、追踪矩阵、Runbook、UAT证据模板、Compose部署入口和CI质量门齐备性检查 | 通过 |
 | 本地部署态冒烟 | PostgreSQL 16 + Spring Boot + Vite dev proxy，演示管理员登录、`/api/bootstrap`、系统管理页组织/用户/角色展示 | 通过 |
 
 ## 3. 执行命令与结果
@@ -35,6 +36,9 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `npm run build` | Build succeeded；保留 antd vendor chunk 体积提示 |
 | `docker compose -f compose.v1-test.yml config` | Compose config validation passed |
 | `docker compose -f compose.v1-test.yml build` | 未完成；当前机器访问 Docker Hub token 接口超时，未进入 Dockerfile 执行阶段 |
+| `node scripts/v1-uat-readiness-check.mjs` | RC/UAT readiness check passed |
+| `node --test scripts/v1-uat-readiness-check.test.mjs` | 2 tests passed |
+| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 2 tests passed；覆盖CI前端job相对路径 |
 | GitHub Actions `V1 Validation` | 已配置，push/PR自动运行Compose部署配置校验、后端、PostgreSQL集成、前端测试和构建 |
 | `npm run smoke:v1:browser` | `http://127.0.0.1:5175/system` 登录后展示 `V1演示销售部`、`V1演示管理员`、`v1_demo_admin`；console 0 warning/error |
 | 本地API Smoke | `POST /api/auth/login` + `GET /api/bootstrap` 返回 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25） |
