@@ -36,7 +36,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BootstrapResponse'
+                $ref: '#/components/schemas/ApiBootstrapResponse'
   /api/auth/login:
     post:
       tags: [Auth]
@@ -860,6 +860,21 @@ components:
         type: integer
         format: int64
   schemas:
+    ApiBootstrapResponse:
+      type: object
+      required: [code, message, data, trace_id]
+      properties:
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: success
+        data:
+          $ref: '#/components/schemas/BootstrapResponse'
+        trace_id:
+          type: string
+          example: v1-bootstrap-smoke
     LoginRequest:
       type: object
       required: [username, password]

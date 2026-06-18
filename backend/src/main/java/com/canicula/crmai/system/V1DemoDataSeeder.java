@@ -2,12 +2,14 @@ package com.canicula.crmai.system;
 
 import com.canicula.crmai.auth.PasswordCredentialService;
 import java.sql.PreparedStatement;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.env.Environment;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -36,15 +38,21 @@ public class V1DemoDataSeeder implements ApplicationRunner {
 
     private final JdbcTemplate jdbcTemplate;
     private final PasswordCredentialService passwordCredentialService;
+    private final Environment environment;
 
-    V1DemoDataSeeder(JdbcTemplate jdbcTemplate, PasswordCredentialService passwordCredentialService) {
+    V1DemoDataSeeder(
+            JdbcTemplate jdbcTemplate,
+            PasswordCredentialService passwordCredentialService,
+            Environment environment) {
         this.jdbcTemplate = jdbcTemplate;
         this.passwordCredentialService = passwordCredentialService;
+        this.environment = environment;
     }
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        refuseProductionProfile();
         Long departmentId = ensureDepartment();
         Long roleId = ensureRole();
         grantAllPermissions(roleId);
@@ -125,26 +133,50 @@ public class V1DemoDataSeeder implements ApplicationRunner {
     }
 
     private Long ensureAdminUser(Long departmentId) {
-        return findId(
+        Optional<Long> existingUserId = findId(
                 "select id from sys_users where email = ? and deleted_at is null",
-                DEMO_ADMIN_EMAIL)
-                .orElseGet(() -> insertAndReturnId(
-                        """
-                        insert into sys_users (department_id, name, email, role_code, status)
-                        values (?, ?, ?, 'system_admin', 'active')
-                        """,
-                        departmentId,
-                        "V1演示管理员",
-                        DEMO_ADMIN_EMAIL));
+                DEMO_ADMIN_EMAIL);
+        if (existingUserId.isPresent()) {
+            assertExistingDemoUserIsOwnedBySeed(existingUserId.get());
+            return existingUserId.get();
+        }
+        return insertAndReturnId(
+                """
+                insert into sys_users (department_id, name, email, role_code, status)
+                values (?, ?, ?, 'system_admin', 'active')
+                """,
+                departmentId,
+                "V1演示管理员",
+                DEMO_ADMIN_EMAIL);
+    }
+
+    private void assertExistingDemoUserIsOwnedBySeed(Long userId) {
+        Optional<LoginAccountSnapshot> existingLogin = findDemoLoginAccount();
+        if (existingLogin.isEmpty()) {
+            throw new IllegalStateException("demo admin email already exists without demo_admin login");
+        }
+        if (!Objects.equals(existingLogin.get().userId(), userId)) {
+            throw new IllegalStateException("demo_admin login belongs to a different user");
+        }
     }
 
     private void ensureLoginAccount(Long userId) {
-        if (count("""
-                select count(*)
-                from sys_login_accounts
-                where login_type = 'username'
-                  and login_identifier = ?
-                """, DEMO_ADMIN_USERNAME) == 0) {
+        Optional<LoginAccountSnapshot> existingLogin = findDemoLoginAccount();
+        if (existingLogin.isPresent()) {
+            LoginAccountSnapshot loginAccount = existingLogin.get();
+            if (!Objects.equals(loginAccount.userId(), userId)) {
+                throw new IllegalStateException("demo_admin login belongs to a different user");
+            }
+            jdbcTemplate.update(
+                    """
+                    update sys_login_accounts
+                    set is_primary = true,
+                        status = 'active',
+                        updated_at = current_timestamp
+                    where id = ?
+                    """,
+                    loginAccount.id());
+        } else {
             jdbcTemplate.update(
                     """
                     insert into sys_login_accounts (user_id, login_type, login_identifier, is_primary, status)
@@ -152,6 +184,25 @@ public class V1DemoDataSeeder implements ApplicationRunner {
                     """,
                     userId,
                     DEMO_ADMIN_USERNAME);
+        }
+    }
+
+    private Optional<LoginAccountSnapshot> findDemoLoginAccount() {
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(
+                    """
+                    select id, user_id, status
+                    from sys_login_accounts
+                    where login_type = 'username'
+                      and login_identifier = ?
+                    """,
+                    (rs, rowNum) -> new LoginAccountSnapshot(
+                            rs.getLong("id"),
+                            rs.getLong("user_id"),
+                            rs.getString("status")),
+                    DEMO_ADMIN_USERNAME));
+        } catch (EmptyResultDataAccessException exception) {
+            return Optional.empty();
         }
     }
 
@@ -203,5 +254,14 @@ public class V1DemoDataSeeder implements ApplicationRunner {
             return statement;
         }, keyHolder);
         return Objects.requireNonNull(keyHolder.getKey()).longValue();
+    }
+
+    private void refuseProductionProfile() {
+        if (Arrays.stream(environment.getActiveProfiles()).anyMatch("prod"::equalsIgnoreCase)) {
+            throw new IllegalStateException("V1 demo seed must not run with prod profile");
+        }
+    }
+
+    private record LoginAccountSnapshot(Long id, Long userId, String status) {
     }
 }

@@ -86,6 +86,19 @@ class V1WorkflowIntegrationTest {
                 HttpMethod.GET,
                 new HttpEntity<>(authHeaders(token, "v1-e2e-weekly-progress-trace")),
                 JsonNode.class);
+        ResponseEntity<JsonNode> closeOpportunityResponse = restTemplate.exchange(
+                "/api/opportunities/" + opportunityId + "/close",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "close_type", "won",
+                        "close_reason", "V1核心闭环完成",
+                        "close_description", "完成研发侧核心链路验证"), authHeaders(token, "v1-e2e-close-trace")),
+                JsonNode.class);
+        ResponseEntity<JsonNode> defaultFollowingResponse = restTemplate.exchange(
+                "/api/opportunities?default_following=true",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "v1-e2e-default-following-trace")),
+                JsonNode.class);
         ResponseEntity<JsonNode> completedReminderResponse = restTemplate.exchange(
                 "/api/reminders?status=completed",
                 HttpMethod.GET,
@@ -95,6 +108,10 @@ class V1WorkflowIntegrationTest {
                 "select count(*) from sys_audit_logs where action_code = 'activity.complete' and object_id = ?",
                 Integer.class,
                 activityId);
+        Integer closeAuditCount = jdbcTemplate.queryForObject(
+                "select count(*) from sys_audit_logs where action_code = 'opportunity.close' and object_id = ?",
+                Integer.class,
+                opportunityId);
 
         assertThat(meResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(meResponse.getBody().path("data").path("id").asLong()).isEqualTo(userId);
@@ -118,10 +135,17 @@ class V1WorkflowIntegrationTest {
             assertThat(row.path("progress_items")).anySatisfy(item ->
                     assertThat(item.path("conclusion").asText()).isEqualTo("V1闭环验证通过-" + suffix));
         });
+        assertThat(closeOpportunityResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(closeOpportunityResponse.getBody().path("data").path("status").asText()).isEqualTo("closed");
+        assertThat(closeOpportunityResponse.getBody().path("data").path("close_type").asText()).isEqualTo("won");
+        assertThat(defaultFollowingResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(defaultFollowingResponse.getBody().path("data")).noneSatisfy(opportunity ->
+                assertThat(opportunity.path("id").asLong()).isEqualTo(opportunityId));
         assertThat(completedReminderResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(completedReminderResponse.getBody().path("data")).anySatisfy(reminder ->
                 assertThat(reminder.path("id").asLong()).isEqualTo(reminderId));
         assertThat(completeAuditCount).isEqualTo(1);
+        assertThat(closeAuditCount).isEqualTo(1);
     }
 
     private Long createAccount(String accessToken, String accountName, Long departmentId, Long ownerUserId) {
@@ -264,6 +288,7 @@ class V1WorkflowIntegrationTest {
                 "contact.read",
                 "opportunity.create",
                 "opportunity.read",
+                "opportunity.close",
                 "activity.create",
                 "activity.read",
                 "activity.complete",

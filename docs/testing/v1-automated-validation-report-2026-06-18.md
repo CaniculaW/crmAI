@@ -29,7 +29,7 @@ V1 当前代码分支已通过自动化验证、本地 PostgreSQL 部署态 API 
 | `npm test` | 12 tests passed |
 | `npm run build` | Build succeeded；保留 antd vendor chunk 体积提示 |
 | 本地浏览器Smoke | `http://127.0.0.1:5175/system` 登录后展示 `V1演示销售部`、`V1演示管理员`、`v1_demo_admin`；console 0 warning/error |
-| 本地API Smoke | `POST /api/auth/login` + `GET /api/bootstrap` 返回 200，`permissions_count = 25` |
+| 本地API Smoke | `POST /api/auth/login` + `GET /api/bootstrap` 返回 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25） |
 
 ## 4. 已验证的V1核心链路
 
@@ -45,6 +45,8 @@ V1 当前代码分支已通过自动化验证、本地 PostgreSQL 部署态 API 
 | 审计日志查询与关键操作审计 | `AuditLogControllerTest`、`frontend/src/App.test.tsx` |
 | PostgreSQL迁移可用性 | `PostgresMigrationIT` |
 | 演示管理员种子和部署态探针 | `V1DemoDataSeederTest`、`GET /api/bootstrap`、浏览器Smoke |
+
+逐项验收证据见 `docs/testing/crm-v1-validation-traceability.md`。
 
 ## 5. 待外部完成项
 

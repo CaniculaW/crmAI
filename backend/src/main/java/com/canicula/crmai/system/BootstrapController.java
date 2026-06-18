@@ -2,6 +2,7 @@ package com.canicula.crmai.system;
 
 import com.canicula.crmai.auth.AuthService;
 import com.canicula.crmai.auth.CurrentUserResponse;
+import com.canicula.crmai.auth.RequirePermission;
 import com.canicula.crmai.auth.UnauthorizedException;
 import java.util.Map;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -21,6 +22,7 @@ public class BootstrapController {
     }
 
     @GetMapping("/api/bootstrap")
+    @RequirePermission("system.user.manage")
     BootstrapResponse bootstrap(@RequestHeader(name = "Authorization", required = false) String authorization) {
         CurrentUserResponse currentUser = authService.currentUser(bearerToken(authorization));
         return new BootstrapResponse(
