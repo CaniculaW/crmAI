@@ -568,11 +568,35 @@ paths:
           schema:
             type: integer
             format: int64
+        - name: owner_user_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: week_start
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: week_end
+          in: query
+          schema:
+            type: string
+            format: date
         - name: month
           in: query
           schema:
             type: string
             example: '2026-06'
+        - name: risk_only
+          in: query
+          schema:
+            type: boolean
       responses:
         '200':
           description: Weekly progress list.

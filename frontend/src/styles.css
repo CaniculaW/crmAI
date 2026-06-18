@@ -210,6 +210,11 @@ body {
   margin: 0;
 }
 
+.filter-number,
+.filter-select {
+  width: 130px;
+}
+
 .inline-action {
   height: auto;
   padding: 0;

@@ -1043,7 +1043,8 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
 }
 
 function WeeklyProgressPage() {
-  const progress = useResource(crmApi.weeklyProgress.list, []);
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const progress = useResource(() => crmApi.weeklyProgress.list(filters), [filters]);
   const columns: ColumnsType<WeeklyProgress> = [
     { title: "商机ID", dataIndex: "opportunity_id" },
     { title: "负责人ID", dataIndex: "owner_user_id" },
@@ -1060,6 +1061,37 @@ function WeeklyProgressPage() {
       error={progress.error}
       refresh={progress.refresh}
     >
+      <FilterBar
+        initialValues={filters}
+        onSearch={(values) => setFilters(withoutEmpty(values, []))}
+        onReset={() => setFilters({})}
+      >
+        <Form.Item name="owner_user_id" label="负责人ID">
+          <InputNumber className="filter-number" min={1} />
+        </Form.Item>
+        <Form.Item name="opportunity_id" label="商机ID">
+          <InputNumber className="filter-number" min={1} />
+        </Form.Item>
+        <Form.Item name="account_id" label="客户ID">
+          <InputNumber className="filter-number" min={1} />
+        </Form.Item>
+        <Form.Item name="week_start" label="周开始">
+          <Input allowClear placeholder="YYYY-MM-DD" />
+        </Form.Item>
+        <Form.Item name="week_end" label="周结束">
+          <Input allowClear placeholder="YYYY-MM-DD" />
+        </Form.Item>
+        <Form.Item name="risk_only" label="仅风险">
+          <Select
+            allowClear
+            className="filter-select"
+            options={[
+              { label: "是", value: true },
+              { label: "否", value: false }
+            ]}
+          />
+        </Form.Item>
+      </FilterBar>
       <Table
         rowKey={(row) => `${row.opportunity_id}-${row.week_start_date}`}
         dataSource={progress.data}

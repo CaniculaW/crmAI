@@ -51,7 +51,17 @@ const apiData = {
   ],
   activities: [],
   reminders: [],
-  weeklyProgress: [],
+  weeklyProgress: [
+    {
+      opportunity_id: 10,
+      account_id: 1,
+      owner_user_id: 1001,
+      week_start_date: "2026-06-15",
+      week_end_date: "2026-06-21",
+      activity_count: 1,
+      progress_items: [{ activity_id: 88, subject: "方案沟通", conclusion: "客户认可", next_plan: "推进预算" }]
+    }
+  ],
   dictionaries: [
     {
       id: 501,
@@ -227,6 +237,31 @@ describe("CRM frontend V1 workflow", () => {
           body: expect.stringContaining("重点推进")
         })
       );
+    });
+  });
+
+  it("filters weekly progress by owner and natural week", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "周进展" }));
+    expect(await screen.findByText("2026-06-15")).toBeInTheDocument();
+    await user.type(screen.getByLabelText("负责人ID"), "1001");
+    await user.type(screen.getByLabelText("周开始"), "2026-06-15");
+    await user.type(screen.getByLabelText("周结束"), "2026-06-21");
+    await user.click(screen.getByRole("button", { name: /筛\s*选/ }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/weekly-progress/opportunities?"),
+        expect.anything()
+      );
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("owner_user_id=1001"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("week_start=2026-06-15"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("week_end=2026-06-21"), expect.anything());
     });
   });
 
