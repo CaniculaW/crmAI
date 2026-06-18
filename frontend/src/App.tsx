@@ -262,16 +262,47 @@ function Dashboard() {
 }
 
 function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
-  const resource = useResource(crmApi.accounts.list, []);
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const resource = useResource(() => crmApi.accounts.list(filters), [filters]);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selected, setSelected] = useState<Account | null>(null);
+  const [editing, setEditing] = useState<Account | null>(null);
   const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
 
   const columns: ColumnsType<Account> = [
-    { title: "客户名称", dataIndex: "account_name" },
+    {
+      title: "客户名称",
+      dataIndex: "account_name",
+      render: (value, record) => (
+        <Button type="link" className="inline-action" onClick={() => setSelected(record)}>
+          {value}
+        </Button>
+      )
+    },
     { title: "类型", dataIndex: "account_type" },
     { title: "等级", dataIndex: "account_level", render: textOrDash },
     { title: "状态", dataIndex: "account_status", render: statusTag },
-    { title: "最近跟进", dataIndex: "last_activity_summary", render: textOrDash }
+    { title: "最近跟进", dataIndex: "last_activity_summary", render: textOrDash },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Space>
+          <Button size="small" onClick={() => setSelected(record)}>
+            详情
+          </Button>
+          <Button
+            size="small"
+            onClick={() => {
+              setEditing(record);
+              editForm.setFieldsValue(record);
+            }}
+          >
+            编辑
+          </Button>
+        </Space>
+      )
+    }
   ];
 
   const createAccount = async (values: Record<string, unknown>) => {
@@ -287,6 +318,16 @@ function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
     await resource.refresh();
   };
 
+  const updateAccount = async (values: Record<string, unknown>) => {
+    if (!editing) {
+      return;
+    }
+    await crmApi.accounts.update(editing.id, withoutEmpty(values, []));
+    setEditing(null);
+    editForm.resetFields();
+    await resource.refresh();
+  };
+
   return (
     <DataWorkspace
       title="客户池"
@@ -296,8 +337,26 @@ function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
       action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建客户</Button>}
       refresh={resource.refresh}
     >
+      <FilterBar
+        initialValues={filters}
+        onSearch={(values) => setFilters(withoutEmpty(values, []))}
+        onReset={() => setFilters({})}
+      >
+        <Form.Item name="keyword" label="关键词">
+          <Input allowClear placeholder="客户名称/简称" />
+        </Form.Item>
+        <Form.Item name="account_level" label="等级">
+          <Select allowClear options={["A", "B", "C"].map(option)} />
+        </Form.Item>
+        <Form.Item name="account_status" label="状态">
+          <Select allowClear options={["following", "closed", "cancelled"].map(option)} />
+        </Form.Item>
+        <Form.Item name="industry" label="行业">
+          <Input allowClear />
+        </Form.Item>
+      </FilterBar>
       <Table rowKey="id" size="middle" dataSource={resource.data} columns={columns} pagination={{ pageSize: 8 }} />
-      <Drawer title="新建客户" open={drawerOpen} onClose={() => setDrawerOpen(false)} width={440}>
+      <Drawer title="新建客户" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
         <Form form={form} layout="vertical" onFinish={createAccount} initialValues={{ owner_department_id: 1 }}>
           <Form.Item name="account_name" label="客户名称" rules={[{ required: true }]}>
             <Input />
@@ -317,24 +376,88 @@ function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
           <Button type="primary" htmlType="submit" block>保存客户</Button>
         </Form>
       </Drawer>
+      <Drawer title="客户详情" open={!!selected} onClose={() => setSelected(null)} size="large">
+        <RecordDetails
+          record={selected}
+          fields={[
+            ["客户名称", "account_name"],
+            ["类型", "account_type"],
+            ["等级", "account_level"],
+            ["状态", "account_status"],
+            ["行业", "industry"],
+            ["省份", "region_province"],
+            ["城市", "region_city"],
+            ["最近跟进", "last_activity_summary"],
+            ["最近跟进时间", "last_activity_at"]
+          ]}
+        />
+      </Drawer>
+      <Modal title="编辑客户" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
+        <Form form={editForm} layout="vertical" onFinish={updateAccount}>
+          <Form.Item name="account_level" label="客户等级">
+            <Select allowClear options={["A", "B", "C"].map(option)} />
+          </Form.Item>
+          <Form.Item name="account_status" label="客户状态">
+            <Select allowClear options={["following", "closed", "cancelled"].map(option)} />
+          </Form.Item>
+          <Form.Item name="remark" label="备注">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>保存修改</Button>
+        </Form>
+      </Modal>
     </DataWorkspace>
   );
 }
 
 function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
-  const contacts = useResource(crmApi.contacts.list, []);
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const contacts = useResource(() => crmApi.contacts.list(filters), [filters]);
   const accounts = useResource(crmApi.accounts.list, []);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selected, setSelected] = useState<CrmContact | null>(null);
+  const [editing, setEditing] = useState<CrmContact | null>(null);
   const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
   const accountOptions = toAccountOptions(accounts.data);
 
   const columns: ColumnsType<CrmContact> = [
-    { title: "姓名", dataIndex: "name" },
+    {
+      title: "姓名",
+      dataIndex: "name",
+      render: (value, record) => (
+        <Button type="link" className="inline-action" onClick={() => setSelected(record)}>
+          {value}
+        </Button>
+      )
+    },
     { title: "客户ID", dataIndex: "account_id" },
     { title: "职务", dataIndex: "title", render: textOrDash },
     { title: "类型", dataIndex: "contact_type", render: textOrDash },
     { title: "态度", dataIndex: "attitude", render: textOrDash },
-    { title: "关系热度", dataIndex: "relationship_heat", render: textOrDash }
+    { title: "关系热度", dataIndex: "relationship_heat", render: textOrDash },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Space>
+          <Button size="small" onClick={() => setSelected(record)}>
+            详情
+          </Button>
+          <Button
+            size="small"
+            onClick={() => {
+              setEditing(record);
+              editForm.setFieldsValue({
+                ...record,
+                project_roles: record.project_roles?.join(",")
+              });
+            }}
+          >
+            编辑
+          </Button>
+        </Space>
+      )
+    }
   ];
 
   const createContact = async (values: Record<string, unknown>) => {
@@ -351,6 +474,19 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
     await contacts.refresh();
   };
 
+  const updateContact = async (values: Record<string, unknown>) => {
+    if (!editing) {
+      return;
+    }
+    await crmApi.contacts.update(editing.id, {
+      ...withoutEmpty(values, []),
+      project_roles: splitCsv(values.project_roles)
+    });
+    setEditing(null);
+    editForm.resetFields();
+    await contacts.refresh();
+  };
+
   return (
     <DataWorkspace
       title="联系人"
@@ -360,8 +496,26 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
       action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建联系人</Button>}
       refresh={contacts.refresh}
     >
+      <FilterBar
+        initialValues={filters}
+        onSearch={(values) => setFilters(withoutEmpty(values, []))}
+        onReset={() => setFilters({})}
+      >
+        <Form.Item name="keyword" label="关键词">
+          <Input allowClear placeholder="姓名/职务" />
+        </Form.Item>
+        <Form.Item name="account_id" label="客户">
+          <Select allowClear options={accountOptions} loading={accounts.loading} />
+        </Form.Item>
+        <Form.Item name="attitude" label="态度">
+          <Select allowClear options={["supporter", "neutral", "opponent"].map(option)} />
+        </Form.Item>
+        <Form.Item name="relationship_heat" label="关系热度">
+          <Select allowClear options={["cold", "warm", "familiar", "trusted"].map(option)} />
+        </Form.Item>
+      </FilterBar>
       <Table rowKey="id" dataSource={contacts.data} columns={columns} pagination={{ pageSize: 8 }} />
-      <Drawer title="新建联系人" open={drawerOpen} onClose={() => setDrawerOpen(false)} width={440}>
+      <Drawer title="新建联系人" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
         <Form form={form} layout="vertical" onFinish={createContact}>
           <Form.Item name="account_id" label="所属客户" rules={[{ required: true }]}>
             <Select options={accountOptions} loading={accounts.loading} />
@@ -378,20 +532,75 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
           <Button type="primary" htmlType="submit" block>保存联系人</Button>
         </Form>
       </Drawer>
+      <Drawer title="联系人详情" open={!!selected} onClose={() => setSelected(null)} size="large">
+        <RecordDetails
+          record={selected}
+          fields={[
+            ["姓名", "name"],
+            ["客户ID", "account_id"],
+            ["部门", "department"],
+            ["职务", "title"],
+            ["手机", "mobile"],
+            ["邮箱", "email"],
+            ["类型", "contact_type"],
+            ["态度", "attitude"],
+            ["关系热度", "relationship_heat"],
+            ["项目角色", "project_roles"]
+          ]}
+        />
+      </Drawer>
+      <Modal title="编辑联系人" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
+        <Form form={editForm} layout="vertical" onFinish={updateContact}>
+          <Form.Item name="title" label="职务">
+            <Input />
+          </Form.Item>
+          <Form.Item name="mobile" label="手机">
+            <Input />
+          </Form.Item>
+          <Form.Item name="email" label="邮箱">
+            <Input />
+          </Form.Item>
+          <Form.Item name="attitude" label="态度">
+            <Select allowClear options={["supporter", "neutral", "opponent"].map(option)} />
+          </Form.Item>
+          <Form.Item name="relationship_heat" label="关系热度">
+            <Select allowClear options={["cold", "warm", "familiar", "trusted"].map(option)} />
+          </Form.Item>
+          <Form.Item name="project_roles" label="项目角色">
+            <Input placeholder="多个角色用英文逗号分隔" />
+          </Form.Item>
+          <Form.Item name="remark" label="备注">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>保存修改</Button>
+        </Form>
+      </Modal>
     </DataWorkspace>
   );
 }
 
 function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
-  const opportunities = useResource(crmApi.opportunities.list, []);
+  const [filters, setFilters] = useState<Record<string, unknown>>({ default_following: true });
+  const opportunities = useResource(() => crmApi.opportunities.list(filters), [filters]);
   const accounts = useResource(crmApi.accounts.list, []);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selected, setSelected] = useState<Opportunity | null>(null);
+  const [editing, setEditing] = useState<Opportunity | null>(null);
   const [closing, setClosing] = useState<Opportunity | null>(null);
   const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
   const [closeForm] = Form.useForm();
 
   const columns: ColumnsType<Opportunity> = [
-    { title: "商机名称", dataIndex: "opportunity_name" },
+    {
+      title: "商机名称",
+      dataIndex: "opportunity_name",
+      render: (value, record) => (
+        <Button type="link" className="inline-action" onClick={() => setSelected(record)}>
+          {value}
+        </Button>
+      )
+    },
     { title: "客户ID", dataIndex: "account_id" },
     { title: "阶段", dataIndex: "stage" },
     { title: "状态", dataIndex: "status", render: statusTag },
@@ -400,9 +609,26 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
     {
       title: "操作",
       render: (_, record) => (
-        <Button size="small" disabled={record.status !== "following"} onClick={() => setClosing(record)}>
-          关闭/取消
-        </Button>
+        <Space>
+          <Button size="small" onClick={() => setSelected(record)}>
+            详情
+          </Button>
+          <Button
+            size="small"
+            onClick={() => {
+              setEditing(record);
+              editForm.setFieldsValue(record);
+            }}
+          >
+            编辑
+          </Button>
+          <Button size="small" disabled={record.status !== "following"} onClick={() => setClosing(record)}>
+            关闭/取消
+          </Button>
+          <Button size="small" disabled={record.status === "following"} onClick={() => void reopenOpportunity(record)}>
+            重启
+          </Button>
+        </Space>
       )
     }
   ];
@@ -424,6 +650,16 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
     await opportunities.refresh();
   };
 
+  const updateOpportunity = async (values: Record<string, unknown>) => {
+    if (!editing) {
+      return;
+    }
+    await crmApi.opportunities.update(editing.id, withoutEmpty(values, []));
+    setEditing(null);
+    editForm.resetFields();
+    await opportunities.refresh();
+  };
+
   const closeOpportunity = async (values: Record<string, unknown>) => {
     if (!closing) {
       return;
@@ -431,6 +667,11 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
     await crmApi.opportunities.close(closing.id, values);
     setClosing(null);
     closeForm.resetFields();
+    await opportunities.refresh();
+  };
+
+  const reopenOpportunity = async (record: Opportunity) => {
+    await crmApi.opportunities.reopen(record.id, { reopen_reason: "frontend_reopen" });
     await opportunities.refresh();
   };
 
@@ -443,8 +684,29 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
       action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建商机</Button>}
       refresh={opportunities.refresh}
     >
+      <FilterBar
+        initialValues={filters}
+        onSearch={(values) => setFilters(withoutEmpty(values, []))}
+        onReset={() => setFilters({ default_following: true })}
+      >
+        <Form.Item name="keyword" label="关键词">
+          <Input allowClear placeholder="商机名称" />
+        </Form.Item>
+        <Form.Item name="account_id" label="客户">
+          <Select allowClear options={toAccountOptions(accounts.data)} loading={accounts.loading} />
+        </Form.Item>
+        <Form.Item name="stage" label="阶段">
+          <Select allowClear options={["lead", "proposal", "negotiation", "contract"].map(option)} />
+        </Form.Item>
+        <Form.Item name="status" label="状态">
+          <Select allowClear options={["following", "won", "lost", "cancelled"].map(option)} />
+        </Form.Item>
+        <Form.Item name="risk_status" label="风险">
+          <Select allowClear options={["normal", "risk"].map(option)} />
+        </Form.Item>
+      </FilterBar>
       <Table rowKey="id" dataSource={opportunities.data} columns={columns} pagination={{ pageSize: 8 }} />
-      <Drawer title="新建商机" open={drawerOpen} onClose={() => setDrawerOpen(false)} width={460}>
+      <Drawer title="新建商机" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
         <Form form={form} layout="vertical" onFinish={createOpportunity} initialValues={{ owner_department_id: 1 }}>
           <Form.Item name="account_id" label="所属客户" rules={[{ required: true }]}>
             <Select options={toAccountOptions(accounts.data)} loading={accounts.loading} />
@@ -464,6 +726,49 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
           <Button type="primary" htmlType="submit" block>保存商机</Button>
         </Form>
       </Drawer>
+      <Drawer title="商机详情" open={!!selected} onClose={() => setSelected(null)} size="large">
+        <RecordDetails
+          record={selected}
+          fields={[
+            ["商机名称", "opportunity_name"],
+            ["客户ID", "account_id"],
+            ["阶段", "stage"],
+            ["状态", "status"],
+            ["等级", "level"],
+            ["风险", "risk_status"],
+            ["预计合同金额", "estimated_contract_amount"],
+            ["当前进展", "current_progress"],
+            ["下一步计划", "next_plan"],
+            ["最近跟进", "last_activity_summary"]
+          ]}
+        />
+      </Drawer>
+      <Modal title="编辑商机" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
+        <Form form={editForm} layout="vertical" onFinish={updateOpportunity}>
+          <Form.Item name="stage" label="阶段">
+            <Select allowClear options={["lead", "proposal", "negotiation", "contract"].map(option)} />
+          </Form.Item>
+          <Form.Item name="status" label="状态">
+            <Select allowClear options={["following", "won", "lost", "cancelled"].map(option)} />
+          </Form.Item>
+          <Form.Item name="level" label="等级">
+            <Select allowClear options={["A", "B", "C"].map(option)} />
+          </Form.Item>
+          <Form.Item name="risk_status" label="风险状态">
+            <Select allowClear options={["normal", "risk"].map(option)} />
+          </Form.Item>
+          <Form.Item name="estimated_contract_amount" label="预计合同金额">
+            <InputNumber min={0} className="full-width" />
+          </Form.Item>
+          <Form.Item name="current_progress" label="当前进展">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Form.Item name="next_plan" label="下一步计划">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>保存修改</Button>
+        </Form>
+      </Modal>
       <Modal title="关闭/取消商机" open={!!closing} onCancel={() => setClosing(null)} footer={null}>
         <Form form={closeForm} layout="vertical" onFinish={closeOpportunity} initialValues={{ close_type: "won" }}>
           <Form.Item name="close_type" label="类型" rules={[{ required: true }]}>
@@ -483,16 +788,28 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
 }
 
 function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
-  const activities = useResource(crmApi.activities.list, []);
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const activities = useResource(() => crmApi.activities.list(filters), [filters]);
   const accounts = useResource(crmApi.accounts.list, []);
   const opportunities = useResource(crmApi.opportunities.list, []);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selected, setSelected] = useState<Activity | null>(null);
+  const [editing, setEditing] = useState<Activity | null>(null);
   const [completing, setCompleting] = useState<Activity | null>(null);
   const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
   const [completeForm] = Form.useForm();
 
   const columns: ColumnsType<Activity> = [
-    { title: "行动主题", dataIndex: "subject" },
+    {
+      title: "行动主题",
+      dataIndex: "subject",
+      render: (value, record) => (
+        <Button type="link" className="inline-action" onClick={() => setSelected(record)}>
+          {value}
+        </Button>
+      )
+    },
     { title: "客户ID", dataIndex: "account_id" },
     { title: "商机ID", dataIndex: "opportunity_id", render: textOrDash },
     { title: "状态", dataIndex: "activity_status", render: statusTag },
@@ -500,9 +817,27 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
     {
       title: "操作",
       render: (_, record) => (
-        <Button size="small" disabled={record.activity_status === "completed"} onClick={() => setCompleting(record)}>
-          完成
-        </Button>
+        <Space>
+          <Button size="small" onClick={() => setSelected(record)}>
+            详情
+          </Button>
+          <Button
+            size="small"
+            onClick={() => {
+              setEditing(record);
+              editForm.setFieldsValue({
+                ...record,
+                activity_time: fromDateTime(record.activity_time),
+                next_follow_up_at: fromDateTime(record.next_follow_up_at)
+              });
+            }}
+          >
+            编辑
+          </Button>
+          <Button size="small" disabled={record.activity_status === "completed"} onClick={() => setCompleting(record)}>
+            完成
+          </Button>
+        </Space>
       )
     }
   ];
@@ -523,6 +858,20 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
     });
     setDrawerOpen(false);
     form.resetFields();
+    await activities.refresh();
+  };
+
+  const updateActivity = async (values: Record<string, unknown>) => {
+    if (!editing) {
+      return;
+    }
+    await crmApi.activities.update(editing.id, {
+      activity_time: toDateTime(values.activity_time),
+      next_follow_up_at: toDateTime(values.next_follow_up_at),
+      ...withoutEmpty(values, ["activity_time", "next_follow_up_at"])
+    });
+    setEditing(null);
+    editForm.resetFields();
     await activities.refresh();
   };
 
@@ -548,8 +897,29 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
       action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建行动</Button>}
       refresh={activities.refresh}
     >
+      <FilterBar
+        initialValues={filters}
+        onSearch={(values) => setFilters(withoutEmpty(values, []))}
+        onReset={() => setFilters({})}
+      >
+        <Form.Item name="keyword" label="关键词">
+          <Input allowClear placeholder="行动主题" />
+        </Form.Item>
+        <Form.Item name="account_id" label="客户">
+          <Select allowClear options={toAccountOptions(accounts.data)} loading={accounts.loading} />
+        </Form.Item>
+        <Form.Item name="opportunity_id" label="商机">
+          <Select allowClear options={toOpportunityOptions(opportunities.data)} loading={opportunities.loading} />
+        </Form.Item>
+        <Form.Item name="activity_status" label="状态">
+          <Select allowClear options={["planned", "completed", "cancelled"].map(option)} />
+        </Form.Item>
+        <Form.Item name="overdue" label="逾期">
+          <Select allowClear options={[{ label: "是", value: true }, { label: "否", value: false }]} />
+        </Form.Item>
+      </FilterBar>
       <Table rowKey="id" dataSource={activities.data} columns={columns} pagination={{ pageSize: 8 }} />
-      <Drawer title="新建行动" open={drawerOpen} onClose={() => setDrawerOpen(false)} width={480}>
+      <Drawer title="新建行动" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
         <Form form={form} layout="vertical" onFinish={createActivity} initialValues={{ owner_department_id: 1 }}>
           <Form.Item name="account_id" label="客户" rules={[{ required: true }]}>
             <Select options={toAccountOptions(accounts.data)} loading={accounts.loading} />
@@ -575,6 +945,55 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
           <Button type="primary" htmlType="submit" block>保存行动</Button>
         </Form>
       </Drawer>
+      <Drawer title="行动详情" open={!!selected} onClose={() => setSelected(null)} size="large">
+        <RecordDetails
+          record={selected}
+          fields={[
+            ["行动主题", "subject"],
+            ["客户ID", "account_id"],
+            ["商机ID", "opportunity_id"],
+            ["类型", "activity_type"],
+            ["状态", "activity_status"],
+            ["结果", "activity_result"],
+            ["行动时间", "activity_time"],
+            ["下次跟进", "next_follow_up_at"],
+            ["沟通内容", "communication_content"],
+            ["客户反馈", "customer_feedback"],
+            ["形成结论", "conclusion"],
+            ["下一步计划", "next_plan"],
+            ["风险说明", "risk_description"]
+          ]}
+        />
+      </Drawer>
+      <Modal title="编辑行动" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
+        <Form form={editForm} layout="vertical" onFinish={updateActivity}>
+          <Form.Item name="subject" label="行动主题">
+            <Input />
+          </Form.Item>
+          <Form.Item name="activity_status" label="状态">
+            <Select allowClear options={["planned", "completed", "cancelled"].map(option)} />
+          </Form.Item>
+          <Form.Item name="activity_time" label="行动时间">
+            <Input type="datetime-local" />
+          </Form.Item>
+          <Form.Item name="next_follow_up_at" label="下次跟进时间">
+            <Input type="datetime-local" />
+          </Form.Item>
+          <Form.Item name="communication_content" label="沟通内容">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Form.Item name="customer_feedback" label="客户反馈">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Form.Item name="conclusion" label="形成结论">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Form.Item name="next_plan" label="下一步计划">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>保存修改</Button>
+        </Form>
+      </Modal>
       <Modal title="完成行动" open={!!completing} onCancel={() => setCompleting(null)} footer={null}>
         <Form form={completeForm} layout="vertical" onFinish={completeActivity}>
           <Form.Item name="conclusion" label="形成结论" rules={[{ required: true }]}>
@@ -700,6 +1119,67 @@ function PageTitle({ title, description, action }: { title: string; description:
   );
 }
 
+function FilterBar({
+  initialValues,
+  children,
+  onSearch,
+  onReset
+}: {
+  initialValues: Record<string, unknown>;
+  children: React.ReactNode;
+  onSearch: (values: Record<string, unknown>) => void;
+  onReset: () => void;
+}) {
+  const [form] = Form.useForm();
+
+  useEffect(() => {
+    form.setFieldsValue(initialValues);
+  }, [form, initialValues]);
+
+  return (
+    <Form className="filter-bar" form={form} layout="inline" onFinish={onSearch}>
+      {children}
+      <Form.Item>
+        <Space>
+          <Button type="primary" htmlType="submit">
+            筛选
+          </Button>
+          <Button
+            onClick={() => {
+              form.resetFields();
+              onReset();
+            }}
+          >
+            重置
+          </Button>
+        </Space>
+      </Form.Item>
+    </Form>
+  );
+}
+
+function RecordDetails<T extends Record<string, unknown>>({
+  record,
+  fields
+}: {
+  record: T | null;
+  fields: Array<[string, keyof T & string]>;
+}) {
+  if (!record) {
+    return null;
+  }
+  return (
+    <dl className="record-details">
+      {fields.map(([label, key]) => (
+        <div key={key}>
+          <dt>{label}</dt>
+          <dd>{formatValue(record[key])}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 function RefreshButton({ onClick, loading }: { onClick: () => void | Promise<void>; loading?: boolean }) {
   return (
     <Button aria-label="刷新" icon={<RefreshCw size={16} />} loading={loading} onClick={() => void onClick()}>
@@ -802,11 +1282,41 @@ function dateText(value?: string | null) {
   return value.replace("T", " ").slice(0, 16);
 }
 
+function formatValue(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value.join(", ") : "-";
+  }
+  if (typeof value === "string") {
+    return value.includes("T") ? dateText(value) : value || "-";
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return "-";
+}
+
 function toDateTime(value: unknown) {
   if (typeof value !== "string" || !value) {
     return undefined;
   }
   return new Date(value).toISOString();
+}
+
+function fromDateTime(value?: string | null) {
+  if (!value) {
+    return undefined;
+  }
+  return value.slice(0, 16);
+}
+
+function splitCsv(value: unknown) {
+  if (typeof value !== "string") {
+    return [];
+  }
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function withoutEmpty(values: Record<string, unknown>, omittedKeys: string[]) {

@@ -123,6 +123,47 @@ describe("CRM frontend V1 workflow", () => {
       );
     });
   });
+
+  it("filters accounts with backend query parameters", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "客户池" }));
+    await screen.findByText("测试客户A");
+    await user.type(screen.getByPlaceholderText("客户名称/简称"), "测试");
+    await user.click(screen.getByRole("button", { name: /筛\s*选/ }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/accounts?keyword="), expect.anything());
+    });
+  });
+
+  it("updates an account from the customer list page", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "客户池" }));
+    await screen.findByText("测试客户A");
+    await user.click(screen.getByRole("button", { name: /编\s*辑/ }));
+    await user.type(screen.getByLabelText("备注"), "重点推进");
+    await user.click(screen.getByRole("button", { name: /保存\s*修改/ }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/accounts/1",
+        expect.objectContaining({
+          method: "PATCH",
+          body: expect.stringContaining("重点推进")
+        })
+      );
+    });
+  });
 });
 
 async function loginThroughUi(user: ReturnType<typeof userEvent.setup>) {
@@ -135,38 +176,42 @@ async function loginThroughUi(user: ReturnType<typeof userEvent.setup>) {
 function mockCrmFetch() {
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
+    const path = url.split("?")[0];
     const method = init?.method ?? "GET";
-    if (url.endsWith("/api/auth/login")) {
+    if (path.endsWith("/api/auth/login")) {
       return jsonResponse({ code: "OK", data: { access_token: "token-001", token_type: "Bearer", user: apiData.user } });
     }
-    if (url.endsWith("/api/auth/logout")) {
+    if (path.endsWith("/api/auth/logout")) {
       return jsonResponse({ code: "OK", data: { logged_out: true } });
     }
-    if (url.endsWith("/api/auth/me")) {
+    if (path.endsWith("/api/auth/me")) {
       return jsonResponse({ code: "OK", data: apiData.user });
     }
-    if (url.endsWith("/api/accounts") && method === "POST") {
+    if (path.endsWith("/api/accounts/1") && method === "PATCH") {
+      return jsonResponse({ code: "OK", data: { ...apiData.accounts[0], remark: "重点推进" } });
+    }
+    if (path.endsWith("/api/accounts") && method === "POST") {
       return jsonResponse({ code: "OK", data: { ...apiData.accounts[0], id: 2, account_name: "新增客户B" } });
     }
-    if (url.endsWith("/api/accounts")) {
+    if (path.endsWith("/api/accounts")) {
       return jsonResponse({ code: "OK", data: apiData.accounts });
     }
-    if (url.endsWith("/api/contacts")) {
+    if (path.endsWith("/api/contacts")) {
       return jsonResponse({ code: "OK", data: apiData.contacts });
     }
-    if (url.endsWith("/api/opportunities")) {
+    if (path.endsWith("/api/opportunities")) {
       return jsonResponse({ code: "OK", data: apiData.opportunities });
     }
-    if (url.endsWith("/api/activities")) {
+    if (path.endsWith("/api/activities")) {
       return jsonResponse({ code: "OK", data: apiData.activities });
     }
-    if (url.endsWith("/api/reminders")) {
+    if (path.endsWith("/api/reminders")) {
       return jsonResponse({ code: "OK", data: apiData.reminders });
     }
-    if (url.endsWith("/api/weekly-progress/opportunities")) {
+    if (path.endsWith("/api/weekly-progress/opportunities")) {
       return jsonResponse({ code: "OK", data: apiData.weeklyProgress });
     }
-    if (url.endsWith("/api/system/dicts")) {
+    if (path.endsWith("/api/system/dicts")) {
       return jsonResponse({ code: "OK", data: apiData.dictionaries });
     }
     return jsonResponse({ code: "NOT_FOUND", message: "not found" }, 404);

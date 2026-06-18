@@ -1,5 +1,7 @@
 import { clearAuthToken, requestJson, setAuthToken } from "./client";
 
+type QueryParams = Record<string, unknown>;
+
 export type CurrentUser = {
   id: number;
   name: string;
@@ -15,15 +17,23 @@ export type AuthTokenResponse = {
 
 export type Account = {
   id: number;
+  parent_id?: number;
   account_name: string;
+  account_short_name?: string;
   account_type: string;
   account_level?: string;
   account_status: string;
+  account_source?: string;
   industry?: string;
   region_province?: string;
   region_city?: string;
+  address?: string;
+  relationship_status?: string;
   owner_department_id: number;
   owner_user_id: number;
+  background?: string;
+  key_needs?: string;
+  remark?: string;
   last_activity_summary?: string;
   last_activity_at?: string;
 };
@@ -32,11 +42,21 @@ export type Contact = {
   id: number;
   account_id: number;
   name: string;
+  department?: string;
   title?: string;
   mobile?: string;
+  email?: string;
+  wechat?: string;
   contact_type?: string;
+  decision_influence?: string;
   attitude?: string;
   relationship_heat?: string;
+  importance_level?: string;
+  birthday?: string;
+  anniversary?: string;
+  last_communication_summary?: string;
+  next_action?: string;
+  remark?: string;
   project_roles?: string[];
 };
 
@@ -47,10 +67,17 @@ export type Opportunity = {
   stage: string;
   status: string;
   level?: string;
+  source?: string;
+  potential_point?: string;
   risk_status?: string;
+  estimated_budget_amount?: number;
   estimated_contract_amount?: number;
+  expected_close_date?: string;
   owner_department_id: number;
   owner_user_id: number;
+  current_progress?: string;
+  next_plan?: string;
+  remark?: string;
   last_activity_summary?: string;
 };
 
@@ -66,8 +93,15 @@ export type Activity = {
   next_follow_up_at?: string;
   owner_department_id: number;
   owner_user_id: number;
+  communication_content?: string;
+  customer_feedback?: string;
   conclusion?: string;
   next_plan?: string;
+  risk_description?: string;
+  include_in_weekly_progress?: boolean;
+  weekly_period?: string;
+  source_type?: string;
+  remark?: string;
 };
 
 export type Reminder = {
@@ -106,6 +140,20 @@ export type DictionaryType = {
   items: Array<{ id: number; item_code: string; item_name: string; is_active: boolean }>;
 };
 
+function withQuery(path: string, query?: QueryParams) {
+  if (!query) {
+    return path;
+  }
+  const params = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      params.set(key, String(value));
+    }
+  });
+  const queryString = params.toString();
+  return queryString ? `${path}?${queryString}` : path;
+}
+
 export async function login(username: string, password: string) {
   const response = await requestJson<AuthTokenResponse>("/api/auth/login", {
     method: "POST",
@@ -129,36 +177,52 @@ export function currentUser() {
 
 export const crmApi = {
   accounts: {
-    list: () => requestJson<Account[]>("/api/accounts"),
+    list: (query?: QueryParams) => requestJson<Account[]>(withQuery("/api/accounts", query)),
+    detail: (id: number) => requestJson<Account>(`/api/accounts/${id}`),
     create: (body: Record<string, unknown>) =>
-      requestJson<Account>("/api/accounts", { method: "POST", body: JSON.stringify(body) })
+      requestJson<Account>("/api/accounts", { method: "POST", body: JSON.stringify(body) }),
+    update: (id: number, body: Record<string, unknown>) =>
+      requestJson<Account>(`/api/accounts/${id}`, { method: "PATCH", body: JSON.stringify(body) })
   },
   contacts: {
-    list: () => requestJson<Contact[]>("/api/contacts"),
+    list: (query?: QueryParams) => requestJson<Contact[]>(withQuery("/api/contacts", query)),
+    detail: (id: number) => requestJson<Contact>(`/api/contacts/${id}`),
     create: (body: Record<string, unknown>) =>
-      requestJson<Contact>("/api/contacts", { method: "POST", body: JSON.stringify(body) })
+      requestJson<Contact>("/api/contacts", { method: "POST", body: JSON.stringify(body) }),
+    update: (id: number, body: Record<string, unknown>) =>
+      requestJson<Contact>(`/api/contacts/${id}`, { method: "PATCH", body: JSON.stringify(body) })
   },
   opportunities: {
-    list: () => requestJson<Opportunity[]>("/api/opportunities"),
+    list: (query?: QueryParams) => requestJson<Opportunity[]>(withQuery("/api/opportunities", query)),
+    detail: (id: number) => requestJson<Opportunity>(`/api/opportunities/${id}`),
     create: (body: Record<string, unknown>) =>
       requestJson<Opportunity>("/api/opportunities", { method: "POST", body: JSON.stringify(body) }),
+    update: (id: number, body: Record<string, unknown>) =>
+      requestJson<Opportunity>(`/api/opportunities/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
     close: (id: number, body: Record<string, unknown>) =>
-      requestJson<Opportunity>(`/api/opportunities/${id}/close`, { method: "POST", body: JSON.stringify(body) })
+      requestJson<Opportunity>(`/api/opportunities/${id}/close`, { method: "POST", body: JSON.stringify(body) }),
+    reopen: (id: number, body: Record<string, unknown>) =>
+      requestJson<Opportunity>(`/api/opportunities/${id}/reopen`, { method: "POST", body: JSON.stringify(body) })
   },
   activities: {
-    list: () => requestJson<Activity[]>("/api/activities"),
+    list: (query?: QueryParams) => requestJson<Activity[]>(withQuery("/api/activities", query)),
+    detail: (id: number) => requestJson<Activity>(`/api/activities/${id}`),
     create: (body: Record<string, unknown>) =>
       requestJson<Activity>("/api/activities", { method: "POST", body: JSON.stringify(body) }),
+    update: (id: number, body: Record<string, unknown>) =>
+      requestJson<Activity>(`/api/activities/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
     complete: (id: number, body: Record<string, unknown>) =>
       requestJson<Activity>(`/api/activities/${id}/complete`, { method: "POST", body: JSON.stringify(body) })
   },
   reminders: {
-    list: () => requestJson<Reminder[]>("/api/reminders")
+    list: (query?: QueryParams) => requestJson<Reminder[]>(withQuery("/api/reminders", query)),
+    update: (id: number, body: Record<string, unknown>) =>
+      requestJson<Reminder>(`/api/reminders/${id}`, { method: "PATCH", body: JSON.stringify(body) })
   },
   weeklyProgress: {
-    list: () => requestJson<WeeklyProgress[]>("/api/weekly-progress/opportunities")
+    list: (query?: QueryParams) => requestJson<WeeklyProgress[]>(withQuery("/api/weekly-progress/opportunities", query))
   },
   dictionaries: {
-    list: () => requestJson<DictionaryType[]>("/api/system/dicts")
+    list: (query?: QueryParams) => requestJson<DictionaryType[]>(withQuery("/api/system/dicts", query))
   }
 };
