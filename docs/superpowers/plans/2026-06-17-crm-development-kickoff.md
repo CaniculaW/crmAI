@@ -612,11 +612,17 @@ V1需要的表：
 - 销售行动新增、完成、风险触发、最近跟进回写。
 - 商机周进展自动汇总。
 
-- [ ] **Step 2: 执行集成测试**
+- [x] **Step 2: 执行集成测试**
 
 核心链路：
 
 登录 -> 新建客户 -> 新建联系人 -> 新建商机 -> 新建销售行动 -> 完成销售行动 -> 查看商机周进展 -> 关闭商机
+
+执行记录：
+
+- 2026-06-18 已新增并执行 `V1WorkflowIntegrationTest`，覆盖核心链路、团队数据范围、个人越权、审计日志抽样。
+- 2026-06-18 已执行 `OpenApiContractCoverageTest`，校验后端映射接口被 `docs/openapi/crm-v1-openapi.yaml` 覆盖。
+- 2026-06-18 已执行 `mvn test` 和 `mvn verify -Ppostgres-it`，覆盖单元/切片测试与PostgreSQL迁移验证。
 
 - [ ] **Step 3: 业务验收**
 
