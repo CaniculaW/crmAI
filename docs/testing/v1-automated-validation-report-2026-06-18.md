@@ -8,6 +8,8 @@ V1 当前代码分支已通过自动化验证、本地 PostgreSQL 部署态 API 
 
 具名测试环境执行步骤、证据包结构和验收会议模板见 `docs/testing/crm-v1-test-environment-validation-runbook.md`；验收结果汇总和 Go/No-Go 记录模板见 `docs/testing/crm-v1-uat-evidence-pack-template.md`。
 
+GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖后端测试、PostgreSQL 集成验证、前端测试和前端生产构建。
+
 ## 2. 验证范围
 
 | 范围 | 覆盖内容 | 结论 |
@@ -30,6 +32,7 @@ V1 当前代码分支已通过自动化验证、本地 PostgreSQL 部署态 API 
 | `mvn -Dtest=V1DemoDataSeederTest test` | 1 test passed |
 | `npm test` | 16 tests passed |
 | `npm run build` | Build succeeded；保留 antd vendor chunk 体积提示 |
+| GitHub Actions `V1 Validation` | 已配置，push/PR自动运行后端、PostgreSQL集成、前端测试和构建 |
 | `npm run smoke:v1:browser` | `http://127.0.0.1:5175/system` 登录后展示 `V1演示销售部`、`V1演示管理员`、`v1_demo_admin`；console 0 warning/error |
 | 本地API Smoke | `POST /api/auth/login` + `GET /api/bootstrap` 返回 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25） |
 

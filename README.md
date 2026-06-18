@@ -4,6 +4,27 @@
 
 当前阶段：Sprint 0，进行技术栈、工程骨架、接口、数据库和测试验收准备。
 
+## V1 质量门
+
+GitHub Actions 已配置 V1 自动验证工作流：
+
+```text
+.github/workflows/v1-validation.yml
+```
+
+触发方式：
+
+- push 到 `main`
+- 面向 `main` 的 pull request
+- 手动 `workflow_dispatch`
+
+覆盖内容：
+
+- 后端：`mvn -B test`
+- 后端 PostgreSQL 集成验证：`mvn -B verify -Ppostgres-it`
+- 前端：`npm test`
+- 前端生产构建：`npm run build`
+
 ## 后端
 
 后端工程位于 `backend/`，当前采用 Java 17 + Spring Boot + Maven。
