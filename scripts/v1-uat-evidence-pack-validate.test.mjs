@@ -115,3 +115,11 @@ test("fails a Go evidence pack when business signoff is missing", () => {
   assert.equal(result.ok, false);
   assert.match(result.failed.map((check) => check.id).join(","), /signoff-complete/);
 });
+
+test("explains that draft placeholders remain when the no-placeholder check fails", () => {
+  const pack = completeGoPack.replace("Sales Owner", "待填写");
+  const result = evaluateUatEvidencePack(pack);
+  const placeholderFailure = result.failed.find((check) => check.id === "no-placeholders");
+
+  assert.equal(placeholderFailure?.message, "Evidence pack still contains draft placeholders.");
+});

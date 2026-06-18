@@ -128,6 +128,14 @@ node scripts/v1-validation-status.mjs --output docs/testing/v1-validation-status
 
 该报告只汇总现有 validators 的结果，不替代 UAT 执行、缺陷闭环或签署。
 
+需要把阻塞项拆成角色工作流时，生成 UAT 行动计划：
+
+```bash
+node scripts/v1-uat-action-plan.mjs --output docs/testing/v1-uat-action-plan.md
+```
+
+该行动计划用于项目/产品、测试、业务UAT和研发分工推进；不替代 tracker、证据包 validator 或最终 release gate。
+
 ## 3. 测试环境 Smoke 步骤
 
 | 编号 | 步骤 | 通过标准 | 证据 |

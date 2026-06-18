@@ -88,10 +88,13 @@ export function evaluateUatEvidencePack(markdown) {
   const checks = [];
   const decision = extractDecision(markdown);
 
+  const hasDraftPlaceholders = hasPlaceholder(markdown);
   checks.push(makeCheck(
     "no-placeholders",
-    !hasPlaceholder(markdown),
-    "Evidence pack has no draft placeholders."
+    !hasDraftPlaceholders,
+    hasDraftPlaceholders
+      ? "Evidence pack still contains draft placeholders."
+      : "Evidence pack has no draft placeholders."
   ));
 
   checks.push(makeCheck(

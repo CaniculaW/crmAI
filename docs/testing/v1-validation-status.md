@@ -1,7 +1,7 @@
 # CRM V1 Validation Status
 
-Generated at: 2026-06-18T18:34:48.195Z
-Git commit: 918ffced1a9002e7b624db51ace724c56301b646
+Generated at: 2026-06-18T18:47:16.377Z
+Git commit: 81512ded185a52c44747da70d008ebe4d2d9bd70
 
 Overall: No-Go
 
@@ -23,7 +23,7 @@ Overall: No-Go
 
 ## Open Blockers
 
-- FAIL UAT Evidence Pack/no-placeholders: Evidence pack has no draft placeholders.
+- FAIL UAT Evidence Pack/no-placeholders: Evidence pack still contains draft placeholders.
 - FAIL UAT Evidence Pack/environment-results: Missing passed environment evidence: 销售个人账号, 销售负责人账号, 权限样本账号
 - FAIL UAT Evidence Pack/uat-business-cases: Missing passed UAT evidence: UAT-001, UAT-002, UAT-003, UAT-004, UAT-005, UAT-006, UAT-007, UAT-008, UAT-009, UAT-010
 - FAIL UAT Evidence Pack/p0-defects: P0/S1 defect row is missing or invalid.

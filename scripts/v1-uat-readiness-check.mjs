@@ -23,9 +23,12 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-release-gate.test.mjs",
   "scripts/v1-validation-status.mjs",
   "scripts/v1-validation-status.test.mjs",
+  "scripts/v1-uat-action-plan.mjs",
+  "scripts/v1-uat-action-plan.test.mjs",
   "docs/releases/v1.0.0-rc.8.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/v1-validation-status.md",
+  "docs/testing/v1-uat-action-plan.md",
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
@@ -254,6 +257,20 @@ export function evaluateReadinessSnapshot(snapshot) {
     "V1 validation status report is tested and summarizes current Go/No-Go blockers from existing gates."
   ));
 
+  const uatActionPlan = snapshot["scripts/v1-uat-action-plan.mjs"] ?? "";
+  const uatActionPlanTest = snapshot["scripts/v1-uat-action-plan.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "v1-uat-action-plan",
+    includesAll(workflow + uatActionPlan + uatActionPlanTest, [
+      "node --test scripts/v1-uat-action-plan.test.mjs",
+      "generateV1UatActionPlanMarkdown",
+      "Overall: No-Go",
+      "Role Workstreams",
+      "generates a No-Go UAT action plan grouped by project, test, business, and engineering workstreams"
+    ]),
+    "V1 UAT action plan is tested and turns validator blockers into role-based execution workstreams."
+  ));
+
   const release = snapshot["docs/releases/v1.0.0-rc.8.md"] ?? "";
   checks.push(makeCheck(
     "rc-release-record",
@@ -308,9 +325,10 @@ export function evaluateReadinessSnapshot(snapshot) {
   const traceability = snapshot["docs/testing/crm-v1-validation-traceability.md"] ?? "";
   const validationReport = snapshot["docs/testing/v1-automated-validation-report-2026-06-18.md"] ?? "";
   const validationStatusDoc = snapshot["docs/testing/v1-validation-status.md"] ?? "";
+  const uatActionPlanDoc = snapshot["docs/testing/v1-uat-action-plan.md"] ?? "";
   checks.push(makeCheck(
     "external-uat-blockers-documented",
-    includesAll(traceability + validationReport + validationStatusDoc + release + acceptance, [
+    includesAll(traceability + validationReport + validationStatusDoc + uatActionPlanDoc + release + acceptance, [
       "具名测试环境",
       "业务验收签署",
       "仍需"
@@ -337,7 +355,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-evidence-pack-validate.mjs", "v1-validation-status.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-evidence-pack-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 
