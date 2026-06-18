@@ -170,6 +170,15 @@ export type SystemUser = {
   roles: SystemRoleSummary[];
 };
 
+export type SystemDepartment = {
+  id: number;
+  parent_id?: number;
+  code: string;
+  name: string;
+  region_code?: string;
+  status: string;
+};
+
 export type SystemRole = {
   id: number;
   code: string;
@@ -301,7 +310,16 @@ export const crmApi = {
     list: (query?: QueryParams) => requestJson<AuditLog[]>(withQuery("/api/system/audit-logs", query))
   },
   users: {
-    list: () => requestJson<SystemUser[]>("/api/system/users")
+    list: () => requestJson<SystemUser[]>("/api/system/users"),
+    create: (body: Record<string, unknown>) =>
+      requestJson<SystemUser>("/api/system/users", { method: "POST", body: JSON.stringify(body) }),
+    update: (userId: number, body: Record<string, unknown>) =>
+      requestJson<SystemUser>(`/api/system/users/${userId}`, { method: "PUT", body: JSON.stringify(body) })
+  },
+  departments: {
+    list: () => requestJson<SystemDepartment[]>("/api/system/departments"),
+    create: (body: Record<string, unknown>) =>
+      requestJson<SystemDepartment>("/api/system/departments", { method: "POST", body: JSON.stringify(body) })
   },
   roles: {
     list: () => requestJson<SystemRole[]>("/api/system/roles"),

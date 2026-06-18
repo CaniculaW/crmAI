@@ -56,6 +56,100 @@ class IdentityAdminControllerTest {
     }
 
     @Test
+    void listsAndCreatesDepartmentsForSystemUserManagers() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String token = createAndLoginUser("dept_mgr_" + suffix, List.of("system.user.manage"));
+
+        ResponseEntity<JsonNode> createResponse = restTemplate.exchange(
+                "/api/system/departments",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "code", "dept_api_" + suffix,
+                        "name", "系统管理创建部门",
+                        "region_code", "CN-31",
+                        "status", "active"), authHeaders(token, "identity-dept-create-trace-001")),
+                JsonNode.class);
+        ResponseEntity<JsonNode> listResponse = restTemplate.exchange(
+                "/api/system/departments",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "identity-dept-list-trace-001")),
+                JsonNode.class);
+
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Long departmentId = createResponse.getBody().path("data").path("id").asLong();
+        assertThat(createResponse.getBody().path("data").path("name").asText()).isEqualTo("系统管理创建部门");
+        assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(listResponse.getBody().path("data")).anySatisfy(department ->
+                assertThat(department.path("id").asLong()).isEqualTo(departmentId));
+    }
+
+    @Test
+    void createsAndUpdatesUsersForSystemUserManagers() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String token = createAndLoginUser("user_admin_" + suffix, List.of("system.user.manage"));
+        Long departmentId = identityService.createDepartment(new DepartmentCreateRequest(
+                null,
+                "user-admin-dept-" + suffix,
+                "用户管理测试部",
+                "CN-31",
+                "active"));
+        Long firstRoleId = identityService.createRole(new RoleCreateRequest(
+                "created_user_role_" + suffix,
+                "新用户角色",
+                "创建用户时分配"));
+        Long secondRoleId = identityService.createRole(new RoleCreateRequest(
+                "updated_user_role_" + suffix,
+                "更新用户角色",
+                "更新用户时替换"));
+
+        ResponseEntity<JsonNode> createResponse = restTemplate.exchange(
+                "/api/system/users",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "department_id", departmentId,
+                        "name", "新建系统用户",
+                        "mobile", "138" + suffix.substring(0, 8),
+                        "email", "created_" + suffix + "@example.com",
+                        "role_code", "sales_rep",
+                        "status", "active",
+                        "login_username", "created_user_" + suffix,
+                        "initial_password", "S3cure!123",
+                        "role_ids", List.of(firstRoleId)), authHeaders(token, "identity-user-create-trace-001")),
+                JsonNode.class);
+
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Long userId = createResponse.getBody().path("data").path("id").asLong();
+        assertThat(createResponse.getBody().path("data").path("roles")).anySatisfy(role ->
+                assertThat(role.path("id").asLong()).isEqualTo(firstRoleId));
+
+        ResponseEntity<JsonNode> loginResponse = restTemplate.exchange(
+                "/api/auth/login",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "username", "created_user_" + suffix,
+                        "password", "S3cure!123"), traceHeaders("identity-created-login-trace-001")),
+                JsonNode.class);
+        assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<JsonNode> updateResponse = restTemplate.exchange(
+                "/api/system/users/" + userId,
+                HttpMethod.PUT,
+                new HttpEntity<>(Map.of(
+                        "name", "更新系统用户",
+                        "status", "inactive",
+                        "role_ids", List.of(secondRoleId)), authHeaders(token, "identity-user-update-trace-001")),
+                JsonNode.class);
+
+        assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(updateResponse.getBody().path("data").path("name").asText()).isEqualTo("更新系统用户");
+        assertThat(updateResponse.getBody().path("data").path("status").asText()).isEqualTo("inactive");
+        assertThat(updateResponse.getBody().path("data").path("roles")).anySatisfy(role ->
+                assertThat(role.path("id").asLong()).isEqualTo(secondRoleId));
+        assertThat(updateResponse.getBody().path("data").path("roles")).noneSatisfy(role ->
+                assertThat(role.path("id").asLong()).isEqualTo(firstRoleId));
+    }
+
+    @Test
     void listsPermissionsAndReplacesRolePermissionsForSystemRoleManagers() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         String token = createAndLoginUser("role_mgr_" + suffix, List.of("system.role.manage"));

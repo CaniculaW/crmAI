@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
@@ -105,10 +105,20 @@ const apiData = {
   users: [
     {
       id: 1001,
+      department_id: 1,
       name: "销售一号",
       email: "sales@example.com",
       status: "active",
       roles: [{ id: 3001, code: "sales_admin", name: "销售管理员" }]
+    }
+  ],
+  departments: [
+    {
+      id: 1,
+      code: "sales-cn",
+      name: "华东销售部",
+      region_code: "CN-31",
+      status: "active"
     }
   ],
   roles: [
@@ -377,7 +387,71 @@ describe("CRM frontend V1 workflow", () => {
       );
     });
   });
+
+  it("creates departments and maintains users from system management", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "系统管理" }));
+    expect(await screen.findByText("华东销售部")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "新建组织" }));
+    const departmentDialog = latestDialog();
+    await user.type(departmentDialog.getByLabelText("组织编码"), "sales-south");
+    await user.type(departmentDialog.getByLabelText("组织名称"), "华南销售部");
+    await user.type(departmentDialog.getByLabelText("区域编码"), "CN-44");
+    await user.click(departmentDialog.getByRole("button", { name: "保存组织" }));
+
+    await user.click(screen.getByRole("button", { name: "新增用户" }));
+    const userCreateDialog = latestDialog();
+    await user.type(userCreateDialog.getByLabelText("部门ID"), "1");
+    await user.type(userCreateDialog.getByLabelText("姓名"), "新增销售");
+    await user.type(userCreateDialog.getByLabelText("邮箱"), "new-sales@example.com");
+    await user.type(userCreateDialog.getByLabelText("登录账号"), "new_sales");
+    await user.type(userCreateDialog.getByLabelText("初始密码"), "S3cure!123");
+    await user.click(userCreateDialog.getByLabelText("销售管理员"));
+    await user.click(userCreateDialog.getByRole("button", { name: "保存用户" }));
+
+    await user.click(screen.getByRole("button", { name: "编辑用户" }));
+    const userEditDialog = latestDialog();
+    await user.clear(userEditDialog.getByLabelText("姓名"));
+    await user.type(userEditDialog.getByLabelText("姓名"), "销售一号更新");
+    await user.click(userEditDialog.getByRole("button", { name: "保存用户" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/system/departments",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("sales-south")
+        })
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/system/users",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("new_sales")
+        })
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/system/users/1001",
+        expect.objectContaining({
+          method: "PUT",
+          body: expect.stringContaining("销售一号更新")
+        })
+      );
+    });
+  });
 });
+
+function latestDialog() {
+  const dialogs = screen.getAllByRole("dialog");
+  const dialog = dialogs[dialogs.length - 1];
+  return within(dialog);
+}
 
 async function loginThroughUi(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText("用户名"), "sales");
@@ -436,8 +510,20 @@ function mockCrmFetch() {
     if (path.endsWith("/api/system/audit-logs")) {
       return jsonResponse({ code: "OK", data: apiData.auditLogs });
     }
+    if (path.endsWith("/api/system/departments") && method === "POST") {
+      return jsonResponse({ code: "OK", data: { ...apiData.departments[0], id: 2, code: "sales-south", name: "华南销售部" } });
+    }
+    if (path.endsWith("/api/system/departments")) {
+      return jsonResponse({ code: "OK", data: apiData.departments });
+    }
+    if (path.endsWith("/api/system/users") && method === "POST") {
+      return jsonResponse({ code: "OK", data: { ...apiData.users[0], id: 1002, name: "新增销售" } });
+    }
     if (path.endsWith("/api/system/users")) {
       return jsonResponse({ code: "OK", data: apiData.users });
+    }
+    if (path.endsWith("/api/system/users/1001") && method === "PUT") {
+      return jsonResponse({ code: "OK", data: { ...apiData.users[0], name: "销售一号更新" } });
     }
     if (path.endsWith("/api/system/roles")) {
       return jsonResponse({ code: "OK", data: apiData.roles });

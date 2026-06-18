@@ -1,6 +1,7 @@
 package com.canicula.crmai.identity;
 
 import com.canicula.crmai.auth.RoleSummary;
+import com.canicula.crmai.auth.PasswordCredentialService;
 import java.sql.PreparedStatement;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -16,9 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class IdentityService {
 
     private final JdbcTemplate jdbcTemplate;
+    private final PasswordCredentialService passwordCredentialService;
 
-    IdentityService(JdbcTemplate jdbcTemplate) {
+    IdentityService(JdbcTemplate jdbcTemplate, PasswordCredentialService passwordCredentialService) {
         this.jdbcTemplate = jdbcTemplate;
+        this.passwordCredentialService = passwordCredentialService;
     }
 
     @Transactional
@@ -147,6 +150,83 @@ public class IdentityService {
                         findRoleSummariesByUserId(rs.getLong("id"))));
     }
 
+    public List<DepartmentAdminResponse> listDepartments() {
+        return jdbcTemplate.query(
+                """
+                select id, parent_id, code, name, region_code, status
+                from sys_departments
+                where deleted_at is null
+                order by parent_id nulls first, code
+                """,
+                (rs, rowNum) -> toDepartmentAdminResponse(
+                        rs.getLong("id"),
+                        nullableLong(rs.getObject("parent_id")),
+                        rs.getString("code"),
+                        rs.getString("name"),
+                        rs.getString("region_code"),
+                        rs.getString("status")));
+    }
+
+    @Transactional
+    public DepartmentAdminResponse createDepartmentForAdmin(DepartmentAdminCreateRequest request) {
+        Long departmentId = createDepartment(new DepartmentCreateRequest(
+                request.parent_id(),
+                request.code(),
+                request.name(),
+                request.region_code(),
+                request.status()));
+        return findDepartment(departmentId);
+    }
+
+    @Transactional
+    public UserAdminResponse createUserForAdmin(UserAdminCreateRequest request) {
+        Long userId = createUser(new UserCreateRequest(
+                request.department_id(),
+                request.name(),
+                request.mobile(),
+                request.email(),
+                request.role_code(),
+                request.status()));
+        createLoginAccount(new LoginAccountCreateRequest(
+                userId,
+                "username",
+                request.login_username(),
+                true,
+                "active"));
+        passwordCredentialService.createPasswordCredential(userId, request.initial_password());
+        replaceUserRoles(userId, request.role_ids());
+        return findUser(userId);
+    }
+
+    @Transactional
+    public UserAdminResponse updateUserForAdmin(Long userId, UserAdminUpdateRequest request) {
+        jdbcTemplate.update(
+                """
+                update sys_users
+                set department_id = coalesce(?, department_id),
+                    name = coalesce(?, name),
+                    mobile = coalesce(?, mobile),
+                    email = coalesce(?, email),
+                    role_code = coalesce(?, role_code),
+                    status = coalesce(?, status),
+                    updated_at = current_timestamp,
+                    version = version + 1
+                where id = ?
+                  and deleted_at is null
+                """,
+                request.department_id(),
+                request.name(),
+                request.mobile(),
+                request.email(),
+                request.role_code(),
+                request.status(),
+                userId);
+        if (request.role_ids() != null) {
+            replaceUserRoles(userId, request.role_ids());
+        }
+        return findUser(userId);
+    }
+
     public List<RoleAdminResponse> listRoles() {
         return jdbcTemplate.query(
                 """
@@ -189,6 +269,18 @@ public class IdentityService {
         return new RolePermissionChange(beforeRole, afterRole);
     }
 
+    private void replaceUserRoles(Long userId, List<Long> roleIds) {
+        jdbcTemplate.update("delete from sys_user_roles where user_id = ?", userId);
+        new LinkedHashSet<>(roleIds == null ? List.<Long>of() : roleIds).forEach(roleId ->
+                jdbcTemplate.update(
+                        """
+                        insert into sys_user_roles (user_id, role_id)
+                        values (?, ?)
+                        """,
+                        userId,
+                        roleId));
+    }
+
     @Transactional
     public void updateLoginAccountStatus(String loginType, String loginIdentifier, String status) {
         jdbcTemplate.update(
@@ -202,6 +294,45 @@ public class IdentityService {
                 status,
                 loginType,
                 loginIdentifier);
+    }
+
+    private DepartmentAdminResponse findDepartment(Long departmentId) {
+        return jdbcTemplate.queryForObject(
+                """
+                select id, parent_id, code, name, region_code, status
+                from sys_departments
+                where id = ?
+                  and deleted_at is null
+                """,
+                (rs, rowNum) -> toDepartmentAdminResponse(
+                        rs.getLong("id"),
+                        nullableLong(rs.getObject("parent_id")),
+                        rs.getString("code"),
+                        rs.getString("name"),
+                        rs.getString("region_code"),
+                        rs.getString("status")),
+                departmentId);
+    }
+
+    private UserAdminResponse findUser(Long userId) {
+        return jdbcTemplate.queryForObject(
+                """
+                select id, department_id, name, mobile, email, role_code, status, last_login_at
+                from sys_users
+                where id = ?
+                  and deleted_at is null
+                """,
+                (rs, rowNum) -> new UserAdminResponse(
+                        rs.getLong("id"),
+                        nullableLong(rs.getObject("department_id")),
+                        rs.getString("name"),
+                        rs.getString("mobile"),
+                        rs.getString("email"),
+                        rs.getString("role_code"),
+                        rs.getString("status"),
+                        rs.getObject("last_login_at", java.time.OffsetDateTime.class),
+                        findRoleSummariesByUserId(rs.getLong("id"))),
+                userId);
     }
 
     private RoleAdminResponse findRole(Long roleId) {
@@ -218,6 +349,16 @@ public class IdentityService {
                         rs.getString("name"),
                         rs.getString("description")),
                 roleId);
+    }
+
+    private DepartmentAdminResponse toDepartmentAdminResponse(
+            Long id,
+            Long parentId,
+            String code,
+            String name,
+            String regionCode,
+            String status) {
+        return new DepartmentAdminResponse(id, parentId, code, name, regionCode, status);
     }
 
     private RoleAdminResponse toRoleAdminResponse(Long id, String code, String name, String description) {

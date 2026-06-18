@@ -45,7 +45,7 @@
 | BE-003 | 已完成 | `/api`统一响应包裹、`X-Trace-Id`透传/生成、参数校验错误字段明细、前端请求层拆包兼容 | `mvn test`、`npm test` |
 | BE-004 | 已完成 | `sys_login_logs`、`sys_audit_logs`迁移，登录日志服务，操作审计服务，JSON快照写入 | `mvn test`、`mvn verify -Ppostgres-it` |
 | BE-005 | 已完成 | 核心字典项seed，字典查询接口，字典类型/项创建，字典项停用默认隐藏 | `mvn test`、`mvn verify -Ppostgres-it` |
-| BE-006 | 已完成 | 用户、组织、角色、登录账号、凭据、权限、角色权限、数据范围基础表与身份服务；已补充用户列表、角色列表、权限点列表和角色权限替换管理接口 | `mvn -Dtest=IdentityAdminControllerTest test`、`mvn test`、`mvn verify -Ppostgres-it` |
+| BE-006 | 已完成 | 用户、组织、角色、登录账号、凭据、权限、角色权限、数据范围基础表与身份服务；已补充组织列表/创建、用户列表/创建/编辑、角色列表、权限点列表和角色权限替换管理接口 | `mvn -Dtest=IdentityAdminControllerTest test`、`mvn -Dtest=OpenApiContractCoverageTest test`、`mvn test`、`mvn verify -Ppostgres-it` |
 | BE-007 | 已完成 | PBKDF2密码凭据、服务端session、登录/当前用户/登出接口、登录成功/失败日志、401统一响应 | `mvn test`、`mvn verify -Ppostgres-it` |
 | BE-008 | 已完成 | 修改本人密码、管理员重置密码、强制改密标记、密码变更审计 | `mvn test`、`mvn verify -Ppostgres-it` |
 | BE-009 | 已完成 | `@RequirePermission` 权限点拦截、403统一响应、字典管理与密码重置权限保护、数据权限SQL条件组装服务 | `mvn test`、`mvn verify -Ppostgres-it` |

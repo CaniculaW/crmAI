@@ -189,6 +189,114 @@ paths:
       responses:
         '200':
           description: User list.
+    post:
+      tags: [System]
+      summary: Create a system user with login account and assigned roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [department_id, name, login_username, initial_password]
+              properties:
+                department_id:
+                  type: integer
+                  format: int64
+                name:
+                  type: string
+                mobile:
+                  type: string
+                email:
+                  type: string
+                role_code:
+                  type: string
+                status:
+                  type: string
+                login_username:
+                  type: string
+                initial_password:
+                  type: string
+                  format: password
+                role_ids:
+                  type: array
+                  items:
+                    type: integer
+                    format: int64
+      responses:
+        '200':
+          description: Created user.
+  /api/system/users/{userId}:
+    put:
+      tags: [System]
+      summary: Update a system user and replace assigned roles
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                department_id:
+                  type: integer
+                  format: int64
+                name:
+                  type: string
+                mobile:
+                  type: string
+                email:
+                  type: string
+                role_code:
+                  type: string
+                status:
+                  type: string
+                role_ids:
+                  type: array
+                  items:
+                    type: integer
+                    format: int64
+      responses:
+        '200':
+          description: Updated user.
+  /api/system/departments:
+    get:
+      tags: [System]
+      summary: List system departments
+      responses:
+        '200':
+          description: Department list.
+    post:
+      tags: [System]
+      summary: Create a system department
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, name]
+              properties:
+                parent_id:
+                  type: integer
+                  format: int64
+                code:
+                  type: string
+                name:
+                  type: string
+                region_code:
+                  type: string
+                status:
+                  type: string
+      responses:
+        '200':
+          description: Created department.
   /api/system/roles:
     get:
       tags: [System]

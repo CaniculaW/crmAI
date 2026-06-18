@@ -39,6 +39,7 @@ import {
   type DictionaryType,
   type Opportunity,
   type Reminder,
+  type SystemDepartment,
   type SystemPermission,
   type SystemRole,
   type SystemUser,
@@ -1195,14 +1196,21 @@ function SystemPage() {
   const dictionaries = useResource(crmApi.dictionaries.list, []);
   const auditLogs = useResource(() => crmApi.auditLogs.list({ limit: 20 }), []);
   const users = useResource(crmApi.users.list, []);
+  const departments = useResource(crmApi.departments.list, []);
   const roles = useResource(crmApi.roles.list, []);
   const permissions = useResource(crmApi.permissions.list, []);
   const [typeOpen, setTypeOpen] = useState(false);
+  const [departmentOpen, setDepartmentOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
   const [itemTarget, setItemTarget] = useState<DictionaryType | null>(null);
   const [editingItem, setEditingItem] = useState<DictionaryType["items"][number] | null>(null);
+  const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
   const [editingRole, setEditingRole] = useState<SystemRole | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
   const [typeForm] = Form.useForm();
+  const [departmentForm] = Form.useForm();
+  const [userForm] = Form.useForm();
+  const [userEditForm] = Form.useForm();
   const [itemForm] = Form.useForm();
   const [itemEditForm] = Form.useForm();
   const [permissionForm] = Form.useForm();
@@ -1213,6 +1221,22 @@ function SystemPage() {
     typeForm.resetFields();
     setTypeOpen(false);
     await dictionaries.refresh();
+  };
+
+  const createDepartment = async (values: Record<string, unknown>) => {
+    await crmApi.departments.create(withoutEmpty(values, []));
+    departmentForm.resetFields();
+    setDepartmentOpen(false);
+    await departments.refresh();
+    await auditLogs.refresh();
+  };
+
+  const createUser = async (values: Record<string, unknown>) => {
+    await crmApi.users.create(withoutEmpty(values, []));
+    userForm.resetFields();
+    setUserOpen(false);
+    await users.refresh();
+    await auditLogs.refresh();
   };
 
   const createItem = async (values: Record<string, unknown>) => {
@@ -1241,10 +1265,35 @@ function SystemPage() {
     setResetOpen(false);
   };
 
+  const editUser = (user: SystemUser) => {
+    setEditingUser(user);
+    userEditForm.setFieldsValue({
+      department_id: user.department_id,
+      name: user.name,
+      mobile: user.mobile,
+      email: user.email,
+      role_code: user.role_code,
+      status: user.status,
+      role_ids: user.roles.map((role) => role.id)
+    });
+  };
+
+  const updateUser = async (values: Record<string, unknown>) => {
+    if (!editingUser) {
+      return;
+    }
+    await crmApi.users.update(editingUser.id, withoutEmpty(values, []));
+    userEditForm.resetFields();
+    setEditingUser(null);
+    await users.refresh();
+    await auditLogs.refresh();
+  };
+
   const refreshSystem = async () => {
     await Promise.all([
       dictionaries.refresh(),
       users.refresh(),
+      departments.refresh(),
       roles.refresh(),
       permissions.refresh(),
       auditLogs.refresh()
@@ -1269,6 +1318,7 @@ function SystemPage() {
 
   const userColumns: ColumnsType<SystemUser> = [
     { title: "姓名", dataIndex: "name" },
+    { title: "部门ID", dataIndex: "department_id", render: textOrDash },
     { title: "邮箱", dataIndex: "email", render: textOrDash },
     { title: "状态", dataIndex: "status", render: statusTag },
     {
@@ -1280,7 +1330,23 @@ function SystemPage() {
           ))}
         </Space>
       )
+    },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Button aria-label="编辑用户" size="small" onClick={() => editUser(record)}>
+          编辑
+        </Button>
+      )
     }
+  ];
+
+  const departmentColumns: ColumnsType<SystemDepartment> = [
+    { title: "组织", dataIndex: "name" },
+    { title: "编码", dataIndex: "code" },
+    { title: "上级ID", dataIndex: "parent_id", render: textOrDash },
+    { title: "区域", dataIndex: "region_code", render: textOrDash },
+    { title: "状态", dataIndex: "status", render: statusTag }
   ];
 
   const roleColumns: ColumnsType<SystemRole> = [
@@ -1310,12 +1376,18 @@ function SystemPage() {
   return (
     <DataWorkspace
       title="系统管理"
-      description="V1 当前接入用户、角色权限、字典配置、密码重置和审计日志基础维护。"
-      loading={dictionaries.loading || users.loading || roles.loading || permissions.loading}
-      error={dictionaries.error || users.error || roles.error || permissions.error}
+      description="V1 当前接入组织、用户、角色权限、字典配置、密码重置和审计日志基础维护。"
+      loading={dictionaries.loading || users.loading || departments.loading || roles.loading || permissions.loading}
+      error={dictionaries.error || users.error || departments.error || roles.error || permissions.error}
       refresh={refreshSystem}
       action={
         <Space>
+          <Button icon={<Plus size={16} />} onClick={() => setDepartmentOpen(true)}>
+            新建组织
+          </Button>
+          <Button icon={<Plus size={16} />} onClick={() => setUserOpen(true)}>
+            新增用户
+          </Button>
           <Button icon={<Plus size={16} />} onClick={() => setTypeOpen(true)}>
             新建字典
           </Button>
@@ -1324,6 +1396,16 @@ function SystemPage() {
       }
     >
       <div className="system-grid">
+        <Card size="small" title="组织列表">
+          <Table
+            rowKey="id"
+            size="small"
+            loading={departments.loading}
+            dataSource={departments.data}
+            columns={departmentColumns}
+            pagination={{ pageSize: 5 }}
+          />
+        </Card>
         <Card size="small" title="用户列表">
           <Table
             rowKey="id"
@@ -1385,6 +1467,102 @@ function SystemPage() {
           pagination={{ pageSize: 8 }}
         />
       </Card>
+      <Modal title="新建组织" open={departmentOpen} onCancel={() => setDepartmentOpen(false)} footer={null} destroyOnHidden>
+        <Form name="departmentForm" form={departmentForm} layout="vertical" onFinish={createDepartment} initialValues={{ status: "active" }}>
+          <Form.Item name="parent_id" label="上级组织ID">
+            <InputNumber className="full-width" min={1} />
+          </Form.Item>
+          <Form.Item name="code" label="组织编码" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="name" label="组织名称" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="region_code" label="区域编码">
+            <Input />
+          </Form.Item>
+          <Form.Item name="status" label="状态">
+            <Select options={["active", "inactive"].map(option)} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            保存组织
+          </Button>
+        </Form>
+      </Modal>
+      <Modal title="新增用户" open={userOpen} onCancel={() => setUserOpen(false)} footer={null} destroyOnHidden>
+        <Form name="userCreateForm" form={userForm} layout="vertical" onFinish={createUser} initialValues={{ status: "active" }}>
+          <Form.Item name="department_id" label="部门ID" rules={[{ required: true }]}>
+            <InputNumber className="full-width" min={1} />
+          </Form.Item>
+          <Form.Item name="name" label="姓名" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="mobile" label="手机">
+            <Input />
+          </Form.Item>
+          <Form.Item name="email" label="邮箱">
+            <Input />
+          </Form.Item>
+          <Form.Item name="role_code" label="岗位编码">
+            <Input />
+          </Form.Item>
+          <Form.Item name="status" label="状态">
+            <Select options={["active", "inactive"].map(option)} />
+          </Form.Item>
+          <Form.Item name="login_username" label="登录账号" rules={[{ required: true }]}>
+            <Input autoComplete="username" />
+          </Form.Item>
+          <Form.Item name="initial_password" label="初始密码" rules={[{ required: true }]}>
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+          <Form.Item name="role_ids" label="角色">
+            <Checkbox.Group className="permission-check-list">
+              {roles.data.map((role: SystemRole) => (
+                <Checkbox key={role.id} value={role.id}>
+                  {role.name}
+                </Checkbox>
+              ))}
+            </Checkbox.Group>
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            保存用户
+          </Button>
+        </Form>
+      </Modal>
+      <Modal title="编辑用户" open={!!editingUser} onCancel={() => setEditingUser(null)} footer={null} destroyOnHidden>
+        <Form name="userEditForm" form={userEditForm} layout="vertical" onFinish={updateUser}>
+          <Form.Item name="department_id" label="部门ID">
+            <InputNumber className="full-width" min={1} />
+          </Form.Item>
+          <Form.Item name="name" label="姓名" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="mobile" label="手机">
+            <Input />
+          </Form.Item>
+          <Form.Item name="email" label="邮箱">
+            <Input />
+          </Form.Item>
+          <Form.Item name="role_code" label="岗位编码">
+            <Input />
+          </Form.Item>
+          <Form.Item name="status" label="状态">
+            <Select options={["active", "inactive"].map(option)} />
+          </Form.Item>
+          <Form.Item name="role_ids" label="角色">
+            <Checkbox.Group className="permission-check-list">
+              {roles.data.map((role: SystemRole) => (
+                <Checkbox key={role.id} value={role.id}>
+                  {role.name}
+                </Checkbox>
+              ))}
+            </Checkbox.Group>
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            保存用户
+          </Button>
+        </Form>
+      </Modal>
       <Modal title="新建字典" open={typeOpen} onCancel={() => setTypeOpen(false)} footer={null}>
         <Form form={typeForm} layout="vertical" onFinish={createType}>
           <Form.Item name="dict_code" label="字典编码" rules={[{ required: true }]}>
