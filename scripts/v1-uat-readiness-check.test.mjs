@@ -14,6 +14,7 @@ jobs:
       - run: node --test scripts/v1-uat-evidence-pack-validate.test.mjs
       - run: node --test scripts/v1-uat-execution-tracker-validate.test.mjs
       - run: node --test scripts/v1-release-gate.test.mjs
+      - run: node --test scripts/v1-validation-status.test.mjs
   backend:
     steps:
       - run: mvn -B test
@@ -36,10 +37,13 @@ jobs:
   "scripts/v1-uat-execution-tracker-validate.test.mjs": "fails the current rc8 tracker because external UAT remains pending\n",
   "scripts/v1-release-gate.mjs": "evaluateV1ReleaseGate\nevaluateV1ReleaseGateFromFiles\nV1 release gate requires Go\n",
   "scripts/v1-release-gate.test.mjs": "fails when the project decision is Conditional Go\n",
+  "scripts/v1-validation-status.mjs": "generateV1ValidationStatusMarkdown\nOverall: No-Go\nUAT Execution Tracker\n",
+  "scripts/v1-validation-status.test.mjs": "summarizes a No-Go V1 status with concrete blocker commands\n",
   "scripts/v1-deployment-config-check.mjs": "evaluateDeploymentConfigSnapshot\nCRM_BACKEND_BUILD_IMAGE\nCRM_FRONTEND_RUNTIME_IMAGE\n",
   "scripts/v1-deployment-config-check.test.mjs": "configurable for mirrored registries\n",
   "docs/releases/v1.0.0-rc.8.md": "v1.0.0-rc.8\nGitHub Actions `V1 Validation`\nsuccess\nUAT\nGo/No-Go\nV1-local-uat-20260618\nCRM_BACKEND_BUILD_IMAGE\nv1-uat-evidence-pack-validate\nV1演示业务数据\n仍需在具名测试环境完成验收签署\n",
   "docs/testing/v1-automated-validation-report-2026-06-18.md": "代码级、接口级、迁移级、本地部署态\nGitHub Actions\n具名测试环境部署态验收\n业务验收签署\n",
+  "docs/testing/v1-validation-status.md": "CRM V1 Validation Status\nOverall: No-Go\nUAT Execution Tracker\nRelease Gate\n具名测试环境\n业务验收签署\n仍需\n",
   "docs/testing/crm-v1-validation-traceability.md": "研发验证通过\n若目标口径是“项目 V1 验收通过”，仍需完成具名测试环境验证和业务验收签署。\n",
   "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\n",
   "docs/testing/crm-v1-uat-evidence-pack-template.md": "Go/No-Go\n签署\n缺陷\n",
@@ -67,7 +71,7 @@ No-Go
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-uat-evidence-pack-validate.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-uat-evidence-pack-validate.mjs\nv1-validation-status.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -226,6 +230,22 @@ test("fails when the final V1 release gate is missing from readiness materials",
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "v1-release-gate"));
+});
+
+test("fails when the V1 validation status report is missing from readiness materials", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-validation-status.mjs": "",
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"].replace(
+      "      - run: node --test scripts/v1-validation-status.test.mjs\n",
+      ""
+    )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-validation-status-report"));
 });
 
 test("fails when the UAT execution tracker is missing", () => {

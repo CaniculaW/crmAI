@@ -120,6 +120,14 @@ node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execu
 
 要求：正式准出前，tracker validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐角色、PRE、SMK、UAT、P0/P1、签署或 release gate 状态。
 
+需要项目例会或验收推进页时，生成聚合状态报告：
+
+```bash
+node scripts/v1-validation-status.mjs --output docs/testing/v1-validation-status.md
+```
+
+该报告只汇总现有 validators 的结果，不替代 UAT 执行、缺陷闭环或签署。
+
 ## 3. 测试环境 Smoke 步骤
 
 | 编号 | 步骤 | 通过标准 | 证据 |

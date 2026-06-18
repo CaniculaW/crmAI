@@ -8,7 +8,7 @@ V1 当前代码分支已通过自动化验证、本地 PostgreSQL 部署态 API 
 
 具名测试环境执行步骤、证据包结构和验收会议模板见 `docs/testing/crm-v1-test-environment-validation-runbook.md`；验收结果汇总和 Go/No-Go 记录模板见 `docs/testing/crm-v1-uat-evidence-pack-template.md`。
 
-GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compose部署配置校验、RC/UAT readiness 审计、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT执行追踪表 validator、V1最终放行门禁规则、后端测试、PostgreSQL 集成验证、前端测试和前端生产构建。readiness 审计同时校验 rc.8 UAT 交接草稿保留 `No-Go`、validator `FAIL`、Compose部署态证据、UAT执行派工追踪表和外部 UAT/签署阻塞项。
+GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compose部署配置校验、RC/UAT readiness 审计、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT执行追踪表 validator、V1最终放行门禁规则、V1聚合状态报告规则、后端测试、PostgreSQL 集成验证、前端测试和前端生产构建。readiness 审计同时校验 rc.8 UAT 交接草稿保留 `No-Go`、validator `FAIL`、Compose部署态证据、UAT执行派工追踪表、聚合状态报告和外部 UAT/签署阻塞项。
 
 ## 2. 验证范围
 
@@ -43,9 +43,11 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 3 tests passed |
 | `node scripts/v1-uat-readiness-check.mjs` | RC/UAT readiness check passed |
-| `node --test scripts/v1-uat-readiness-check.test.mjs` | 16 tests passed；包含UAT执行派工追踪表和tracker validator gate |
-| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 16 tests passed；覆盖CI前端job相对路径 |
+| `node --test scripts/v1-uat-readiness-check.test.mjs` | 17 tests passed；包含UAT执行派工追踪表、tracker validator gate和聚合状态报告gate |
+| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 17 tests passed；覆盖CI前端job相对路径 |
 | `node --test scripts/v1-uat-execution-tracker-validate.test.mjs` | 3 tests passed；覆盖完整 Go 追踪表、当前 No-Go 追踪表和缺失证据 |
+| `node --test scripts/v1-validation-status.test.mjs` | 2 tests passed；覆盖 No-Go 聚合状态和全量 Go 状态 |
+| `node scripts/v1-validation-status.mjs --output docs/testing/v1-validation-status.md` | 生成当前 `No-Go` 聚合状态报告 |
 | `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md` | FAIL as expected；当前追踪表仍缺具名环境、UAT执行、P0/P1、签署和Go |
 | `node --test scripts/v1-release-gate.test.mjs` | 5 tests passed；覆盖完整 Go、readiness 失败、No-Go、Conditional Go 和 tracker 未完成 |
 | `node scripts/v1-release-gate.mjs` | FAIL as expected；当前 rc.8 草稿不是正式 Go 证据包 |
@@ -75,7 +77,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 
 逐项验收证据见 `docs/testing/crm-v1-validation-traceability.md`。
 
-rc.8 Compose部署态证据见 `docs/testing/evidence/v1-compose-uat-2026-06-19.md`，覆盖镜像源覆盖、容器状态、API Smoke 和浏览器 Smoke。UAT执行派工追踪表见 `docs/testing/crm-v1-uat-execution-tracker.md`，用于逐项推进 PRE、SMK、UAT、缺陷和签署；tracker validator 实测为 `FAIL / No-Go`，会列出当前未完成项。rc.8 UAT 交接草稿见 `docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`。该草稿已预填工程侧自动化和本地验证证据，validator 实测为 `FAIL / No-Go`，最终 V1 放行门禁也返回 `FAIL`，仍需测试/业务侧补齐具名测试环境账号、UAT-001 至 UAT-010、缺陷汇总和签署；readiness 审计会防止该草稿在外部 UAT 完成前被误标为 Go/PASS。
+rc.8 Compose部署态证据见 `docs/testing/evidence/v1-compose-uat-2026-06-19.md`，覆盖镜像源覆盖、容器状态、API Smoke 和浏览器 Smoke。UAT执行派工追踪表见 `docs/testing/crm-v1-uat-execution-tracker.md`，用于逐项推进 PRE、SMK、UAT、缺陷和签署；tracker validator 实测为 `FAIL / No-Go`，会列出当前未完成项。聚合状态报告见 `docs/testing/v1-validation-status.md`。rc.8 UAT 交接草稿见 `docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`。该草稿已预填工程侧自动化和本地验证证据，validator 实测为 `FAIL / No-Go`，最终 V1 放行门禁也返回 `FAIL`，仍需测试/业务侧补齐具名测试环境账号、UAT-001 至 UAT-010、缺陷汇总和签署；readiness 审计会防止该草稿在外部 UAT 完成前被误标为 Go/PASS。
 
 ## 5. 待外部完成项
 

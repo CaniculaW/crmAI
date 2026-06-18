@@ -21,8 +21,11 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-uat-execution-tracker-validate.test.mjs",
   "scripts/v1-release-gate.mjs",
   "scripts/v1-release-gate.test.mjs",
+  "scripts/v1-validation-status.mjs",
+  "scripts/v1-validation-status.test.mjs",
   "docs/releases/v1.0.0-rc.8.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
+  "docs/testing/v1-validation-status.md",
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
@@ -237,6 +240,20 @@ export function evaluateReadinessSnapshot(snapshot) {
     "Final V1 release gate is tested and requires readiness, formal UAT evidence, and an explicit Go decision."
   ));
 
+  const validationStatus = snapshot["scripts/v1-validation-status.mjs"] ?? "";
+  const validationStatusTest = snapshot["scripts/v1-validation-status.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "v1-validation-status-report",
+    includesAll(workflow + validationStatus + validationStatusTest, [
+      "node --test scripts/v1-validation-status.test.mjs",
+      "generateV1ValidationStatusMarkdown",
+      "Overall: No-Go",
+      "UAT Execution Tracker",
+      "summarizes a No-Go V1 status with concrete blocker commands"
+    ]),
+    "V1 validation status report is tested and summarizes current Go/No-Go blockers from existing gates."
+  ));
+
   const release = snapshot["docs/releases/v1.0.0-rc.8.md"] ?? "";
   checks.push(makeCheck(
     "rc-release-record",
@@ -290,9 +307,10 @@ export function evaluateReadinessSnapshot(snapshot) {
 
   const traceability = snapshot["docs/testing/crm-v1-validation-traceability.md"] ?? "";
   const validationReport = snapshot["docs/testing/v1-automated-validation-report-2026-06-18.md"] ?? "";
+  const validationStatusDoc = snapshot["docs/testing/v1-validation-status.md"] ?? "";
   checks.push(makeCheck(
     "external-uat-blockers-documented",
-    includesAll(traceability + validationReport + release + acceptance, [
+    includesAll(traceability + validationReport + validationStatusDoc + release + acceptance, [
       "具名测试环境",
       "业务验收签署",
       "仍需"
@@ -319,7 +337,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-evidence-pack-validate.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-evidence-pack-validate.mjs", "v1-validation-status.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 
