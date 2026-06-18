@@ -8,7 +8,7 @@ V1 当前代码分支已通过自动化验证、本地 PostgreSQL 部署态 API 
 
 具名测试环境执行步骤、证据包结构和验收会议模板见 `docs/testing/crm-v1-test-environment-validation-runbook.md`；验收结果汇总和 Go/No-Go 记录模板见 `docs/testing/crm-v1-uat-evidence-pack-template.md`。
 
-GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compose部署配置校验、后端测试、PostgreSQL 集成验证、前端测试和前端生产构建。
+GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compose部署配置校验、RC/UAT readiness 审计、UAT 证据包生成器、后端测试、PostgreSQL 集成验证、前端测试和前端生产构建。
 
 ## 2. 验证范围
 
@@ -41,9 +41,9 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 4 tests passed；覆盖CI前端job相对路径 |
 | `node --test scripts/v1-uat-evidence-pack.test.mjs` | 3 tests passed |
 | `node scripts/v1-uat-evidence-pack.mjs ...` | 可生成不含明文密码/API Token 的 UAT 证据包草稿 |
-| GitHub Actions `V1 Validation` | 已配置，push/PR自动运行Compose部署配置校验、后端、PostgreSQL集成、前端测试和构建 |
+| GitHub Actions `V1 Validation` | run `27745883608`，提交 `285df9a5c784ca7692294b316f26dcf1f82cbec8`，3 个 job 全部 `success` |
 | V1候选版本 | `v1.0.0-rc.5` 作为包含RC/UAT就绪审计、本地具名验证环境证据、证据版本一致性检查和 UAT 证据包生成器的候选版本 |
-| `npm run smoke:v1:browser` | `http://127.0.0.1:5175/system` 登录后展示 `V1演示销售部`、`V1演示管理员`、`v1_demo_admin`；console 0 warning/error |
+| `npm run smoke:v1:browser` | `http://127.0.0.1:5175/system` 通过；截图归档至 `docs/testing/evidence/artifacts/v1-rc5-local-browser-smoke-20260618.png` |
 | 本地API Smoke | `POST /api/auth/login` + `GET /api/bootstrap` 返回 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25） |
 
 ## 4. 已验证的V1核心链路
