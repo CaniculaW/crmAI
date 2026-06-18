@@ -32,7 +32,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `mvn verify -Ppostgres-it` | 56 surefire tests passed；1 PostgreSQL integration test passed |
 | `mvn -Dtest=IdentityAdminControllerTest test` | 5 tests passed |
 | `mvn -Dtest=OpenApiContractCoverageTest test` | 1 test passed |
-| `mvn -Dtest=V1DemoDataSeederTest test` | 1 test passed |
+| `mvn -Dtest=V1DemoDataSeederTest test` | 4 tests passed；演示管理员、权限、V1演示业务数据和周进展聚合探针通过 |
 | `npm test` | 16 tests passed |
 | `npm run build` | Build succeeded；保留 antd vendor chunk 体积提示 |
 | `docker compose -f compose.v1-test.yml config` | Compose config validation passed |
@@ -45,10 +45,10 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 6 tests passed；覆盖CI前端job相对路径 |
 | `node --test scripts/v1-uat-evidence-pack.test.mjs` | 3 tests passed |
 | `node scripts/v1-uat-evidence-pack.mjs ...` | 可生成不含明文密码/API Token、包含 validator 留痕区的 UAT 证据包草稿 |
-| GitHub Actions `V1 Validation` | `v1.0.0-rc.7` 所属提交推送后以远端 run 为权威记录，准出要求为 `success`；上一轮 `rc.6` 基线 run `27747151121` 已通过 |
-| V1候选版本 | `v1.0.0-rc.7` 作为包含RC/UAT就绪审计、本地具名验证环境证据、证据版本一致性检查、UAT 证据包生成器、证据包 Go/No-Go validator 和镜像源覆盖配置检查的候选版本 |
-| `npm run smoke:v1:browser` | `http://127.0.0.1:5175/system` 通过；截图归档至 `docs/testing/evidence/artifacts/v1-rc6-local-browser-smoke-20260618.png` |
-| 本地API Smoke | `POST /api/auth/login` + `GET /api/bootstrap` 返回 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25） |
+| GitHub Actions `V1 Validation` | `v1.0.0-rc.8` 所属提交推送后以远端 run 为权威记录，准出要求为 `success`；上一轮 `rc.7` 基线 run `27774139423` 已通过 |
+| V1候选版本 | `v1.0.0-rc.8` 作为包含RC/UAT就绪审计、本地具名验证环境证据、证据版本一致性检查、UAT 证据包生成器、证据包 Go/No-Go validator、镜像源覆盖配置检查和 V1演示业务数据 seed 的候选版本 |
+| `npm run smoke:v1:browser` | `http://127.0.0.1:5175/system` 通过；截图归档至 `docs/testing/evidence/artifacts/v1-rc8-local-browser-smoke-20260619.png` |
+| 本地API Smoke | `POST /api/auth/login` + `GET /api/bootstrap` 返回 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25），V1演示业务数据计数返回客户/联系人/商机/销售行动各1条 |
 
 ## 4. 已验证的V1核心链路
 
@@ -71,6 +71,6 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 
 | 项目 | 原因 | 建议动作 |
 |---|---|---|
-| 具名测试环境部署态验收 | 本地部署态已通过；测试环境域名、账号和样例业务数据仍需由项目/测试侧确认；若 Docker Hub token 超时，可通过 `.env` 镜像源覆盖使用企业镜像代理 | 按 `docs/testing/crm-v1-test-environment-validation-runbook.md` 执行环境Smoke、证据归档和业务演示 |
+| 具名测试环境部署态验收 | 本地部署态已通过；测试环境域名、账号仍需由项目/测试侧确认；若 Docker Hub token 超时，可通过 `.env` 镜像源覆盖使用企业镜像代理 | 按 `docs/testing/crm-v1-test-environment-validation-runbook.md` 执行环境Smoke、证据归档和业务演示 |
 | 业务验收签署 | 销售侧和管理侧验收人尚未在文档中具名 | 项目侧指定验收人，填写 UAT 证据包，并执行 `node scripts/v1-uat-evidence-pack-validate.mjs <证据包>` 后形成签署记录 |
 | V1范围冻结确认 | 产品/业务侧仍需确认最终试点范围和TBD项 | 在验收会中确认范围、字典、风险映射和审计抽样标准 |

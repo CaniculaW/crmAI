@@ -55,7 +55,7 @@ http://127.0.0.1:5174/
 当前候选版本记录：
 
 ```text
-docs/releases/v1.0.0-rc.7.md
+docs/releases/v1.0.0-rc.8.md
 ```
 
 RC/UAT 就绪审计：

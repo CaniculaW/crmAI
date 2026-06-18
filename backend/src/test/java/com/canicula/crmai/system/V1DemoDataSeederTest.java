@@ -88,6 +88,13 @@ class V1DemoDataSeederTest {
         assertThat(bootstrap.path("permissions_count").asInt()).isGreaterThanOrEqualTo(25);
         assertThat(bootstrap.path("v1_counts").path("departments").asInt()).isGreaterThanOrEqualTo(1);
         assertThat(bootstrap.path("v1_counts").path("users").asInt()).isGreaterThanOrEqualTo(1);
+        assertThat(bootstrap.path("v1_counts").path("accounts").asInt()).isGreaterThanOrEqualTo(1);
+        assertThat(bootstrap.path("v1_counts").path("contacts").asInt()).isGreaterThanOrEqualTo(1);
+        assertThat(bootstrap.path("v1_counts").path("opportunities").asInt()).isGreaterThanOrEqualTo(1);
+        assertThat(bootstrap.path("v1_counts").path("activities").asInt()).isGreaterThanOrEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from v_opportunity_weekly_progress",
+                Integer.class)).isGreaterThanOrEqualTo(1);
     }
 
     @Test

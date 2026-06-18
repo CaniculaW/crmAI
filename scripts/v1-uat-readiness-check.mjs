@@ -17,7 +17,7 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-uat-evidence-pack.test.mjs",
   "scripts/v1-uat-evidence-pack-validate.mjs",
   "scripts/v1-uat-evidence-pack-validate.test.mjs",
-  "docs/releases/v1.0.0-rc.7.md",
+  "docs/releases/v1.0.0-rc.8.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
@@ -116,18 +116,32 @@ export function evaluateReadinessSnapshot(snapshot) {
     "UAT evidence pack validator is covered by tests and enforces Go/No-Go hard gates."
   ));
 
-  const release = snapshot["docs/releases/v1.0.0-rc.7.md"] ?? "";
+  const release = snapshot["docs/releases/v1.0.0-rc.8.md"] ?? "";
   checks.push(makeCheck(
     "rc-release-record",
-    includesAll(release, ["v1.0.0-rc.7", "GitHub Actions", "success", "UAT", "Go/No-Go", "V1-local-uat-20260618", "CRM_BACKEND_BUILD_IMAGE", "v1-uat-evidence-pack-validate"]),
+    includesAll(release, ["v1.0.0-rc.8", "GitHub Actions", "success", "UAT", "Go/No-Go", "V1-local-uat-20260618", "CRM_BACKEND_BUILD_IMAGE", "v1-uat-evidence-pack-validate", "V1演示业务数据"]),
     "V1 RC record captures tag, CI evidence, UAT, and Go/No-Go context."
   ));
 
   const localEvidence = snapshot["docs/testing/evidence/v1-local-uat-2026-06-18.md"] ?? "";
   checks.push(makeCheck(
     "local-uat-evidence",
-    includesAll(localEvidence, ["V1-local-uat-20260618", "v1.0.0-rc.7", "Flyway", "14", "/api/health", "/api/bootstrap", "Browser Use URL policy", "UAT evidence pack validator"]),
-    "Local named validation evidence captures service checks and browser/Docker limitations."
+    includesAll(localEvidence, [
+      "V1-local-uat-20260618",
+      "v1.0.0-rc.8",
+      "Flyway",
+      "14",
+      "/api/health",
+      "/api/bootstrap",
+      "Browser Use URL policy",
+      "UAT evidence pack validator",
+      "V1演示业务数据",
+      "\"accounts\": 1",
+      "\"contacts\": 1",
+      "\"opportunities\": 1",
+      "\"activities\": 1"
+    ]),
+    "Local named validation evidence captures service checks, browser/Docker limitations, and non-empty V1 demo business data."
   ));
 
   const acceptance = snapshot["docs/testing/crm-v1-acceptance-checklist.md"] ?? "";
@@ -167,7 +181,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.7.md", "v1-uat-evidence-pack-validate.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-evidence-pack-validate.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 
