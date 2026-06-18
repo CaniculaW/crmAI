@@ -69,3 +69,18 @@ test("parses CLI options for a named test environment", () => {
     testOwner: "QA"
   });
 });
+
+test("uses an explicit evidence date when provided", () => {
+  const parsed = parseEvidenceArgs([
+    "--environment", "crm-v1-test",
+    "--frontend-url", "https://crm-test.example.com",
+    "--backend-url", "https://crm-test-api.example.com",
+    "--git-commit", "abc123",
+    "--rc", "v1.0.0-rc.8",
+    "--date", "2026-06-19"
+  ]);
+  const markdown = generateEvidencePackMarkdown(buildEvidenceModel(parsed));
+
+  assert.equal(parsed.date, "2026-06-19");
+  assert.match(markdown, /\| 验收日期 \| 2026-06-19 \|/);
+});

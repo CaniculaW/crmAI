@@ -43,9 +43,9 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node scripts/v1-uat-readiness-check.mjs` | RC/UAT readiness check passed |
 | `node --test scripts/v1-uat-readiness-check.test.mjs` | 8 tests passed |
 | `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 8 tests passed；覆盖CI前端job相对路径 |
-| `node --test scripts/v1-uat-evidence-pack.test.mjs` | 3 tests passed |
+| `node --test scripts/v1-uat-evidence-pack.test.mjs` | 4 tests passed |
 | `node scripts/v1-uat-evidence-pack.mjs ...` | 可生成不含明文密码/API Token、包含 validator 留痕区的 UAT 证据包草稿 |
-| GitHub Actions `V1 Validation` | `v1.0.0-rc.8` 所属提交推送后以远端 run 为权威记录，准出要求为 `success`；上一轮 `rc.7` 基线 run `27774139423` 已通过 |
+| GitHub Actions `V1 Validation` | `v1.0.0-rc.8` 所属提交 `0c9db47b0df8a0b05e63b66bdaa09f46222d9f0c` 的远端 run `27776171025` 已通过 |
 | V1候选版本 | `v1.0.0-rc.8` 作为包含RC/UAT就绪审计、本地具名验证环境证据、证据版本一致性检查、UAT 证据包生成器、证据包 Go/No-Go validator、镜像源覆盖配置检查和 V1演示业务数据 seed 的候选版本 |
 | `npm run smoke:v1:browser` | `http://127.0.0.1:5175/system` 通过；截图归档至 `docs/testing/evidence/artifacts/v1-rc8-local-browser-smoke-20260619.png` |
 | 本地API Smoke | `POST /api/auth/login` + `GET /api/bootstrap` 返回 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25），V1演示业务数据计数返回客户/联系人/商机/销售行动各1条 |
@@ -66,6 +66,8 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | 演示管理员种子和部署态探针 | `V1DemoDataSeederTest`、`GET /api/bootstrap`、浏览器Smoke |
 
 逐项验收证据见 `docs/testing/crm-v1-validation-traceability.md`。
+
+rc.8 UAT 交接草稿见 `docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`。该草稿已预填工程侧自动化和本地验证证据，validator 实测为 `FAIL / No-Go`，仍需测试/业务侧补齐具名测试环境账号、UAT-001 至 UAT-010、缺陷汇总和签署。
 
 ## 5. 待外部完成项
 

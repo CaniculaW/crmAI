@@ -44,7 +44,8 @@ export function parseEvidenceArgs(argv) {
     ["--test-owner", "testOwner"],
     ["--product-owner", "productOwner"],
     ["--dev-owner", "devOwner"],
-    ["--username", "username"]
+    ["--username", "username"],
+    ["--date", "date"]
   ]);
   const parsed = {};
 
@@ -67,7 +68,7 @@ export function parseEvidenceArgs(argv) {
 export function buildEvidenceModel(input = {}) {
   const now = input.now instanceof Date ? input.now : new Date();
   return {
-    date: now.toISOString().slice(0, 10),
+    date: input.date ?? now.toISOString().slice(0, 10),
     environment: input.environment ?? "待填写",
     frontendUrl: input.frontendUrl ?? "待填写",
     backendUrl: input.backendUrl ?? "待填写",
@@ -241,7 +242,7 @@ function printUsage() {
   console.error([
     "Usage: node scripts/v1-uat-evidence-pack.mjs --environment <name> --frontend-url <url> --backend-url <url> --git-commit <sha> --rc <tag>",
     "",
-    "Optional: --test-owner <name> --product-owner <name> --dev-owner <name> --username <masked-user>",
+    "Optional: --date <YYYY-MM-DD> --test-owner <name> --product-owner <name> --dev-owner <name> --username <masked-user>",
     "Do not pass passwords, production secrets, or API tokens."
   ].join("\n"));
 }
