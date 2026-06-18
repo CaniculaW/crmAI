@@ -8,7 +8,7 @@ V1 当前代码分支已通过自动化验证、本地 PostgreSQL 部署态 API 
 
 具名测试环境执行步骤、证据包结构和验收会议模板见 `docs/testing/crm-v1-test-environment-validation-runbook.md`；验收结果汇总和 Go/No-Go 记录模板见 `docs/testing/crm-v1-uat-evidence-pack-template.md`。
 
-GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compose部署配置校验、RC/UAT readiness 审计、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT具名环境证据 validator、UAT缺陷台账 validator、UAT执行追踪表 validator、V1最终放行门禁规则、V1聚合状态报告规则、V1 UAT行动计划规则、V1 Go/No-Go会议包规则、后端测试、PostgreSQL 集成验证、前端测试和前端生产构建。readiness 审计同时校验 rc.8 UAT 交接草稿保留 `No-Go`、validator `FAIL`、Compose部署态证据、UAT执行派工追踪表、UAT具名环境证据、UAT缺陷台账、聚合状态报告、UAT行动计划、Go/No-Go会议包和外部 UAT/签署阻塞项。
+GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compose部署配置校验、RC/UAT readiness 审计、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT具名环境证据 validator、UAT缺陷台账 validator、UAT执行追踪表 validator、V1最终放行门禁规则、V1聚合状态报告规则、V1 UAT行动计划规则、V1 UAT逐项执行包规则、V1 Go/No-Go会议包规则、后端测试、PostgreSQL 集成验证、前端测试和前端生产构建。readiness 审计同时校验 rc.8 UAT 交接草稿保留 `No-Go`、validator `FAIL`、Compose部署态证据、UAT执行派工追踪表、UAT具名环境证据、UAT逐项执行包、UAT缺陷台账、聚合状态报告、UAT行动计划、Go/No-Go会议包和外部 UAT/签署阻塞项。
 
 ## 2. 验证范围
 
@@ -43,7 +43,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `CRM_POSTGRES_IMAGE=docker.1ms.run/library/postgres:16 ... docker compose -f compose.v1-test.yml up -d --build` | Compose build and startup passed；db/backend/frontend 均 Up，db healthy |
 | `node scripts/v1-deployment-config-check.mjs` | V1 deployment config check passed；Dockerfile/Compose 支持可配置基础镜像 |
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
-| `node --test scripts/*.test.mjs` | 71 tests passed |
+| `node --test scripts/*.test.mjs` | 75 tests passed |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 4 tests passed |
 | `node --test scripts/v1-uat-evidence-manifest-validate.test.mjs` | 4 tests passed；覆盖完整证据清单、当前草稿 No-Go、PASS项缺证据和敏感材料拦截 |
 | `node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md` | FAIL as expected；当前证据清单仍为 No-Go |
@@ -52,13 +52,15 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node --test scripts/v1-uat-defect-register-validate.test.mjs` | 5 tests passed；覆盖完整缺陷台账、当前草稿 No-Go、P0/P1 未关闭、缺失回归证据和敏感材料拦截 |
 | `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md` | FAIL as expected；当前缺陷台账仍为 No-Go |
 | `node scripts/v1-uat-readiness-check.mjs` | RC/UAT readiness check passed |
-| `node --test scripts/v1-uat-readiness-check.test.mjs` | 28 tests passed；包含UAT执行派工追踪表、UAT具名环境证据、UAT证据清单、UAT缺陷台账、tracker validator gate、聚合状态报告gate、UAT行动计划gate和Go/No-Go会议包gate |
-| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 28 tests passed；覆盖CI前端job相对路径 |
+| `node --test scripts/v1-uat-readiness-check.test.mjs` | 30 tests passed；包含UAT执行派工追踪表、UAT具名环境证据、UAT逐项执行包、UAT证据清单、UAT缺陷台账、tracker validator gate、聚合状态报告gate、UAT行动计划gate和Go/No-Go会议包gate |
+| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 30 tests passed；覆盖CI前端job相对路径 |
 | `node --test scripts/v1-uat-execution-tracker-validate.test.mjs` | 4 tests passed；覆盖完整 Go 追踪表、当前 No-Go 追踪表、缺失证据和缺陷台账门禁未通过 |
 | `node --test scripts/v1-validation-status.test.mjs` | 2 tests passed；覆盖 No-Go 聚合状态和全量 Go 状态 |
 | `node scripts/v1-validation-status.mjs --output docs/testing/v1-validation-status.md` | 生成当前 `No-Go` 聚合状态报告 |
 | `node --test scripts/v1-uat-action-plan.test.mjs` | 2 tests passed；覆盖 No-Go 行动计划和全量 Go 状态 |
 | `node scripts/v1-uat-action-plan.mjs --output docs/testing/v1-uat-action-plan.md` | 生成当前 `No-Go` UAT行动计划 |
+| `node --test scripts/v1-uat-execution-pack.test.mjs` | 2 tests passed；覆盖 No-Go 逐项补证清单和全量 Go 状态 |
+| `node scripts/v1-uat-execution-pack.mjs --output docs/testing/v1-uat-execution-pack.md` | 生成当前 `No-Go` UAT逐项执行包 |
 | `node --test scripts/v1-go-no-go-meeting.test.mjs` | 2 tests passed；覆盖 No-Go 会议包和全量 Go 状态 |
 | `node scripts/v1-go-no-go-meeting.mjs --output docs/testing/v1-go-no-go-meeting.md` | 生成当前 `No-Go` Go/No-Go会议包 |
 | `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md` | FAIL as expected；当前追踪表仍缺具名环境、UAT执行、P0/P1、签署和Go |
@@ -90,7 +92,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 
 逐项验收证据见 `docs/testing/crm-v1-validation-traceability.md`。
 
-rc.8 Compose部署态证据见 `docs/testing/evidence/v1-compose-uat-2026-06-19.md`，覆盖镜像源覆盖、容器状态、API Smoke 和浏览器 Smoke。UAT执行派工追踪表见 `docs/testing/crm-v1-uat-execution-tracker.md`，用于逐项推进 PRE、SMK、UAT、缺陷和签署；tracker validator 实测为 `FAIL / No-Go`，会列出当前未完成项。UAT具名环境证据见 `docs/testing/v1-uat-environment-evidence.md`，用于收敛测试环境元数据、Smoke、账号和权限样本证据；environment validator 实测为 `FAIL / No-Go`。UAT缺陷台账见 `docs/testing/v1-uat-defect-register.md`，用于收敛 P0/P1 缺陷闭环和回归证据；defect register validator 实测为 `FAIL / No-Go`。聚合状态报告见 `docs/testing/v1-validation-status.md`；UAT行动计划见 `docs/testing/v1-uat-action-plan.md`，按项目/产品、测试、业务UAT和研发拆分下一步；Go/No-Go会议包见 `docs/testing/v1-go-no-go-meeting.md`，用于正式准出会议留痕。rc.8 UAT 交接草稿见 `docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`。该草稿已预填工程侧自动化和本地验证证据，validator 实测为 `FAIL / No-Go`，最终 V1 放行门禁也返回 `FAIL`，仍需测试/业务侧补齐具名测试环境账号、UAT-001 至 UAT-010、缺陷汇总、回归证据和签署；readiness 审计会防止该草稿在外部 UAT 完成前被误标为 Go/PASS。
+rc.8 Compose部署态证据见 `docs/testing/evidence/v1-compose-uat-2026-06-19.md`，覆盖镜像源覆盖、容器状态、API Smoke 和浏览器 Smoke。UAT执行派工追踪表见 `docs/testing/crm-v1-uat-execution-tracker.md`，用于逐项推进 PRE、SMK、UAT、缺陷和签署；tracker validator 实测为 `FAIL / No-Go`，会列出当前未完成项。UAT具名环境证据见 `docs/testing/v1-uat-environment-evidence.md`，用于收敛测试环境元数据、Smoke、账号和权限样本证据；environment validator 实测为 `FAIL / No-Go`。UAT缺陷台账见 `docs/testing/v1-uat-defect-register.md`，用于收敛 P0/P1 缺陷闭环和回归证据；defect register validator 实测为 `FAIL / No-Go`。聚合状态报告见 `docs/testing/v1-validation-status.md`；UAT行动计划见 `docs/testing/v1-uat-action-plan.md`，按项目/产品、测试、业务UAT和研发拆分下一步；UAT逐项执行包见 `docs/testing/v1-uat-execution-pack.md`，把失败门禁拆成 ENV、PRE、SMK、UAT、DEF、SIGNOFF 和 GO-NOGO 补证项；Go/No-Go会议包见 `docs/testing/v1-go-no-go-meeting.md`，用于正式准出会议留痕。rc.8 UAT 交接草稿见 `docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`。该草稿已预填工程侧自动化和本地验证证据，validator 实测为 `FAIL / No-Go`，最终 V1 放行门禁也返回 `FAIL`，仍需测试/业务侧补齐具名测试环境账号、UAT-001 至 UAT-010、缺陷汇总、回归证据和签署；readiness 审计会防止该草稿在外部 UAT 完成前被误标为 Go/PASS。
 
 ## 5. 待外部完成项
 

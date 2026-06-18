@@ -1,7 +1,7 @@
 # CRM V1 Validation Status
 
-Generated at: 2026-06-18T19:52:53.369Z
-Git commit: ce6c06389fbde5cb5910d54b840a9afd6f7127f9
+Generated at: 2026-06-18T20:06:25.101Z
+Git commit: b75dea4c495715e480933058a8117ae9789dd61d
 
 Overall: No-Go
 
@@ -9,13 +9,13 @@ Overall: No-Go
 
 | Gate | Result | Decision | Failed checks |
 |---|---|---|---:|
-| Readiness | FAIL | - | 1 |
+| Readiness | PASS | - | 0 |
 | UAT Environment Evidence | FAIL | No-Go | 3 |
 | UAT Evidence Pack | FAIL | No-Go | 7 |
 | UAT Evidence Manifest | FAIL | No-Go | 2 |
 | UAT Execution Tracker | FAIL | No-Go | 7 |
 | UAT Defect Register | FAIL | No-Go | 3 |
-| Release Gate | FAIL | No-Go | 7 |
+| Release Gate | FAIL | No-Go | 6 |
 
 ## Verification Commands
 
@@ -29,7 +29,6 @@ Overall: No-Go
 
 ## Open Blockers
 
-- FAIL Readiness/uat-environment-evidence: UAT environment evidence inventories named environment metadata, smoke checks, account checks, and permission checks without secrets.
 - FAIL UAT Environment Evidence/environment-summary: Invalid environment summary items: 测试环境名称, 前端访问地址, 后端 API 地址, Git 提交号
 - FAIL UAT Environment Evidence/environment-checks: Incomplete environment checks: ENV-001, ENV-002, ENV-003, ENV-004, ENV-005, ENV-006, ENV-007, ENV-008
 - FAIL UAT Environment Evidence/go-decision: Environment evidence decision is No-Go; V1 validation requires Go.
@@ -52,7 +51,6 @@ Overall: No-Go
 - FAIL UAT Defect Register/p0-p1-summary: Invalid P0/P1 summary rows: P0 / S1 阻断, P1 / S2 严重
 - FAIL UAT Defect Register/defect-details: Incomplete defect details: DEF-DRAFT
 - FAIL UAT Defect Register/go-decision: Defect register decision is No-Go; V1 validation requires Go.
-- FAIL Release Gate/rc-uat-readiness: RC/UAT readiness failed: uat-environment-evidence
 - FAIL Release Gate/uat-environment: UAT environment evidence failed: environment-summary, environment-checks, go-decision
 - FAIL Release Gate/uat-evidence-pack: UAT evidence pack failed: no-placeholders, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete
 - FAIL Release Gate/uat-evidence-manifest: UAT evidence manifest failed: evidence-complete, go-decision

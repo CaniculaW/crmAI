@@ -178,13 +178,19 @@ V1 UAT行动计划：
 node scripts/v1-uat-action-plan.mjs --output docs/testing/v1-uat-action-plan.md
 ```
 
+V1 UAT逐项执行包：
+
+```bash
+node scripts/v1-uat-execution-pack.mjs --output docs/testing/v1-uat-execution-pack.md
+```
+
 V1 Go/No-Go会议包：
 
 ```bash
 node scripts/v1-go-no-go-meeting.mjs --output docs/testing/v1-go-no-go-meeting.md
 ```
 
-当前 rc.8 草稿和 UAT 执行追踪表仍是 `No-Go`，因此最终放行门禁会失败；待具名测试环境 UAT、缺陷闭环、追踪表和签署完成并形成 `Go` 证据包后，该命令才应通过。
+当前 rc.8 草稿、UAT 执行追踪表和 UAT 逐项执行包仍是 `No-Go`，因此最终放行门禁会失败；待具名测试环境 UAT、缺陷闭环、追踪表和签署完成并形成 `Go` 证据包后，该命令才应通过。
 
 ## 后端
 

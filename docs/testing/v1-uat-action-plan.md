@@ -1,6 +1,6 @@
 # CRM V1 UAT Action Plan
 
-Generated at: 2026-06-18T19:52:56.995Z
+Generated at: 2026-06-18T20:06:25.132Z
 
 Overall: No-Go
 
@@ -24,7 +24,6 @@ Overall: No-Go
 
 ## Open Gate Findings
 
-- Readiness/uat-environment-evidence: UAT environment evidence inventories named environment metadata, smoke checks, account checks, and permission checks without secrets.
 - UAT Environment Evidence/environment-summary: Invalid environment summary items: 测试环境名称, 前端访问地址, 后端 API 地址, Git 提交号
 - UAT Environment Evidence/environment-checks: Incomplete environment checks: ENV-001, ENV-002, ENV-003, ENV-004, ENV-005, ENV-006, ENV-007, ENV-008
 - UAT Environment Evidence/go-decision: Environment evidence decision is No-Go; V1 validation requires Go.
@@ -47,7 +46,6 @@ Overall: No-Go
 - UAT Defect Register/p0-p1-summary: Invalid P0/P1 summary rows: P0 / S1 阻断, P1 / S2 严重
 - UAT Defect Register/defect-details: Incomplete defect details: DEF-DRAFT
 - UAT Defect Register/go-decision: Defect register decision is No-Go; V1 validation requires Go.
-- Release Gate/rc-uat-readiness: RC/UAT readiness failed: uat-environment-evidence
 - Release Gate/uat-environment: UAT environment evidence failed: environment-summary, environment-checks, go-decision
 - Release Gate/uat-evidence-pack: UAT evidence pack failed: no-placeholders, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete
 - Release Gate/uat-evidence-manifest: UAT evidence manifest failed: evidence-complete, go-decision

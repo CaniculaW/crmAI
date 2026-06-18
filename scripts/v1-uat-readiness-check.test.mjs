@@ -19,6 +19,7 @@ jobs:
       - run: node --test scripts/v1-release-gate.test.mjs
       - run: node --test scripts/v1-validation-status.test.mjs
       - run: node --test scripts/v1-uat-action-plan.test.mjs
+      - run: node --test scripts/v1-uat-execution-pack.test.mjs
       - run: node --test scripts/v1-go-no-go-meeting.test.mjs
   backend:
     steps:
@@ -52,6 +53,8 @@ jobs:
   "scripts/v1-validation-status.test.mjs": "summarizes a No-Go V1 status with concrete blocker commands\n",
   "scripts/v1-uat-action-plan.mjs": "generateV1UatActionPlanMarkdown\nOverall: No-Go\nRole Workstreams\nUAT Environment Evidence\n",
   "scripts/v1-uat-action-plan.test.mjs": "generates a No-Go UAT action plan grouped by project, test, business, and engineering workstreams\n",
+  "scripts/v1-uat-execution-pack.mjs": "generateV1UatExecutionPackMarkdown\nOverall: No-Go\nExecution Items\nENV-001\nUAT-010\n",
+  "scripts/v1-uat-execution-pack.test.mjs": "generates an executable UAT evidence collection pack from failed gates\n",
   "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nUAT Environment Evidence\n",
   "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\n",
   "scripts/v1-deployment-config-check.mjs": "evaluateDeploymentConfigSnapshot\nCRM_BACKEND_BUILD_IMAGE\nCRM_FRONTEND_RUNTIME_IMAGE\n",
@@ -60,6 +63,7 @@ jobs:
   "docs/testing/v1-automated-validation-report-2026-06-18.md": "代码级、接口级、迁移级、本地部署态\nGitHub Actions\n具名测试环境部署态验收\n业务验收签署\n",
   "docs/testing/v1-validation-status.md": "CRM V1 Validation Status\nOverall: No-Go\nUAT Environment Evidence\nUAT Execution Tracker\nRelease Gate\n具名测试环境\n业务验收签署\n仍需\n",
   "docs/testing/v1-uat-action-plan.md": "CRM V1 UAT Action Plan\nOverall: No-Go\nRole Workstreams\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
+  "docs/testing/v1-uat-execution-pack.md": "CRM V1 UAT Execution Pack\nOverall: No-Go\nExecution Items\nENV-001\nPRE-001\nSMK-001\nUAT-001\nDEF-REGISTER\nSIGNOFF-SALES\nGO-NOGO\n",
   "docs/testing/v1-go-no-go-meeting.md": "CRM V1 Go/No-Go Meeting Pack\nDecision Recommendation: No-Go\nFinal Signoff Table\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
   "docs/testing/crm-v1-validation-traceability.md": "研发验证通过\n若目标口径是“项目 V1 验收通过”，仍需完成具名测试环境验证和业务验收签署。\n",
   "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\n",
@@ -141,7 +145,7 @@ node scripts/v1-uat-evidence-manifest-validate.mjs
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-go-no-go-meeting.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -382,6 +386,22 @@ test("fails when the V1 UAT action plan is missing from readiness materials", ()
   assert.ok(result.failed.some((check) => check.id === "v1-uat-action-plan"));
 });
 
+test("fails when the V1 UAT execution pack is missing from readiness materials", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-execution-pack.mjs": "",
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"].replace(
+      "      - run: node --test scripts/v1-uat-execution-pack.test.mjs\n",
+      ""
+    )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-uat-execution-pack"));
+});
+
 test("fails when the V1 Go/No-Go meeting pack is missing from readiness materials", () => {
   const snapshot = {
     ...completeSnapshot,
@@ -396,6 +416,16 @@ test("fails when the V1 Go/No-Go meeting pack is missing from readiness material
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "v1-go-no-go-meeting-pack"));
+});
+
+test("fails when the V1 UAT execution pack document is missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["docs/testing/v1-uat-execution-pack.md"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
 });
 
 test("fails when the UAT execution tracker is missing", () => {

@@ -31,12 +31,15 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-validation-status.test.mjs",
   "scripts/v1-uat-action-plan.mjs",
   "scripts/v1-uat-action-plan.test.mjs",
+  "scripts/v1-uat-execution-pack.mjs",
+  "scripts/v1-uat-execution-pack.test.mjs",
   "scripts/v1-go-no-go-meeting.mjs",
   "scripts/v1-go-no-go-meeting.test.mjs",
   "docs/releases/v1.0.0-rc.8.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/v1-validation-status.md",
   "docs/testing/v1-uat-action-plan.md",
+  "docs/testing/v1-uat-execution-pack.md",
   "docs/testing/v1-go-no-go-meeting.md",
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
@@ -405,6 +408,22 @@ export function evaluateReadinessSnapshot(snapshot) {
     "V1 UAT action plan is tested and turns validator blockers into role-based execution workstreams."
   ));
 
+  const uatExecutionPack = snapshot["scripts/v1-uat-execution-pack.mjs"] ?? "";
+  const uatExecutionPackTest = snapshot["scripts/v1-uat-execution-pack.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "v1-uat-execution-pack",
+    includesAll(workflow + uatExecutionPack + uatExecutionPackTest, [
+      "node --test scripts/v1-uat-execution-pack.test.mjs",
+      "generateV1UatExecutionPackMarkdown",
+      "Overall: No-Go",
+      "Execution Items",
+      "ENV-001",
+      "UAT-010",
+      "generates an executable UAT evidence collection pack from failed gates"
+    ]),
+    "V1 UAT execution pack is tested and turns failed gates into item-level evidence collection work."
+  ));
+
   const goNoGoMeeting = snapshot["scripts/v1-go-no-go-meeting.mjs"] ?? "";
   const goNoGoMeetingTest = snapshot["scripts/v1-go-no-go-meeting.test.mjs"] ?? "";
   checks.push(makeCheck(
@@ -523,10 +542,28 @@ export function evaluateReadinessSnapshot(snapshot) {
     "UAT evidence manifest inventories PRE, SMK, UAT, defect, signoff, and Go/No-Go evidence references without secrets."
   ));
 
+  const uatExecutionPackDoc = snapshot["docs/testing/v1-uat-execution-pack.md"] ?? "";
+  checks.push(makeCheck(
+    "uat-execution-pack-doc",
+    includesAll(uatExecutionPackDoc, [
+      "CRM V1 UAT Execution Pack",
+      "Overall: No-Go",
+      "Execution Items",
+      "ENV-001",
+      "PRE-001",
+      "SMK-001",
+      "UAT-001",
+      "DEF-REGISTER",
+      "SIGNOFF-SALES",
+      "GO-NOGO"
+    ]),
+    "UAT execution pack inventories item-level evidence collection work for environment, pre-check, smoke, UAT, defect, signoff, and Go/No-Go evidence."
+  ));
+
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-go-no-go-meeting.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 
