@@ -1,25 +1,33 @@
-# CRM V1 UAT Action Plan
+# CRM V1 Go/No-Go Meeting Pack
 
-Generated at: 2026-06-18T18:56:19.519Z
+Generated at: 2026-06-18T18:56:19.248Z
 
-Overall: No-Go
+Decision Recommendation: No-Go
 
-## Role Workstreams
+## Required Attendees
 
-| Workstream | Owner side | Next actions |
-|---|---|---|
-| Project / Product | 项目/产品 | 指定销售侧验收人、管理侧验收人、产品负责人、测试负责人和项目负责人；组织Go/No-Go会议并保留签署证据 |
-| Test | 测试 | 完成 PRE-001 至 PRE-006、SMK-001 至 SMK-005、UAT证据包、P0/P1缺陷汇总和回归证据 |
-| Business UAT | 业务 | 完成 UAT-001 至 UAT-010 并为每项提供截图、操作记录或缺陷单 |
-| Engineering | 研发 | 支持具名测试环境、账号权限、Smoke问题定位，并在证据补齐后重跑最终放行门禁 |
+- 销售侧验收人
+- 管理侧验收人
+- 产品负责人
+- 测试负责人
+- 研发负责人
+- 项目负责人
 
-## Gate Commands
+## Required Gate Commands
 
+- `node scripts/v1-uat-readiness-check.mjs`
 - `node scripts/v1-uat-evidence-pack-validate.mjs docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`
 - `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md`
 - `node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md`
 
-## Open Gate Findings
+## Meeting Agenda
+
+1. Confirm candidate version, test environment, and evidence package.
+2. Review UAT execution tracker, P0/P1 defect closure, and regression evidence.
+3. Review sales-side and management-side acceptance results.
+4. Record final Go/No-Go decision and signoff owners.
+
+## Open Approval Blockers
 
 - UAT Evidence Pack/no-placeholders: Evidence pack still contains draft placeholders.
 - UAT Evidence Pack/environment-results: Missing passed environment evidence: 销售个人账号, 销售负责人账号, 权限样本账号
@@ -39,4 +47,17 @@ Overall: No-Go
 - Release Gate/uat-execution-tracker: UAT execution tracker failed: roles-assigned, pre-checks, smoke-checks, uat-cases, p0-p1-defects, release-gates, go-decision
 - Release Gate/go-decision: Project decision is No-Go; V1 release gate requires Go.
 
-Do not mark V1 as Go until every listed gate is PASS and the project decision is Go.
+Cannot approve V1 until every validator returns PASS and the project decision is Go.
+
+## Final Signoff Table
+
+| Role | Name | Decision | Date | Evidence |
+|---|---|---|---|---|
+| 销售侧验收人 | 待填写 | 待填写 | 待填写 | 待填写 |
+| 管理侧验收人 | 待填写 | 待填写 | 待填写 | 待填写 |
+| 产品负责人 | 待填写 | 待填写 | 待填写 | 待填写 |
+| 测试负责人 | 待填写 | 待填写 | 待填写 | 待填写 |
+| 研发负责人 | 待填写 | 待填写 | 待填写 | 待填写 |
+| 项目负责人 | 待填写 | 待填写 | 待填写 | 待填写 |
+
+Note: This meeting pack organizes final approval evidence. It does not replace UAT execution, defect closure, evidence-pack validation, tracker validation, or the final release gate.

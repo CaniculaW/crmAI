@@ -136,6 +136,14 @@ node scripts/v1-uat-action-plan.mjs --output docs/testing/v1-uat-action-plan.md
 
 该行动计划用于项目/产品、测试、业务UAT和研发分工推进；不替代 tracker、证据包 validator 或最终 release gate。
 
+需要召开正式 Go/No-Go 准出会议时，生成会议包：
+
+```bash
+node scripts/v1-go-no-go-meeting.mjs --output docs/testing/v1-go-no-go-meeting.md
+```
+
+该会议包集中列出参会角色、门禁命令、开放阻塞项和最终签署表；只有证据包 validator、tracker validator、最终 release gate 全部通过且项目负责人选择 `Go` 后，才能作为准出会议留痕。
+
 ## 3. 测试环境 Smoke 步骤
 
 | 编号 | 步骤 | 通过标准 | 证据 |

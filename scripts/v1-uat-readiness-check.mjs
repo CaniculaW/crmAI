@@ -25,10 +25,13 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-validation-status.test.mjs",
   "scripts/v1-uat-action-plan.mjs",
   "scripts/v1-uat-action-plan.test.mjs",
+  "scripts/v1-go-no-go-meeting.mjs",
+  "scripts/v1-go-no-go-meeting.test.mjs",
   "docs/releases/v1.0.0-rc.8.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/v1-validation-status.md",
   "docs/testing/v1-uat-action-plan.md",
+  "docs/testing/v1-go-no-go-meeting.md",
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
@@ -271,6 +274,20 @@ export function evaluateReadinessSnapshot(snapshot) {
     "V1 UAT action plan is tested and turns validator blockers into role-based execution workstreams."
   ));
 
+  const goNoGoMeeting = snapshot["scripts/v1-go-no-go-meeting.mjs"] ?? "";
+  const goNoGoMeetingTest = snapshot["scripts/v1-go-no-go-meeting.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "v1-go-no-go-meeting-pack",
+    includesAll(workflow + goNoGoMeeting + goNoGoMeetingTest, [
+      "node --test scripts/v1-go-no-go-meeting.test.mjs",
+      "generateV1GoNoGoMeetingMarkdown",
+      "Decision Recommendation: No-Go",
+      "Final Signoff Table",
+      "generates a No-Go meeting pack that blocks approval until validators pass"
+    ]),
+    "V1 Go/No-Go meeting pack is tested and keeps final approval tied to validator PASS plus project Go."
+  ));
+
   const release = snapshot["docs/releases/v1.0.0-rc.8.md"] ?? "";
   checks.push(makeCheck(
     "rc-release-record",
@@ -326,9 +343,10 @@ export function evaluateReadinessSnapshot(snapshot) {
   const validationReport = snapshot["docs/testing/v1-automated-validation-report-2026-06-18.md"] ?? "";
   const validationStatusDoc = snapshot["docs/testing/v1-validation-status.md"] ?? "";
   const uatActionPlanDoc = snapshot["docs/testing/v1-uat-action-plan.md"] ?? "";
+  const goNoGoMeetingDoc = snapshot["docs/testing/v1-go-no-go-meeting.md"] ?? "";
   checks.push(makeCheck(
     "external-uat-blockers-documented",
-    includesAll(traceability + validationReport + validationStatusDoc + uatActionPlanDoc + release + acceptance, [
+    includesAll(traceability + validationReport + validationStatusDoc + uatActionPlanDoc + goNoGoMeetingDoc + release + acceptance, [
       "具名测试环境",
       "业务验收签署",
       "仍需"
@@ -355,7 +373,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-evidence-pack-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-evidence-pack-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-go-no-go-meeting.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 
