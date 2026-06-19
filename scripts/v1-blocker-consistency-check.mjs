@@ -9,7 +9,8 @@ import { evaluateV1ReleaseGateFromFiles } from "./v1-release-gate.mjs";
 const DECISION_DOC_PATHS = [
   "docs/testing/v1-validation-status.md",
   "docs/testing/v1-uat-action-plan.md",
-  "docs/testing/v1-go-no-go-meeting.md"
+  "docs/testing/v1-go-no-go-meeting.md",
+  "docs/testing/v1-external-uat-request.md"
 ];
 
 const EXECUTION_PACK_PATH = "docs/testing/v1-uat-execution-pack.md";

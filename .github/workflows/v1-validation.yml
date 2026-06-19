@@ -79,6 +79,9 @@ jobs:
       - name: Run V1 Go No-Go meeting pack tests
         run: node --test scripts/v1-go-no-go-meeting.test.mjs
 
+      - name: Run V1 external UAT request packet tests
+        run: node --test scripts/v1-external-uat-request.test.mjs
+
       - name: Run V1 generated docs consistency tests
         run: node --test scripts/v1-generated-docs-check.test.mjs
 

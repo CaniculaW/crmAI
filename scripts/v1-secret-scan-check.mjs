@@ -4,13 +4,14 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const CURRENT_V1_EVIDENCE_DOCS = [
+export const CURRENT_V1_EVIDENCE_DOCS = [
   "docs/releases/v1.0.0-rc.8.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/v1-validation-status.md",
   "docs/testing/v1-uat-action-plan.md",
   "docs/testing/v1-uat-execution-pack.md",
   "docs/testing/v1-go-no-go-meeting.md",
+  "docs/testing/v1-external-uat-request.md",
   "docs/testing/v1-uat-environment-evidence.md",
   "docs/testing/v1-uat-defect-register.md",
   "docs/testing/v1-uat-signoff-register.md",

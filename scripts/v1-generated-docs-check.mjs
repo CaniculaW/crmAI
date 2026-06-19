@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { generateV1GoNoGoMeetingFromFiles } from "./v1-go-no-go-meeting.mjs";
+import { generateV1ExternalUatRequestFromFiles } from "./v1-external-uat-request.mjs";
 import { generateV1UatActionPlanFromFiles } from "./v1-uat-action-plan.mjs";
 import { generateV1UatExecutionPackFromFiles } from "./v1-uat-execution-pack.mjs";
 import { generateV1ValidationStatusFromFiles } from "./v1-validation-status.mjs";
@@ -13,7 +14,8 @@ const GENERATED_DOC_PATHS = [
   "docs/testing/v1-validation-status.md",
   "docs/testing/v1-uat-action-plan.md",
   "docs/testing/v1-uat-execution-pack.md",
-  "docs/testing/v1-go-no-go-meeting.md"
+  "docs/testing/v1-go-no-go-meeting.md",
+  "docs/testing/v1-external-uat-request.md"
 ];
 
 function makeCheck(id, ok, message) {
@@ -55,6 +57,10 @@ function defaultGenerators(rootDir) {
     "docs/testing/v1-go-no-go-meeting.md": () => generateV1GoNoGoMeetingFromFiles({
       rootDir,
       generatedAt: generatedAtFrom(rootDir, "docs/testing/v1-go-no-go-meeting.md")
+    }),
+    "docs/testing/v1-external-uat-request.md": () => generateV1ExternalUatRequestFromFiles({
+      rootDir,
+      generatedAt: generatedAtFrom(rootDir, "docs/testing/v1-external-uat-request.md")
     })
   };
 }
@@ -110,7 +116,7 @@ function printResult(result) {
   }
 
   lines.push("");
-  lines.push("Note: PASS means generated V1 status, action, execution, and Go/No-Go documents match their current generator outputs.");
+  lines.push("Note: PASS means generated V1 status, action, execution, Go/No-Go, and external UAT request documents match their current generator outputs.");
 
   console.log(lines.join("\n"));
 }

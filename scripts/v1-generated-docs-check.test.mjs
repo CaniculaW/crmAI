@@ -10,7 +10,8 @@ const DOCS = [
   "docs/testing/v1-validation-status.md",
   "docs/testing/v1-uat-action-plan.md",
   "docs/testing/v1-uat-execution-pack.md",
-  "docs/testing/v1-go-no-go-meeting.md"
+  "docs/testing/v1-go-no-go-meeting.md",
+  "docs/testing/v1-external-uat-request.md"
 ];
 
 function writeSnapshot(files) {
@@ -40,8 +41,9 @@ test("fails when a generated document drifts from its generator", () => {
   const rootDir = writeSnapshot({
     "docs/testing/v1-validation-status.md": "# Generated\n\nCurrent content\n",
     "docs/testing/v1-uat-action-plan.md": "# Generated\n\nCurrent content\n",
-    "docs/testing/v1-uat-execution-pack.md": "# Generated\n\nStale execution pack\n",
-    "docs/testing/v1-go-no-go-meeting.md": "# Generated\n\nCurrent content\n"
+    "docs/testing/v1-uat-execution-pack.md": "# Generated\n\nCurrent content\n",
+    "docs/testing/v1-go-no-go-meeting.md": "# Generated\n\nCurrent content\n",
+    "docs/testing/v1-external-uat-request.md": "# Generated\n\nStale external request\n"
   });
 
   const result = evaluateGeneratedDocsSnapshot({
@@ -50,11 +52,12 @@ test("fails when a generated document drifts from its generator", () => {
       "docs/testing/v1-validation-status.md": () => "# Generated\n\nCurrent content\n",
       "docs/testing/v1-uat-action-plan.md": () => "# Generated\n\nCurrent content\n",
       "docs/testing/v1-uat-execution-pack.md": () => "# Generated\n\nCurrent content\n",
-      "docs/testing/v1-go-no-go-meeting.md": () => "# Generated\n\nCurrent content\n"
+      "docs/testing/v1-go-no-go-meeting.md": () => "# Generated\n\nCurrent content\n",
+      "docs/testing/v1-external-uat-request.md": () => "# Generated\n\nCurrent content\n"
     }
   });
 
   assert.equal(result.ok, false);
-  assert.deepEqual(result.failed.map((check) => check.id), ["docs/testing/v1-uat-execution-pack.md"]);
+  assert.deepEqual(result.failed.map((check) => check.id), ["docs/testing/v1-external-uat-request.md"]);
   assert.match(result.failed[0].message, /is stale/);
 });

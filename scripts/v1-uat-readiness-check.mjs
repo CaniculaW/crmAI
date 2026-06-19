@@ -41,6 +41,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-uat-execution-pack.test.mjs",
   "scripts/v1-go-no-go-meeting.mjs",
   "scripts/v1-go-no-go-meeting.test.mjs",
+  "scripts/v1-external-uat-request.mjs",
+  "scripts/v1-external-uat-request.test.mjs",
   "scripts/v1-generated-docs-check.mjs",
   "scripts/v1-generated-docs-check.test.mjs",
   "scripts/v1-plan-status-check.mjs",
@@ -61,6 +63,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/v1-uat-action-plan.md",
   "docs/testing/v1-uat-execution-pack.md",
   "docs/testing/v1-go-no-go-meeting.md",
+  "docs/testing/v1-external-uat-request.md",
   "docs/meeting-notes/crm-kickoff-minutes.md",
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
@@ -577,6 +580,20 @@ export function evaluateReadinessSnapshot(snapshot) {
     "V1 Go/No-Go meeting pack is tested and keeps final approval tied to validator PASS plus project Go."
   ));
 
+  const externalUatRequest = snapshot["scripts/v1-external-uat-request.mjs"] ?? "";
+  const externalUatRequestTest = snapshot["scripts/v1-external-uat-request.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "v1-external-uat-request-pack",
+    includesAll(workflow + externalUatRequest + externalUatRequestTest, [
+      "node --test scripts/v1-external-uat-request.test.mjs",
+      "generateV1ExternalUatRequestMarkdown",
+      "Request Status: External UAT Evidence Required",
+      "Request Board",
+      "generates a No-Go external UAT request packet with source documents and validation commands"
+    ]),
+    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board."
+  ));
+
   const generatedDocsChecker = snapshot["scripts/v1-generated-docs-check.mjs"] ?? "";
   const generatedDocsCheckerTest = snapshot["scripts/v1-generated-docs-check.test.mjs"] ?? "";
   checks.push(makeCheck(
@@ -656,9 +673,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node scripts/v1-blocker-consistency-check.mjs",
       "evaluateV1BlockerConsistencySnapshot",
       "decision-doc-release-blockers",
-      "fails when a decision document omits a release gate blocker"
+      "fails when a decision document omits a release gate blocker",
+      "fails when the external UAT request packet omits a release gate blocker"
     ]),
-    "V1 blocker consistency checker is tested and wired into CI to keep current release-gate blockers visible in decision materials and execution actions."
+    "V1 blocker consistency checker is tested and wired into CI to keep current release-gate blockers visible in decision materials, external UAT requests, and execution actions."
   ));
 
   const secretScanChecker = snapshot["scripts/v1-secret-scan-check.mjs"] ?? "";
@@ -731,9 +749,10 @@ export function evaluateReadinessSnapshot(snapshot) {
   const validationStatusDoc = snapshot["docs/testing/v1-validation-status.md"] ?? "";
   const uatActionPlanDoc = snapshot["docs/testing/v1-uat-action-plan.md"] ?? "";
   const goNoGoMeetingDoc = snapshot["docs/testing/v1-go-no-go-meeting.md"] ?? "";
+  const externalUatRequestDoc = snapshot["docs/testing/v1-external-uat-request.md"] ?? "";
   checks.push(makeCheck(
     "external-uat-blockers-documented",
-    includesAll(traceability + validationReport + validationStatusDoc + uatActionPlanDoc + goNoGoMeetingDoc + release + acceptance, [
+    includesAll(traceability + validationReport + validationStatusDoc + uatActionPlanDoc + goNoGoMeetingDoc + externalUatRequestDoc + release + acceptance, [
       "具名测试环境",
       "业务验收签署",
       "仍需"
@@ -817,10 +836,34 @@ export function evaluateReadinessSnapshot(snapshot) {
     "UAT execution pack inventories item-level evidence collection work for environment, pre-check, smoke, UAT, defect, signoff, and Go/No-Go evidence."
   ));
 
+  checks.push(makeCheck(
+    "external-uat-request-doc",
+    includesAll(externalUatRequestDoc, [
+      "CRM V1 External UAT Request Packet",
+      "Request Status: External UAT Evidence Required",
+      "Request Board",
+      "Project / Product",
+      "Test",
+      "Business UAT",
+      "Engineering",
+      "Do not record plaintext passwords",
+      "Kickoff Governance",
+      "UAT Launch Intake",
+      "UAT Environment Evidence",
+      "UAT Evidence Pack",
+      "UAT Evidence Manifest",
+      "UAT Execution Tracker",
+      "UAT Defect Register",
+      "UAT Signoff Register",
+      "Release Gate"
+    ]),
+    "External UAT request packet inventories stakeholder-facing source documents, validation commands, and No-Go blockers."
+  ));
+
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-kickoff-governance-validate.mjs", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-signoff-register-validate.mjs", "v1-uat-launch-intake-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs", "v1-generated-docs-check.mjs", "v1-plan-status-check.mjs", "v1-acceptance-checklist-check.mjs", "v1-uat-coverage-check.mjs", "v1-traceability-check.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-kickoff-governance-validate.mjs", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-signoff-register-validate.mjs", "v1-uat-launch-intake-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs", "v1-external-uat-request.mjs", "v1-generated-docs-check.mjs", "v1-plan-status-check.mjs", "v1-acceptance-checklist-check.mjs", "v1-uat-coverage-check.mjs", "v1-traceability-check.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 

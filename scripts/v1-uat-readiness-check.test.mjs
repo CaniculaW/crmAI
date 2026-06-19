@@ -24,6 +24,7 @@ jobs:
       - run: node --test scripts/v1-uat-action-plan.test.mjs
       - run: node --test scripts/v1-uat-execution-pack.test.mjs
       - run: node --test scripts/v1-go-no-go-meeting.test.mjs
+      - run: node --test scripts/v1-external-uat-request.test.mjs
       - run: node --test scripts/v1-generated-docs-check.test.mjs
       - run: node scripts/v1-generated-docs-check.mjs
       - run: node --test scripts/v1-plan-status-check.test.mjs
@@ -80,6 +81,8 @@ jobs:
   "scripts/v1-uat-execution-pack.test.mjs": "generates an executable UAT evidence collection pack from failed gates\n",
   "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nKickoff Governance\nUAT Environment Evidence\n",
   "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\n",
+  "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\nRequest Status: External UAT Evidence Required\nRequest Board\nDo not record plaintext passwords\n",
+  "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\n",
   "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\n",
   "scripts/v1-generated-docs-check.test.mjs": "fails when a generated document drifts from its generator\n",
   "scripts/v1-plan-status-check.mjs": "evaluateV1PlanStatusSnapshot\nopen-plan-items-no-go\n",
@@ -91,7 +94,7 @@ jobs:
   "scripts/v1-traceability-check.mjs": "evaluateV1TraceabilitySnapshot\ntraceability-release-alignment\n",
   "scripts/v1-traceability-check.test.mjs": "fails when traceability claims project acceptance while release gate is No-Go\n",
   "scripts/v1-blocker-consistency-check.mjs": "evaluateV1BlockerConsistencySnapshot\ndecision-doc-release-blockers\n",
-  "scripts/v1-blocker-consistency-check.test.mjs": "fails when a decision document omits a release gate blocker\n",
+  "scripts/v1-blocker-consistency-check.test.mjs": "fails when a decision document omits a release gate blocker\nfails when the external UAT request packet omits a release gate blocker\n",
   "scripts/v1-secret-scan-check.mjs": "evaluateV1SecretScanSnapshot\ncurrent-v1-evidence-no-secrets\n",
   "scripts/v1-secret-scan-check.test.mjs": "fails when a current V1 evidence document contains a bearer token\n",
   "scripts/v1-deployment-config-check.mjs": "evaluateDeploymentConfigSnapshot\nCRM_BACKEND_BUILD_IMAGE\nCRM_FRONTEND_RUNTIME_IMAGE\n",
@@ -102,6 +105,7 @@ jobs:
   "docs/testing/v1-uat-action-plan.md": "CRM V1 UAT Action Plan\nOverall: No-Go\nRole Workstreams\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
   "docs/testing/v1-uat-execution-pack.md": "CRM V1 UAT Execution Pack\nOverall: No-Go\nExecution Items\nENV-001\nPRE-001\nSMK-001\nUAT-001\nDEF-REGISTER\nSIGNOFF-SALES\nGO-NOGO\n",
   "docs/testing/v1-go-no-go-meeting.md": "CRM V1 Go/No-Go Meeting Pack\nDecision Recommendation: No-Go\nFinal Signoff Table\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
+  "docs/testing/v1-external-uat-request.md": "CRM V1 External UAT Request Packet\nRequest Status: External UAT Evidence Required\nRequest Board\nProject / Product\nTest\nBusiness UAT\nEngineering\nDo not record plaintext passwords\nKickoff Governance\nUAT Launch Intake\nUAT Environment Evidence\nUAT Evidence Pack\nUAT Evidence Manifest\nUAT Execution Tracker\nUAT Defect Register\nUAT Signoff Register\nRelease Gate\n",
   "docs/meeting-notes/crm-kickoff-minutes.md": `CRM研发启动会纪要
 Decision: No-Go
 产品负责人
@@ -236,7 +240,7 @@ node scripts/v1-uat-evidence-manifest-validate.mjs
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-generated-docs-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\nv1-uat-coverage-check.mjs\nv1-traceability-check.mjs\nv1-blocker-consistency-check.mjs\nv1-secret-scan-check.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-external-uat-request.mjs\nv1-generated-docs-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\nv1-uat-coverage-check.mjs\nv1-traceability-check.mjs\nv1-blocker-consistency-check.mjs\nv1-secret-scan-check.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -555,6 +559,22 @@ test("fails when the V1 Go/No-Go meeting pack is missing from readiness material
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "v1-go-no-go-meeting-pack"));
+});
+
+test("fails when the V1 external UAT request packet is missing from readiness materials", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-external-uat-request.mjs": "",
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"].replace(
+      "      - run: node --test scripts/v1-external-uat-request.test.mjs\n",
+      ""
+    )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-external-uat-request-pack"));
 });
 
 test("fails when the V1 generated docs consistency checker is missing from readiness materials", () => {

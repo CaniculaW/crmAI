@@ -1,7 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { evaluateV1SecretScanSnapshot } from "./v1-secret-scan-check.mjs";
+import {
+  CURRENT_V1_EVIDENCE_DOCS,
+  evaluateV1SecretScanSnapshot
+} from "./v1-secret-scan-check.mjs";
+
+test("tracks the external UAT request packet as current V1 evidence", () => {
+  assert.ok(CURRENT_V1_EVIDENCE_DOCS.includes("docs/testing/v1-external-uat-request.md"));
+});
 
 test("passes when current V1 evidence uses redacted placeholders", () => {
   const result = evaluateV1SecretScanSnapshot({

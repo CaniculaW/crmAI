@@ -15,6 +15,10 @@ const DECISION_DOCS = {
   "docs/testing/v1-go-no-go-meeting.md": [
     "Release Gate/uat-launch-intake",
     "Release Gate/go-decision"
+  ].join("\n"),
+  "docs/testing/v1-external-uat-request.md": [
+    "Release Gate/uat-launch-intake",
+    "Release Gate/go-decision"
   ].join("\n")
 };
 
@@ -66,6 +70,25 @@ test("fails when a decision document omits a release gate blocker", () => {
   assert.deepEqual(result.missingReleaseBlockers, [
     {
       docPath: "docs/testing/v1-validation-status.md",
+      blocker: "Release Gate/uat-launch-intake"
+    }
+  ]);
+});
+
+test("fails when the external UAT request packet omits a release gate blocker", () => {
+  const result = evaluateV1BlockerConsistencySnapshot({
+    releaseGateResult: releaseGateResult(),
+    documents: {
+      ...DECISION_DOCS,
+      "docs/testing/v1-external-uat-request.md": "Release Gate/go-decision",
+      "docs/testing/v1-uat-execution-pack.md": EXECUTION_PACK
+    }
+  });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.missingReleaseBlockers, [
+    {
+      docPath: "docs/testing/v1-external-uat-request.md",
       blocker: "Release Gate/uat-launch-intake"
     }
   ]);
