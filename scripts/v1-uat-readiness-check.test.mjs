@@ -41,6 +41,8 @@ jobs:
       - run: node scripts/v1-traceability-check.mjs
       - run: node --test scripts/v1-blocker-consistency-check.test.mjs
       - run: node scripts/v1-blocker-consistency-check.mjs
+      - run: node --test scripts/v1-final-evidence-handoff-check.test.mjs
+      - run: node scripts/v1-final-evidence-handoff-check.mjs
       - run: node --test scripts/v1-secret-scan-check.test.mjs
       - run: node scripts/v1-secret-scan-check.mjs
   backend:
@@ -103,6 +105,8 @@ jobs:
   "scripts/v1-traceability-check.test.mjs": "fails when traceability claims project acceptance while release gate is No-Go\n",
   "scripts/v1-blocker-consistency-check.mjs": "evaluateV1BlockerConsistencySnapshot\ndecision-doc-release-blockers\n",
   "scripts/v1-blocker-consistency-check.test.mjs": "fails when a decision document omits a release gate blocker\nfails when the external UAT request packet omits a release gate blocker\n",
+  "scripts/v1-final-evidence-handoff-check.mjs": "evaluateV1FinalEvidenceHandoffSnapshot\nno-go-handoff-guardrail\nhandoff-command-coverage\nnode scripts/v1-final-evidence-handoff-check.mjs\n",
+  "scripts/v1-final-evidence-handoff-check.test.mjs": "fails when final handoff materials claim V1 acceptance while release gate is No-Go\n",
   "scripts/v1-secret-scan-check.mjs": "evaluateV1SecretScanSnapshot\ncurrent-v1-evidence-no-secrets\n",
   "scripts/v1-secret-scan-check.test.mjs": "fails when a current V1 evidence document contains a bearer token\n",
   "scripts/v1-deployment-config-check.mjs": "evaluateDeploymentConfigSnapshot\nCRM_BACKEND_BUILD_IMAGE\nCRM_FRONTEND_RUNTIME_IMAGE\n",
@@ -135,7 +139,7 @@ V1范围冻结
 node scripts/v1-kickoff-governance-validate.mjs
 `,
   "docs/testing/crm-v1-validation-traceability.md": "研发验证通过\n若目标口径是“项目 V1 验收通过”，仍需完成具名测试环境验证和业务验收签署。\nnode scripts/v1-traceability-check.mjs\n",
-  "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\nUAT-001\nUAT-010\nAC-005\nAC-014\nnode scripts/v1-generated-docs-check.mjs\nnode scripts/v1-plan-status-check.mjs\nnode scripts/v1-uat-coverage-check.mjs\nnode scripts/v1-blocker-consistency-check.mjs\nnode scripts/v1-secret-scan-check.mjs\n",
+  "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\nUAT-001\nUAT-010\nAC-005\nAC-014\nnode scripts/v1-generated-docs-check.mjs\nnode scripts/v1-plan-status-check.mjs\nnode scripts/v1-uat-coverage-check.mjs\nnode scripts/v1-blocker-consistency-check.mjs\nnode scripts/v1-final-evidence-handoff-check.mjs\nnode scripts/v1-secret-scan-check.mjs\n",
   "docs/testing/crm-v1-uat-evidence-pack-template.md": "Go/No-Go\n签署\n缺陷\n",
   "docs/testing/crm-v1-uat-execution-tracker.md": `CRM V1 UAT执行派工与证据追踪表
 v1.0.0-rc.8
@@ -250,7 +254,7 @@ node scripts/v1-evidence-reference-check.mjs
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-evidence-reference-check.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-external-uat-request.mjs\nv1-generated-docs-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\nv1-uat-coverage-check.mjs\nv1-traceability-check.mjs\nv1-blocker-consistency-check.mjs\nv1-secret-scan-check.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-evidence-reference-check.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-external-uat-request.mjs\nv1-generated-docs-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\nv1-uat-coverage-check.mjs\nv1-traceability-check.mjs\nv1-blocker-consistency-check.mjs\nv1-final-evidence-handoff-check.mjs\nv1-secret-scan-check.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -711,6 +715,22 @@ test("fails when the V1 blocker consistency checker is missing from readiness ma
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "v1-blocker-consistency-checker"));
+});
+
+test("fails when the V1 final evidence handoff checker is missing from readiness materials", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-final-evidence-handoff-check.mjs": "",
+    "scripts/v1-final-evidence-handoff-check.test.mjs": "",
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
+      .replace("      - run: node --test scripts/v1-final-evidence-handoff-check.test.mjs\n", "")
+      .replace("      - run: node scripts/v1-final-evidence-handoff-check.mjs\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-final-evidence-handoff-checker"));
 });
 
 test("fails when the V1 secret scan checker is missing from readiness materials", () => {

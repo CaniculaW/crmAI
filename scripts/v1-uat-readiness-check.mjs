@@ -59,6 +59,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-traceability-check.test.mjs",
   "scripts/v1-blocker-consistency-check.mjs",
   "scripts/v1-blocker-consistency-check.test.mjs",
+  "scripts/v1-final-evidence-handoff-check.mjs",
+  "scripts/v1-final-evidence-handoff-check.test.mjs",
   "scripts/v1-secret-scan-check.mjs",
   "scripts/v1-secret-scan-check.test.mjs",
   "docs/releases/v1.0.0-rc.8.md",
@@ -715,6 +717,21 @@ export function evaluateReadinessSnapshot(snapshot) {
     "V1 blocker consistency checker is tested and wired into CI to keep current release-gate blockers visible in decision materials, external UAT requests, and execution actions."
   ));
 
+  const finalEvidenceHandoffChecker = snapshot["scripts/v1-final-evidence-handoff-check.mjs"] ?? "";
+  const finalEvidenceHandoffCheckerTest = snapshot["scripts/v1-final-evidence-handoff-check.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "v1-final-evidence-handoff-checker",
+    includesAll(workflow + finalEvidenceHandoffChecker + finalEvidenceHandoffCheckerTest, [
+      "node --test scripts/v1-final-evidence-handoff-check.test.mjs",
+      "node scripts/v1-final-evidence-handoff-check.mjs",
+      "evaluateV1FinalEvidenceHandoffSnapshot",
+      "no-go-handoff-guardrail",
+      "handoff-command-coverage",
+      "fails when final handoff materials claim V1 acceptance while release gate is No-Go"
+    ]),
+    "V1 final evidence handoff checker is tested and wired into CI to keep final handoff materials aligned with release gate status and external blockers."
+  ));
+
   const secretScanChecker = snapshot["scripts/v1-secret-scan-check.mjs"] ?? "";
   const secretScanCheckerTest = snapshot["scripts/v1-secret-scan-check.test.mjs"] ?? "";
   checks.push(makeCheck(
@@ -899,7 +916,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-kickoff-governance-validate.mjs", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-signoff-register-validate.mjs", "v1-uat-launch-intake-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs", "v1-external-uat-request.mjs", "v1-generated-docs-check.mjs", "v1-plan-status-check.mjs", "v1-acceptance-checklist-check.mjs", "v1-uat-coverage-check.mjs", "v1-traceability-check.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-kickoff-governance-validate.mjs", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-signoff-register-validate.mjs", "v1-uat-launch-intake-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs", "v1-external-uat-request.mjs", "v1-generated-docs-check.mjs", "v1-plan-status-check.mjs", "v1-acceptance-checklist-check.mjs", "v1-uat-coverage-check.mjs", "v1-traceability-check.mjs", "v1-final-evidence-handoff-check.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 

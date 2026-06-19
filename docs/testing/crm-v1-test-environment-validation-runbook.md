@@ -252,6 +252,14 @@ node scripts/v1-blocker-consistency-check.mjs
 
 该检查用于确认当前 release gate 阻塞项均出现在状态报告、行动计划和 Go/No-Go 会议包中，并已拆成 UAT 执行包里的补证行动项。
 
+最终交接材料更新后，执行交接证据一致性检查：
+
+```bash
+node scripts/v1-final-evidence-handoff-check.mjs
+```
+
+该检查用于确认 README、候选版本记录、自动化验证报告、Runbook 和验收清单仍列出最终门禁命令、release gate JSON 状态和外部 UAT/签署阻塞项，防止 `No-Go` 状态下误写为 V1 已验收通过或可正式发布。
+
 当前 V1 证据材料更新后，执行秘密扫描：
 
 ```bash

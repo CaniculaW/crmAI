@@ -130,6 +130,12 @@ jobs:
       - name: Validate V1 blocker consistency
         run: node scripts/v1-blocker-consistency-check.mjs
 
+      - name: Run V1 final evidence handoff tests
+        run: node --test scripts/v1-final-evidence-handoff-check.test.mjs
+
+      - name: Validate V1 final evidence handoff
+        run: node scripts/v1-final-evidence-handoff-check.mjs
+
       - name: Run V1 secret scan tests
         run: node --test scripts/v1-secret-scan-check.test.mjs
 
