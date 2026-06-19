@@ -414,13 +414,15 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node --test scripts/v1-uat-environment-validate.test.mjs",
       "evaluateUatEnvironmentEvidence",
       "environment-summary",
+      "environment-summary-format",
       "environment-checks",
       "environment-evidence-retained",
       "no-secret-material",
       "fails a draft environment record when named environment evidence is pending",
+      "fails when environment URLs or git commit are not structured",
       "fails when PASS environment evidence reference is not retained"
     ]),
-    "UAT environment evidence validator is tested and enforces named environment metadata, retained smoke/account evidence, and secret redaction."
+    "UAT environment evidence validator is tested and enforces named environment metadata, http(s) URLs, 40-character git commit SHA, retained smoke/account evidence, and secret redaction."
   ));
 
   const defectRegisterValidator = snapshot["scripts/v1-uat-defect-register-validate.mjs"] ?? "";

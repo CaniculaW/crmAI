@@ -139,6 +139,8 @@ UAT 具名测试环境证据校验：
 node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md
 ```
 
+前端访问地址和后端 API 地址必须为 `http(s)` URL，Git 提交号必须为40位提交 SHA。
+
 UAT 证据包填写后校验：
 
 ```bash

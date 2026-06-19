@@ -51,6 +51,19 @@ function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value) && !/^[-—无]+$/.test(value);
 }
 
+function isHttpUrl(value) {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function isGitSha(value) {
+  return /^[a-f0-9]{40}$/i.test(value ?? "");
+}
+
 function evidenceReferenceTokens(value) {
   return String(value ?? "")
     .replace(/`/g, "")
@@ -89,6 +102,26 @@ export function evaluateUatEnvironmentEvidence(markdown) {
     invalidSummaryItems.length === 0
       ? "Named UAT environment summary contains environment name, URLs, release candidate, and commit."
       : `Invalid environment summary items: ${invalidSummaryItems.join(", ")}`
+  ));
+
+  const summaryFormatRules = [
+    { item: "前端访问地址", valid: isHttpUrl },
+    { item: "后端 API 地址", valid: isHttpUrl },
+    { item: "Git 提交号", valid: isGitSha }
+  ];
+  const invalidSummaryFormats = summaryFormatRules
+    .filter(({ item, valid }) => {
+      const row = findRow(rows, item);
+      const value = row?.[1] ?? "";
+      return isConcrete(value) && !valid(value);
+    })
+    .map(({ item }) => item);
+  checks.push(makeCheck(
+    "environment-summary-format",
+    invalidSummaryFormats.length === 0,
+    invalidSummaryFormats.length === 0
+      ? "Environment URLs are http(s) and Git commit is a 40-character SHA."
+      : `Invalid environment summary formats: ${invalidSummaryFormats.join(", ")}`
   ));
 
   const envRows = environmentCheckRows(rows);
@@ -150,6 +183,7 @@ export function evaluateUatEnvironmentEvidence(markdown) {
     ok: failed.length === 0,
     decision,
     unretainedEnvironmentEvidenceChecks,
+    invalidSummaryFormats,
     passed,
     failed,
     checks

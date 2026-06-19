@@ -80,6 +80,19 @@ test("fails when a required environment check is missing", () => {
   assert.ok(result.failed.some((check) => check.id === "required-checks"));
 });
 
+test("fails when environment URLs or git commit are not structured", () => {
+  const environment = completeEnvironment
+    .replace("https://crm-v1-uat.example.com/system", "crm-v1-uat")
+    .replace("https://crm-v1-uat-api.example.com", "api host")
+    .replace("ce6c06389fbde5cb5910d54b840a9afd6f7127f9", "latest");
+
+  const result = evaluateUatEnvironmentEvidence(environment);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidSummaryFormats, ["前端访问地址", "后端 API 地址", "Git 提交号"]);
+  assert.ok(result.failed.some((check) => check.id === "environment-summary-format"));
+});
+
 test("fails when a PASS environment check lacks concrete evidence", () => {
   const environment = completeEnvironment.replace(
     "| ENV-005 | 销售个人账号可登录并可操作 | PASS | docs/testing/evidence/env/sales-user.png | QA Owner |",
