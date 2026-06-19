@@ -41,6 +41,15 @@ function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value);
 }
 
+function isIsoDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
 function evidenceReferenceTokens(value) {
   return String(value ?? "")
     .replace(/`/g, "")
@@ -92,7 +101,7 @@ export function evaluateUatSignoffRegister(markdown) {
       const evidence = row[5] ?? "";
       return rowDecision !== required.decision
         || !isConcrete(owner)
-        || !isConcrete(signedDate)
+        || !isIsoDate(signedDate)
         || !isConcrete(evidence);
     })
     .map((required) => required.id);
@@ -103,6 +112,25 @@ export function evaluateUatSignoffRegister(markdown) {
     incompleteSignoffs.length === 0
       ? "All required signoffs have owner, decision, date, and evidence."
       : `Incomplete signoffs: ${incompleteSignoffs.join(", ")}`
+  ));
+
+  const invalidSignedDateSignoffs = REQUIRED_SIGNOFFS
+    .filter((required) => {
+      const row = findRow(rows, required.id);
+      if (!row) {
+        return false;
+      }
+      const signedDate = row[4] ?? "";
+      return isConcrete(signedDate) && !isIsoDate(signedDate);
+    })
+    .map((required) => required.id);
+
+  checks.push(makeCheck(
+    "signed-date-format",
+    invalidSignedDateSignoffs.length === 0,
+    invalidSignedDateSignoffs.length === 0
+      ? "Signed dates use YYYY-MM-DD."
+      : `Signoffs have non-ISO signed dates: ${invalidSignedDateSignoffs.join(", ")}`
   ));
 
   const unretainedEvidenceSignoffs = REQUIRED_SIGNOFFS
@@ -117,7 +145,7 @@ export function evaluateUatSignoffRegister(markdown) {
       const evidence = row[5] ?? "";
       const completedSignoff = rowDecision === required.decision
         && isConcrete(owner)
-        && isConcrete(signedDate)
+        && isIsoDate(signedDate)
         && isConcrete(evidence);
 
       return completedSignoff && !isRetainedEvidenceReference(evidence);
@@ -156,6 +184,7 @@ export function evaluateUatSignoffRegister(markdown) {
     ok: failed.length === 0,
     decision,
     unretainedEvidenceSignoffs,
+    invalidSignedDateSignoffs,
     passed,
     failed,
     checks

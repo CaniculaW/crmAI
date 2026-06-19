@@ -69,6 +69,19 @@ test("fails when an approved signoff lacks concrete evidence", () => {
   assert.ok(result.failed.some((check) => check.id === "required-signoffs"));
 });
 
+test("fails when an approved signoff uses a non-ISO signed date", () => {
+  const withLooseDate = completeRegister.replace(
+    "| SIGNOFF-SALES | 销售侧验收人 | Sales Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md | 销售侧验收通过 |",
+    "| SIGNOFF-SALES | 销售侧验收人 | Sales Owner | 同意 | June 19 | docs/testing/evidence/signoff/sales-approval.md | 销售侧验收通过 |"
+  );
+
+  const result = evaluateUatSignoffRegister(withLooseDate);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidSignedDateSignoffs, ["SIGNOFF-SALES"]);
+  assert.ok(result.failed.some((check) => check.id === "signed-date-format"));
+});
+
 test("fails when an approved signoff evidence reference is not retained", () => {
   const withUnretainedEvidence = completeRegister.replace(
     "docs/testing/evidence/signoff/sales-approval.md",
