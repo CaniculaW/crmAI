@@ -6,14 +6,14 @@ import { fileURLToPath } from "node:url";
 
 import { evaluateV1ReleaseGateFromFiles } from "./v1-release-gate.mjs";
 
-const DECISION_DOC_PATHS = [
+const DEFAULT_DECISION_DOC_PATHS = [
   "docs/testing/v1-validation-status.md",
   "docs/testing/v1-uat-action-plan.md",
   "docs/testing/v1-go-no-go-meeting.md",
   "docs/testing/v1-external-uat-request.md"
 ];
 
-const EXECUTION_PACK_PATH = "docs/testing/v1-uat-execution-pack.md";
+const DEFAULT_EXECUTION_PACK_PATH = "docs/testing/v1-uat-execution-pack.md";
 
 const EXECUTION_ITEMS_BY_RELEASE_BLOCKER = {
   "kickoff-governance": ["KICKOFF-OWNERS", "KICKOFF-SCOPE", "KICKOFF-GO"],
@@ -38,9 +38,13 @@ function releaseBlockers(releaseGateResult) {
   }));
 }
 
-function missingDecisionDocBlockers(releaseGateResult, documents) {
+function resolveFromRoot(rootDir, filePath) {
+  return path.resolve(rootDir, filePath);
+}
+
+function missingDecisionDocBlockers(releaseGateResult, documents, decisionDocPaths = DEFAULT_DECISION_DOC_PATHS) {
   const blockers = releaseBlockers(releaseGateResult);
-  return DECISION_DOC_PATHS.flatMap((docPath) => {
+  return decisionDocPaths.flatMap((docPath) => {
     const text = documents[docPath] ?? "";
     return blockers
       .filter((blocker) => !text.includes(blocker.token))
@@ -48,8 +52,8 @@ function missingDecisionDocBlockers(releaseGateResult, documents) {
   });
 }
 
-function missingExecutionPackItems(releaseGateResult, documents) {
-  const executionPack = documents[EXECUTION_PACK_PATH] ?? "";
+function missingExecutionPackItems(releaseGateResult, documents, executionPackPath = DEFAULT_EXECUTION_PACK_PATH) {
+  const executionPack = documents[executionPackPath] ?? "";
   return releaseBlockers(releaseGateResult).flatMap((blocker) => {
     const expectedItems = EXECUTION_ITEMS_BY_RELEASE_BLOCKER[blocker.id] ?? [];
     return expectedItems
@@ -58,10 +62,15 @@ function missingExecutionPackItems(releaseGateResult, documents) {
   });
 }
 
-export function evaluateV1BlockerConsistencySnapshot({ releaseGateResult, documents }) {
-  const missingReleaseBlockers = missingDecisionDocBlockers(releaseGateResult, documents);
-  const missingExecutionItems = missingExecutionPackItems(releaseGateResult, documents);
-  const executionPack = documents[EXECUTION_PACK_PATH] ?? "";
+export function evaluateV1BlockerConsistencySnapshot({
+  releaseGateResult,
+  documents,
+  decisionDocPaths = DEFAULT_DECISION_DOC_PATHS,
+  executionPackPath = DEFAULT_EXECUTION_PACK_PATH
+}) {
+  const missingReleaseBlockers = missingDecisionDocBlockers(releaseGateResult, documents, decisionDocPaths);
+  const missingExecutionItems = missingExecutionPackItems(releaseGateResult, documents, executionPackPath);
+  const executionPack = documents[executionPackPath] ?? "";
   const hasReleaseGateCommand = executionPack.includes("node scripts/v1-release-gate.mjs");
 
   const checks = [
@@ -101,15 +110,48 @@ export function evaluateV1BlockerConsistencySnapshot({ releaseGateResult, docume
   };
 }
 
-export function evaluateV1BlockerConsistencyFromFiles(rootDir = process.cwd()) {
+function normalizeFromFilesOptions(options) {
+  if (typeof options === "string") {
+    return { rootDir: options };
+  }
+  return options ?? {};
+}
+
+export function evaluateV1BlockerConsistencyFromFiles(options = process.cwd()) {
+  const {
+    rootDir = process.cwd(),
+    decisionDocPaths = DEFAULT_DECISION_DOC_PATHS,
+    executionPackPath = DEFAULT_EXECUTION_PACK_PATH,
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath
+  } = normalizeFromFilesOptions(options);
+
   const documents = {};
-  for (const docPath of [...DECISION_DOC_PATHS, EXECUTION_PACK_PATH]) {
-    documents[docPath] = readFileSync(path.join(rootDir, docPath), "utf8");
+  for (const docPath of [...decisionDocPaths, executionPackPath]) {
+    documents[docPath] = readFileSync(resolveFromRoot(rootDir, docPath), "utf8");
   }
 
   return evaluateV1BlockerConsistencySnapshot({
-    releaseGateResult: evaluateV1ReleaseGateFromFiles(rootDir),
-    documents
+    releaseGateResult: evaluateV1ReleaseGateFromFiles(
+      rootDir,
+      evidencePath,
+      trackerPath,
+      manifestPath,
+      defectRegisterPath,
+      environmentPath,
+      signoffRegisterPath,
+      launchIntakePath,
+      kickoffPath
+    ),
+    documents,
+    decisionDocPaths,
+    executionPackPath
   });
 }
 

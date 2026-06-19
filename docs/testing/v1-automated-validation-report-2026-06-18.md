@@ -47,7 +47,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `CRM_POSTGRES_IMAGE=docker.1ms.run/library/postgres:16 ... docker compose -f compose.v1-test.yml up -d --build` | Compose build and startup passed；db/backend/frontend 均 Up，db healthy |
 | `node scripts/v1-deployment-config-check.mjs` | V1 deployment config check passed；Dockerfile/Compose 支持可配置基础镜像 |
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
-| `node --test scripts/*.test.mjs` | 147 tests passed |
+| `node --test scripts/*.test.mjs` | 148 tests passed |
 | `node --test scripts/v1-kickoff-governance-validate.test.mjs` | 5 tests passed；覆盖完整启动治理记录、当前草稿 No-Go、缺失负责人、V2/AI 范围误入 V1 和敏感材料拦截 |
 | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | FAIL as expected；当前启动会负责人、V1范围冻结和项目 Go 结论仍为 No-Go |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 4 tests passed |
@@ -87,7 +87,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node scripts/v1-uat-coverage-check.mjs` | V1 UAT coverage check passed；UAT-001 至 UAT-010 覆盖 AC-001 至 AC-017 |
 | `node --test scripts/v1-traceability-check.test.mjs` | 3 tests passed；覆盖追踪矩阵完整、AC漏项和 release gate No-Go 时误标项目验收通过 |
 | `node scripts/v1-traceability-check.mjs` | V1 traceability check passed；AC-001 至 AC-017 追踪矩阵完整且与当前 No-Go 状态一致 |
-| `node --test scripts/v1-blocker-consistency-check.test.mjs` | 4 tests passed；覆盖决策材料和执行包完整映射当前 release gate 阻塞项、决策文档漏项、外部UAT请求包漏项和执行行动项漏项 |
+| `node --test scripts/v1-blocker-consistency-check.test.mjs` | 5 tests passed；覆盖决策材料和执行包完整映射当前 release gate 阻塞项、外部 UAT 源文档/决策材料绝对路径、决策文档漏项、外部UAT请求包漏项和执行行动项漏项 |
 | `node scripts/v1-blocker-consistency-check.mjs` | V1 blocker consistency check passed；当前 release gate 阻塞项已出现在决策材料并映射到 UAT 执行包行动项 |
 | `node --test scripts/v1-secret-scan-check.test.mjs` | 4 tests passed；覆盖当前证据清单包含外部 UAT 请求包、脱敏占位允许、明文密码拦截和 Bearer token 拦截 |
 | `node scripts/v1-secret-scan-check.mjs` | V1 secret scan check passed；当前 V1 证据文档未发现明显明文敏感材料 |
