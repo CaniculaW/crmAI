@@ -187,6 +187,8 @@ UAT 执行追踪表校验：
 node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md
 ```
 
+已通过的 PRE、SMK、UAT 和 P0/P1 缺陷证据需引用 `docs/` 下留存文件或外部 `http(s)` 系统链接。
+
 UAT 签署台账：
 
 ```text

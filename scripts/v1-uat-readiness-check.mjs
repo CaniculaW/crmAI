@@ -533,9 +533,11 @@ export function evaluateReadinessSnapshot(snapshot) {
       "evaluateUatExecutionTracker",
       "required-items",
       "release-gates",
-      "fails the current rc8 tracker because external UAT remains pending"
+      "tracker-evidence-retained",
+      "fails the current rc8 tracker because external UAT remains pending",
+      "fails when passed tracker evidence references are not retained"
     ]),
-    "UAT execution tracker validator is tested and reports pending external UAT, defects, signoff, and release-gate blockers."
+    "UAT execution tracker validator is tested and reports pending external UAT, retained evidence references, defects, signoff, and release-gate blockers."
   ));
 
   const releaseGate = snapshot["scripts/v1-release-gate.mjs"] ?? "";

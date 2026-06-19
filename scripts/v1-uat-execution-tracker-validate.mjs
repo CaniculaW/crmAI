@@ -64,6 +64,20 @@ function isConcreteEvidence(value) {
   return Boolean(value) && !hasPlaceholder(value) && !/证据要求|截图、命令输出、缺陷单或会议纪要之一/.test(value);
 }
 
+function evidenceReferenceTokens(value) {
+  return String(value ?? "")
+    .replace(/`/g, "")
+    .split(/[\s,，;；]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function isRetainedEvidenceReference(value) {
+  return isConcreteEvidence(value) && evidenceReferenceTokens(value).some((token) => (
+    token.startsWith("docs/") || /^https?:\/\//i.test(token)
+  ));
+}
+
 function extractDecision(markdown) {
   const match = markdown.match(/当前结论：\s*(Conditional Go|No-Go|Go)/);
   return match?.[1] ?? "";
@@ -159,6 +173,49 @@ export function evaluateUatExecutionTracker(markdown) {
     "P0/S1 and P1/S2 defect rows must show no open defects and concrete evidence."
   ));
 
+  const unretainedPreCheckEvidence = REQUIRED_PRE_CHECKS.filter((id) => {
+    const row = findRow(rows, id);
+    return row?.[4] === "通过" && isConcreteEvidence(row[3] ?? "") && !isRetainedEvidenceReference(row[3]);
+  });
+  const unretainedSmokeCheckEvidence = REQUIRED_SMOKE_CHECKS.filter((id) => {
+    const row = findRow(rows, id);
+    return row?.[4] === "通过" && isConcreteEvidence(row[3] ?? "") && !isRetainedEvidenceReference(row[3]);
+  });
+  const unretainedUatEvidence = REQUIRED_UAT_CASES.filter((id) => {
+    const row = findRow(rows, id);
+    return row?.[5] === "通过" && isConcreteEvidence(row[4] ?? "") && !isRetainedEvidenceReference(row[4]);
+  });
+  const unretainedDefectEvidence = [p0, p1]
+    .filter((row) => defectClosed(row) && !isRetainedEvidenceReference(row?.[3] ?? ""))
+    .map((row) => row[0]);
+  const unretainedEvidenceReferences = {
+    preChecks: unretainedPreCheckEvidence,
+    smokeChecks: unretainedSmokeCheckEvidence,
+    uatCases: unretainedUatEvidence,
+    defects: unretainedDefectEvidence
+  };
+  const unretainedEvidenceMessages = [
+    unretainedPreCheckEvidence.length === 0
+      ? ""
+      : `pre-checks: ${unretainedPreCheckEvidence.join(", ")}`,
+    unretainedSmokeCheckEvidence.length === 0
+      ? ""
+      : `smoke-checks: ${unretainedSmokeCheckEvidence.join(", ")}`,
+    unretainedUatEvidence.length === 0
+      ? ""
+      : `uat-cases: ${unretainedUatEvidence.join(", ")}`,
+    unretainedDefectEvidence.length === 0
+      ? ""
+      : `defects: ${unretainedDefectEvidence.join(", ")}`
+  ].filter(Boolean);
+  checks.push(makeCheck(
+    "tracker-evidence-retained",
+    unretainedEvidenceMessages.length === 0,
+    unretainedEvidenceMessages.length === 0
+      ? "Passed tracker PRE, SMK, UAT, and P0/P1 defect evidence references point to retained docs or external URLs."
+      : `Unretained tracker evidence references: ${unretainedEvidenceMessages.join("; ")}`
+  ));
+
   const incompleteGates = REQUIRED_GATES.filter((gate) => {
     const row = findRow(rows, gate);
     const status = row?.[3] ?? "";
@@ -189,6 +246,7 @@ export function evaluateUatExecutionTracker(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    unretainedEvidenceReferences,
     passed,
     failed,
     checks

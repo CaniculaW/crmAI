@@ -79,8 +79,8 @@ jobs:
   "scripts/v1-uat-evidence-manifest-validate.test.mjs": "fails the current draft manifest because external UAT evidence is pending\n",
   "scripts/v1-evidence-reference-check.mjs": "evaluateEvidenceReferences\nevaluateEvidenceReferencesFromFiles\npass-reference-artifacts\ngo-pass-references\n",
   "scripts/v1-evidence-reference-check.test.mjs": "fails a PASS evidence row when its repository artifact path is missing\n",
-  "scripts/v1-uat-execution-tracker-validate.mjs": "evaluateUatExecutionTracker\nrequired-items\nrelease-gates\n",
-  "scripts/v1-uat-execution-tracker-validate.test.mjs": "fails the current rc8 tracker because external UAT remains pending\n",
+  "scripts/v1-uat-execution-tracker-validate.mjs": "evaluateUatExecutionTracker\nrequired-items\nrelease-gates\ntracker-evidence-retained\n",
+  "scripts/v1-uat-execution-tracker-validate.test.mjs": "fails the current rc8 tracker because external UAT remains pending\nfails when passed tracker evidence references are not retained\n",
   "scripts/v1-release-gate.mjs": "evaluateV1ReleaseGate\nevaluateV1ReleaseGateFromFiles\nV1 release gate requires Go\nkickoff-governance\nuat-launch-intake\nuat-environment\nuat-evidence-references\n",
   "scripts/v1-release-gate.test.mjs": "fails when kickoff governance remains incomplete\nfails when the UAT launch intake remains incomplete\nfails when PASS evidence references do not resolve to retained artifacts\nfails when the project decision is Conditional Go\n",
   "scripts/v1-validation-status.mjs": "generateV1ValidationStatusMarkdown\nOverall: No-Go\nKickoff Governance\nUAT Environment Evidence\nUAT Execution Tracker\n",
@@ -589,6 +589,19 @@ test("fails when the UAT execution tracker validator is missing from readiness m
       "      - run: node --test scripts/v1-uat-execution-tracker-validate.test.mjs\n",
       ""
     )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-execution-tracker-validator"));
+});
+
+test("fails when the UAT execution tracker validator omits retained evidence guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-execution-tracker-validate.mjs": completeSnapshot["scripts/v1-uat-execution-tracker-validate.mjs"].replace("tracker-evidence-retained\n", ""),
+    "scripts/v1-uat-execution-tracker-validate.test.mjs": completeSnapshot["scripts/v1-uat-execution-tracker-validate.test.mjs"].replace("fails when passed tracker evidence references are not retained\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

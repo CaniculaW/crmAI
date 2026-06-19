@@ -301,29 +301,29 @@ const completeTracker = `# CRM V1 UAT执行派工与证据追踪表
 |---|---|---|---|---|
 ${Array.from({ length: 6 }, (_, index) => {
   const id = `PRE-${String(index + 1).padStart(3, "0")}`;
-  return `| ${id} | V1前置检查 | 项目/测试 | evidence/${id.toLowerCase()}.png | 通过 |`;
+  return `| ${id} | V1前置检查 | 项目/测试 | docs/testing/evidence/tracker/${id.toLowerCase()}.png | 通过 |`;
 }).join("\n")}
 
 | 编号 | 验证项 | 责任侧 | 证据要求 | 当前状态 |
 |---|---|---|---|---|
 ${Array.from({ length: 5 }, (_, index) => {
   const id = `SMK-${String(index + 1).padStart(3, "0")}`;
-  return `| ${id} | V1环境Smoke | 测试 | evidence/${id.toLowerCase()}.png | 通过 |`;
+  return `| ${id} | V1环境Smoke | 测试 | docs/testing/evidence/tracker/${id.toLowerCase()}.png | 通过 |`;
 }).join("\n")}
 
 | 编号 | 验收链路 | 主要验收人 | 对应验收项 | 证据要求 | 当前状态 |
 |---|---|---|---|---|---|
 ${Array.from({ length: 10 }, (_, index) => {
   const id = `UAT-${String(index + 1).padStart(3, "0")}`;
-  return `| ${id} | V1业务验收链路 | Sales Owner | AC-${String(index + 1).padStart(3, "0")} | evidence/${id.toLowerCase()}.png | 通过 |`;
+  return `| ${id} | V1业务验收链路 | Sales Owner | AC-${String(index + 1).padStart(3, "0")} | docs/testing/evidence/tracker/${id.toLowerCase()}.png | 通过 |`;
 }).join("\n")}
 
 | 等级 | 准出要求 | 当前状态 | 证据 |
 |---|---|---|---|
-| P0 / S1 阻断 | 必须全部关闭并回归通过 | 0未关闭 | defect-summary.md |
-| P1 / S2 严重 | 原则上关闭 | 0未关闭 | defect-summary.md |
-| P2 / S3 一般 | 评估试点影响 | 已评估 | defect-summary.md |
-| P3 / S4 轻微 | 可后续优化 | 已记录 | defect-summary.md |
+| P0 / S1 阻断 | 必须全部关闭并回归通过 | 0未关闭 | docs/testing/evidence/tracker/defect-summary.md |
+| P1 / S2 严重 | 原则上关闭 | 0未关闭 | docs/testing/evidence/tracker/defect-summary.md |
+| P2 / S3 一般 | 评估试点影响 | 已评估 | docs/testing/evidence/tracker/defect-summary.md |
+| P3 / S4 轻微 | 可后续优化 | 已记录 | docs/testing/evidence/tracker/defect-summary.md |
 
 | 门禁 | 命令或证据 | 通过条件 | 当前状态 |
 |---|---|---|---|

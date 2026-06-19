@@ -26,7 +26,7 @@ const completeTracker = `# CRM V1 UAT执行派工与证据追踪表
 |---|---|---|---|---|
 ${Array.from({ length: 6 }, (_, index) => {
   const id = `PRE-${String(index + 1).padStart(3, "0")}`;
-  return `| ${id} | V1前置检查 | 项目/测试 | evidence/${id.toLowerCase()}.png | 通过 |`;
+  return `| ${id} | V1前置检查 | 项目/测试 | docs/testing/evidence/tracker/${id.toLowerCase()}.png | 通过 |`;
 }).join("\n")}
 
 ## 4. 测试环境Smoke派工
@@ -35,7 +35,7 @@ ${Array.from({ length: 6 }, (_, index) => {
 |---|---|---|---|---|
 ${Array.from({ length: 5 }, (_, index) => {
   const id = `SMK-${String(index + 1).padStart(3, "0")}`;
-  return `| ${id} | V1环境Smoke | 测试 | evidence/${id.toLowerCase()}.png | 通过 |`;
+  return `| ${id} | V1环境Smoke | 测试 | docs/testing/evidence/tracker/${id.toLowerCase()}.png | 通过 |`;
 }).join("\n")}
 
 ## 5. 业务UAT派工
@@ -44,17 +44,17 @@ ${Array.from({ length: 5 }, (_, index) => {
 |---|---|---|---|---|---|
 ${Array.from({ length: 10 }, (_, index) => {
   const id = `UAT-${String(index + 1).padStart(3, "0")}`;
-  return `| ${id} | V1业务验收链路 | Sales Owner | AC-${String(index + 1).padStart(3, "0")} | evidence/${id.toLowerCase()}.png | 通过 |`;
+  return `| ${id} | V1业务验收链路 | Sales Owner | AC-${String(index + 1).padStart(3, "0")} | docs/testing/evidence/tracker/${id.toLowerCase()}.png | 通过 |`;
 }).join("\n")}
 
 ## 6. 缺陷与回归追踪
 
 | 等级 | 准出要求 | 当前状态 | 证据 |
 |---|---|---|---|
-| P0 / S1 阻断 | 必须全部关闭并回归通过 | 0未关闭 | defect-summary.md |
-| P1 / S2 严重 | 原则上关闭 | 0未关闭 | defect-summary.md |
-| P2 / S3 一般 | 评估试点影响 | 已评估 | defect-summary.md |
-| P3 / S4 轻微 | 可后续优化 | 已记录 | defect-summary.md |
+| P0 / S1 阻断 | 必须全部关闭并回归通过 | 0未关闭 | docs/testing/evidence/tracker/defect-summary.md |
+| P1 / S2 严重 | 原则上关闭 | 0未关闭 | docs/testing/evidence/tracker/defect-summary.md |
+| P2 / S3 一般 | 评估试点影响 | 已评估 | docs/testing/evidence/tracker/defect-summary.md |
+| P3 / S4 轻微 | 可后续优化 | 已记录 | docs/testing/evidence/tracker/defect-summary.md |
 
 ## 7. Go/No-Go执行门禁
 
@@ -115,7 +115,7 @@ test("fails the current rc8 tracker because external UAT remains pending", () =>
 
 test("fails when a passed UAT row lacks concrete evidence", () => {
   const tracker = completeTracker.replace(
-    "| UAT-006 | V1业务验收链路 | Sales Owner | AC-006 | evidence/uat-006.png | 通过 |",
+    "| UAT-006 | V1业务验收链路 | Sales Owner | AC-006 | docs/testing/evidence/tracker/uat-006.png | 通过 |",
     "| UAT-006 | V1业务验收链路 | Sales Owner | AC-006 | 待填写 | 通过 |"
   );
 
@@ -123,6 +123,23 @@ test("fails when a passed UAT row lacks concrete evidence", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "uat-cases"));
+});
+
+test("fails when passed tracker evidence references are not retained", () => {
+  const tracker = completeTracker
+    .replace("docs/testing/evidence/tracker/pre-002.png", "pre-002.png")
+    .replace("docs/testing/evidence/tracker/smk-003.png", "smk-003.png")
+    .replace("docs/testing/evidence/tracker/uat-006.png", "uat-006.png")
+    .replaceAll("docs/testing/evidence/tracker/defect-summary.md", "defect-summary.md");
+
+  const result = evaluateUatExecutionTracker(tracker);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.unretainedEvidenceReferences.preChecks, ["PRE-002"]);
+  assert.deepEqual(result.unretainedEvidenceReferences.smokeChecks, ["SMK-003"]);
+  assert.deepEqual(result.unretainedEvidenceReferences.uatCases, ["UAT-006"]);
+  assert.deepEqual(result.unretainedEvidenceReferences.defects, ["P0 / S1 阻断", "P1 / S2 严重"]);
+  assert.ok(result.failed.some((check) => check.id === "tracker-evidence-retained"));
 });
 
 test("fails when the UAT defect register gate is not PASS", () => {

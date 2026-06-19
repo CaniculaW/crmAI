@@ -47,7 +47,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `CRM_POSTGRES_IMAGE=docker.1ms.run/library/postgres:16 ... docker compose -f compose.v1-test.yml up -d --build` | Compose build and startup passed；db/backend/frontend 均 Up，db healthy |
 | `node scripts/v1-deployment-config-check.mjs` | V1 deployment config check passed；Dockerfile/Compose 支持可配置基础镜像 |
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
-| `node --test scripts/*.test.mjs` | 185 tests passed |
+| `node --test scripts/*.test.mjs` | 187 tests passed |
 | `node --test scripts/v1-kickoff-governance-validate.test.mjs` | 6 tests passed；覆盖完整启动治理记录、当前草稿 No-Go、缺失负责人、V2/AI 范围误入 V1、确认/冻结证据引用未指向可留存工件/URL和敏感材料拦截 |
 | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | FAIL as expected；当前启动会负责人、V1范围冻结和项目 Go 结论仍为 No-Go |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 5 tests passed；新增已通过自动化、环境、UAT用例和签署证据必须指向可留存仓库工件或外部 URL 的拦截 |
@@ -64,9 +64,9 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node --test scripts/v1-uat-launch-intake-validate.test.mjs` | 7 tests passed；覆盖完整启动输入、当前草稿 No-Go、缺失参与角色、环境缺证据、账号未准备、启动输入/账号证据引用未指向可留存工件/URL和敏感材料拦截 |
 | `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md` | FAIL as expected；当前 UAT 启动输入仍为 No-Go |
 | `node scripts/v1-uat-readiness-check.mjs` | RC/UAT readiness check passed |
-| `node --test scripts/v1-uat-readiness-check.test.mjs` | 60 tests passed；包含启动治理纪要可留存证据引用、UAT执行派工追踪表、UAT启动输入可留存证据引用、UAT证据包通过项可留存证据引用、UAT具名环境可留存证据、UAT逐项执行包、UAT证据清单、证据引用保全检查、UAT缺陷台账可留存回归证据、UAT签署台账可留存证据引用、release gate JSON 快照、release gate JSON schema gate、tracker validator gate、聚合状态报告gate、UAT行动计划gate、Go/No-Go会议包gate、外部UAT请求包gate、生成文档一致性gate、计划状态一致性gate、验收清单一致性gate、UAT覆盖gate、UAT执行明细gate、验证追踪矩阵gate、阻塞项一致性gate、外部UAT请求覆盖gate、外部UAT请求责任侧路由gate、最终交接证据一致性gate和证据秘密扫描gate |
-| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 60 tests passed；覆盖CI前端job相对路径 |
-| `node --test scripts/v1-uat-execution-tracker-validate.test.mjs` | 5 tests passed；覆盖完整 Go 追踪表、当前 No-Go 追踪表、缺失证据、缺陷台账门禁未通过和签署台账门禁缺失 |
+| `node --test scripts/v1-uat-readiness-check.test.mjs` | 61 tests passed；包含启动治理纪要可留存证据引用、UAT执行派工追踪表可留存证据引用、UAT启动输入可留存证据引用、UAT证据包通过项可留存证据引用、UAT具名环境可留存证据、UAT逐项执行包、UAT证据清单、证据引用保全检查、UAT缺陷台账可留存回归证据、UAT签署台账可留存证据引用、release gate JSON 快照、release gate JSON schema gate、tracker validator gate、聚合状态报告gate、UAT行动计划gate、Go/No-Go会议包gate、外部UAT请求包gate、生成文档一致性gate、计划状态一致性gate、验收清单一致性gate、UAT覆盖gate、UAT执行明细gate、验证追踪矩阵gate、阻塞项一致性gate、外部UAT请求覆盖gate、外部UAT请求责任侧路由gate、最终交接证据一致性gate和证据秘密扫描gate |
+| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 61 tests passed；覆盖CI前端job相对路径 |
+| `node --test scripts/v1-uat-execution-tracker-validate.test.mjs` | 6 tests passed；覆盖完整 Go 追踪表、当前 No-Go 追踪表、缺失证据、追踪表证据未指向可留存工件/URL、缺陷台账门禁未通过和签署台账门禁缺失 |
 | `node --test scripts/v1-validation-status.test.mjs` | 4 tests passed；覆盖 No-Go 聚合状态、绝对路径 UAT 源文档、全量 Go 状态和显式 git commit 参数 |
 | `node scripts/v1-validation-status.mjs --git-commit <git-sha> --output docs/testing/v1-validation-status.md` | 生成当前 `No-Go` 聚合状态报告，并显式绑定被验证提交 |
 | `node --test scripts/v1-uat-action-plan.test.mjs` | 3 tests passed；覆盖 No-Go 行动计划、绝对路径 UAT 源文档和全量 Go 状态 |
@@ -126,7 +126,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 
 逐项验收证据见 `docs/testing/crm-v1-validation-traceability.md`。
 
-rc.8 Compose部署态证据见 `docs/testing/evidence/v1-compose-uat-2026-06-19.md`，覆盖镜像源覆盖、容器状态、API Smoke 和浏览器 Smoke。启动治理纪要见 `docs/meeting-notes/crm-kickoff-minutes.md`，用于收敛负责人、业务验收人和 V1范围冻结；kickoff governance validator 实测为 `FAIL / No-Go`。UAT执行派工追踪表见 `docs/testing/crm-v1-uat-execution-tracker.md`，用于逐项推进 PRE、SMK、UAT、缺陷和签署；tracker validator 实测为 `FAIL / No-Go`，会列出当前未完成项。UAT具名环境证据见 `docs/testing/v1-uat-environment-evidence.md`，用于收敛测试环境元数据、Smoke、账号和权限样本可留存证据；environment validator 实测为 `FAIL / No-Go`。UAT缺陷台账见 `docs/testing/v1-uat-defect-register.md`，用于收敛 P0/P1 缺陷闭环和可留存回归证据；defect register validator 实测为 `FAIL / No-Go`。UAT签署台账见 `docs/testing/v1-uat-signoff-register.md`，用于收敛销售侧、管理侧、产品、测试、研发和项目负责人签署证据；signoff register validator 实测为 `FAIL / No-Go`。
+rc.8 Compose部署态证据见 `docs/testing/evidence/v1-compose-uat-2026-06-19.md`，覆盖镜像源覆盖、容器状态、API Smoke 和浏览器 Smoke。启动治理纪要见 `docs/meeting-notes/crm-kickoff-minutes.md`，用于收敛负责人、业务验收人和 V1范围冻结；kickoff governance validator 实测为 `FAIL / No-Go`。UAT执行派工追踪表见 `docs/testing/crm-v1-uat-execution-tracker.md`，用于逐项推进 PRE、SMK、UAT、缺陷和签署，并要求已通过项证据指向可留存工件或外部 URL；tracker validator 实测为 `FAIL / No-Go`，会列出当前未完成项。UAT具名环境证据见 `docs/testing/v1-uat-environment-evidence.md`，用于收敛测试环境元数据、Smoke、账号和权限样本可留存证据；environment validator 实测为 `FAIL / No-Go`。UAT缺陷台账见 `docs/testing/v1-uat-defect-register.md`，用于收敛 P0/P1 缺陷闭环和可留存回归证据；defect register validator 实测为 `FAIL / No-Go`。UAT签署台账见 `docs/testing/v1-uat-signoff-register.md`，用于收敛销售侧、管理侧、产品、测试、研发和项目负责人签署证据；signoff register validator 实测为 `FAIL / No-Go`。
 
 聚合状态报告见 `docs/testing/v1-validation-status.md`；UAT行动计划见 `docs/testing/v1-uat-action-plan.md`，按项目/产品、测试、业务UAT和研发拆分下一步；UAT逐项执行包见 `docs/testing/v1-uat-execution-pack.md`，把失败门禁拆成 KICKOFF、ENV、PRE、SMK、UAT、DEF、SIGNOFF 和 GO-NOGO 补证项；Go/No-Go会议包见 `docs/testing/v1-go-no-go-meeting.md`，用于正式准出会议留痕；外部UAT请求包见 `docs/testing/v1-external-uat-request.md`，面向项目/产品、测试、业务UAT和研发集中列出源文档、验证命令和当前阻塞请求；release gate JSON 快照见 `docs/testing/v1-release-gate-status.json`，用于看板或验收机器人读取当前准出状态，并由 `scripts/v1-release-gate-status-check.mjs` 校验字段和值域稳定。
 
