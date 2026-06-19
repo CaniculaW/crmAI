@@ -27,6 +27,7 @@ test("generates a V1 UAT evidence pack with all required business demo cases", (
     assert.match(markdown, new RegExp(`UAT-${String(index).padStart(3, "0")}`));
   }
   assert.match(markdown, /Go \/ Conditional Go \/ No-Go/);
+  assert.match(markdown, /\| 角色 \| 姓名 \| 结论 \| 日期 \| 证据文件 \|/);
   assert.match(markdown, /不记录明文密码/);
   assert.match(markdown, /v1-uat-evidence-pack-validate\.mjs/);
 });

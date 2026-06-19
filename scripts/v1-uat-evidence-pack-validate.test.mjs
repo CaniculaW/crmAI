@@ -25,24 +25,24 @@ const completeGoPack = `# CRM V1 UAT 证据包与 Go/No-Go 记录
 
 | 命令 | 执行环境 | 结果 | 证据文件 |
 |---|---|---|---|
-| \`mvn test\` | crm-v1-test | 通过 | ci-27747151121 |
-| \`mvn verify -Ppostgres-it\` | crm-v1-test | 通过 | ci-27747151121 |
-| \`npm test\` | crm-v1-test | 通过 | ci-27747151121 |
-| \`npm run build\` | crm-v1-test | 通过 | ci-27747151121 |
-| \`npm run smoke:v1:browser\` | crm-v1-test | 通过 | smoke-output.json |
-| \`/api/bootstrap Smoke\` | crm-v1-test | 通过 | bootstrap-response.json |
+| \`mvn test\` | crm-v1-test | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27747151121 |
+| \`mvn verify -Ppostgres-it\` | crm-v1-test | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27747151121 |
+| \`npm test\` | crm-v1-test | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27747151121 |
+| \`npm run build\` | crm-v1-test | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27747151121 |
+| \`npm run smoke:v1:browser\` | crm-v1-test | 通过 | docs/testing/evidence/smoke-output.json |
+| \`/api/bootstrap Smoke\` | crm-v1-test | 通过 | docs/testing/evidence/bootstrap-response.json |
 
 ## 3. 环境与账号证据
 
 | 证据项 | 通过标准 | 结果 | 证据文件 |
 |---|---|---|---|
-| 前端登录页可访问 | 显示 CRM 登录表单 | 通过 | login.png |
-| 后端健康检查 | /api/health 返回 200 | 通过 | health.txt |
-| 数据库迁移 | Flyway 14 个迁移脚本完成 | 通过 | migration.png |
-| 管理员账号 | 可登录，可进入系统管理页 | 通过 | admin.png |
-| 销售个人账号 | 可登录，可创建客户/商机/行动 | 通过 | sales.png |
-| 销售负责人账号 | 可查看本部门数据 | 通过 | manager.png |
-| 权限样本账号 | 可验证数据范围 | 通过 | permissions.png |
+| 前端登录页可访问 | 显示 CRM 登录表单 | 通过 | docs/testing/evidence/env/login-page.png |
+| 后端健康检查 | /api/health 返回 200 | 通过 | docs/testing/evidence/env/health.txt |
+| 数据库迁移 | Flyway 14 个迁移脚本完成 | 通过 | docs/testing/evidence/env/migration.png |
+| 管理员账号 | 可登录，可进入系统管理页 | 通过 | docs/testing/evidence/env/admin.png |
+| 销售个人账号 | 可登录，可创建客户/商机/行动 | 通过 | docs/testing/evidence/env/sales.png |
+| 销售负责人账号 | 可查看本部门数据 | 通过 | docs/testing/evidence/env/manager.png |
+| 权限样本账号 | 可验证数据范围 | 通过 | docs/testing/evidence/env/permissions.png |
 
 ## 4. 业务演示验收记录
 
@@ -50,7 +50,7 @@ const completeGoPack = `# CRM V1 UAT 证据包与 Go/No-Go 记录
 |---|---|---|---|---|---|
 ${Array.from({ length: 10 }, (_, index) => {
   const id = `UAT-${String(index + 1).padStart(3, "0")}`;
-  return `| ${id} | V1 验收链路 | Sales Owner | 通过 | ${id.toLowerCase()}.png | 无 |`;
+  return `| ${id} | V1 验收链路 | Sales Owner | 通过 | docs/testing/evidence/uat/${id.toLowerCase()}.png | 无 |`;
 }).join("\n")}
 
 ## 5. 缺陷汇总
@@ -83,14 +83,14 @@ Go/No-Go 结论：
 
 ## 8. 签署
 
-| 角色 | 姓名 | 结论 | 日期 |
-|---|---|---|---|
-| 销售侧验收人 | Sales Owner | 同意 | 2026-06-19 |
-| 管理侧验收人 | Manager Owner | 同意 | 2026-06-19 |
-| 产品负责人 | Product | 同意 | 2026-06-19 |
-| 测试负责人 | QA | 同意 | 2026-06-19 |
-| 研发负责人 | Dev | 同意 | 2026-06-19 |
-| 项目负责人 | PM | Go | 2026-06-19 |
+| 角色 | 姓名 | 结论 | 日期 | 证据文件 |
+|---|---|---|---|---|
+| 销售侧验收人 | Sales Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md |
+| 管理侧验收人 | Manager Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/manager-approval.md |
+| 产品负责人 | Product | 同意 | 2026-06-19 | docs/testing/evidence/signoff/product-approval.md |
+| 测试负责人 | QA | 同意 | 2026-06-19 | docs/testing/evidence/signoff/test-approval.md |
+| 研发负责人 | Dev | 同意 | 2026-06-19 | docs/testing/evidence/signoff/dev-approval.md |
+| 项目负责人 | PM | Go | 2026-06-19 | docs/testing/evidence/signoff/project-go.md |
 `;
 
 test("passes a complete signed Go evidence pack", () => {
@@ -109,7 +109,10 @@ test("fails a Go evidence pack when a P0 defect remains open", () => {
 });
 
 test("fails a Go evidence pack when business signoff is missing", () => {
-  const pack = completeGoPack.replace("| 销售侧验收人 | Sales Owner | 同意 | 2026-06-19 |", "| 销售侧验收人 | 待填写 | 同意 | 2026-06-19 |");
+  const pack = completeGoPack.replace(
+    "| 销售侧验收人 | Sales Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md |",
+    "| 销售侧验收人 | 待填写 | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md |"
+  );
   const result = evaluateUatEvidencePack(pack);
 
   assert.equal(result.ok, false);
@@ -122,4 +125,17 @@ test("explains that draft placeholders remain when the no-placeholder check fail
   const placeholderFailure = result.failed.find((check) => check.id === "no-placeholders");
 
   assert.equal(placeholderFailure?.message, "Evidence pack still contains draft placeholders.");
+});
+
+test("fails when passed UAT evidence references are not retained", () => {
+  const pack = completeGoPack
+    .replace("docs/testing/evidence/env/login-page.png", "login.png")
+    .replace("docs/testing/evidence/signoff/project-go.md", "project-go.md");
+
+  const result = evaluateUatEvidencePack(pack);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.unretainedEvidenceReferences.environment, ["前端登录页可访问"]);
+  assert.deepEqual(result.unretainedEvidenceReferences.signoff, ["项目负责人"]);
+  assert.ok(result.failed.some((check) => check.id === "evidence-references-retained"));
 });

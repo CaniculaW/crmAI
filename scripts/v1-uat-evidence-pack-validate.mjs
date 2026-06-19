@@ -49,6 +49,24 @@ function hasPlaceholder(value) {
   return /待填写|待执行|通过 \/ 不通过|是 \/ 否|同意 \/ 不同意/.test(value);
 }
 
+function isConcrete(value) {
+  return Boolean(value) && !hasPlaceholder(value);
+}
+
+function evidenceReferenceTokens(value) {
+  return String(value ?? "")
+    .replace(/`/g, "")
+    .split(/[\s,，;；]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function isRetainedEvidenceReference(value) {
+  return isConcrete(value) && evidenceReferenceTokens(value).some((token) => (
+    token.startsWith("docs/") || /^https?:\/\//i.test(token)
+  ));
+}
+
 function makeCheck(id, ok, message) {
   return { id, ok, message };
 }
@@ -118,6 +136,11 @@ export function evaluateUatEvidencePack(markdown) {
       : `Missing passed automation evidence: ${missingAutomation.join(", ")}`
   ));
 
+  const unretainedAutomationEvidence = REQUIRED_AUTOMATION_COMMANDS.filter((command) => {
+    const row = findRowContaining(rows, command);
+    return rowPasses(row, 2) && isConcrete(row?.[3] ?? "") && !isRetainedEvidenceReference(row[3]);
+  });
+
   const missingEnvironment = REQUIRED_ENVIRONMENT_CHECKS.filter((item) => {
     const row = findRow(rows, item);
     return !row || !rowPasses(row, 2) || !row[3] || hasPlaceholder(row[3]);
@@ -130,6 +153,11 @@ export function evaluateUatEvidencePack(markdown) {
       : `Missing passed environment evidence: ${missingEnvironment.join(", ")}`
   ));
 
+  const unretainedEnvironmentEvidence = REQUIRED_ENVIRONMENT_CHECKS.filter((item) => {
+    const row = findRow(rows, item);
+    return rowPasses(row, 2) && isConcrete(row?.[3] ?? "") && !isRetainedEvidenceReference(row[3]);
+  });
+
   const missingUatCases = REQUIRED_UAT_CASES.filter((id) => {
     const row = findRow(rows, id);
     return !row || row[3] !== "通过" || !row[2] || !row[4] || hasPlaceholder(row.join(" "));
@@ -141,6 +169,11 @@ export function evaluateUatEvidencePack(markdown) {
       ? "UAT-001 through UAT-010 are marked passed with owner and evidence."
       : `Missing passed UAT evidence: ${missingUatCases.join(", ")}`
   ));
+
+  const unretainedUatEvidence = REQUIRED_UAT_CASES.filter((id) => {
+    const row = findRow(rows, id);
+    return row?.[3] === "通过" && isConcrete(row?.[4] ?? "") && !isRetainedEvidenceReference(row[4]);
+  });
 
   const p0Open = parseOpenDefectCount(rows, "P0 / S1 阻断");
   checks.push(makeCheck(
@@ -190,6 +223,39 @@ export function evaluateUatEvidencePack(markdown) {
       : `Incomplete signoff rows: ${incompleteSignoff.join(", ")}`
   ));
 
+  const unretainedSignoffEvidence = REQUIRED_SIGNOFF_ROLES.filter((role) => {
+    const row = findLastRow(rows, role);
+    const accepted = role === "项目负责人" ? row?.[2] === decision : row?.[2] === "同意";
+    return accepted && !isRetainedEvidenceReference(row?.[4] ?? "");
+  });
+  const unretainedEvidenceReferences = {
+    automation: unretainedAutomationEvidence,
+    environment: unretainedEnvironmentEvidence,
+    uat: unretainedUatEvidence,
+    signoff: unretainedSignoffEvidence
+  };
+  const unretainedEvidenceMessages = [
+    unretainedAutomationEvidence.length === 0
+      ? ""
+      : `automation: ${unretainedAutomationEvidence.join(", ")}`,
+    unretainedEnvironmentEvidence.length === 0
+      ? ""
+      : `environment: ${unretainedEnvironmentEvidence.join(", ")}`,
+    unretainedUatEvidence.length === 0
+      ? ""
+      : `uat: ${unretainedUatEvidence.join(", ")}`,
+    unretainedSignoffEvidence.length === 0
+      ? ""
+      : `signoff: ${unretainedSignoffEvidence.join(", ")}`
+  ].filter(Boolean);
+  checks.push(makeCheck(
+    "evidence-references-retained",
+    unretainedEvidenceMessages.length === 0,
+    unretainedEvidenceMessages.length === 0
+      ? "Passed automation, environment, UAT, and signoff evidence references point to retained docs or external URLs."
+      : `Unretained evidence references: ${unretainedEvidenceMessages.join("; ")}`
+  ));
+
   checks.push(makeCheck(
     "go-decision-valid",
     decision === "Go" || decision === "Conditional Go" || decision === "No-Go",
@@ -213,6 +279,7 @@ export function evaluateUatEvidencePack(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    unretainedEvidenceReferences,
     passed,
     failed,
     checks

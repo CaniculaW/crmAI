@@ -65,8 +65,8 @@ jobs:
   "scripts/v1-uat-evidence-pack.test.mjs": "generates a V1 UAT evidence pack\n",
   "scripts/v1-uat-environment-validate.mjs": "evaluateUatEnvironmentEvidence\nenvironment-summary\nenvironment-checks\nenvironment-evidence-retained\nno-secret-material\n",
   "scripts/v1-uat-environment-validate.test.mjs": "fails a draft environment record when named environment evidence is pending\nfails when PASS environment evidence reference is not retained\n",
-  "scripts/v1-uat-evidence-pack-validate.mjs": "evaluateUatEvidencePack\np0-defects\nsignoff-complete\ngo-hard-gates\n",
-  "scripts/v1-uat-evidence-pack-validate.test.mjs": "fails a Go evidence pack when a P0 defect remains open\n",
+  "scripts/v1-uat-evidence-pack-validate.mjs": "evaluateUatEvidencePack\np0-defects\nsignoff-complete\ngo-hard-gates\nevidence-references-retained\n",
+  "scripts/v1-uat-evidence-pack-validate.test.mjs": "fails a Go evidence pack when a P0 defect remains open\nfails when passed UAT evidence references are not retained\n",
   "scripts/v1-uat-defect-register-validate.mjs": "evaluateUatDefectRegister\np0-p1-summary\nregression-evidence\ndefect-evidence-retained\nno-secret-material\n",
   "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\nfails when closed P0 or P1 regression evidence is not retained\n",
   "scripts/v1-uat-signoff-register-validate.mjs": "evaluateUatSignoffRegister\nrequired-signoffs\nsignoff-evidence-retained\nproject-go-decision\nno-secret-material\n",
@@ -399,6 +399,19 @@ test("fails when UAT evidence pack validator is missing from readiness materials
       "      - run: node --test scripts/v1-uat-evidence-pack-validate.test.mjs\n",
       ""
     )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-evidence-validator"));
+});
+
+test("fails when the UAT evidence pack validator omits retained evidence guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-evidence-pack-validate.mjs": completeSnapshot["scripts/v1-uat-evidence-pack-validate.mjs"].replace("evidence-references-retained\n", ""),
+    "scripts/v1-uat-evidence-pack-validate.test.mjs": completeSnapshot["scripts/v1-uat-evidence-pack-validate.test.mjs"].replace("fails when passed UAT evidence references are not retained\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

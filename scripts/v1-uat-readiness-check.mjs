@@ -399,9 +399,11 @@ export function evaluateReadinessSnapshot(snapshot) {
       "p0-defects",
       "signoff-complete",
       "go-hard-gates",
-      "fails a Go evidence pack when a P0 defect remains open"
+      "evidence-references-retained",
+      "fails a Go evidence pack when a P0 defect remains open",
+      "fails when passed UAT evidence references are not retained"
     ]),
-    "UAT evidence pack validator is covered by tests and enforces Go/No-Go hard gates."
+    "UAT evidence pack validator is covered by tests and enforces Go/No-Go hard gates with retained automation, environment, UAT, and signoff evidence references."
   ));
 
   const environmentValidator = snapshot["scripts/v1-uat-environment-validate.mjs"] ?? "";

@@ -143,6 +143,8 @@ UAT 证据包填写后校验：
 node scripts/v1-uat-evidence-pack-validate.mjs <crm-v1-uat-evidence-pack.md>
 ```
 
+通过项证据需引用 `docs/` 下留存文件或外部 `http(s)` 系统链接，不能只填写游离文件名或文本说明。
+
 UAT 缺陷台账：
 
 ```text

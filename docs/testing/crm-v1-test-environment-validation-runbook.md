@@ -22,7 +22,7 @@
 - `scripts/v1-uat-evidence-pack.mjs`：用于按具名测试环境参数生成 UAT 证据包草稿，不写入明文密码或 API Token。
 - `scripts/v1-uat-launch-intake-validate.mjs`：用于在正式 UAT 启动前校验具名环境、参与人、账号保管、UAT窗口、证据归档位置，以及启动输入证据引用是否指向 `docs/` 留存工件或外部 URL。
 - `scripts/v1-kickoff-governance-validate.mjs`：用于在正式 UAT 准出前校验启动会负责人、业务验收人、V1范围冻结、确认/冻结证据引用是否指向 `docs/` 留存工件或外部 URL、项目 Go 结论和敏感材料。
-- `scripts/v1-uat-evidence-pack-validate.mjs`：用于在证据包填写完成后校验 Go/No-Go 条件、P0/P1 缺陷和签署是否一致。
+- `scripts/v1-uat-evidence-pack-validate.mjs`：用于在证据包填写完成后校验 Go/No-Go 条件、P0/P1 缺陷、签署是否一致，以及通过项证据是否指向 `docs/` 留存工件或外部 URL。
 - `scripts/v1-uat-environment-validate.mjs`：用于在具名环境证据填写完成后校验 ENV-001 至 ENV-008、环境元数据、证据引用是否指向 `docs/` 留存工件或外部 URL，以及敏感材料。
 - `scripts/v1-uat-defect-register-validate.mjs`：用于在缺陷台账填写完成后校验 P0/P1 未关闭数量、回归证据是否指向 `docs/` 留存工件或外部 URL、敏感材料和 Go/No-Go 条件。
 - `scripts/v1-uat-signoff-register-validate.mjs`：用于在签署台账填写完成后校验六方签署、项目 `Go` 结论、证据引用是否指向 `docs/` 留存工件或外部 URL，以及敏感材料。
