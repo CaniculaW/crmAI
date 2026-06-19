@@ -57,6 +57,19 @@ function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value);
 }
 
+function evidenceReferenceTokens(value) {
+  return value
+    .split(/[\s,，;；]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function isRetainedEvidenceReference(value) {
+  return isConcrete(value) && evidenceReferenceTokens(value).some((token) => (
+    token.startsWith("docs/") || /^https?:\/\//i.test(token)
+  ));
+}
+
 function extractDecision(markdown) {
   const match = markdown.match(/^Decision:\s*(Go|Conditional Go|No-Go)\s*$/m);
   return match?.[1] ?? "";
@@ -118,6 +131,40 @@ export function evaluateUatLaunchIntake(markdown) {
       : `Incomplete account custody items: ${incompleteAccountCustody.join(", ")}`
   ));
 
+  const unretainedLaunchEvidenceFields = REQUIRED_ENVIRONMENT_FIELDS
+    .filter((field) => {
+      const row = findRow(rows, field);
+      return row
+        && isConcrete(row[1] ?? "")
+        && isConcrete(row[2] ?? "")
+        && !isRetainedEvidenceReference(row[2]);
+    });
+
+  const unretainedAccountEvidenceItems = REQUIRED_ACCOUNT_ITEMS
+    .filter((item) => {
+      const row = findRow(rows, item);
+      return row
+        && isConcrete(row[1] ?? "")
+        && row[2] === "已准备"
+        && isConcrete(row[3] ?? "")
+        && !isRetainedEvidenceReference(row[3]);
+    });
+
+  checks.push(makeCheck(
+    "launch-evidence-retained",
+    unretainedLaunchEvidenceFields.length === 0 && unretainedAccountEvidenceItems.length === 0,
+    unretainedLaunchEvidenceFields.length === 0 && unretainedAccountEvidenceItems.length === 0
+      ? "Launch environment and account custody evidence references point to retained docs or external systems."
+      : [
+        unretainedLaunchEvidenceFields.length === 0
+          ? ""
+          : `Unretained launch evidence fields: ${unretainedLaunchEvidenceFields.join(", ")}`,
+        unretainedAccountEvidenceItems.length === 0
+          ? ""
+          : `Unretained account evidence items: ${unretainedAccountEvidenceItems.join(", ")}`
+      ].filter(Boolean).join("; ")
+  ));
+
   checks.push(makeCheck(
     "project-go-decision",
     decision === "Go",
@@ -140,6 +187,8 @@ export function evaluateUatLaunchIntake(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    unretainedLaunchEvidenceFields,
+    unretainedAccountEvidenceItems,
     passed,
     failed,
     checks

@@ -233,12 +233,12 @@ Decision: Go
 
 | Field | Value | Evidence |
 |---|---|---|
-| 测试环境名称 | CRM-V1-UAT-20260619 | deployment-record#env |
-| 前端访问地址 | https://crm-v1-uat.example.test | deployment-record#frontend |
-| 后端 API 地址 | https://crm-v1-uat-api.example.test | deployment-record#backend |
-| Git 提交号 | 09c46ac031469604f2a680ef011621854d2d9e23 | ci-run#27801041679 |
-| UAT窗口 | 2026-06-20 09:00 至 2026-06-21 18:00 | uat-calendar#v1 |
-| 证据归档位置 | evidence/v1-uat/ | evidence-index#root |
+| 测试环境名称 | CRM-V1-UAT-20260619 | docs/testing/evidence/launch/environment-record.md |
+| 前端访问地址 | https://crm-v1-uat.example.test | docs/testing/evidence/launch/frontend-url.md |
+| 后端 API 地址 | https://crm-v1-uat-api.example.test | docs/testing/evidence/launch/backend-api.md |
+| Git 提交号 | 09c46ac031469604f2a680ef011621854d2d9e23 | https://github.com/CaniculaW/crmAI/actions/runs/27822689146 |
+| UAT窗口 | 2026-06-20 09:00 至 2026-06-21 18:00 | docs/testing/evidence/launch/uat-calendar.md |
+| 证据归档位置 | docs/testing/evidence/v1-uat/ | docs/testing/evidence/launch/evidence-index.md |
 
 | Participant ID | Role | Owner | Contact | Responsibility | Status |
 |---|---|---|---|---|---|
@@ -251,10 +251,10 @@ Decision: Go
 
 | Account item | Owner | Status | Evidence |
 |---|---|---|---|
-| 管理员账号 | 测试负责人 | 已准备 | account-custody#admin |
-| 销售个人账号 | 测试负责人 | 已准备 | account-custody#sales |
-| 销售负责人账号 | 测试负责人 | 已准备 | account-custody#manager |
-| 权限样本账号 | 测试负责人 | 已准备 | account-custody#permission-sample |
+| 管理员账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-admin.md |
+| 销售个人账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-sales.md |
+| 销售负责人账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-manager.md |
+| 权限样本账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-permission-sample.md |
 `;
 
 const completeEnvironment = `# CRM V1 UAT Environment Evidence

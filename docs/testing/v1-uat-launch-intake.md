@@ -9,6 +9,7 @@ Rules:
 
 - 不记录明文密码、生产密钥、API tokens 或个人敏感信息。
 - Every environment field must include a concrete value and evidence reference.
+- Environment and account custody evidence references must point to a retained `docs/` artifact or an external `http(s)` system URL; free-text anchors are not sufficient.
 - Every required participant must be named and confirmed before UAT execution starts.
 - Account custody rows must confirm prepared masked accounts only; passwords stay outside this repository.
 - Validate with `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md`.
