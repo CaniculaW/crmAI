@@ -485,14 +485,16 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node --test scripts/v1-uat-launch-intake-validate.test.mjs",
       "evaluateUatLaunchIntake",
       "environment-intake",
+      "launch-window-format",
       "participant-roster",
       "account-custody",
       "launch-evidence-retained",
       "no-secret-material",
       "fails a draft launch intake because external UAT inputs are pending",
+      "fails when the UAT launch window is not a structured date time range",
       "fails when UAT launch evidence references are not retained"
     ]),
-    "UAT launch intake validator is tested and enforces named environment, participant roster, account custody, retained evidence references, and secret redaction."
+    "UAT launch intake validator is tested and enforces named environment, structured UAT window, participant roster, account custody, retained evidence references, and secret redaction."
   ));
 
   const evidenceManifestValidator = snapshot["scripts/v1-uat-evidence-manifest-validate.mjs"] ?? "";

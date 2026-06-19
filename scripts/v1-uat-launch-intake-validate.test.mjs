@@ -107,6 +107,19 @@ test("fails when a required environment field lacks evidence", () => {
   assert.ok(result.failed.some((check) => check.id === "environment-intake"));
 });
 
+test("fails when the UAT launch window is not a structured date time range", () => {
+  const looseWindow = completeIntake.replace(
+    "| UAT窗口 | 2026-06-20 09:00 至 2026-06-21 18:00 | docs/testing/evidence/launch/uat-calendar.md |",
+    "| UAT窗口 | 下周 | docs/testing/evidence/launch/uat-calendar.md |"
+  );
+
+  const result = evaluateUatLaunchIntake(looseWindow);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidLaunchWindowFields, ["UAT窗口"]);
+  assert.ok(result.failed.some((check) => check.id === "launch-window-format"));
+});
+
 test("fails when an account custody item is not prepared", () => {
   const notPrepared = completeIntake.replace(
     "| 销售个人账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-sales.md |",

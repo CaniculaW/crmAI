@@ -57,6 +57,37 @@ function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value);
 }
 
+function parseDateTime(value) {
+  const match = String(value ?? "").match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  const [, year, month, day, hour, minute] = match;
+  const parsed = new Date(`${year}-${month}-${day}T${hour}:${minute}:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  const normalized = parsed.toISOString().slice(0, 16).replace("T", " ");
+  return normalized === value ? parsed : null;
+}
+
+function parseLaunchWindow(value) {
+  const parts = String(value ?? "").split(/\s+至\s+/);
+  if (parts.length !== 2) {
+    return null;
+  }
+
+  const start = parseDateTime(parts[0]);
+  const end = parseDateTime(parts[1]);
+  if (!start || !end || end <= start) {
+    return null;
+  }
+
+  return { start, end };
+}
+
 function evidenceReferenceTokens(value) {
   return value
     .split(/[\s,，;；]+/)
@@ -92,6 +123,21 @@ export function evaluateUatLaunchIntake(markdown) {
     incompleteEnvironment.length === 0
       ? "UAT launch environment, window, commit, and evidence repository are concrete."
       : `Incomplete launch environment fields: ${incompleteEnvironment.join(", ")}`
+  ));
+
+  const launchWindowRow = findRow(rows, "UAT窗口");
+  const invalidLaunchWindowFields = launchWindowRow
+    && isConcrete(launchWindowRow[1] ?? "")
+    && !parseLaunchWindow(launchWindowRow[1])
+    ? ["UAT窗口"]
+    : [];
+
+  checks.push(makeCheck(
+    "launch-window-format",
+    invalidLaunchWindowFields.length === 0,
+    invalidLaunchWindowFields.length === 0
+      ? "UAT launch window uses YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm with an end after the start."
+      : "UAT launch window must use YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm with an end after the start."
   ));
 
   const incompleteParticipants = REQUIRED_PARTICIPANTS
@@ -187,6 +233,7 @@ export function evaluateUatLaunchIntake(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    invalidLaunchWindowFields,
     unretainedLaunchEvidenceFields,
     unretainedAccountEvidenceItems,
     passed,

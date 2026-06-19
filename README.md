@@ -101,6 +101,8 @@ UAT 启动输入校验：
 node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md
 ```
 
+`UAT窗口` 必须使用 `YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm`，结束时间晚于开始时间。
+
 启动治理纪要：
 
 ```text

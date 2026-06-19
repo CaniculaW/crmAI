@@ -1,6 +1,6 @@
 # CRM V1 UAT Execution Pack
 
-Generated at: 2026-06-19T04:34:27.184Z
+Generated at: 2026-06-19T14:15:52.655Z
 
 Overall: No-Go
 
@@ -49,7 +49,7 @@ Overall: No-Go
 | SIGNOFF-DEV | 研发 | 补齐签署证据 | 具名签署人、签署日期、签署结论和会议纪要 |
 | SIGNOFF-PM | 项目/产品 | 补齐签署证据 | 具名签署人、签署日期、签署结论和会议纪要 |
 | GO-NOGO | 项目/产品 | 完成 Go/No-Go 会议结论 | Go/No-Go 会议记录、结论、风险接受项和项目负责人确认 |
-| LAUNCH-ENV | 项目/产品 | 补齐UAT启动环境与排期 | 具名环境、UAT窗口、Git提交号和证据归档位置 |
+| LAUNCH-ENV | 项目/产品 | 补齐UAT启动环境与排期 | 具名环境、YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm UAT窗口、Git提交号和证据归档位置 |
 | LAUNCH-ROSTER | 项目/产品 | 补齐UAT启动参与人 | 销售侧、管理侧、产品、测试、研发和项目负责人名单及联系方式 |
 | LAUNCH-ACCOUNTS | 测试 | 补齐UAT账号保管证据 | 管理员、销售个人、销售负责人和权限样本账号的脱敏保管记录 |
 | LAUNCH-GO | 项目/产品 | 确认UAT启动Go结论 | UAT启动确认记录或项目负责人确认 |

@@ -82,7 +82,7 @@ function executionItem(id) {
       id,
       owner: "项目/产品",
       action: "补齐UAT启动环境与排期",
-      evidence: "具名环境、UAT窗口、Git提交号和证据归档位置"
+      evidence: "具名环境、YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm UAT窗口、Git提交号和证据归档位置"
     };
   }
 
