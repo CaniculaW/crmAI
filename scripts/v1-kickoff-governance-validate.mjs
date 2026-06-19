@@ -69,6 +69,19 @@ function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value);
 }
 
+function evidenceReferenceTokens(value) {
+  return value
+    .split(/[\s,，;；]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function isRetainedEvidenceReference(value) {
+  return isConcrete(value) && evidenceReferenceTokens(value).some((token) => (
+    token.startsWith("docs/") || /^https?:\/\//i.test(token)
+  ));
+}
+
 function extractDecision(markdown) {
   const match = markdown.match(/^Decision:\s*(Go|Conditional Go|No-Go)\s*$/m);
   return match?.[1] ?? "";
@@ -130,6 +143,37 @@ export function evaluateKickoffGovernance(markdown) {
       ].filter(Boolean).join("; ")
   ));
 
+  const unretainedOwnerEvidenceRoles = REQUIRED_OWNER_ROLES.filter((role) => {
+    const row = findRow(rows, role);
+    return row
+      && isConcrete(row[1] ?? "")
+      && row[2] === "已确认"
+      && !isRetainedEvidenceReference(row[3] ?? "");
+  });
+
+  const unretainedScopeEvidenceItems = REQUIRED_SCOPE_ITEMS.filter((item) => {
+    const row = findRow(rows, item);
+    return row
+      && isConcrete(row[1] ?? "")
+      && isConfirmedStatus(row[2] ?? "")
+      && !isRetainedEvidenceReference(row[3] ?? "");
+  });
+
+  checks.push(makeCheck(
+    "kickoff-evidence-retained",
+    unretainedOwnerEvidenceRoles.length === 0 && unretainedScopeEvidenceItems.length === 0,
+    unretainedOwnerEvidenceRoles.length === 0 && unretainedScopeEvidenceItems.length === 0
+      ? "Confirmed kickoff owners and scope freeze items point to retained docs or external systems."
+      : [
+        unretainedOwnerEvidenceRoles.length === 0
+          ? ""
+          : `Unretained kickoff owner evidence roles: ${unretainedOwnerEvidenceRoles.join(", ")}`,
+        unretainedScopeEvidenceItems.length === 0
+          ? ""
+          : `Unretained kickoff scope evidence items: ${unretainedScopeEvidenceItems.join(", ")}`
+      ].filter(Boolean).join("; ")
+  ));
+
   checks.push(makeCheck(
     "project-go-decision",
     decision === "Go",
@@ -152,6 +196,8 @@ export function evaluateKickoffGovernance(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    unretainedOwnerEvidenceRoles,
+    unretainedScopeEvidenceItems,
     passed,
     failed,
     checks

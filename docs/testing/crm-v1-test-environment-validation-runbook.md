@@ -21,7 +21,7 @@
 - `docs/testing/v1-uat-signoff-register.md`：用于记录销售侧、管理侧、产品、测试、研发和项目负责人六方签署结论。
 - `scripts/v1-uat-evidence-pack.mjs`：用于按具名测试环境参数生成 UAT 证据包草稿，不写入明文密码或 API Token。
 - `scripts/v1-uat-launch-intake-validate.mjs`：用于在正式 UAT 启动前校验具名环境、参与人、账号保管、UAT窗口、证据归档位置，以及启动输入证据引用是否指向 `docs/` 留存工件或外部 URL。
-- `scripts/v1-kickoff-governance-validate.mjs`：用于在正式 UAT 准出前校验启动会负责人、业务验收人、V1范围冻结、项目 Go 结论和敏感材料。
+- `scripts/v1-kickoff-governance-validate.mjs`：用于在正式 UAT 准出前校验启动会负责人、业务验收人、V1范围冻结、确认/冻结证据引用是否指向 `docs/` 留存工件或外部 URL、项目 Go 结论和敏感材料。
 - `scripts/v1-uat-evidence-pack-validate.mjs`：用于在证据包填写完成后校验 Go/No-Go 条件、P0/P1 缺陷和签署是否一致。
 - `scripts/v1-uat-environment-validate.mjs`：用于在具名环境证据填写完成后校验 ENV-001 至 ENV-008、环境元数据、证据引用是否指向 `docs/` 留存工件或外部 URL，以及敏感材料。
 - `scripts/v1-uat-defect-register-validate.mjs`：用于在缺陷台账填写完成后校验 P0/P1 未关闭数量、回归证据是否指向 `docs/` 留存工件或外部 URL、敏感材料和 Go/No-Go 条件。
@@ -128,7 +128,7 @@ node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake
 node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md
 ```
 
-要求：正式准出前，启动治理 validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐产品负责人、销售侧/管理侧业务验收人、研发负责人、前端负责人、后端负责人、测试负责人、V1范围冻结状态或项目 `Go` 结论。
+要求：正式准出前，启动治理 validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐产品负责人、销售侧/管理侧业务验收人、研发负责人、前端负责人、后端负责人、测试负责人、V1范围冻结状态、可留存确认/冻结证据引用或项目 `Go` 结论。
 
 证据包填写完成后执行准出一致性校验：
 
@@ -369,7 +369,7 @@ v1-uat-evidence/
 | 判定项 | 通过条件 | 不通过处理 |
 |---|---|---|
 | 自动化验证 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` 通过 | 回退到研发修复 |
-| 启动治理 validator | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` 返回 PASS | 补齐负责人、业务验收人、V1范围冻结或项目 `Go` 结论 |
+| 启动治理 validator | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` 返回 PASS | 补齐负责人、业务验收人、V1范围冻结、可留存确认/冻结证据引用或项目 `Go` 结论 |
 | 部署态 Smoke | `npm run smoke:v1:browser` 和 `/api/bootstrap` 通过 | 先定位环境、账号、代理或权限配置 |
 | 环境证据 validator | `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md` 返回 PASS | 修正环境元数据、账号证据、权限样本或可留存 Smoke 证据 |
 | UAT启动输入 validator | `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md` 返回 PASS | 补齐具名环境、UAT窗口、证据归档位置、参与人、账号保管证据或可留存证据引用 |
