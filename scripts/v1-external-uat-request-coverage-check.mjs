@@ -39,6 +39,47 @@ const REQUIRED_COMMANDS = [
   "node scripts/v1-release-gate.mjs"
 ];
 
+const REQUIRED_WORKSTREAM_ROUTES = [
+  {
+    id: "Project / Product",
+    tokens: [
+      "| Project / Product | 项目/产品 |",
+      "docs/meeting-notes/crm-kickoff-minutes.md",
+      "docs/testing/v1-uat-launch-intake.md",
+      "docs/testing/v1-uat-signoff-register.md",
+      "指定负责人、冻结V1范围、确认UAT窗口、组织签署和Go/No-Go会议"
+    ]
+  },
+  {
+    id: "Test",
+    tokens: [
+      "| Test | 测试 |",
+      "docs/testing/v1-uat-environment-evidence.md",
+      "docs/testing/v1-uat-defect-register.md",
+      "docs/testing/v1-uat-evidence-manifest.md",
+      "执行具名环境检查、维护缺陷闭环、汇总证据清单并重跑校验命令"
+    ]
+  },
+  {
+    id: "Business UAT",
+    tokens: [
+      "| Business UAT | 业务 |",
+      "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md",
+      "docs/testing/crm-v1-uat-execution-tracker.md",
+      "执行UAT-001至UAT-010，提供截图、操作记录、缺陷单和验收结论"
+    ]
+  },
+  {
+    id: "Engineering",
+    tokens: [
+      "| Engineering | 研发 |",
+      "docs/testing/crm-v1-test-environment-validation-runbook.md",
+      "docs/testing/v1-automated-validation-report-2026-06-18.md",
+      "支撑环境、账号、Smoke定位和最终release gate复验"
+    ]
+  }
+];
+
 function makeCheck(id, ok, message) {
   return { id, ok, message };
 }
@@ -79,6 +120,12 @@ function resolveFromRoot(rootDir, filePath) {
   return path.resolve(rootDir, filePath);
 }
 
+function hasRouteLine(requestText, route) {
+  return requestText
+    .split("\n")
+    .some((line) => route.tokens.every((token) => line.includes(token)));
+}
+
 export function evaluateV1ExternalUatRequestCoverageSnapshot({
   requestText,
   readinessResult,
@@ -109,10 +156,22 @@ export function evaluateV1ExternalUatRequestCoverageSnapshot({
   const missingBlockers = blockers.filter((blocker) => !requestText.includes(blocker));
   const missingCommands = REQUIRED_COMMANDS.filter((command) => !requestText.includes(command));
   const releaseGateIsGo = releaseGateResult.ok === true && releaseGateResult.decision === "Go";
+  const missingWorkstreamRoutes = releaseGateIsGo
+    ? []
+    : REQUIRED_WORKSTREAM_ROUTES
+      .filter((route) => !hasRouteLine(requestText, route))
+      .map((route) => route.id);
   const statusIsOpen = /Request Status:\s*External UAT Evidence Required/.test(requestText);
   const statusIsClosed = /Request Status:\s*No External UAT Requests Open/.test(requestText);
 
   const checks = [
+    makeCheck(
+      "request-workstream-routing",
+      missingWorkstreamRoutes.length === 0,
+      missingWorkstreamRoutes.length === 0
+        ? "External UAT request packet keeps every owner-side workstream route visible."
+        : `External UAT request packet is missing owner-side workstream routes: ${missingWorkstreamRoutes.join(", ")}`
+    ),
     makeCheck(
       "request-command-coverage",
       missingCommands.length === 0,
@@ -145,7 +204,8 @@ export function evaluateV1ExternalUatRequestCoverageSnapshot({
     failed,
     checks,
     missingBlockers,
-    missingCommands
+    missingCommands,
+    missingWorkstreamRoutes
   };
 }
 

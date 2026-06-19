@@ -66,6 +66,10 @@ const gateResults = {
 function completeRequestText() {
   return [
     "Request Status: External UAT Evidence Required",
+    "| Project / Product | 项目/产品 | docs/meeting-notes/crm-kickoff-minutes.md; docs/testing/v1-uat-launch-intake.md; docs/testing/v1-uat-signoff-register.md | 指定负责人、冻结V1范围、确认UAT窗口、组织签署和Go/No-Go会议 |",
+    "| Test | 测试 | docs/testing/v1-uat-environment-evidence.md; docs/testing/v1-uat-defect-register.md; docs/testing/v1-uat-evidence-manifest.md | 执行具名环境检查、维护缺陷闭环、汇总证据清单并重跑校验命令 |",
+    "| Business UAT | 业务 | docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md; docs/testing/crm-v1-uat-execution-tracker.md | 执行UAT-001至UAT-010，提供截图、操作记录、缺陷单和验收结论 |",
+    "| Engineering | 研发 | docs/testing/crm-v1-test-environment-validation-runbook.md; docs/testing/v1-automated-validation-report-2026-06-18.md | 支撑环境、账号、Smoke定位和最终release gate复验 |",
     "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
     "node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md",
     "node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md",
@@ -130,4 +134,14 @@ test("fails when No-Go external UAT request blockers are hidden behind a closed 
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "request-status-alignment"));
+});
+
+test("fails when the external UAT request packet omits owner-side routing", () => {
+  const result = evaluateV1ExternalUatRequestCoverageSnapshot({
+    requestText: completeRequestText().replace("docs/testing/v1-uat-defect-register.md", ""),
+    ...gateResults
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "request-workstream-routing"));
 });

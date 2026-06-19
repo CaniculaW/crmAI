@@ -258,7 +258,7 @@ node scripts/v1-blocker-consistency-check.mjs
 node scripts/v1-external-uat-request-coverage-check.mjs
 ```
 
-该检查用于确认 `docs/testing/v1-external-uat-request.md` 已列出当前每个失败 validator 的具体 `Gate/check-id` 和全部补证命令，防止交给项目/测试/业务侧的请求包漏掉实际阻塞项。
+该检查用于确认 `docs/testing/v1-external-uat-request.md` 已列出当前每个失败 validator 的具体 `Gate/check-id`、全部补证命令，以及项目/测试/业务/研发责任侧路由，防止交给项目/测试/业务侧的请求包漏掉实际阻塞项或责任入口。
 
 最终交接材料更新后，执行交接证据一致性检查：
 

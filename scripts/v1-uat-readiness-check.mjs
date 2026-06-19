@@ -729,9 +729,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "evaluateV1ExternalUatRequestCoverageSnapshot",
       "request-blocker-coverage",
       "request-command-coverage",
+      "request-workstream-routing",
       "fails when the external UAT request packet omits a failed validator check"
     ]),
-    "V1 external UAT request coverage checker is tested and wired into CI to keep stakeholder request packets aligned with current failed validator checks."
+    "V1 external UAT request coverage checker is tested and wired into CI to keep stakeholder request packets aligned with current failed validator checks and owner-side routing."
   ));
 
   const finalEvidenceHandoffChecker = snapshot["scripts/v1-final-evidence-handoff-check.mjs"] ?? "";

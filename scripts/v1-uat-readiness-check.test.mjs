@@ -107,7 +107,7 @@ jobs:
   "scripts/v1-traceability-check.test.mjs": "fails when traceability claims project acceptance while release gate is No-Go\n",
   "scripts/v1-blocker-consistency-check.mjs": "evaluateV1BlockerConsistencySnapshot\ndecision-doc-release-blockers\n",
   "scripts/v1-blocker-consistency-check.test.mjs": "fails when a decision document omits a release gate blocker\nfails when the external UAT request packet omits a release gate blocker\n",
-  "scripts/v1-external-uat-request-coverage-check.mjs": "evaluateV1ExternalUatRequestCoverageSnapshot\nrequest-blocker-coverage\nrequest-command-coverage\nnode scripts/v1-external-uat-request-coverage-check.mjs\n",
+  "scripts/v1-external-uat-request-coverage-check.mjs": "evaluateV1ExternalUatRequestCoverageSnapshot\nrequest-blocker-coverage\nrequest-command-coverage\nrequest-workstream-routing\nnode scripts/v1-external-uat-request-coverage-check.mjs\n",
   "scripts/v1-external-uat-request-coverage-check.test.mjs": "fails when the external UAT request packet omits a failed validator check\n",
   "scripts/v1-final-evidence-handoff-check.mjs": "evaluateV1FinalEvidenceHandoffSnapshot\nno-go-handoff-guardrail\nhandoff-command-coverage\nnode scripts/v1-final-evidence-handoff-check.mjs\n",
   "scripts/v1-final-evidence-handoff-check.test.mjs": "fails when final handoff materials claim V1 acceptance while release gate is No-Go\n",
@@ -729,6 +729,19 @@ test("fails when the V1 external UAT request coverage checker is missing from re
     ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
       .replace("      - run: node --test scripts/v1-external-uat-request-coverage-check.test.mjs\n", "")
       .replace("      - run: node scripts/v1-external-uat-request-coverage-check.mjs\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-external-uat-request-coverage-checker"));
+});
+
+test("fails when the V1 external UAT request coverage checker omits owner-side routing guards", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-external-uat-request-coverage-check.mjs": completeSnapshot["scripts/v1-external-uat-request-coverage-check.mjs"]
+      .replace("request-workstream-routing\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);
