@@ -50,6 +50,22 @@ test("passes PASS evidence rows with existing repository artifacts or external U
   assert.deepEqual(result.failed, []);
 });
 
+test("fails a PASS evidence row when its reference is not retained under docs or an external URL", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-evidence-refs-"));
+  writeFileSync(path.join(rootDir, "README.md"), "project overview");
+
+  const result = evaluateEvidenceReferences({
+    rootDir,
+    manifestMarkdown: manifest([
+      manifestRow({ reference: "README.md" })
+    ])
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "pass-reference-artifacts"));
+  assert.match(result.failed.find((check) => check.id === "pass-reference-artifacts").message, /UAT-001/);
+});
+
 test("keeps current No-Go pending rows valid for reference checking while source documents are being collected", () => {
   const result = evaluateEvidenceReferences({
     rootDir: process.cwd(),

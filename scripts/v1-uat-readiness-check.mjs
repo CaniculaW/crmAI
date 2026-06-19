@@ -521,9 +521,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "evaluateEvidenceReferencesFromFiles",
       "pass-reference-artifacts",
       "go-pass-references",
-      "fails a PASS evidence row when its repository artifact path is missing"
+      "fails a PASS evidence row when its repository artifact path is missing",
+      "fails a PASS evidence row when its reference is not retained under docs or an external URL"
     ]),
-    "V1 evidence reference checker is tested and wired into CI to keep manifest PASS rows tied to retained artifacts or external URLs."
+    "V1 evidence reference checker is tested and wired into CI to keep manifest PASS rows tied to retained docs artifacts or external URLs."
   ));
 
   const executionTrackerValidator = snapshot["scripts/v1-uat-execution-tracker-validate.mjs"] ?? "";

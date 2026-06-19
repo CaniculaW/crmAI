@@ -78,7 +78,7 @@ jobs:
   "scripts/v1-uat-evidence-manifest-validate.mjs": "evaluateUatEvidenceManifest\nrequired-items\nevidence-complete\nevidence-references-retained\nno-secret-material\n",
   "scripts/v1-uat-evidence-manifest-validate.test.mjs": "fails the current draft manifest because external UAT evidence is pending\nfails when PASS evidence references are not retained\n",
   "scripts/v1-evidence-reference-check.mjs": "evaluateEvidenceReferences\nevaluateEvidenceReferencesFromFiles\npass-reference-artifacts\ngo-pass-references\n",
-  "scripts/v1-evidence-reference-check.test.mjs": "fails a PASS evidence row when its repository artifact path is missing\n",
+  "scripts/v1-evidence-reference-check.test.mjs": "fails a PASS evidence row when its repository artifact path is missing\nfails a PASS evidence row when its reference is not retained under docs or an external URL\n",
   "scripts/v1-uat-execution-tracker-validate.mjs": "evaluateUatExecutionTracker\nrequired-items\nrelease-gates\ntracker-evidence-retained\n",
   "scripts/v1-uat-execution-tracker-validate.test.mjs": "fails the current rc8 tracker because external UAT remains pending\nfails when passed tracker evidence references are not retained\n",
   "scripts/v1-release-gate.mjs": "evaluateV1ReleaseGate\nevaluateV1ReleaseGateFromFiles\nV1 release gate requires Go\nkickoff-governance\nuat-launch-intake\nuat-environment\nuat-evidence-references\n",

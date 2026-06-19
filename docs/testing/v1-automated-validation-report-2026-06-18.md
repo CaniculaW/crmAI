@@ -28,7 +28,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | UAT缺陷台账准出校验 | 已提供 `scripts/v1-uat-defect-register-validate.mjs` 和 `docs/testing/v1-uat-defect-register.md`，校验 P0/P1 汇总、关闭状态、回归证据必须指向 `docs/` 留存工件或外部 URL、敏感材料和 Go/No-Go 结论一致性 | 通过 |
 | UAT签署台账准出校验 | 已提供 `scripts/v1-uat-signoff-register-validate.mjs` 和 `docs/testing/v1-uat-signoff-register.md`，校验六方签署、签署日期、证据引用必须指向 `docs/` 留存工件或外部 URL、敏感材料和项目 `Go` 结论一致性 | 通过 |
 | UAT启动输入准出校验 | 已提供 `scripts/v1-uat-launch-intake-validate.mjs` 和 `docs/testing/v1-uat-launch-intake.md`，校验具名环境、UAT窗口、证据归档位置、参与人、账号保管、证据引用必须指向 `docs/` 留存工件或外部 URL，以及敏感材料 | 通过 |
-| UAT证据引用保全检查 | 已提供 `scripts/v1-evidence-reference-check.mjs`，校验证据清单中每个 `PASS` 行必须引用已归档仓库文件或外部 URL，并拦截敏感材料 | 通过 |
+| UAT证据引用保全检查 | 已提供 `scripts/v1-evidence-reference-check.mjs`，校验证据清单中每个 `PASS` 行必须引用 `docs/` 下已归档工件或外部 URL，并拦截普通仓库文件和敏感材料 | 通过 |
 | 本地部署态冒烟 | PostgreSQL 16 + Spring Boot + Vite dev proxy，演示管理员登录、`/api/bootstrap`、系统管理页组织/用户/角色展示 | 通过 |
 
 ## 3. 执行命令与结果
@@ -47,14 +47,14 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `CRM_POSTGRES_IMAGE=docker.1ms.run/library/postgres:16 ... docker compose -f compose.v1-test.yml up -d --build` | Compose build and startup passed；db/backend/frontend 均 Up，db healthy |
 | `node scripts/v1-deployment-config-check.mjs` | V1 deployment config check passed；Dockerfile/Compose 支持可配置基础镜像 |
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
-| `node --test scripts/*.test.mjs` | 189 tests passed |
+| `node --test scripts/*.test.mjs` | 190 tests passed |
 | `node --test scripts/v1-kickoff-governance-validate.test.mjs` | 6 tests passed；覆盖完整启动治理记录、当前草稿 No-Go、缺失负责人、V2/AI 范围误入 V1、确认/冻结证据引用未指向可留存工件/URL和敏感材料拦截 |
 | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | FAIL as expected；当前启动会负责人、V1范围冻结和项目 Go 结论仍为 No-Go |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 5 tests passed；新增已通过自动化、环境、UAT用例和签署证据必须指向可留存仓库工件或外部 URL 的拦截 |
 | `node --test scripts/v1-uat-evidence-manifest-validate.test.mjs` | 5 tests passed；覆盖完整证据清单、当前草稿 No-Go、PASS项缺证据、PASS项证据未指向可留存工件/URL和敏感材料拦截 |
 | `node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md` | FAIL as expected；当前证据清单仍为 No-Go |
-| `node --test scripts/v1-evidence-reference-check.test.mjs` | 4 tests passed；覆盖 PASS 行缺失归档文件、仓库文件/外部 URL 通过、当前 No-Go 待补证据行通过和敏感材料拦截 |
-| `node scripts/v1-evidence-reference-check.mjs docs/testing/v1-uat-evidence-manifest.md` | PASS；当前证据清单仍为 No-Go，暂无 PASS 行需要解析，后续 Go 前必须引用已归档文件或外部 URL |
+| `node --test scripts/v1-evidence-reference-check.test.mjs` | 5 tests passed；覆盖 PASS 行缺失归档文件、`docs/` 已归档工件/外部 URL 通过、普通仓库文件不可作为保全证据、当前 No-Go 待补证据行通过和敏感材料拦截 |
+| `node scripts/v1-evidence-reference-check.mjs docs/testing/v1-uat-evidence-manifest.md` | PASS；当前证据清单仍为 No-Go，暂无 PASS 行需要解析，后续 Go 前必须引用 `docs/` 下已归档工件或外部 URL |
 | `node --test scripts/v1-uat-environment-validate.test.mjs` | 6 tests passed；覆盖完整具名环境证据、当前草稿 No-Go、缺失 ENV 检查、PASS项缺证据、PASS项证据未指向可留存工件/URL和敏感材料拦截 |
 | `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md` | FAIL as expected；当前具名环境证据仍为 No-Go |
 | `node --test scripts/v1-uat-defect-register-validate.test.mjs` | 6 tests passed；覆盖完整缺陷台账、当前草稿 No-Go、P0/P1 未关闭、缺失回归证据、回归证据未指向可留存工件/URL和敏感材料拦截 |

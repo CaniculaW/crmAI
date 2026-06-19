@@ -32,9 +32,8 @@ function isExternalUrl(reference) {
   return /^https?:\/\/\S+/i.test(reference);
 }
 
-function looksLikeRepoPath(reference) {
-  return /^(docs|scripts|backend|frontend|\.github)\//.test(reference)
-    || /^(README\.md|compose\.v1-test\.yml|\.env\.example)$/.test(reference);
+function looksLikeRetainedArtifactPath(reference) {
+  return /^docs\//.test(reference);
 }
 
 function extractBacktickReferences(value) {
@@ -51,11 +50,11 @@ function extractPlainReferences(value) {
 
 function extractEvidenceReferences(value) {
   const references = [...extractBacktickReferences(value), ...extractPlainReferences(value)];
-  return [...new Set(references)].filter((reference) => isExternalUrl(reference) || looksLikeRepoPath(reference));
+  return [...new Set(references)].filter((reference) => isExternalUrl(reference) || looksLikeRetainedArtifactPath(reference));
 }
 
 function existingRepositoryPath(rootDir, reference) {
-  if (!looksLikeRepoPath(reference)) {
+  if (!looksLikeRetainedArtifactPath(reference)) {
     return false;
   }
 
@@ -96,11 +95,11 @@ export function evaluateEvidenceReferences({
   const invalidRows = passRows.flatMap((row) => {
     const references = extractEvidenceReferences(row.reference);
     if (references.length === 0) {
-      return [`${row.id} has no repository path or external URL evidence reference`];
+      return [`${row.id} has no retained docs artifact or external URL evidence reference`];
     }
 
     const missingPaths = references
-      .filter((reference) => looksLikeRepoPath(reference))
+      .filter((reference) => looksLikeRetainedArtifactPath(reference))
       .filter((reference) => !existingRepositoryPath(rootDir, reference));
 
     return missingPaths.map((reference) => `${row.id} references missing artifact ${reference}`);
@@ -110,7 +109,7 @@ export function evaluateEvidenceReferences({
     "pass-reference-artifacts",
     invalidRows.length === 0,
     invalidRows.length === 0
-      ? "Every PASS evidence row references an existing repository artifact or external URL."
+      ? "Every PASS evidence row references an existing retained docs artifact or external URL."
       : `Invalid PASS evidence references: ${invalidRows.join("; ")}`
   ));
 
@@ -159,7 +158,7 @@ function printResult(result) {
   }
 
   lines.push("");
-  lines.push("Note: PASS means every manifest PASS row points to an existing repository artifact or an external URL. It does not replace UAT execution, signoff, or the final release gate.");
+  lines.push("Note: PASS means every manifest PASS row points to an existing retained docs artifact or an external URL. It does not replace UAT execution, signoff, or the final release gate.");
 
   console.log(lines.join("\n"));
 }
