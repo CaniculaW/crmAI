@@ -196,6 +196,14 @@ node scripts/v1-go-no-go-meeting.mjs --output docs/testing/v1-go-no-go-meeting.m
 
 该会议包集中列出参会角色、门禁命令、开放阻塞项和最终签署表；只有证据包 validator、tracker validator、最终 release gate 全部通过且项目负责人选择 `Go` 后，才能作为准出会议留痕。
 
+生成聚合状态报告、UAT行动计划、逐项执行包或 Go/No-Go 会议包后，执行生成文档一致性检查：
+
+```bash
+node scripts/v1-generated-docs-check.mjs
+```
+
+该检查用于防止生成器实现和已提交的 V1 状态/行动/执行/会议文档发生漂移。
+
 正式准出前执行最终放行门禁：
 
 ```bash
