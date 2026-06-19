@@ -47,7 +47,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `CRM_POSTGRES_IMAGE=docker.1ms.run/library/postgres:16 ... docker compose -f compose.v1-test.yml up -d --build` | Compose build and startup passed；db/backend/frontend 均 Up，db healthy |
 | `node scripts/v1-deployment-config-check.mjs` | V1 deployment config check passed；Dockerfile/Compose 支持可配置基础镜像 |
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
-| `node --test scripts/*.test.mjs` | 150 tests passed |
+| `node --test scripts/*.test.mjs` | 151 tests passed |
 | `node --test scripts/v1-kickoff-governance-validate.test.mjs` | 5 tests passed；覆盖完整启动治理记录、当前草稿 No-Go、缺失负责人、V2/AI 范围误入 V1 和敏感材料拦截 |
 | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | FAIL as expected；当前启动会负责人、V1范围冻结和项目 Go 结论仍为 No-Go |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 4 tests passed |
@@ -92,7 +92,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node --test scripts/v1-secret-scan-check.test.mjs` | 4 tests passed；覆盖当前证据清单包含外部 UAT 请求包、脱敏占位允许、明文密码拦截和 Bearer token 拦截 |
 | `node scripts/v1-secret-scan-check.mjs` | V1 secret scan check passed；当前 V1 证据文档未发现明显明文敏感材料 |
 | `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md` | FAIL as expected；当前追踪表仍缺具名环境、UAT执行、P0/P1、签署和Go |
-| `node --test scripts/v1-release-gate.test.mjs` | 14 tests passed；覆盖完整 Go、从已填写 UAT 源文件读取完整 Go、CLI 命名外部 UAT 源文档参数、readiness 失败、启动治理未完成、UAT启动输入未完成、UAT具名环境未完成、No-Go、Conditional Go、tracker 未完成、证据清单未完成、证据引用缺失、缺陷台账未完成和签署台账未完成 |
+| `node --test scripts/v1-release-gate.test.mjs` | 15 tests passed；覆盖完整 Go、从已填写 UAT 源文件读取完整 Go、CLI 命名外部 UAT 源文档参数、机器可读 JSON 输出、readiness 失败、启动治理未完成、UAT启动输入未完成、UAT具名环境未完成、No-Go、Conditional Go、tracker 未完成、证据清单未完成、证据引用缺失、缺陷台账未完成和签署台账未完成 |
 | `node scripts/v1-release-gate.mjs` | FAIL as expected；当前启动治理和 rc.8 草稿不是正式 Go 证据包 |
 | `node --test scripts/v1-uat-evidence-pack.test.mjs` | 4 tests passed |
 | `node scripts/v1-uat-evidence-pack.mjs ...` | 可生成不含明文密码/API Token、包含 validator 留痕区的 UAT 证据包草稿 |

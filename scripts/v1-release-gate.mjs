@@ -57,6 +57,7 @@ function makeCheck(id, ok, message) {
 export function parseArgs(argv) {
   const parsed = {
     rootDir: process.cwd(),
+    outputFormat: "text",
     evidencePath: DEFAULT_EVIDENCE_PATH,
     trackerPath: DEFAULT_TRACKER_PATH,
     manifestPath: DEFAULT_MANIFEST_PATH,
@@ -71,6 +72,11 @@ export function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     const optionKey = NAMED_OPTIONS.get(arg);
+
+    if (arg === "--json") {
+      parsed.outputFormat = "json";
+      continue;
+    }
 
     if (optionKey) {
       const value = argv[index + 1];
@@ -245,7 +251,16 @@ export function evaluateV1ReleaseGateFromFiles(
   });
 }
 
-function printResult(result) {
+export function renderResult(result, outputFormat = "text") {
+  if (outputFormat === "json") {
+    return `${JSON.stringify({
+      result: result.ok ? "PASS" : "FAIL",
+      decision: result.decision || "MISSING",
+      ok: result.ok,
+      checks: result.checks
+    }, null, 2)}\n`;
+  }
+
   const lines = [
     "# V1 Release Gate",
     "",
@@ -262,12 +277,16 @@ function printResult(result) {
   lines.push("");
   lines.push("Note: PASS means the V1 candidate has completed engineering readiness, kickoff governance validation, UAT launch intake validation, named UAT environment validation, UAT execution tracking, defect register validation, signoff register validation, evidence manifest validation, evidence reference retention validation, formal UAT evidence validation, and an explicit project Go decision.");
 
-  console.log(lines.join("\n"));
+  return lines.join("\n");
+}
+
+function printResult(result, outputFormat) {
+  process.stdout.write(renderResult(result, outputFormat));
 }
 
 function printUsage() {
   console.error("Usage: node scripts/v1-release-gate.mjs [root-dir] [uat-evidence-pack.md] [uat-execution-tracker.md] [uat-evidence-manifest.md] [uat-defect-register.md] [uat-environment-evidence.md] [uat-signoff-register.md] [v1-uat-launch-intake.md] [crm-kickoff-minutes.md]");
-  console.error("   or: node scripts/v1-release-gate.mjs --root <root-dir> --evidence <uat-evidence-pack.md> --tracker <uat-execution-tracker.md> --manifest <uat-evidence-manifest.md> --defects <uat-defect-register.md> --environment <uat-environment-evidence.md> --signoffs <uat-signoff-register.md> --launch-intake <v1-uat-launch-intake.md> --kickoff <crm-kickoff-minutes.md>");
+  console.error("   or: node scripts/v1-release-gate.mjs [--json] --root <root-dir> --evidence <uat-evidence-pack.md> --tracker <uat-execution-tracker.md> --manifest <uat-evidence-manifest.md> --defects <uat-defect-register.md> --environment <uat-environment-evidence.md> --signoffs <uat-signoff-register.md> --launch-intake <v1-uat-launch-intake.md> --kickoff <crm-kickoff-minutes.md>");
 }
 
 const isCli = process.argv[1] === fileURLToPath(import.meta.url);
@@ -283,10 +302,11 @@ if (isCli) {
       environmentPath,
       signoffRegisterPath,
       launchIntakePath,
-      kickoffPath
+      kickoffPath,
+      outputFormat
     } = parseArgs(process.argv.slice(2));
     const result = evaluateV1ReleaseGateFromFiles(rootDir, evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath, signoffRegisterPath, launchIntakePath, kickoffPath);
-    printResult(result);
+    printResult(result, outputFormat);
     process.exitCode = result.ok ? 0 : 1;
   } catch (error) {
     printUsage();

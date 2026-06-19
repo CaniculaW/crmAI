@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { evaluateV1ReleaseGate, evaluateV1ReleaseGateFromFiles, parseArgs } from "./v1-release-gate.mjs";
+import { evaluateV1ReleaseGate, evaluateV1ReleaseGateFromFiles, parseArgs, renderResult } from "./v1-release-gate.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
 
 const passingReadinessResult = {
@@ -453,6 +453,7 @@ test("passes from filled UAT source files when every validator and project Go ev
 
 test("parses named CLI options for external V1 release gate source paths", () => {
   const parsed = parseArgs([
+    "--json",
     "--root",
     "/workspace/crm",
     "--evidence",
@@ -473,6 +474,7 @@ test("parses named CLI options for external V1 release gate source paths", () =>
     "/tmp/kickoff.md"
   ]);
 
+  assert.equal(parsed.outputFormat, "json");
   assert.equal(parsed.rootDir, "/workspace/crm");
   assert.equal(parsed.evidencePath, "/tmp/evidence-pack.md");
   assert.equal(parsed.trackerPath, "/tmp/execution-tracker.md");
@@ -482,6 +484,25 @@ test("parses named CLI options for external V1 release gate source paths", () =>
   assert.equal(parsed.signoffRegisterPath, "/tmp/signoffs.md");
   assert.equal(parsed.launchIntakePath, "/tmp/launch-intake.md");
   assert.equal(parsed.kickoffPath, "/tmp/kickoff.md");
+});
+
+test("renders V1 release gate results as machine-readable JSON", () => {
+  const uatEvidenceResult = evaluateUatEvidencePack("# Incomplete evidence pack");
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    environmentResult: passingEnvironmentResult,
+    uatEvidenceResult,
+    trackerResult: passingTrackerResult,
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
+  });
+
+  const parsed = JSON.parse(renderResult(result, "json"));
+
+  assert.equal(parsed.result, "FAIL");
+  assert.equal(parsed.decision, "MISSING");
+  assert.ok(parsed.checks.some((check) => check.id === "uat-evidence-pack" && check.ok === false));
 });
 
 test("fails when RC/UAT readiness has a failed check", () => {
