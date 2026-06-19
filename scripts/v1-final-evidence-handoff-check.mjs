@@ -9,7 +9,11 @@ const HANDOFF_DOC_PATHS = [
   "docs/releases/v1.0.0-rc.8.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
-  "docs/testing/crm-v1-acceptance-checklist.md"
+  "docs/testing/crm-v1-acceptance-checklist.md",
+  "docs/testing/v1-uat-action-plan.md",
+  "docs/testing/v1-uat-execution-pack.md",
+  "docs/testing/v1-go-no-go-meeting.md",
+  "docs/testing/v1-external-uat-request.md"
 ];
 
 const STATUS_PATH = "docs/testing/v1-release-gate-status.json";
@@ -137,6 +141,7 @@ export function evaluateV1FinalEvidenceHandoffSnapshot(documents) {
     passed,
     failed,
     checks,
+    missingDocs,
     missingCommands,
     missingBlockerTerms,
     misleadingClaims

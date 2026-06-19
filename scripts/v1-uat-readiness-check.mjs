@@ -762,11 +762,13 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node --test scripts/v1-final-evidence-handoff-check.test.mjs",
       "node scripts/v1-final-evidence-handoff-check.mjs",
       "evaluateV1FinalEvidenceHandoffSnapshot",
+      "handoff-materials-present",
       "no-go-handoff-guardrail",
       "handoff-command-coverage",
-      "fails when final handoff materials claim V1 acceptance while release gate is No-Go"
+      "fails when final handoff materials claim V1 acceptance while release gate is No-Go",
+      "fails when generated UAT handoff packets are missing"
     ]),
-    "V1 final evidence handoff checker is tested and wired into CI to keep final handoff materials aligned with release gate status and external blockers."
+    "V1 final evidence handoff checker is tested and wired into CI to keep final handoff materials, generated UAT packets, release gate status, and external blockers aligned."
   ));
 
   const secretScanChecker = snapshot["scripts/v1-secret-scan-check.mjs"] ?? "";

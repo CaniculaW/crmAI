@@ -33,6 +33,10 @@ function completeDocuments(overrides = {}) {
     "docs/testing/v1-automated-validation-report-2026-06-18.md": shared,
     "docs/testing/crm-v1-test-environment-validation-runbook.md": shared,
     "docs/testing/crm-v1-acceptance-checklist.md": shared,
+    "docs/testing/v1-uat-action-plan.md": shared,
+    "docs/testing/v1-uat-execution-pack.md": shared,
+    "docs/testing/v1-go-no-go-meeting.md": shared,
+    "docs/testing/v1-external-uat-request.md": shared,
     "docs/testing/v1-release-gate-status.json": `${releaseGateStatus}\n`,
     ...overrides
   };
@@ -65,6 +69,25 @@ test("fails when final handoff materials omit the final release gate command", (
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "handoff-command-coverage"));
+});
+
+test("fails when generated UAT handoff packets are missing", () => {
+  const docs = completeDocuments();
+  delete docs["docs/testing/v1-uat-action-plan.md"];
+  delete docs["docs/testing/v1-uat-execution-pack.md"];
+  delete docs["docs/testing/v1-go-no-go-meeting.md"];
+  delete docs["docs/testing/v1-external-uat-request.md"];
+
+  const result = evaluateV1FinalEvidenceHandoffSnapshot(docs);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "handoff-materials-present"));
+  assert.deepEqual(result.missingDocs, [
+    "docs/testing/v1-uat-action-plan.md",
+    "docs/testing/v1-uat-execution-pack.md",
+    "docs/testing/v1-go-no-go-meeting.md",
+    "docs/testing/v1-external-uat-request.md"
+  ]);
 });
 
 test("fails when No-Go final handoff materials hide external UAT blockers", () => {

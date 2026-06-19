@@ -47,7 +47,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `CRM_POSTGRES_IMAGE=docker.1ms.run/library/postgres:16 ... docker compose -f compose.v1-test.yml up -d --build` | Compose build and startup passed；db/backend/frontend 均 Up，db healthy |
 | `node scripts/v1-deployment-config-check.mjs` | V1 deployment config check passed；Dockerfile/Compose 支持可配置基础镜像 |
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
-| `node --test scripts/*.test.mjs` | 190 tests passed |
+| `node --test scripts/*.test.mjs` | 191 tests passed |
 | `node --test scripts/v1-kickoff-governance-validate.test.mjs` | 6 tests passed；覆盖完整启动治理记录、当前草稿 No-Go、缺失负责人、V2/AI 范围误入 V1、确认/冻结证据引用未指向可留存工件/URL和敏感材料拦截 |
 | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | FAIL as expected；当前启动会负责人、V1范围冻结和项目 Go 结论仍为 No-Go |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 5 tests passed；新增已通过自动化、环境、UAT用例和签署证据必须指向可留存仓库工件或外部 URL 的拦截 |
@@ -93,7 +93,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node scripts/v1-blocker-consistency-check.mjs` | V1 blocker consistency check passed；当前 release gate 阻塞项已出现在决策材料并映射到 UAT 执行包行动项 |
 | `node --test scripts/v1-external-uat-request-coverage-check.test.mjs` | 5 tests passed；覆盖外部 UAT 请求包阻塞项完整、责任侧路由、漏写 validator 失败项、漏写命令和 No-Go 时误标请求关闭 |
 | `node scripts/v1-external-uat-request-coverage-check.mjs` | V1 external UAT request coverage check passed；外部 UAT 请求包覆盖当前失败 validator 明细、补证命令和责任侧路由 |
-| `node --test scripts/v1-final-evidence-handoff-check.test.mjs` | 4 tests passed；覆盖 No-Go 阻塞和门禁命令可见、No-Go 时误称验收通过、缺失最终门禁命令和隐藏外部阻塞项 |
+| `node --test scripts/v1-final-evidence-handoff-check.test.mjs` | 5 tests passed；覆盖 No-Go 阻塞和门禁命令可见、No-Go 时误称验收通过、缺失最终门禁命令、缺失生成的UAT交接包和隐藏外部阻塞项 |
 | `node scripts/v1-final-evidence-handoff-check.mjs` | V1 final evidence handoff check passed；最终交接材料与当前 `FAIL / No-Go` release gate 保持一致 |
 | `node --test scripts/v1-secret-scan-check.test.mjs` | 5 tests passed；覆盖当前证据清单包含外部 UAT 请求包、release gate JSON 快照、脱敏占位允许、明文密码拦截和 Bearer token 拦截 |
 | `node scripts/v1-secret-scan-check.mjs` | V1 secret scan check passed；当前 V1 证据文档未发现明显明文敏感材料 |
@@ -130,7 +130,7 @@ rc.8 Compose部署态证据见 `docs/testing/evidence/v1-compose-uat-2026-06-19.
 
 聚合状态报告见 `docs/testing/v1-validation-status.md`；UAT行动计划见 `docs/testing/v1-uat-action-plan.md`，按项目/产品、测试、业务UAT和研发拆分下一步；UAT逐项执行包见 `docs/testing/v1-uat-execution-pack.md`，把失败门禁拆成 KICKOFF、ENV、PRE、SMK、UAT、DEF、SIGNOFF 和 GO-NOGO 补证项；Go/No-Go会议包见 `docs/testing/v1-go-no-go-meeting.md`，用于正式准出会议留痕；外部UAT请求包见 `docs/testing/v1-external-uat-request.md`，面向项目/产品、测试、业务UAT和研发集中列出源文档、验证命令和当前阻塞请求；release gate JSON 快照见 `docs/testing/v1-release-gate-status.json`，用于看板或验收机器人读取当前准出状态，并由 `scripts/v1-release-gate-status-check.mjs` 校验字段和值域稳定。
 
-生成文档一致性检查见 `scripts/v1-generated-docs-check.mjs`，用于防止生成器和已提交证据文档漂移；release gate JSON schema 校验见 `scripts/v1-release-gate-status-check.mjs`，用于防止机器可读准出快照结构漂移；计划状态一致性检查见 `scripts/v1-plan-status-check.mjs`，用于防止启动计划未完成项被误配为 V1 Go；验收清单一致性检查见 `scripts/v1-acceptance-checklist-check.mjs`，用于防止 AC-001 至 AC-017 在最终放行仍为 No-Go 时被误标为业务通过；UAT覆盖检查见 `scripts/v1-uat-coverage-check.mjs`，用于防止 UAT-001 至 UAT-010 漏覆盖任一 V1 验收项，且防止 UAT 行缺操作人或证据要求；验证追踪矩阵一致性检查见 `scripts/v1-traceability-check.mjs`，用于防止 AC-001 至 AC-017 的研发证据矩阵漏项或误标项目验收通过；阻塞项一致性检查见 `scripts/v1-blocker-consistency-check.mjs`，用于防止当前 release gate 阻塞项从状态报告、行动计划、会议包或执行行动项中漏写；外部UAT请求覆盖检查见 `scripts/v1-external-uat-request-coverage-check.mjs`，用于防止项目/测试/业务侧请求包漏掉当前失败 validator 明细、补证命令或责任侧路由；最终交接证据一致性检查见 `scripts/v1-final-evidence-handoff-check.mjs`，用于防止 README、候选版本记录、自动化验证报告、Runbook 或验收清单在 `No-Go` 状态下误称 V1 已验收通过或可正式发布；证据秘密扫描见 `scripts/v1-secret-scan-check.mjs`，用于防止当前 V1 证据文档、外部 UAT 请求包和 release gate JSON 快照中出现明文密码、Bearer token、API key 或等价敏感材料。rc.8 UAT 交接草稿见 `docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`。该草稿已预填工程侧自动化和本地验证证据，validator 实测为 `FAIL / No-Go`，最终 V1 放行门禁也返回 `FAIL`，仍需项目/测试/业务侧补齐启动治理、具名测试环境账号、UAT-001 至 UAT-010、缺陷汇总、回归证据和签署台账；readiness 审计会防止该草稿在外部 UAT 完成前被误标为 Go/PASS。
+生成文档一致性检查见 `scripts/v1-generated-docs-check.mjs`，用于防止生成器和已提交证据文档漂移；release gate JSON schema 校验见 `scripts/v1-release-gate-status-check.mjs`，用于防止机器可读准出快照结构漂移；计划状态一致性检查见 `scripts/v1-plan-status-check.mjs`，用于防止启动计划未完成项被误配为 V1 Go；验收清单一致性检查见 `scripts/v1-acceptance-checklist-check.mjs`，用于防止 AC-001 至 AC-017 在最终放行仍为 No-Go 时被误标为业务通过；UAT覆盖检查见 `scripts/v1-uat-coverage-check.mjs`，用于防止 UAT-001 至 UAT-010 漏覆盖任一 V1 验收项，且防止 UAT 行缺操作人或证据要求；验证追踪矩阵一致性检查见 `scripts/v1-traceability-check.mjs`，用于防止 AC-001 至 AC-017 的研发证据矩阵漏项或误标项目验收通过；阻塞项一致性检查见 `scripts/v1-blocker-consistency-check.mjs`，用于防止当前 release gate 阻塞项从状态报告、行动计划、会议包或执行行动项中漏写；外部UAT请求覆盖检查见 `scripts/v1-external-uat-request-coverage-check.mjs`，用于防止项目/测试/业务侧请求包漏掉当前失败 validator 明细、补证命令或责任侧路由；最终交接证据一致性检查见 `scripts/v1-final-evidence-handoff-check.mjs`，用于防止 README、候选版本记录、自动化验证报告、Runbook、验收清单、UAT行动计划、UAT逐项执行包、Go/No-Go会议包或外部UAT请求包在 `No-Go` 状态下缺失、漏掉最终门禁命令、隐藏阻塞项，或误称 V1 已验收通过/可正式发布；证据秘密扫描见 `scripts/v1-secret-scan-check.mjs`，用于防止当前 V1 证据文档、外部 UAT 请求包和 release gate JSON 快照中出现明文密码、Bearer token、API key 或等价敏感材料。rc.8 UAT 交接草稿见 `docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`。该草稿已预填工程侧自动化和本地验证证据，validator 实测为 `FAIL / No-Go`，最终 V1 放行门禁也返回 `FAIL`，仍需项目/测试/业务侧补齐启动治理、具名测试环境账号、UAT-001 至 UAT-010、缺陷汇总、回归证据和签署台账；readiness 审计会防止该草稿在外部 UAT 完成前被误标为 Go/PASS。
 
 ## 5. 待外部完成项
 
