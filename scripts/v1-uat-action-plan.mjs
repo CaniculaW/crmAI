@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { evaluateKickoffGovernance } from "./v1-kickoff-governance-validate.mjs";
 import { evaluateV1ReleaseGate } from "./v1-release-gate.mjs";
 import { evaluateReadinessSnapshot, readSnapshot } from "./v1-uat-readiness-check.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
@@ -21,6 +22,7 @@ const DEFAULT_DEFECT_REGISTER_PATH = "docs/testing/v1-uat-defect-register.md";
 const DEFAULT_ENVIRONMENT_PATH = "docs/testing/v1-uat-environment-evidence.md";
 const DEFAULT_SIGNOFF_REGISTER_PATH = "docs/testing/v1-uat-signoff-register.md";
 const DEFAULT_LAUNCH_INTAKE_PATH = "docs/testing/v1-uat-launch-intake.md";
+const DEFAULT_KICKOFF_PATH = "docs/meeting-notes/crm-kickoff-minutes.md";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-uat-action-plan.md";
 
 function gateCommands(
@@ -30,9 +32,11 @@ function gateCommands(
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
   signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
-  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH
 ) {
   return [
+    `node scripts/v1-kickoff-governance-validate.mjs ${kickoffPath}`,
     `node scripts/v1-uat-launch-intake-validate.mjs ${launchIntakePath}`,
     `node scripts/v1-uat-environment-validate.mjs ${environmentPath}`,
     `node scripts/v1-uat-evidence-pack-validate.mjs ${evidencePath}`,
@@ -40,7 +44,7 @@ function gateCommands(
     `node scripts/v1-uat-execution-tracker-validate.mjs ${trackerPath}`,
     `node scripts/v1-uat-defect-register-validate.mjs ${defectRegisterPath}`,
     `node scripts/v1-uat-signoff-register-validate.mjs ${signoffRegisterPath}`,
-    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath} ${environmentPath} ${signoffRegisterPath} ${launchIntakePath}`
+    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath} ${environmentPath} ${signoffRegisterPath} ${launchIntakePath} ${kickoffPath}`
   ];
 }
 
@@ -64,6 +68,7 @@ function workstreamRows(hasBlockers) {
 export function generateV1UatActionPlanMarkdown({
   generatedAt,
   readinessResult,
+  kickoffResult,
   environmentResult,
   evidenceResult,
   manifestResult,
@@ -78,11 +83,13 @@ export function generateV1UatActionPlanMarkdown({
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
   signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
-  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH
 }) {
   const overall = releaseGateResult.ok && releaseGateResult.decision === "Go" ? "Go" : "No-Go";
   const blockers = [
     ...failedCheckLines("Readiness", readinessResult),
+    ...failedCheckLines("Kickoff Governance", kickoffResult),
     ...failedCheckLines("UAT Launch Intake", launchIntakeResult),
     ...failedCheckLines("UAT Environment Evidence", environmentResult),
     ...failedCheckLines("UAT Evidence Pack", evidenceResult),
@@ -116,7 +123,7 @@ export function generateV1UatActionPlanMarkdown({
   lines.push("## Gate Commands");
   lines.push("");
 
-  for (const command of gateCommands(evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath, signoffRegisterPath, launchIntakePath)) {
+  for (const command of gateCommands(evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath, signoffRegisterPath, launchIntakePath, kickoffPath)) {
     lines.push(`- \`${command}\``);
   }
 
@@ -144,9 +151,11 @@ export function generateV1UatActionPlanFromFiles({
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
   signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
   launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH,
   generatedAt = new Date().toISOString()
 } = {}) {
   const readinessResult = evaluateReadinessSnapshot(readSnapshot(rootDir));
+  const kickoffResult = evaluateKickoffGovernance(readFileSync(path.join(rootDir, kickoffPath), "utf8"));
   const launchIntakeResult = evaluateUatLaunchIntake(readFileSync(path.join(rootDir, launchIntakePath), "utf8"));
   const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(path.join(rootDir, environmentPath), "utf8"));
   const evidenceResult = evaluateUatEvidencePack(readFileSync(path.join(rootDir, evidencePath), "utf8"));
@@ -156,6 +165,7 @@ export function generateV1UatActionPlanFromFiles({
   const signoffRegisterResult = evaluateUatSignoffRegister(readFileSync(path.join(rootDir, signoffRegisterPath), "utf8"));
   const releaseGateResult = evaluateV1ReleaseGate({
     readinessResult,
+    kickoffResult,
     launchIntakeResult,
     environmentResult,
     uatEvidenceResult: evidenceResult,
@@ -168,6 +178,7 @@ export function generateV1UatActionPlanFromFiles({
   return generateV1UatActionPlanMarkdown({
     generatedAt,
     readinessResult,
+    kickoffResult,
     launchIntakeResult,
     environmentResult,
     evidenceResult,
@@ -182,7 +193,8 @@ export function generateV1UatActionPlanFromFiles({
     defectRegisterPath,
     environmentPath,
     signoffRegisterPath,
-    launchIntakePath
+    launchIntakePath,
+    kickoffPath
   });
 }
 
@@ -196,6 +208,7 @@ function parseArgs(argv) {
     environmentPath: DEFAULT_ENVIRONMENT_PATH,
     signoffRegisterPath: DEFAULT_SIGNOFF_REGISTER_PATH,
     launchIntakePath: DEFAULT_LAUNCH_INTAKE_PATH,
+    kickoffPath: DEFAULT_KICKOFF_PATH,
     outputPath: null
   };
 
@@ -224,6 +237,9 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--launch-intake") {
       parsed.launchIntakePath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--kickoff") {
+      parsed.kickoffPath = argv[index + 1];
       index += 1;
     } else if (arg === "--output") {
       parsed.outputPath = argv[index + 1] ?? DEFAULT_OUTPUT_PATH;

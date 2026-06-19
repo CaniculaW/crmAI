@@ -1,7 +1,7 @@
 # CRM V1 Validation Status
 
-Generated at: 2026-06-19T02:27:51.341Z
-Git commit: 09c46ac031469604f2a680ef011621854d2d9e23
+Generated at: 2026-06-19T02:48:08.469Z
+Git commit: 8d755400744874edee84e1721e1917bbefe8a7ac
 
 Overall: No-Go
 
@@ -10,6 +10,7 @@ Overall: No-Go
 | Gate | Result | Decision | Failed checks |
 |---|---|---|---:|
 | Readiness | PASS | - | 0 |
+| Kickoff Governance | FAIL | No-Go | 3 |
 | UAT Launch Intake | FAIL | No-Go | 4 |
 | UAT Environment Evidence | FAIL | No-Go | 3 |
 | UAT Evidence Pack | FAIL | No-Go | 7 |
@@ -17,11 +18,12 @@ Overall: No-Go
 | UAT Execution Tracker | FAIL | No-Go | 7 |
 | UAT Defect Register | FAIL | No-Go | 3 |
 | UAT Signoff Register | FAIL | No-Go | 2 |
-| Release Gate | FAIL | No-Go | 8 |
+| Release Gate | FAIL | No-Go | 9 |
 
 ## Verification Commands
 
 - `node scripts/v1-uat-readiness-check.mjs`
+- `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md`
 - `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md`
 - `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md`
 - `node scripts/v1-uat-evidence-pack-validate.mjs docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`
@@ -29,10 +31,13 @@ Overall: No-Go
 - `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md`
 - `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md`
 - `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md`
-- `node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md`
+- `node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md`
 
 ## Open Blockers
 
+- FAIL Kickoff Governance/required-owners: Incomplete kickoff owners: 产品负责人, 业务验收人-销售侧, 业务验收人-管理侧, 研发负责人, 前端负责人, 后端负责人, 测试负责人
+- FAIL Kickoff Governance/scope-freeze: Incomplete kickoff scope freeze items: V1 模块范围, V1 业务闭环, V1 暂不做, 上线周期, 技术栈, 验收方式, V1范围冻结
+- FAIL Kickoff Governance/project-go-decision: Kickoff governance decision is No-Go; V1 validation requires Go.
 - FAIL UAT Launch Intake/environment-intake: Incomplete launch environment fields: 测试环境名称, 前端访问地址, 后端 API 地址, Git 提交号, UAT窗口, 证据归档位置
 - FAIL UAT Launch Intake/participant-roster: Incomplete UAT participants: UAT-SALES, UAT-MANAGER, UAT-PRODUCT, UAT-TEST, UAT-DEV, UAT-PM
 - FAIL UAT Launch Intake/account-custody: Incomplete account custody items: 管理员账号, 销售个人账号, 销售负责人账号, 权限样本账号
@@ -61,6 +66,7 @@ Overall: No-Go
 - FAIL UAT Defect Register/go-decision: Defect register decision is No-Go; V1 validation requires Go.
 - FAIL UAT Signoff Register/required-signoffs: Incomplete signoffs: SIGNOFF-SALES, SIGNOFF-MANAGER, SIGNOFF-PRODUCT, SIGNOFF-TEST, SIGNOFF-DEV, SIGNOFF-PM
 - FAIL UAT Signoff Register/project-go-decision: Project signoff is No-Go and register decision is No-Go; V1 validation requires Go.
+- FAIL Release Gate/kickoff-governance: Kickoff governance failed: required-owners, scope-freeze, project-go-decision
 - FAIL Release Gate/uat-launch-intake: UAT launch intake failed: environment-intake, participant-roster, account-custody, project-go-decision
 - FAIL Release Gate/uat-environment: UAT environment evidence failed: environment-summary, environment-checks, go-decision
 - FAIL Release Gate/uat-evidence-pack: UAT evidence pack failed: no-placeholders, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete
@@ -72,4 +78,4 @@ Overall: No-Go
 
 ## Completion Rule
 
-V1验证通过必须同时满足：readiness PASS、UAT启动输入 validator PASS、UAT具名环境证据 validator PASS、UAT证据包 validator PASS、UAT证据清单 validator PASS、UAT执行追踪表 validator PASS、UAT缺陷台账 validator PASS、UAT签署台账 validator PASS、最终 release gate PASS，且项目负责人结论为 `Go`。
+V1验证通过必须同时满足：readiness PASS、启动治理 validator PASS、UAT启动输入 validator PASS、UAT具名环境证据 validator PASS、UAT证据包 validator PASS、UAT证据清单 validator PASS、UAT执行追踪表 validator PASS、UAT缺陷台账 validator PASS、UAT签署台账 validator PASS、最终 release gate PASS，且项目负责人结论为 `Go`。

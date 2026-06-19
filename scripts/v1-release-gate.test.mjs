@@ -14,6 +14,16 @@ const failingReadinessResult = {
   failed: [{ id: "compose-uat-evidence" }]
 };
 
+const passingKickoffResult = {
+  ok: true,
+  failed: []
+};
+
+const failingKickoffResult = {
+  ok: false,
+  failed: [{ id: "required-owners" }, { id: "scope-freeze" }]
+};
+
 const passingLaunchIntakeResult = {
   ok: true,
   failed: []
@@ -194,6 +204,24 @@ test("fails when RC/UAT readiness has a failed check", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "rc-uat-readiness"));
+});
+
+test("fails when kickoff governance remains incomplete", () => {
+  const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    kickoffResult: failingKickoffResult,
+    launchIntakeResult: passingLaunchIntakeResult,
+    environmentResult: passingEnvironmentResult,
+    uatEvidenceResult,
+    trackerResult: passingTrackerResult,
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "kickoff-governance"));
 });
 
 test("fails when the UAT launch intake remains incomplete", () => {

@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { evaluateKickoffGovernance } from "./v1-kickoff-governance-validate.mjs";
 import { evaluateUatDefectRegister } from "./v1-uat-defect-register-validate.mjs";
 import { evaluateUatEnvironmentEvidence } from "./v1-uat-environment-validate.mjs";
 import { evaluateUatEvidenceManifest } from "./v1-uat-evidence-manifest-validate.mjs";
@@ -19,6 +20,7 @@ const DEFAULT_DEFECT_REGISTER_PATH = "docs/testing/v1-uat-defect-register.md";
 const DEFAULT_ENVIRONMENT_PATH = "docs/testing/v1-uat-environment-evidence.md";
 const DEFAULT_SIGNOFF_REGISTER_PATH = "docs/testing/v1-uat-signoff-register.md";
 const DEFAULT_LAUNCH_INTAKE_PATH = "docs/testing/v1-uat-launch-intake.md";
+const DEFAULT_KICKOFF_PATH = "docs/meeting-notes/crm-kickoff-minutes.md";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-uat-execution-pack.md";
 
 const SIGNOFF_OWNER = new Map([
@@ -43,6 +45,33 @@ function collectFailedMessages(...results) {
 }
 
 function executionItem(id) {
+  if (id === "KICKOFF-OWNERS") {
+    return {
+      id,
+      owner: "项目/产品",
+      action: "补齐启动会负责人和业务验收人",
+      evidence: "启动会纪要中的产品、业务验收、研发、前端、后端和测试负责人具名确认"
+    };
+  }
+
+  if (id === "KICKOFF-SCOPE") {
+    return {
+      id,
+      owner: "项目/产品",
+      action: "完成V1范围冻结确认",
+      evidence: "V1范围、非V1范围、上线周期、技术栈和验收方式的冻结确认记录"
+    };
+  }
+
+  if (id === "KICKOFF-GO") {
+    return {
+      id,
+      owner: "项目/产品",
+      action: "确认启动治理Go结论",
+      evidence: "启动会纪要或项目负责人对V1范围冻结的Go确认"
+    };
+  }
+
   if (id === "LAUNCH-ENV") {
     return {
       id,
@@ -148,6 +177,7 @@ function collectExecutionItems({
   defectRegisterResult,
   signoffRegisterResult,
   launchIntakeResult,
+  kickoffResult = { ok: true, failed: [] },
   evidenceResult
 }) {
   const messages = collectFailedMessages(
@@ -157,6 +187,7 @@ function collectExecutionItems({
     defectRegisterResult,
     signoffRegisterResult,
     launchIntakeResult,
+    kickoffResult,
     evidenceResult
   ).join("\n");
 
@@ -182,6 +213,16 @@ function collectExecutionItems({
     }
   }
 
+  for (const check of kickoffResult.failed ?? []) {
+    if (check.id === "required-owners") {
+      ids.push("KICKOFF-OWNERS");
+    } else if (check.id === "scope-freeze" || check.id === "scope-boundary") {
+      ids.push("KICKOFF-SCOPE");
+    } else if (check.id === "project-go-decision") {
+      ids.push("KICKOFF-GO");
+    }
+  }
+
   if ((defectRegisterResult.failed ?? []).length > 0 && !ids.includes("DEF-REGISTER")) {
     ids.push("DEF-REGISTER");
   }
@@ -196,9 +237,11 @@ function gateCommands({
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
   signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
-  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH
 }) {
   return [
+    `node scripts/v1-kickoff-governance-validate.mjs ${kickoffPath}`,
     `node scripts/v1-uat-launch-intake-validate.mjs ${launchIntakePath}`,
     `node scripts/v1-uat-environment-validate.mjs ${environmentPath}`,
     `node scripts/v1-uat-evidence-pack-validate.mjs ${evidencePath}`,
@@ -206,12 +249,13 @@ function gateCommands({
     `node scripts/v1-uat-execution-tracker-validate.mjs ${trackerPath}`,
     `node scripts/v1-uat-defect-register-validate.mjs ${defectRegisterPath}`,
     `node scripts/v1-uat-signoff-register-validate.mjs ${signoffRegisterPath}`,
-    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath} ${environmentPath} ${signoffRegisterPath} ${launchIntakePath}`
+    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath} ${environmentPath} ${signoffRegisterPath} ${launchIntakePath} ${kickoffPath}`
   ];
 }
 
 export function generateV1UatExecutionPackMarkdown({
   generatedAt,
+  kickoffResult = { ok: true, failed: [] },
   environmentResult,
   trackerResult,
   manifestResult,
@@ -225,9 +269,11 @@ export function generateV1UatExecutionPackMarkdown({
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
   signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
-  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH
 }) {
   const items = collectExecutionItems({
+    kickoffResult,
     environmentResult,
     trackerResult,
     manifestResult,
@@ -262,7 +308,7 @@ export function generateV1UatExecutionPackMarkdown({
   lines.push("");
   lines.push("## Verification Commands");
   lines.push("");
-  for (const command of gateCommands({ evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath, signoffRegisterPath, launchIntakePath })) {
+  for (const command of gateCommands({ evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath, signoffRegisterPath, launchIntakePath, kickoffPath })) {
     lines.push(`- \`${command}\``);
   }
 
@@ -283,8 +329,10 @@ export function generateV1UatExecutionPackFromFiles({
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
   signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
   launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH,
   generatedAt = new Date().toISOString()
 } = {}) {
+  const kickoffResult = evaluateKickoffGovernance(readFileSync(path.join(rootDir, kickoffPath), "utf8"));
   const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(path.join(rootDir, environmentPath), "utf8"));
   const trackerResult = evaluateUatExecutionTracker(readFileSync(path.join(rootDir, trackerPath), "utf8"));
   const manifestResult = evaluateUatEvidenceManifest(readFileSync(path.join(rootDir, manifestPath), "utf8"));
@@ -295,6 +343,7 @@ export function generateV1UatExecutionPackFromFiles({
 
   return generateV1UatExecutionPackMarkdown({
     generatedAt,
+    kickoffResult,
     environmentResult,
     trackerResult,
     manifestResult,
@@ -308,7 +357,8 @@ export function generateV1UatExecutionPackFromFiles({
     defectRegisterPath,
     environmentPath,
     signoffRegisterPath,
-    launchIntakePath
+    launchIntakePath,
+    kickoffPath
   });
 }
 
@@ -322,6 +372,7 @@ function parseArgs(argv) {
     environmentPath: DEFAULT_ENVIRONMENT_PATH,
     signoffRegisterPath: DEFAULT_SIGNOFF_REGISTER_PATH,
     launchIntakePath: DEFAULT_LAUNCH_INTAKE_PATH,
+    kickoffPath: DEFAULT_KICKOFF_PATH,
     outputPath: null
   };
 
@@ -350,6 +401,9 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--launch-intake") {
       parsed.launchIntakePath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--kickoff") {
+      parsed.kickoffPath = argv[index + 1];
       index += 1;
     } else if (arg === "--output") {
       parsed.outputPath = argv[index + 1] ?? DEFAULT_OUTPUT_PATH;

@@ -15,6 +15,7 @@ jobs:
       - run: node --test scripts/v1-uat-evidence-pack-validate.test.mjs
       - run: node --test scripts/v1-uat-defect-register-validate.test.mjs
       - run: node --test scripts/v1-uat-signoff-register-validate.test.mjs
+      - run: node --test scripts/v1-kickoff-governance-validate.test.mjs
       - run: node --test scripts/v1-uat-launch-intake-validate.test.mjs
       - run: node --test scripts/v1-uat-evidence-manifest-validate.test.mjs
       - run: node --test scripts/v1-uat-execution-tracker-validate.test.mjs
@@ -47,21 +48,23 @@ jobs:
   "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\n",
   "scripts/v1-uat-signoff-register-validate.mjs": "evaluateUatSignoffRegister\nrequired-signoffs\nproject-go-decision\nno-secret-material\n",
   "scripts/v1-uat-signoff-register-validate.test.mjs": "fails the draft signoff register because signoffs are pending\n",
+  "scripts/v1-kickoff-governance-validate.mjs": "evaluateKickoffGovernance\nrequired-owners\nscope-freeze\nscope-boundary\nno-secret-material\n",
+  "scripts/v1-kickoff-governance-validate.test.mjs": "fails the current kickoff draft because owners and scope freeze remain pending\n",
   "scripts/v1-uat-launch-intake-validate.mjs": "evaluateUatLaunchIntake\nenvironment-intake\nparticipant-roster\naccount-custody\nno-secret-material\n",
   "scripts/v1-uat-launch-intake-validate.test.mjs": "fails a draft launch intake because external UAT inputs are pending\n",
   "scripts/v1-uat-evidence-manifest-validate.mjs": "evaluateUatEvidenceManifest\nrequired-items\nevidence-complete\nno-secret-material\n",
   "scripts/v1-uat-evidence-manifest-validate.test.mjs": "fails the current draft manifest because external UAT evidence is pending\n",
   "scripts/v1-uat-execution-tracker-validate.mjs": "evaluateUatExecutionTracker\nrequired-items\nrelease-gates\n",
   "scripts/v1-uat-execution-tracker-validate.test.mjs": "fails the current rc8 tracker because external UAT remains pending\n",
-  "scripts/v1-release-gate.mjs": "evaluateV1ReleaseGate\nevaluateV1ReleaseGateFromFiles\nV1 release gate requires Go\nuat-launch-intake\nuat-environment\n",
-  "scripts/v1-release-gate.test.mjs": "fails when the UAT launch intake remains incomplete\nfails when the project decision is Conditional Go\n",
-  "scripts/v1-validation-status.mjs": "generateV1ValidationStatusMarkdown\nOverall: No-Go\nUAT Environment Evidence\nUAT Execution Tracker\n",
+  "scripts/v1-release-gate.mjs": "evaluateV1ReleaseGate\nevaluateV1ReleaseGateFromFiles\nV1 release gate requires Go\nkickoff-governance\nuat-launch-intake\nuat-environment\n",
+  "scripts/v1-release-gate.test.mjs": "fails when kickoff governance remains incomplete\nfails when the UAT launch intake remains incomplete\nfails when the project decision is Conditional Go\n",
+  "scripts/v1-validation-status.mjs": "generateV1ValidationStatusMarkdown\nOverall: No-Go\nKickoff Governance\nUAT Environment Evidence\nUAT Execution Tracker\n",
   "scripts/v1-validation-status.test.mjs": "summarizes a No-Go V1 status with concrete blocker commands\n",
-  "scripts/v1-uat-action-plan.mjs": "generateV1UatActionPlanMarkdown\nOverall: No-Go\nRole Workstreams\nUAT Environment Evidence\n",
+  "scripts/v1-uat-action-plan.mjs": "generateV1UatActionPlanMarkdown\nOverall: No-Go\nRole Workstreams\nKickoff Governance\nUAT Environment Evidence\n",
   "scripts/v1-uat-action-plan.test.mjs": "generates a No-Go UAT action plan grouped by project, test, business, and engineering workstreams\n",
-  "scripts/v1-uat-execution-pack.mjs": "generateV1UatExecutionPackMarkdown\nOverall: No-Go\nExecution Items\nENV-001\nUAT-010\n",
+  "scripts/v1-uat-execution-pack.mjs": "generateV1UatExecutionPackMarkdown\nOverall: No-Go\nExecution Items\nKICKOFF-OWNERS\nENV-001\nUAT-010\n",
   "scripts/v1-uat-execution-pack.test.mjs": "generates an executable UAT evidence collection pack from failed gates\n",
-  "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nUAT Environment Evidence\n",
+  "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nKickoff Governance\nUAT Environment Evidence\n",
   "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\n",
   "scripts/v1-deployment-config-check.mjs": "evaluateDeploymentConfigSnapshot\nCRM_BACKEND_BUILD_IMAGE\nCRM_FRONTEND_RUNTIME_IMAGE\n",
   "scripts/v1-deployment-config-check.test.mjs": "configurable for mirrored registries\n",
@@ -71,6 +74,25 @@ jobs:
   "docs/testing/v1-uat-action-plan.md": "CRM V1 UAT Action Plan\nOverall: No-Go\nRole Workstreams\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
   "docs/testing/v1-uat-execution-pack.md": "CRM V1 UAT Execution Pack\nOverall: No-Go\nExecution Items\nENV-001\nPRE-001\nSMK-001\nUAT-001\nDEF-REGISTER\nSIGNOFF-SALES\nGO-NOGO\n",
   "docs/testing/v1-go-no-go-meeting.md": "CRM V1 Go/No-Go Meeting Pack\nDecision Recommendation: No-Go\nFinal Signoff Table\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
+  "docs/meeting-notes/crm-kickoff-minutes.md": `CRM研发启动会纪要
+Decision: No-Go
+产品负责人
+业务验收人-销售侧
+业务验收人-管理侧
+研发负责人
+前端负责人
+后端负责人
+测试负责人
+V1 模块范围
+V1 业务闭环
+V1 暂不做
+上线周期
+技术栈
+验收方式
+V1范围冻结
+不记录明文密码
+node scripts/v1-kickoff-governance-validate.mjs
+`,
   "docs/testing/crm-v1-validation-traceability.md": "研发验证通过\n若目标口径是“项目 V1 验收通过”，仍需完成具名测试环境验证和业务验收签署。\n",
   "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\n",
   "docs/testing/crm-v1-uat-evidence-pack-template.md": "Go/No-Go\n签署\n缺陷\n",
@@ -186,7 +208,7 @@ node scripts/v1-uat-evidence-manifest-validate.mjs
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -379,6 +401,22 @@ test("fails when the UAT launch intake validator is missing from readiness mater
   assert.ok(result.failed.some((check) => check.id === "uat-launch-intake-validator"));
 });
 
+test("fails when the kickoff governance validator is missing from readiness materials", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-kickoff-governance-validate.mjs": "",
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"].replace(
+      "      - run: node --test scripts/v1-kickoff-governance-validate.test.mjs\n",
+      ""
+    )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "kickoff-governance-validator"));
+});
+
 test("fails when the UAT evidence manifest validator is missing from readiness materials", () => {
   const snapshot = {
     ...completeSnapshot,
@@ -561,6 +599,28 @@ test("fails when the UAT launch intake is missing", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the kickoff minutes are missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["docs/meeting-notes/crm-kickoff-minutes.md"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the kickoff minutes omit scope freeze rows", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "docs/meeting-notes/crm-kickoff-minutes.md": "CRM研发启动会纪要\nDecision: No-Go\n产品负责人\n"
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "kickoff-governance"));
 });
 
 test("fails when the UAT launch intake omits account custody rows", () => {

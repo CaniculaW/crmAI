@@ -73,10 +73,20 @@ const failingLaunchIntake = {
   ]
 };
 
+const failingKickoff = {
+  ok: false,
+  decision: "No-Go",
+  failed: [
+    { id: "required-owners", message: "Incomplete kickoff owners: 产品负责人, 业务验收人-销售侧" },
+    { id: "scope-freeze", message: "Incomplete kickoff scope freeze items: V1范围冻结" }
+  ]
+};
+
 const failingReleaseGate = {
   ok: false,
   decision: "No-Go",
   failed: [
+    { id: "kickoff-governance", message: "Kickoff governance failed: required-owners, scope-freeze" },
     { id: "uat-environment", message: "UAT environment evidence failed: environment-summary, environment-checks" },
     { id: "uat-evidence-pack", message: "UAT evidence pack failed: uat-business-cases, signoff-complete" },
     { id: "uat-evidence-manifest", message: "UAT evidence manifest failed: evidence-complete, go-decision" },
@@ -92,6 +102,7 @@ test("summarizes a No-Go V1 status with concrete blocker commands", () => {
     generatedAt: "2026-06-19T02:40:00+08:00",
     gitCommit: "918ffced1a9002e7b624db51ace724c56301b646",
     readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
     environmentResult: failingEnvironment,
     evidenceResult: failingEvidence,
     manifestResult: failingManifest,
@@ -105,6 +116,7 @@ test("summarizes a No-Go V1 status with concrete blocker commands", () => {
   assert.match(markdown, /# CRM V1 Validation Status/);
   assert.match(markdown, /Overall: No-Go/);
   assert.match(markdown, /Readiness \| PASS/);
+  assert.match(markdown, /Kickoff Governance \| FAIL/);
   assert.match(markdown, /UAT Environment Evidence \| FAIL/);
   assert.match(markdown, /UAT Evidence Pack \| FAIL/);
   assert.match(markdown, /UAT Evidence Manifest \| FAIL/);
@@ -113,6 +125,7 @@ test("summarizes a No-Go V1 status with concrete blocker commands", () => {
   assert.match(markdown, /UAT Launch Intake \| FAIL/);
   assert.match(markdown, /UAT Execution Tracker \| FAIL/);
   assert.match(markdown, /Release Gate \| FAIL/);
+  assert.match(markdown, /node scripts\/v1-kickoff-governance-validate\.mjs docs\/meeting-notes\/crm-kickoff-minutes\.md/);
   assert.match(markdown, /node scripts\/v1-uat-environment-validate\.mjs docs\/testing\/v1-uat-environment-evidence\.md/);
   assert.match(markdown, /node scripts\/v1-uat-evidence-manifest-validate\.mjs docs\/testing\/v1-uat-evidence-manifest\.md/);
   assert.match(markdown, /node scripts\/v1-uat-defect-register-validate\.mjs docs\/testing\/v1-uat-defect-register\.md/);
@@ -120,6 +133,7 @@ test("summarizes a No-Go V1 status with concrete blocker commands", () => {
   assert.match(markdown, /node scripts\/v1-uat-launch-intake-validate\.mjs docs\/testing\/v1-uat-launch-intake\.md/);
   assert.match(markdown, /node scripts\/v1-uat-execution-tracker-validate\.mjs docs\/testing\/crm-v1-uat-execution-tracker\.md/);
   assert.match(markdown, /node scripts\/v1-release-gate\.mjs \. docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md docs\/testing\/crm-v1-uat-execution-tracker\.md docs\/testing\/v1-uat-evidence-manifest\.md docs\/testing\/v1-uat-defect-register\.md docs\/testing\/v1-uat-environment-evidence\.md docs\/testing\/v1-uat-signoff-register\.md/);
+  assert.match(markdown, /Incomplete kickoff owners: 产品负责人, 业务验收人-销售侧/);
   assert.match(markdown, /Invalid environment summary items/);
   assert.match(markdown, /Missing passed UAT evidence: UAT-001, UAT-010/);
   assert.match(markdown, /Evidence rows not marked PASS: PRE-001, UAT-010/);
@@ -135,6 +149,7 @@ test("summarizes a Go V1 status only when all gates pass and decision is Go", ()
     generatedAt: "2026-06-19T02:40:00+08:00",
     gitCommit: "abc123",
     readinessResult: passingReadiness,
+    kickoffResult: passing,
     environmentResult: passing,
     evidenceResult: passing,
     manifestResult: passing,

@@ -23,6 +23,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-uat-defect-register-validate.test.mjs",
   "scripts/v1-uat-signoff-register-validate.mjs",
   "scripts/v1-uat-signoff-register-validate.test.mjs",
+  "scripts/v1-kickoff-governance-validate.mjs",
+  "scripts/v1-kickoff-governance-validate.test.mjs",
   "scripts/v1-uat-launch-intake-validate.mjs",
   "scripts/v1-uat-launch-intake-validate.test.mjs",
   "scripts/v1-uat-evidence-manifest-validate.mjs",
@@ -45,6 +47,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/v1-uat-action-plan.md",
   "docs/testing/v1-uat-execution-pack.md",
   "docs/testing/v1-go-no-go-meeting.md",
+  "docs/meeting-notes/crm-kickoff-minutes.md",
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
@@ -241,6 +244,29 @@ function hasUatSignoffRegister(content) {
   ]);
 }
 
+function hasKickoffGovernance(content) {
+  return includesAll(content, [
+    "CRM研发启动会纪要",
+    "Decision: No-Go",
+    "产品负责人",
+    "业务验收人-销售侧",
+    "业务验收人-管理侧",
+    "研发负责人",
+    "前端负责人",
+    "后端负责人",
+    "测试负责人",
+    "V1 模块范围",
+    "V1 业务闭环",
+    "V1 暂不做",
+    "上线周期",
+    "技术栈",
+    "验收方式",
+    "V1范围冻结",
+    "不记录明文密码",
+    "node scripts/v1-kickoff-governance-validate.mjs"
+  ]);
+}
+
 function hasUatLaunchIntake(content) {
   return includesAll(content, [
     "CRM V1 UAT Launch Intake",
@@ -397,6 +423,22 @@ export function evaluateReadinessSnapshot(snapshot) {
     "UAT signoff register validator is tested and enforces role signoff, project Go decision, and secret redaction."
   ));
 
+  const kickoffValidator = snapshot["scripts/v1-kickoff-governance-validate.mjs"] ?? "";
+  const kickoffValidatorTest = snapshot["scripts/v1-kickoff-governance-validate.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "kickoff-governance-validator",
+    includesAll(workflow + kickoffValidator + kickoffValidatorTest, [
+      "node --test scripts/v1-kickoff-governance-validate.test.mjs",
+      "evaluateKickoffGovernance",
+      "required-owners",
+      "scope-freeze",
+      "scope-boundary",
+      "no-secret-material",
+      "fails the current kickoff draft because owners and scope freeze remain pending"
+    ]),
+    "Kickoff governance validator is tested and enforces named owners, V1 scope freeze, scope boundary, project Go, and secret redaction."
+  ));
+
   const launchIntakeValidator = snapshot["scripts/v1-uat-launch-intake-validate.mjs"] ?? "";
   const launchIntakeValidatorTest = snapshot["scripts/v1-uat-launch-intake-validate.test.mjs"] ?? "";
   checks.push(makeCheck(
@@ -451,11 +493,13 @@ export function evaluateReadinessSnapshot(snapshot) {
       "evaluateV1ReleaseGate",
       "evaluateV1ReleaseGateFromFiles",
       "V1 release gate requires Go",
+      "kickoff-governance",
       "uat-launch-intake",
       "uat-environment",
+      "fails when kickoff governance remains incomplete",
       "fails when the project decision is Conditional Go"
     ]),
-    "Final V1 release gate is tested and requires readiness, UAT launch intake, formal UAT evidence, and an explicit Go decision."
+    "Final V1 release gate is tested and requires readiness, kickoff governance, UAT launch intake, formal UAT evidence, and an explicit Go decision."
   ));
 
   const validationStatus = snapshot["scripts/v1-validation-status.mjs"] ?? "";
@@ -622,6 +666,13 @@ export function evaluateReadinessSnapshot(snapshot) {
     "UAT signoff register inventories sales, management, product, test, development, and project signoffs without secrets."
   ));
 
+  const kickoffGovernance = snapshot["docs/meeting-notes/crm-kickoff-minutes.md"] ?? "";
+  checks.push(makeCheck(
+    "kickoff-governance",
+    hasKickoffGovernance(kickoffGovernance),
+    "Kickoff minutes inventory owners, V1 scope freeze, out-of-scope items, acceptance mode, and No-Go status without secrets."
+  ));
+
   const uatLaunchIntake = snapshot["docs/testing/v1-uat-launch-intake.md"] ?? "";
   checks.push(makeCheck(
     "uat-launch-intake",
@@ -657,7 +708,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-signoff-register-validate.mjs", "v1-uat-launch-intake-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-kickoff-governance-validate.mjs", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-signoff-register-validate.mjs", "v1-uat-launch-intake-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 

@@ -4,6 +4,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { evaluateKickoffGovernance } from "./v1-kickoff-governance-validate.mjs";
 import { evaluateV1ReleaseGate } from "./v1-release-gate.mjs";
 import { evaluateReadinessSnapshot, readSnapshot } from "./v1-uat-readiness-check.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
@@ -21,6 +22,7 @@ const DEFAULT_DEFECT_REGISTER_PATH = "docs/testing/v1-uat-defect-register.md";
 const DEFAULT_ENVIRONMENT_PATH = "docs/testing/v1-uat-environment-evidence.md";
 const DEFAULT_SIGNOFF_REGISTER_PATH = "docs/testing/v1-uat-signoff-register.md";
 const DEFAULT_LAUNCH_INTAKE_PATH = "docs/testing/v1-uat-launch-intake.md";
+const DEFAULT_KICKOFF_PATH = "docs/meeting-notes/crm-kickoff-minutes.md";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-validation-status.md";
 
 function statusLabel(ok) {
@@ -34,10 +36,12 @@ function commandList(
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
   signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
-  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH
 ) {
   return [
     "node scripts/v1-uat-readiness-check.mjs",
+    `node scripts/v1-kickoff-governance-validate.mjs ${kickoffPath}`,
     `node scripts/v1-uat-launch-intake-validate.mjs ${launchIntakePath}`,
     `node scripts/v1-uat-environment-validate.mjs ${environmentPath}`,
     `node scripts/v1-uat-evidence-pack-validate.mjs ${evidencePath}`,
@@ -45,7 +49,7 @@ function commandList(
     `node scripts/v1-uat-execution-tracker-validate.mjs ${trackerPath}`,
     `node scripts/v1-uat-defect-register-validate.mjs ${defectRegisterPath}`,
     `node scripts/v1-uat-signoff-register-validate.mjs ${signoffRegisterPath}`,
-    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath} ${environmentPath} ${signoffRegisterPath} ${launchIntakePath}`
+    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath} ${environmentPath} ${signoffRegisterPath} ${launchIntakePath} ${kickoffPath}`
   ];
 }
 
@@ -69,6 +73,7 @@ export function generateV1ValidationStatusMarkdown({
   generatedAt,
   gitCommit,
   readinessResult,
+  kickoffResult,
   environmentResult,
   evidenceResult,
   manifestResult,
@@ -83,11 +88,13 @@ export function generateV1ValidationStatusMarkdown({
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
   signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
-  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH
 }) {
   const overall = releaseGateResult.ok && releaseGateResult.decision === "Go" ? "Go" : "No-Go";
   const blockers = [
     ...collectFailedChecks("Readiness", readinessResult),
+    ...collectFailedChecks("Kickoff Governance", kickoffResult),
     ...collectFailedChecks("UAT Launch Intake", launchIntakeResult),
     ...collectFailedChecks("UAT Environment Evidence", environmentResult),
     ...collectFailedChecks("UAT Evidence Pack", evidenceResult),
@@ -111,6 +118,7 @@ export function generateV1ValidationStatusMarkdown({
     "| Gate | Result | Decision | Failed checks |",
     "|---|---|---|---:|",
     resultRow("Readiness", readinessResult),
+    resultRow("Kickoff Governance", kickoffResult),
     resultRow("UAT Launch Intake", launchIntakeResult),
     resultRow("UAT Environment Evidence", environmentResult),
     resultRow("UAT Evidence Pack", evidenceResult),
@@ -124,7 +132,7 @@ export function generateV1ValidationStatusMarkdown({
     ""
   ];
 
-  for (const command of commandList(evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath, signoffRegisterPath, launchIntakePath)) {
+  for (const command of commandList(evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath, signoffRegisterPath, launchIntakePath, kickoffPath)) {
     lines.push(`- \`${command}\``);
   }
 
@@ -143,7 +151,7 @@ export function generateV1ValidationStatusMarkdown({
   lines.push("");
   lines.push("## Completion Rule");
   lines.push("");
-  lines.push("V1验证通过必须同时满足：readiness PASS、UAT启动输入 validator PASS、UAT具名环境证据 validator PASS、UAT证据包 validator PASS、UAT证据清单 validator PASS、UAT执行追踪表 validator PASS、UAT缺陷台账 validator PASS、UAT签署台账 validator PASS、最终 release gate PASS，且项目负责人结论为 `Go`。");
+  lines.push("V1验证通过必须同时满足：readiness PASS、启动治理 validator PASS、UAT启动输入 validator PASS、UAT具名环境证据 validator PASS、UAT证据包 validator PASS、UAT证据清单 validator PASS、UAT执行追踪表 validator PASS、UAT缺陷台账 validator PASS、UAT签署台账 validator PASS、最终 release gate PASS，且项目负责人结论为 `Go`。");
 
   return `${lines.join("\n")}\n`;
 }
@@ -170,10 +178,12 @@ export function generateV1ValidationStatusFromFiles({
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
   signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
   launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH,
   generatedAt = new Date().toISOString(),
   gitCommit = readGitCommit(rootDir)
 } = {}) {
   const readinessResult = evaluateReadinessSnapshot(readSnapshot(rootDir));
+  const kickoffResult = evaluateKickoffGovernance(readFileSync(path.join(rootDir, kickoffPath), "utf8"));
   const launchIntakeResult = evaluateUatLaunchIntake(readFileSync(path.join(rootDir, launchIntakePath), "utf8"));
   const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(path.join(rootDir, environmentPath), "utf8"));
   const evidenceResult = evaluateUatEvidencePack(readFileSync(path.join(rootDir, evidencePath), "utf8"));
@@ -183,6 +193,7 @@ export function generateV1ValidationStatusFromFiles({
   const signoffRegisterResult = evaluateUatSignoffRegister(readFileSync(path.join(rootDir, signoffRegisterPath), "utf8"));
   const releaseGateResult = evaluateV1ReleaseGate({
     readinessResult,
+    kickoffResult,
     launchIntakeResult,
     environmentResult,
     uatEvidenceResult: evidenceResult,
@@ -196,6 +207,7 @@ export function generateV1ValidationStatusFromFiles({
     generatedAt,
     gitCommit,
     readinessResult,
+    kickoffResult,
     launchIntakeResult,
     environmentResult,
     evidenceResult,
@@ -210,7 +222,8 @@ export function generateV1ValidationStatusFromFiles({
     defectRegisterPath,
     environmentPath,
     signoffRegisterPath,
-    launchIntakePath
+    launchIntakePath,
+    kickoffPath
   });
 }
 
@@ -224,6 +237,7 @@ function parseArgs(argv) {
     environmentPath: DEFAULT_ENVIRONMENT_PATH,
     signoffRegisterPath: DEFAULT_SIGNOFF_REGISTER_PATH,
     launchIntakePath: DEFAULT_LAUNCH_INTAKE_PATH,
+    kickoffPath: DEFAULT_KICKOFF_PATH,
     outputPath: null
   };
 
@@ -252,6 +266,9 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--launch-intake") {
       parsed.launchIntakePath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--kickoff") {
+      parsed.kickoffPath = argv[index + 1];
       index += 1;
     } else if (arg === "--output") {
       parsed.outputPath = argv[index + 1] ?? DEFAULT_OUTPUT_PATH;

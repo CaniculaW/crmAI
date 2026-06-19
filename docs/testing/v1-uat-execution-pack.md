@@ -1,6 +1,6 @@
 # CRM V1 UAT Execution Pack
 
-Generated at: 2026-06-19T02:27:51.436Z
+Generated at: 2026-06-19T02:48:08.469Z
 
 Overall: No-Go
 
@@ -53,9 +53,13 @@ Overall: No-Go
 | LAUNCH-ROSTER | 项目/产品 | 补齐UAT启动参与人 | 销售侧、管理侧、产品、测试、研发和项目负责人名单及联系方式 |
 | LAUNCH-ACCOUNTS | 测试 | 补齐UAT账号保管证据 | 管理员、销售个人、销售负责人和权限样本账号的脱敏保管记录 |
 | LAUNCH-GO | 项目/产品 | 确认UAT启动Go结论 | UAT启动确认记录或项目负责人确认 |
+| KICKOFF-OWNERS | 项目/产品 | 补齐启动会负责人和业务验收人 | 启动会纪要中的产品、业务验收、研发、前端、后端和测试负责人具名确认 |
+| KICKOFF-SCOPE | 项目/产品 | 完成V1范围冻结确认 | V1范围、非V1范围、上线周期、技术栈和验收方式的冻结确认记录 |
+| KICKOFF-GO | 项目/产品 | 确认启动治理Go结论 | 启动会纪要或项目负责人对V1范围冻结的Go确认 |
 
 ## Verification Commands
 
+- `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md`
 - `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md`
 - `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md`
 - `node scripts/v1-uat-evidence-pack-validate.mjs docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`
@@ -63,7 +67,7 @@ Overall: No-Go
 - `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md`
 - `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md`
 - `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md`
-- `node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md`
+- `node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md`
 
 ## Completion Rule
 

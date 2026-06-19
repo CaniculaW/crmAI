@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { evaluateKickoffGovernance } from "./v1-kickoff-governance-validate.mjs";
 import { evaluateV1ReleaseGate } from "./v1-release-gate.mjs";
 import { evaluateReadinessSnapshot, readSnapshot } from "./v1-uat-readiness-check.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
@@ -21,6 +22,7 @@ const DEFAULT_DEFECT_REGISTER_PATH = "docs/testing/v1-uat-defect-register.md";
 const DEFAULT_ENVIRONMENT_PATH = "docs/testing/v1-uat-environment-evidence.md";
 const DEFAULT_SIGNOFF_REGISTER_PATH = "docs/testing/v1-uat-signoff-register.md";
 const DEFAULT_LAUNCH_INTAKE_PATH = "docs/testing/v1-uat-launch-intake.md";
+const DEFAULT_KICKOFF_PATH = "docs/meeting-notes/crm-kickoff-minutes.md";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-go-no-go-meeting.md";
 
 const SIGNOFF_ROLES = [
@@ -39,10 +41,12 @@ function gateCommands(
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
   signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
-  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH
 ) {
   return [
     `node scripts/v1-uat-readiness-check.mjs`,
+    `node scripts/v1-kickoff-governance-validate.mjs ${kickoffPath}`,
     `node scripts/v1-uat-launch-intake-validate.mjs ${launchIntakePath}`,
     `node scripts/v1-uat-environment-validate.mjs ${environmentPath}`,
     `node scripts/v1-uat-evidence-pack-validate.mjs ${evidencePath}`,
@@ -50,7 +54,7 @@ function gateCommands(
     `node scripts/v1-uat-execution-tracker-validate.mjs ${trackerPath}`,
     `node scripts/v1-uat-defect-register-validate.mjs ${defectRegisterPath}`,
     `node scripts/v1-uat-signoff-register-validate.mjs ${signoffRegisterPath}`,
-    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath} ${environmentPath} ${signoffRegisterPath} ${launchIntakePath}`
+    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath} ${environmentPath} ${signoffRegisterPath} ${launchIntakePath} ${kickoffPath}`
   ];
 }
 
@@ -65,6 +69,7 @@ function recommendation(releaseGateResult) {
 export function generateV1GoNoGoMeetingMarkdown({
   generatedAt,
   readinessResult,
+  kickoffResult,
   environmentResult,
   evidenceResult,
   manifestResult,
@@ -79,11 +84,13 @@ export function generateV1GoNoGoMeetingMarkdown({
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
   signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
-  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH
 }) {
   const decisionRecommendation = recommendation(releaseGateResult);
   const blockers = [
     ...failedLines("Readiness", readinessResult),
+    ...failedLines("Kickoff Governance", kickoffResult),
     ...failedLines("UAT Launch Intake", launchIntakeResult),
     ...failedLines("UAT Environment Evidence", environmentResult),
     ...failedLines("UAT Evidence Pack", evidenceResult),
@@ -107,7 +114,7 @@ export function generateV1GoNoGoMeetingMarkdown({
     "",
     "## Required Gate Commands",
     "",
-    ...gateCommands(evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath, signoffRegisterPath, launchIntakePath).map((command) => `- \`${command}\``),
+    ...gateCommands(evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath, signoffRegisterPath, launchIntakePath, kickoffPath).map((command) => `- \`${command}\``),
     "",
     "## Meeting Agenda",
     "",
@@ -140,7 +147,7 @@ export function generateV1GoNoGoMeetingMarkdown({
   }
 
   lines.push("");
-  lines.push("Note: This meeting pack organizes final approval evidence. It does not replace UAT execution, launch-intake validation, named-environment validation, defect closure, signoff-register validation, evidence-pack validation, evidence-manifest validation, tracker validation, defect-register validation, or the final release gate.");
+  lines.push("Note: This meeting pack organizes final approval evidence. It does not replace kickoff-governance validation, UAT execution, launch-intake validation, named-environment validation, defect closure, signoff-register validation, evidence-pack validation, evidence-manifest validation, tracker validation, defect-register validation, or the final release gate.");
 
   return `${lines.join("\n")}\n`;
 }
@@ -154,9 +161,11 @@ export function generateV1GoNoGoMeetingFromFiles({
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
   signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
   launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH,
   generatedAt = new Date().toISOString()
 } = {}) {
   const readinessResult = evaluateReadinessSnapshot(readSnapshot(rootDir));
+  const kickoffResult = evaluateKickoffGovernance(readFileSync(path.join(rootDir, kickoffPath), "utf8"));
   const launchIntakeResult = evaluateUatLaunchIntake(readFileSync(path.join(rootDir, launchIntakePath), "utf8"));
   const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(path.join(rootDir, environmentPath), "utf8"));
   const evidenceResult = evaluateUatEvidencePack(readFileSync(path.join(rootDir, evidencePath), "utf8"));
@@ -166,6 +175,7 @@ export function generateV1GoNoGoMeetingFromFiles({
   const signoffRegisterResult = evaluateUatSignoffRegister(readFileSync(path.join(rootDir, signoffRegisterPath), "utf8"));
   const releaseGateResult = evaluateV1ReleaseGate({
     readinessResult,
+    kickoffResult,
     launchIntakeResult,
     environmentResult,
     uatEvidenceResult: evidenceResult,
@@ -178,6 +188,7 @@ export function generateV1GoNoGoMeetingFromFiles({
   return generateV1GoNoGoMeetingMarkdown({
     generatedAt,
     readinessResult,
+    kickoffResult,
     launchIntakeResult,
     environmentResult,
     evidenceResult,
@@ -192,7 +203,8 @@ export function generateV1GoNoGoMeetingFromFiles({
     defectRegisterPath,
     environmentPath,
     signoffRegisterPath,
-    launchIntakePath
+    launchIntakePath,
+    kickoffPath
   });
 }
 
@@ -206,6 +218,7 @@ function parseArgs(argv) {
     environmentPath: DEFAULT_ENVIRONMENT_PATH,
     signoffRegisterPath: DEFAULT_SIGNOFF_REGISTER_PATH,
     launchIntakePath: DEFAULT_LAUNCH_INTAKE_PATH,
+    kickoffPath: DEFAULT_KICKOFF_PATH,
     outputPath: null
   };
 
@@ -234,6 +247,9 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--launch-intake") {
       parsed.launchIntakePath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--kickoff") {
+      parsed.kickoffPath = argv[index + 1];
       index += 1;
     } else if (arg === "--output") {
       parsed.outputPath = argv[index + 1] ?? DEFAULT_OUTPUT_PATH;

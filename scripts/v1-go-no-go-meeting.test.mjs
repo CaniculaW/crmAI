@@ -68,10 +68,19 @@ const failingLaunchIntake = {
   ]
 };
 
+const failingKickoff = {
+  ok: false,
+  decision: "No-Go",
+  failed: [
+    { id: "required-owners", message: "Incomplete kickoff owners: 产品负责人, 业务验收人-销售侧" }
+  ]
+};
+
 const failingReleaseGate = {
   ok: false,
   decision: "No-Go",
   failed: [
+    { id: "kickoff-governance", message: "Kickoff governance failed: required-owners" },
     { id: "uat-environment", message: "UAT environment evidence failed: environment-summary, environment-checks" },
     { id: "uat-evidence-pack", message: "UAT evidence pack failed: environment-results, signoff-complete" },
     { id: "uat-evidence-manifest", message: "UAT evidence manifest failed: evidence-complete" },
@@ -85,6 +94,7 @@ test("generates a No-Go meeting pack that blocks approval until validators pass"
   const markdown = generateV1GoNoGoMeetingMarkdown({
     generatedAt: "2026-06-19T04:00:00+08:00",
     readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
     environmentResult: failingEnvironment,
     evidenceResult: failingEvidence,
     manifestResult: failingManifest,
@@ -101,6 +111,7 @@ test("generates a No-Go meeting pack that blocks approval until validators pass"
   assert.match(markdown, /销售侧验收人/);
   assert.match(markdown, /管理侧验收人/);
   assert.match(markdown, /Cannot approve V1 until every validator returns PASS and the project decision is Go/);
+  assert.match(markdown, /node scripts\/v1-kickoff-governance-validate\.mjs docs\/meeting-notes\/crm-kickoff-minutes\.md/);
   assert.match(markdown, /node scripts\/v1-uat-evidence-pack-validate\.mjs docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md/);
   assert.match(markdown, /node scripts\/v1-uat-environment-validate\.mjs docs\/testing\/v1-uat-environment-evidence\.md/);
   assert.match(markdown, /node scripts\/v1-uat-defect-register-validate\.mjs docs\/testing\/v1-uat-defect-register\.md/);
@@ -109,6 +120,7 @@ test("generates a No-Go meeting pack that blocks approval until validators pass"
   assert.match(markdown, /node scripts\/v1-uat-evidence-manifest-validate\.mjs docs\/testing\/v1-uat-evidence-manifest\.md/);
   assert.match(markdown, /node scripts\/v1-release-gate\.mjs \. docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md docs\/testing\/crm-v1-uat-execution-tracker\.md docs\/testing\/v1-uat-evidence-manifest\.md docs\/testing\/v1-uat-defect-register\.md docs\/testing\/v1-uat-environment-evidence\.md docs\/testing\/v1-uat-signoff-register\.md/);
   assert.match(markdown, /UAT Environment Evidence\/environment-summary: Invalid environment summary items/);
+  assert.match(markdown, /Kickoff Governance\/required-owners: Incomplete kickoff owners/);
   assert.match(markdown, /UAT Evidence Pack\/environment-results: Missing passed environment evidence/);
   assert.match(markdown, /UAT Evidence Manifest\/evidence-complete: Evidence rows not marked PASS/);
   assert.match(markdown, /UAT Defect Register\/p0-p1-summary: Invalid P0\/P1 summary rows/);
@@ -122,6 +134,7 @@ test("generates a Go meeting pack only when release gate passes with Go decision
   const markdown = generateV1GoNoGoMeetingMarkdown({
     generatedAt: "2026-06-19T04:00:00+08:00",
     readinessResult: passingReadiness,
+    kickoffResult: passing,
     environmentResult: passing,
     evidenceResult: passing,
     manifestResult: passing,

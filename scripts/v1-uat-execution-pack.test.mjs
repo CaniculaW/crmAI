@@ -67,9 +67,20 @@ const failingLaunchIntake = {
   ]
 };
 
+const failingKickoff = {
+  ok: false,
+  decision: "No-Go",
+  failed: [
+    { id: "required-owners", message: "Incomplete kickoff owners: 产品负责人, 业务验收人-销售侧" },
+    { id: "scope-freeze", message: "Incomplete kickoff scope freeze items: V1范围冻结" },
+    { id: "project-go-decision", message: "Kickoff governance decision is No-Go; V1 validation requires Go." }
+  ]
+};
+
 test("generates an executable UAT evidence collection pack from failed gates", () => {
   const markdown = generateV1UatExecutionPackMarkdown({
     generatedAt: "2026-06-19T04:00:00+08:00",
+    kickoffResult: failingKickoff,
     environmentResult: failingEnvironment,
     trackerResult: failingTracker,
     manifestResult: failingManifest,
@@ -82,6 +93,9 @@ test("generates an executable UAT evidence collection pack from failed gates", (
   assert.match(markdown, /# CRM V1 UAT Execution Pack/);
   assert.match(markdown, /Generated at: 2026-06-19T04:00:00\+08:00/);
   assert.match(markdown, /Overall: No-Go/);
+  assert.match(markdown, /KICKOFF-OWNERS \| 项目\/产品 \| 补齐启动会负责人和业务验收人/);
+  assert.match(markdown, /KICKOFF-SCOPE \| 项目\/产品 \| 完成V1范围冻结确认/);
+  assert.match(markdown, /KICKOFF-GO \| 项目\/产品 \| 确认启动治理Go结论/);
   assert.match(markdown, /ENV-001 \| 测试 \| 补充具名环境 Smoke 证据/);
   assert.match(markdown, /ENV-004 \| 测试 \| 补充具名环境 Smoke 证据/);
   assert.match(markdown, /PRE-001 \| 测试 \| 完成 UAT 前置检查/);
@@ -95,6 +109,7 @@ test("generates an executable UAT evidence collection pack from failed gates", (
   assert.match(markdown, /GO-NOGO \| 项目\/产品 \| 完成 Go\/No-Go 会议结论/);
   assert.match(markdown, /node scripts\/v1-uat-environment-validate\.mjs docs\/testing\/v1-uat-environment-evidence\.md/);
   assert.match(markdown, /node scripts\/v1-uat-signoff-register-validate\.mjs docs\/testing\/v1-uat-signoff-register\.md/);
+  assert.match(markdown, /node scripts\/v1-kickoff-governance-validate\.mjs docs\/meeting-notes\/crm-kickoff-minutes\.md/);
   assert.match(markdown, /node scripts\/v1-uat-launch-intake-validate\.mjs docs\/testing\/v1-uat-launch-intake\.md/);
   assert.match(markdown, /node scripts\/v1-release-gate\.mjs/);
   assert.doesNotMatch(markdown, /undefined/);
@@ -104,6 +119,7 @@ test("generates a Go execution pack only when there are no failed gate items", (
   const passing = { ok: true, decision: "Go", failed: [] };
   const markdown = generateV1UatExecutionPackMarkdown({
     generatedAt: "2026-06-19T04:00:00+08:00",
+    kickoffResult: passing,
     environmentResult: passing,
     trackerResult: passing,
     manifestResult: passing,
