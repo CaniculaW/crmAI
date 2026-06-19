@@ -23,7 +23,7 @@
 - `scripts/v1-uat-launch-intake-validate.mjs`：用于在正式 UAT 启动前校验具名环境、前后端 `http(s)` URL、40位 Git 提交号、具体参与人姓名、不得以角色标签替代参与人或账号保管 Owner、账号保管、结构化 UAT窗口、证据归档位置，以及启动输入证据引用是否指向 `docs/` 留存工件或外部 URL。
 - `scripts/v1-kickoff-governance-validate.mjs`：用于在正式 UAT 准出前校验启动会负责人、业务验收人、负责人不得以角色标签替代具体姓名、`YYYY-MM-DD 至 YYYY-MM-DD` 上线周期、V1范围冻结、确认/冻结证据引用是否指向 `docs/` 留存工件或外部 URL、项目 Go 结论和敏感材料。
 - `scripts/v1-uat-evidence-pack-validate.mjs`：用于在证据包填写完成后校验 Go/No-Go 条件、P0/P1 缺陷、签署是否一致，以及通过项证据是否指向 `docs/` 留存工件或外部 URL。
-- `scripts/v1-uat-environment-validate.mjs`：用于在具名环境证据填写完成后校验 ENV-001 至 ENV-008、环境元数据、前后端 `http(s)` URL、40位 Git 提交号、证据引用是否指向 `docs/` 留存工件或外部 URL，以及敏感材料。
+- `scripts/v1-uat-environment-validate.mjs`：用于在具名环境证据填写完成后校验 ENV-001 至 ENV-008、环境元数据、前后端 `http(s)` URL、40位 Git 提交号、PASS 环境检查 Owner 不得以角色标签替代具体姓名、证据引用是否指向 `docs/` 留存工件或外部 URL，以及敏感材料。
 - `scripts/v1-uat-defect-register-validate.mjs`：用于在缺陷台账填写完成后校验 P0/P1 未关闭数量、回归证据是否指向 `docs/` 留存工件或外部 URL、敏感材料和 Go/No-Go 条件。
 - `scripts/v1-uat-signoff-register-validate.mjs`：用于在签署台账填写完成后校验六方具体签署人姓名、不得以角色标签替代签署人、签署日期为 `YYYY-MM-DD`、项目 `Go` 结论、证据引用是否指向 `docs/` 留存工件或外部 URL，以及敏感材料。
 - `scripts/v1-deployment-config-check.mjs`：用于确认 Compose、Dockerfile 和部署手册支持企业镜像代理或内网镜像仓库覆盖基础镜像。
@@ -144,7 +144,7 @@ node scripts/v1-uat-evidence-pack-validate.mjs crm-v1-uat-evidence-pack.md
 node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md
 ```
 
-要求：正式准出前，环境证据 validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐测试环境名称、前后端 `http(s)` 地址、40位 Git 提交号、账号、权限样本或可留存 Smoke 证据。
+要求：正式准出前，环境证据 validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐测试环境名称、前后端 `http(s)` 地址、40位 Git 提交号、账号、权限样本、PASS 环境检查具体 Owner 或可留存 Smoke 证据；PASS 行 Owner 不能只填写角色标签。
 
 UAT执行追踪表填写后执行状态校验：
 
@@ -371,7 +371,7 @@ v1-uat-evidence/
 | 自动化验证 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` 通过 | 回退到研发修复 |
 | 启动治理 validator | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` 返回 PASS | 补齐负责人、业务验收人的具体姓名，不能用角色标签替代；同时补齐 `YYYY-MM-DD 至 YYYY-MM-DD` 上线周期、V1范围冻结、可留存确认/冻结证据引用或项目 `Go` 结论 |
 | 部署态 Smoke | `npm run smoke:v1:browser` 和 `/api/bootstrap` 通过 | 先定位环境、账号、代理或权限配置 |
-| 环境证据 validator | `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md` 返回 PASS | 修正环境元数据、前后端 `http(s)` 地址、40位 Git 提交号、账号证据、权限样本或可留存 Smoke 证据 |
+| 环境证据 validator | `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md` 返回 PASS | 修正环境元数据、前后端 `http(s)` 地址、40位 Git 提交号、账号证据、权限样本、PASS 环境检查具体 Owner 或可留存 Smoke 证据；不得以角色标签代替 Owner 姓名 |
 | UAT启动输入 validator | `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md` 返回 PASS | 补齐具名环境、前后端 `http(s)` URL、40位 Git 提交号、`YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm` UAT窗口、证据归档位置、具体参与人姓名、具体账号保管 Owner、账号保管证据或可留存证据引用；不得以角色标签代替参与人姓名或账号保管 Owner |
 | P0 用例 | P0 全部通过，无阻断缺陷 | 不准出 |
 | P1 用例 | P1 完成执行，遗留问题有项目/业务确认 | 形成规避方案或延期单 |

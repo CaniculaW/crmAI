@@ -12,6 +12,7 @@ Decision: No-Go
 - Use masked usernames, screenshots, command output, CI links, or ticket IDs as evidence references.
 - 前端访问地址 and 后端 API 地址 must be `http(s)` URLs; Git 提交号 must be a 40-character commit SHA.
 - PASS evidence references must point to retained repository artifacts under `docs/` or external `http(s)` URLs; meeting-note anchors or free-text references are not sufficient.
+- PASS environment check owners must be named people; role labels such as test owner or engineering/operations are not sufficient.
 - Validate with `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md`.
 - The final V1 release gate requires this validator to return `PASS`.
 

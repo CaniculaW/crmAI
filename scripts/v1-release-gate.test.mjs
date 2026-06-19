@@ -278,7 +278,7 @@ Decision: Go
 |---|---|---|---|---|
 ${Array.from({ length: 8 }, (_, index) => {
   const id = `ENV-${String(index + 1).padStart(3, "0")}`;
-  return `| ${id} | V1环境检查 | PASS | docs/testing/evidence/${id.toLowerCase()}.png | QA Owner |`;
+  return `| ${id} | V1环境检查 | PASS | docs/testing/evidence/${id.toLowerCase()}.png | Chen Min |`;
 }).join("\n")}
 `;
 

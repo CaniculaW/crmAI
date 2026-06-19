@@ -51,6 +51,11 @@ function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value) && !/^[-—无]+$/.test(value);
 }
 
+function isNamedOwner(value) {
+  return isConcrete(value)
+    && !/(Owner|负责人|验收人|测试|研发|产品|项目|销售|管理|运维|QA|Dev|PM|Manager|Product|Sales|Test|Frontend|Backend|DevOps)/i.test(value);
+}
+
 function isHttpUrl(value) {
   try {
     const parsed = new URL(value);
@@ -149,6 +154,17 @@ export function evaluateUatEnvironmentEvidence(markdown) {
       : `Incomplete environment checks: ${[...new Set([...incompleteChecks, ...placeholderRows])].join(", ")}`
   ));
 
+  const invalidEnvironmentOwnerChecks = envRows
+    .filter((row) => row[2] === "PASS" && isConcrete(row[4]) && !isNamedOwner(row[4]))
+    .map((row) => row[0]);
+  checks.push(makeCheck(
+    "environment-owner-name-format",
+    invalidEnvironmentOwnerChecks.length === 0,
+    invalidEnvironmentOwnerChecks.length === 0
+      ? "PASS environment check owners are named people rather than role labels."
+      : `PASS environment checks use role labels instead of named people: ${invalidEnvironmentOwnerChecks.join(", ")}`
+  ));
+
   const unretainedEnvironmentEvidenceChecks = envRows
     .filter((row) => row[2] === "PASS" && isConcrete(row[3]) && !isRetainedEvidenceReference(row[3]))
     .map((row) => row[0]);
@@ -183,6 +199,7 @@ export function evaluateUatEnvironmentEvidence(markdown) {
     ok: failed.length === 0,
     decision,
     unretainedEnvironmentEvidenceChecks,
+    invalidEnvironmentOwnerChecks,
     invalidSummaryFormats,
     passed,
     failed,

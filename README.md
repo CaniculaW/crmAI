@@ -146,6 +146,7 @@ node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evi
 ```
 
 前端访问地址和后端 API 地址必须为 `http(s)` URL，Git 提交号必须为40位提交 SHA。
+PASS 环境检查 Owner 必须填写具体姓名，不能用“测试负责人”“研发/运维”等角色标签替代。
 
 UAT 证据包填写后校验：
 

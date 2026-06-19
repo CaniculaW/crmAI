@@ -22,14 +22,14 @@ Decision: Go
 
 | Check ID | Check item | Status | Evidence reference | Owner |
 |---|---|---|---|---|
-| ENV-001 | 前端登录页可访问 | PASS | docs/testing/evidence/env/login-page.png | QA Owner |
-| ENV-002 | 后端健康检查可用 | PASS | docs/testing/evidence/env/health-check.txt | DevOps Owner |
-| ENV-003 | 数据库迁移完成 | PASS | docs/testing/evidence/env/flyway-history.png | DevOps Owner |
-| ENV-004 | 管理员账号可登录 | PASS | docs/testing/evidence/env/admin-login.png | QA Owner |
-| ENV-005 | 销售个人账号可登录并可操作 | PASS | docs/testing/evidence/env/sales-user.png | QA Owner |
-| ENV-006 | 销售负责人账号可查看团队 | PASS | docs/testing/evidence/env/sales-manager.png | QA Owner |
-| ENV-007 | 权限样本账号覆盖本人/本部门/协同/全局 | PASS | docs/testing/evidence/env/permission-samples.md | QA Owner |
-| ENV-008 | 浏览器 Smoke 无 console warning/error | PASS | docs/testing/evidence/env/browser-smoke.json | QA Owner |
+| ENV-001 | 前端登录页可访问 | PASS | docs/testing/evidence/env/login-page.png | Chen Min |
+| ENV-002 | 后端健康检查可用 | PASS | docs/testing/evidence/env/health-check.txt | Liu Yang |
+| ENV-003 | 数据库迁移完成 | PASS | docs/testing/evidence/env/flyway-history.png | Liu Yang |
+| ENV-004 | 管理员账号可登录 | PASS | docs/testing/evidence/env/admin-login.png | Chen Min |
+| ENV-005 | 销售个人账号可登录并可操作 | PASS | docs/testing/evidence/env/sales-user.png | Li Na |
+| ENV-006 | 销售负责人账号可查看团队 | PASS | docs/testing/evidence/env/sales-manager.png | Zhou Rui |
+| ENV-007 | 权限样本账号覆盖本人/本部门/协同/全局 | PASS | docs/testing/evidence/env/permission-samples.md | Chen Min |
+| ENV-008 | 浏览器 Smoke 无 console warning/error | PASS | docs/testing/evidence/env/browser-smoke.json | Chen Min |
 `;
 
 test("passes a complete named UAT environment evidence record", () => {
@@ -70,7 +70,7 @@ Decision: No-Go
 
 test("fails when a required environment check is missing", () => {
   const environment = completeEnvironment.replace(
-    "| ENV-006 | 销售负责人账号可查看团队 | PASS | docs/testing/evidence/env/sales-manager.png | QA Owner |\n",
+    "| ENV-006 | 销售负责人账号可查看团队 | PASS | docs/testing/evidence/env/sales-manager.png | Zhou Rui |\n",
     ""
   );
 
@@ -95,14 +95,27 @@ test("fails when environment URLs or git commit are not structured", () => {
 
 test("fails when a PASS environment check lacks concrete evidence", () => {
   const environment = completeEnvironment.replace(
-    "| ENV-005 | 销售个人账号可登录并可操作 | PASS | docs/testing/evidence/env/sales-user.png | QA Owner |",
-    "| ENV-005 | 销售个人账号可登录并可操作 | PASS | 待补充 | QA Owner |"
+    "| ENV-005 | 销售个人账号可登录并可操作 | PASS | docs/testing/evidence/env/sales-user.png | Li Na |",
+    "| ENV-005 | 销售个人账号可登录并可操作 | PASS | 待补充 | Li Na |"
   );
 
   const result = evaluateUatEnvironmentEvidence(environment);
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "environment-checks"));
+});
+
+test("fails when a PASS environment check owner is only a role label", () => {
+  const environment = completeEnvironment.replace(
+    "| ENV-001 | 前端登录页可访问 | PASS | docs/testing/evidence/env/login-page.png | Chen Min |",
+    "| ENV-001 | 前端登录页可访问 | PASS | docs/testing/evidence/env/login-page.png | 测试负责人 |"
+  );
+
+  const result = evaluateUatEnvironmentEvidence(environment);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidEnvironmentOwnerChecks, ["ENV-001"]);
+  assert.ok(result.failed.some((check) => check.id === "environment-owner-name-format"));
 });
 
 test("fails when PASS environment evidence reference is not retained", () => {
@@ -120,8 +133,8 @@ test("fails when PASS environment evidence reference is not retained", () => {
 
 test("fails when environment evidence contains secret-like material", () => {
   const environment = completeEnvironment.replace(
-    "| ENV-004 | 管理员账号可登录 | PASS | docs/testing/evidence/env/admin-login.png | QA Owner |",
-    "| ENV-004 | 管理员账号可登录 | PASS | password=S3cure!123 | QA Owner |"
+    "| ENV-004 | 管理员账号可登录 | PASS | docs/testing/evidence/env/admin-login.png | Chen Min |",
+    "| ENV-004 | 管理员账号可登录 | PASS | password=S3cure!123 | Chen Min |"
   );
 
   const result = evaluateUatEnvironmentEvidence(environment);
