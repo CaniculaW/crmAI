@@ -47,7 +47,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `CRM_POSTGRES_IMAGE=docker.1ms.run/library/postgres:16 ... docker compose -f compose.v1-test.yml up -d --build` | Compose build and startup passed；db/backend/frontend 均 Up，db healthy |
 | `node scripts/v1-deployment-config-check.mjs` | V1 deployment config check passed；Dockerfile/Compose 支持可配置基础镜像 |
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
-| `node --test scripts/*.test.mjs` | 142 tests passed |
+| `node --test scripts/*.test.mjs` | 143 tests passed |
 | `node --test scripts/v1-kickoff-governance-validate.test.mjs` | 5 tests passed；覆盖完整启动治理记录、当前草稿 No-Go、缺失负责人、V2/AI 范围误入 V1 和敏感材料拦截 |
 | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | FAIL as expected；当前启动会负责人、V1范围冻结和项目 Go 结论仍为 No-Go |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 4 tests passed |
@@ -75,7 +75,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node scripts/v1-uat-execution-pack.mjs --output docs/testing/v1-uat-execution-pack.md` | 生成当前 `No-Go` UAT逐项执行包 |
 | `node --test scripts/v1-go-no-go-meeting.test.mjs` | 2 tests passed；覆盖 No-Go 会议包和全量 Go 状态 |
 | `node scripts/v1-go-no-go-meeting.mjs --output docs/testing/v1-go-no-go-meeting.md` | 生成当前 `No-Go` Go/No-Go会议包 |
-| `node --test scripts/v1-external-uat-request.test.mjs` | 2 tests passed；覆盖 No-Go 外部 UAT 请求包和全量 Go 状态 |
+| `node --test scripts/v1-external-uat-request.test.mjs` | 3 tests passed；覆盖 No-Go 外部 UAT 请求包、绝对路径 UAT 源文档和全量 Go 状态 |
 | `node scripts/v1-external-uat-request.mjs --output docs/testing/v1-external-uat-request.md` | 生成当前 `No-Go` 外部 UAT 请求包 |
 | `node --test scripts/v1-generated-docs-check.test.mjs` | 2 tests passed；覆盖生成文档一致和生成器输出漂移 |
 | `node scripts/v1-generated-docs-check.mjs` | V1 generated docs check passed；状态报告、行动计划、逐项执行包、会议包和外部 UAT 请求包与当前生成器一致 |
