@@ -122,7 +122,7 @@
 node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md
 ```
 
-当前预期结果：`FAIL / No-Go`。该结果用于暴露六方签署、`YYYY-MM-DD` 签署日期、证据引用和项目 `Go` 结论未补齐的项目。
+当前预期结果：`FAIL / No-Go`。该结果用于暴露六方具体签署人姓名、`YYYY-MM-DD` 签署日期、证据引用和项目 `Go` 结论未补齐的项目；已批准签署不得只填写角色标签。
 
 当前追踪表 validator：
 

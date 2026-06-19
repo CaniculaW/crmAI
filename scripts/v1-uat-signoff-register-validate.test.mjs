@@ -10,12 +10,12 @@ Decision: Go
 
 | Signoff ID | Role | Owner | Decision | Signed date | Evidence reference | Notes |
 |---|---|---|---|---|---|---|
-| SIGNOFF-SALES | 销售侧验收人 | Sales Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md | 销售侧验收通过 |
-| SIGNOFF-MANAGER | 管理侧验收人 | Manager Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/manager-approval.md | 管理侧验收通过 |
-| SIGNOFF-PRODUCT | 产品负责人 | Product Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/product-scope-approval.md | 范围确认 |
-| SIGNOFF-TEST | 测试负责人 | QA Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/test-summary.md | 测试准出 |
-| SIGNOFF-DEV | 研发负责人 | Dev Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/dev-release-note.md | 研发准出 |
-| SIGNOFF-PM | 项目负责人 | PM Owner | Go | 2026-06-19 | docs/testing/v1-go-no-go-meeting.md#final-signoff | 项目同意 V1 试点 |
+| SIGNOFF-SALES | 销售侧验收人 | Zhang Wei | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md | 销售侧验收通过 |
+| SIGNOFF-MANAGER | 管理侧验收人 | Li Na | 同意 | 2026-06-19 | docs/testing/evidence/signoff/manager-approval.md | 管理侧验收通过 |
+| SIGNOFF-PRODUCT | 产品负责人 | Wang Qiang | 同意 | 2026-06-19 | docs/testing/evidence/signoff/product-scope-approval.md | 范围确认 |
+| SIGNOFF-TEST | 测试负责人 | Chen Min | 同意 | 2026-06-19 | docs/testing/evidence/signoff/test-summary.md | 测试准出 |
+| SIGNOFF-DEV | 研发负责人 | Liu Yang | 同意 | 2026-06-19 | docs/testing/evidence/signoff/dev-release-note.md | 研发准出 |
+| SIGNOFF-PM | 项目负责人 | Zhao Lin | Go | 2026-06-19 | docs/testing/v1-go-no-go-meeting.md#final-signoff | 项目同意 V1 试点 |
 `;
 
 test("passes a complete signed Go register", () => {
@@ -59,8 +59,8 @@ test("fails when a required signoff role is missing", () => {
 
 test("fails when an approved signoff lacks concrete evidence", () => {
   const withoutEvidence = completeRegister.replace(
-    "| SIGNOFF-SALES | 销售侧验收人 | Sales Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md | 销售侧验收通过 |",
-    "| SIGNOFF-SALES | 销售侧验收人 | Sales Owner | 同意 | 2026-06-19 | 待补充 | 销售侧验收通过 |"
+    "| SIGNOFF-SALES | 销售侧验收人 | Zhang Wei | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md | 销售侧验收通过 |",
+    "| SIGNOFF-SALES | 销售侧验收人 | Zhang Wei | 同意 | 2026-06-19 | 待补充 | 销售侧验收通过 |"
   );
 
   const result = evaluateUatSignoffRegister(withoutEvidence);
@@ -71,8 +71,8 @@ test("fails when an approved signoff lacks concrete evidence", () => {
 
 test("fails when an approved signoff uses a non-ISO signed date", () => {
   const withLooseDate = completeRegister.replace(
-    "| SIGNOFF-SALES | 销售侧验收人 | Sales Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md | 销售侧验收通过 |",
-    "| SIGNOFF-SALES | 销售侧验收人 | Sales Owner | 同意 | June 19 | docs/testing/evidence/signoff/sales-approval.md | 销售侧验收通过 |"
+    "| SIGNOFF-SALES | 销售侧验收人 | Zhang Wei | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md | 销售侧验收通过 |",
+    "| SIGNOFF-SALES | 销售侧验收人 | Zhang Wei | 同意 | June 19 | docs/testing/evidence/signoff/sales-approval.md | 销售侧验收通过 |"
   );
 
   const result = evaluateUatSignoffRegister(withLooseDate);
@@ -80,6 +80,19 @@ test("fails when an approved signoff uses a non-ISO signed date", () => {
   assert.equal(result.ok, false);
   assert.deepEqual(result.invalidSignedDateSignoffs, ["SIGNOFF-SALES"]);
   assert.ok(result.failed.some((check) => check.id === "signed-date-format"));
+});
+
+test("fails when an approved signoff owner is only a role label", () => {
+  const withRoleLabel = completeRegister.replace(
+    "| SIGNOFF-SALES | 销售侧验收人 | Zhang Wei | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md | 销售侧验收通过 |",
+    "| SIGNOFF-SALES | 销售侧验收人 | 销售侧验收人 | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md | 销售侧验收通过 |"
+  );
+
+  const result = evaluateUatSignoffRegister(withRoleLabel);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidOwnerNameSignoffs, ["SIGNOFF-SALES"]);
+  assert.ok(result.failed.some((check) => check.id === "signoff-owner-name-format"));
 });
 
 test("fails when an approved signoff evidence reference is not retained", () => {
@@ -97,8 +110,8 @@ test("fails when an approved signoff evidence reference is not retained", () => 
 
 test("fails when the project owner does not explicitly sign Go", () => {
   const noGo = completeRegister.replace(
-    "| SIGNOFF-PM | 项目负责人 | PM Owner | Go | 2026-06-19 | docs/testing/v1-go-no-go-meeting.md#final-signoff | 项目同意 V1 试点 |",
-    "| SIGNOFF-PM | 项目负责人 | PM Owner | Conditional Go | 2026-06-19 | docs/testing/v1-go-no-go-meeting.md#final-signoff | 条件准出 |"
+    "| SIGNOFF-PM | 项目负责人 | Zhao Lin | Go | 2026-06-19 | docs/testing/v1-go-no-go-meeting.md#final-signoff | 项目同意 V1 试点 |",
+    "| SIGNOFF-PM | 项目负责人 | Zhao Lin | Conditional Go | 2026-06-19 | docs/testing/v1-go-no-go-meeting.md#final-signoff | 条件准出 |"
   );
 
   const result = evaluateUatSignoffRegister(noGo);

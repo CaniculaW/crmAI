@@ -210,6 +210,8 @@ UAT 签署台账校验：
 node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md
 ```
 
+已批准签署必须填写具体签署人姓名，不能用“销售侧验收人”“产品负责人”等角色标签替代；签署日期必须为 `YYYY-MM-DD`，证据引用必须指向 `docs/` 下留存工件或外部 `http(s)` URL。
+
 V1 最终放行门禁：
 
 ```bash

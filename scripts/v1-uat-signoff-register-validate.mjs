@@ -41,6 +41,11 @@ function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value);
 }
 
+function isNamedOwner(value) {
+  return isConcrete(value)
+    && !/(Owner|负责人|验收人|测试|研发|产品|项目|销售|管理|QA|Dev|PM|Manager|Product|Sales|Test|Frontend|Backend)/i.test(value);
+}
+
 function isIsoDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return false;
@@ -133,6 +138,26 @@ export function evaluateUatSignoffRegister(markdown) {
       : `Signoffs have non-ISO signed dates: ${invalidSignedDateSignoffs.join(", ")}`
   ));
 
+  const invalidOwnerNameSignoffs = REQUIRED_SIGNOFFS
+    .filter((required) => {
+      const row = findRow(rows, required.id);
+      if (!row) {
+        return false;
+      }
+      const owner = row[2] ?? "";
+      const rowDecision = row[3] ?? "";
+      return rowDecision === required.decision && isConcrete(owner) && !isNamedOwner(owner);
+    })
+    .map((required) => required.id);
+
+  checks.push(makeCheck(
+    "signoff-owner-name-format",
+    invalidOwnerNameSignoffs.length === 0,
+    invalidOwnerNameSignoffs.length === 0
+      ? "Approved signoff owners are named people rather than role labels."
+      : `Approved signoffs use role labels instead of named people: ${invalidOwnerNameSignoffs.join(", ")}`
+  ));
+
   const unretainedEvidenceSignoffs = REQUIRED_SIGNOFFS
     .filter((required) => {
       const row = findRow(rows, required.id);
@@ -184,6 +209,7 @@ export function evaluateUatSignoffRegister(markdown) {
     ok: failed.length === 0,
     decision,
     unretainedEvidenceSignoffs,
+    invalidOwnerNameSignoffs,
     invalidSignedDateSignoffs,
     passed,
     failed,

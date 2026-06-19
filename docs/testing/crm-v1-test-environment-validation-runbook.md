@@ -25,7 +25,7 @@
 - `scripts/v1-uat-evidence-pack-validate.mjs`：用于在证据包填写完成后校验 Go/No-Go 条件、P0/P1 缺陷、签署是否一致，以及通过项证据是否指向 `docs/` 留存工件或外部 URL。
 - `scripts/v1-uat-environment-validate.mjs`：用于在具名环境证据填写完成后校验 ENV-001 至 ENV-008、环境元数据、前后端 `http(s)` URL、40位 Git 提交号、证据引用是否指向 `docs/` 留存工件或外部 URL，以及敏感材料。
 - `scripts/v1-uat-defect-register-validate.mjs`：用于在缺陷台账填写完成后校验 P0/P1 未关闭数量、回归证据是否指向 `docs/` 留存工件或外部 URL、敏感材料和 Go/No-Go 条件。
-- `scripts/v1-uat-signoff-register-validate.mjs`：用于在签署台账填写完成后校验六方签署、签署日期为 `YYYY-MM-DD`、项目 `Go` 结论、证据引用是否指向 `docs/` 留存工件或外部 URL，以及敏感材料。
+- `scripts/v1-uat-signoff-register-validate.mjs`：用于在签署台账填写完成后校验六方具体签署人姓名、不得以角色标签替代签署人、签署日期为 `YYYY-MM-DD`、项目 `Go` 结论、证据引用是否指向 `docs/` 留存工件或外部 URL，以及敏感材料。
 - `scripts/v1-deployment-config-check.mjs`：用于确认 Compose、Dockerfile 和部署手册支持企业镜像代理或内网镜像仓库覆盖基础镜像。
 
 不适用范围：
@@ -168,7 +168,7 @@ UAT签署台账填写后执行状态校验：
 node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md
 ```
 
-要求：正式准出前，签署台账 validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐具名签署人、`YYYY-MM-DD` 签署日期、签署结论、会议纪要或项目 `Go` 结论。
+要求：正式准出前，签署台账 validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐具体签署人姓名，不能以“销售侧验收人”“产品负责人”等角色标签替代；同时补齐 `YYYY-MM-DD` 签署日期、签署结论、会议纪要或项目 `Go` 结论。
 
 需要项目例会或验收推进页时，生成聚合状态报告：
 
@@ -377,7 +377,7 @@ v1-uat-evidence/
 | P1 用例 | P1 完成执行，遗留问题有项目/业务确认 | 形成规避方案或延期单 |
 | 缺陷台账 validator | `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md` 返回 PASS | 修正缺陷汇总、`PRE-###`/`SMK-###`/`UAT-###` 来源用例、关闭状态、可留存回归证据或 Go/No-Go 结论 |
 | 业务验收 | 销售侧、管理侧验收人完成演示或试用确认 | 安排补验 |
-| 签署台账 validator | `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md` 返回 PASS | 补齐六方具名签署、`YYYY-MM-DD` 签署日期、可留存证据路径/URL或项目 `Go` 结论 |
+| 签署台账 validator | `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md` 返回 PASS | 补齐六方具体签署人姓名、`YYYY-MM-DD` 签署日期、可留存证据路径/URL或项目 `Go` 结论；不得以角色标签代替签署人姓名 |
 | 上线风险 | 遗留缺陷、观察项、回滚条件已记录 | 补充上线风险清单 |
 | 证据包 validator | `node scripts/v1-uat-evidence-pack-validate.mjs <证据包>` 返回 PASS | 修正证据包、缺陷状态或准出结论 |
 
