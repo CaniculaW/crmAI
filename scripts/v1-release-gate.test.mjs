@@ -397,7 +397,7 @@ Decision: Go
 
 | Evidence ID | Type | Owner | Status | Evidence reference | Notes |
 |---|---|---|---|---|---|
-${requiredManifestIds.map((id) => `| ${id} | UAT evidence | QA Owner | PASS | README.md | Verified |`).join("\n")}
+${requiredManifestIds.map((id) => `| ${id} | UAT evidence | QA Owner | PASS | docs/testing/evidence/v1-local-uat-2026-06-18.md | Verified |`).join("\n")}
 `;
 
 function writeFixtureFile(rootDir, filename, content) {

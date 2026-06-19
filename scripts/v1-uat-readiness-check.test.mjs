@@ -75,8 +75,8 @@ jobs:
   "scripts/v1-kickoff-governance-validate.test.mjs": "fails the current kickoff draft because owners and scope freeze remain pending\nfails when confirmed kickoff governance evidence is not retained\n",
   "scripts/v1-uat-launch-intake-validate.mjs": "evaluateUatLaunchIntake\nenvironment-intake\nparticipant-roster\naccount-custody\nlaunch-evidence-retained\nno-secret-material\n",
   "scripts/v1-uat-launch-intake-validate.test.mjs": "fails a draft launch intake because external UAT inputs are pending\nfails when UAT launch evidence references are not retained\n",
-  "scripts/v1-uat-evidence-manifest-validate.mjs": "evaluateUatEvidenceManifest\nrequired-items\nevidence-complete\nno-secret-material\n",
-  "scripts/v1-uat-evidence-manifest-validate.test.mjs": "fails the current draft manifest because external UAT evidence is pending\n",
+  "scripts/v1-uat-evidence-manifest-validate.mjs": "evaluateUatEvidenceManifest\nrequired-items\nevidence-complete\nevidence-references-retained\nno-secret-material\n",
+  "scripts/v1-uat-evidence-manifest-validate.test.mjs": "fails the current draft manifest because external UAT evidence is pending\nfails when PASS evidence references are not retained\n",
   "scripts/v1-evidence-reference-check.mjs": "evaluateEvidenceReferences\nevaluateEvidenceReferencesFromFiles\npass-reference-artifacts\ngo-pass-references\n",
   "scripts/v1-evidence-reference-check.test.mjs": "fails a PASS evidence row when its repository artifact path is missing\n",
   "scripts/v1-uat-execution-tracker-validate.mjs": "evaluateUatExecutionTracker\nrequired-items\nrelease-gates\ntracker-evidence-retained\n",
@@ -573,6 +573,19 @@ test("fails when the UAT evidence manifest validator is missing from readiness m
       "      - run: node --test scripts/v1-uat-evidence-manifest-validate.test.mjs\n",
       ""
     )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-evidence-manifest-validator"));
+});
+
+test("fails when the UAT evidence manifest validator omits retained evidence guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-evidence-manifest-validate.mjs": completeSnapshot["scripts/v1-uat-evidence-manifest-validate.mjs"].replace("evidence-references-retained\n", ""),
+    "scripts/v1-uat-evidence-manifest-validate.test.mjs": completeSnapshot["scripts/v1-uat-evidence-manifest-validate.test.mjs"].replace("fails when PASS evidence references are not retained\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

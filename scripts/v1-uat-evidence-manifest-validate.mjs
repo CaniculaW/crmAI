@@ -50,6 +50,20 @@ function isConcreteReference(value) {
   return Boolean(value) && !hasPlaceholder(value) && !/^[-—无]+$/.test(value);
 }
 
+function evidenceReferenceTokens(value) {
+  return String(value ?? "")
+    .replace(/`/g, "")
+    .split(/[,\s;，；]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function isRetainedEvidenceReference(value) {
+  return isConcreteReference(value) && evidenceReferenceTokens(value).some((token) =>
+    token.startsWith("docs/") || /^https?:\/\//i.test(token)
+  );
+}
+
 function extractDecision(markdown) {
   const match = markdown.match(/Decision:\s*(Conditional Go|No-Go|Go)/i);
   return match?.[1] ?? "";
@@ -89,6 +103,17 @@ export function evaluateUatEvidenceManifest(markdown) {
       : `PASS rows missing concrete evidence references: ${passRowsWithoutEvidence.join(", ")}`
   ));
 
+  const unretainedEvidenceRows = rows
+    .filter((row) => row[3] === "PASS" && isConcreteReference(row[4]) && !isRetainedEvidenceReference(row[4]))
+    .map((row) => row[0]);
+  checks.push(makeCheck(
+    "evidence-references-retained",
+    unretainedEvidenceRows.length === 0,
+    unretainedEvidenceRows.length === 0
+      ? "All PASS evidence references point to retained docs or external URLs."
+      : `PASS evidence references are not retained: ${unretainedEvidenceRows.join(", ")}`
+  ));
+
   checks.push(makeCheck(
     "no-secret-material",
     !hasSecretMaterial(markdown),
@@ -113,7 +138,8 @@ export function evaluateUatEvidenceManifest(markdown) {
     decision,
     passed,
     failed,
-    checks
+    checks,
+    unretainedEvidenceRows
   };
 }
 

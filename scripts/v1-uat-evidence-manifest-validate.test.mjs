@@ -76,6 +76,19 @@ test("fails when a PASS evidence row lacks a concrete reference", () => {
   assert.ok(result.failed.some((check) => check.id === "evidence-references"));
 });
 
+test("fails when PASS evidence references are not retained", () => {
+  const manifest = completeManifest.replace(
+    "| UAT-006 | UAT evidence | QA Owner | PASS | docs/testing/evidence/uat-006.png | Verified |",
+    "| UAT-006 | UAT evidence | QA Owner | PASS | 会议纪要确认 | Verified |"
+  );
+
+  const result = evaluateUatEvidenceManifest(manifest);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.unretainedEvidenceRows, ["UAT-006"]);
+  assert.ok(result.failed.some((check) => check.id === "evidence-references-retained"));
+});
+
 test("fails when manifest text contains secret-like material", () => {
   const manifest = completeManifest.replace(
     "| SMK-003 | UAT evidence | QA Owner | PASS | docs/testing/evidence/smk-003.png | Verified |",
