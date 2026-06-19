@@ -19,6 +19,7 @@ const REQUIRED_HANDOFF_COMMANDS = [
   "node scripts/v1-generated-docs-check.mjs",
   "node scripts/v1-release-gate-status-check.mjs",
   "node scripts/v1-blocker-consistency-check.mjs",
+  "node scripts/v1-external-uat-request-coverage-check.mjs",
   "node scripts/v1-secret-scan-check.mjs",
   "node scripts/v1-release-gate.mjs"
 ];

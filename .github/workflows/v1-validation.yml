@@ -130,6 +130,12 @@ jobs:
       - name: Validate V1 blocker consistency
         run: node scripts/v1-blocker-consistency-check.mjs
 
+      - name: Run V1 external UAT request coverage tests
+        run: node --test scripts/v1-external-uat-request-coverage-check.test.mjs
+
+      - name: Validate V1 external UAT request coverage
+        run: node scripts/v1-external-uat-request-coverage-check.mjs
+
       - name: Run V1 final evidence handoff tests
         run: node --test scripts/v1-final-evidence-handoff-check.test.mjs
 

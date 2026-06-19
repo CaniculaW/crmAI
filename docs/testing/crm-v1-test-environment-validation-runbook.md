@@ -252,6 +252,14 @@ node scripts/v1-blocker-consistency-check.mjs
 
 该检查用于确认当前 release gate 阻塞项均出现在状态报告、行动计划和 Go/No-Go 会议包中，并已拆成 UAT 执行包里的补证行动项。
 
+外部 UAT 请求包更新后，执行请求覆盖检查：
+
+```bash
+node scripts/v1-external-uat-request-coverage-check.mjs
+```
+
+该检查用于确认 `docs/testing/v1-external-uat-request.md` 已列出当前每个失败 validator 的具体 `Gate/check-id` 和全部补证命令，防止交给项目/测试/业务侧的请求包漏掉实际阻塞项。
+
 最终交接材料更新后，执行交接证据一致性检查：
 
 ```bash
