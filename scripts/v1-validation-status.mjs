@@ -14,6 +14,7 @@ import { evaluateUatDefectRegister } from "./v1-uat-defect-register-validate.mjs
 import { evaluateUatEnvironmentEvidence } from "./v1-uat-environment-validate.mjs";
 import { evaluateUatLaunchIntake } from "./v1-uat-launch-intake-validate.mjs";
 import { evaluateUatSignoffRegister } from "./v1-uat-signoff-register-validate.mjs";
+import { evaluateEvidenceReferencesFromFiles } from "./v1-evidence-reference-check.mjs";
 
 const DEFAULT_EVIDENCE_PATH = "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md";
 const DEFAULT_TRACKER_PATH = "docs/testing/crm-v1-uat-execution-tracker.md";
@@ -46,6 +47,7 @@ function commandList(
     `node scripts/v1-uat-environment-validate.mjs ${environmentPath}`,
     `node scripts/v1-uat-evidence-pack-validate.mjs ${evidencePath}`,
     `node scripts/v1-uat-evidence-manifest-validate.mjs ${manifestPath}`,
+    `node scripts/v1-evidence-reference-check.mjs ${manifestPath}`,
     `node scripts/v1-uat-execution-tracker-validate.mjs ${trackerPath}`,
     `node scripts/v1-uat-defect-register-validate.mjs ${defectRegisterPath}`,
     `node scripts/v1-uat-signoff-register-validate.mjs ${signoffRegisterPath}`,
@@ -77,6 +79,7 @@ export function generateV1ValidationStatusMarkdown({
   environmentResult,
   evidenceResult,
   manifestResult,
+  evidenceReferenceResult = { ok: true, decision: "-", failed: [] },
   trackerResult,
   defectRegisterResult,
   signoffRegisterResult,
@@ -99,6 +102,7 @@ export function generateV1ValidationStatusMarkdown({
     ...collectFailedChecks("UAT Environment Evidence", environmentResult),
     ...collectFailedChecks("UAT Evidence Pack", evidenceResult),
     ...collectFailedChecks("UAT Evidence Manifest", manifestResult),
+    ...collectFailedChecks("UAT Evidence References", evidenceReferenceResult),
     ...collectFailedChecks("UAT Execution Tracker", trackerResult),
     ...collectFailedChecks("UAT Defect Register", defectRegisterResult),
     ...collectFailedChecks("UAT Signoff Register", signoffRegisterResult),
@@ -123,6 +127,7 @@ export function generateV1ValidationStatusMarkdown({
     resultRow("UAT Environment Evidence", environmentResult),
     resultRow("UAT Evidence Pack", evidenceResult),
     resultRow("UAT Evidence Manifest", manifestResult),
+    resultRow("UAT Evidence References", evidenceReferenceResult),
     resultRow("UAT Execution Tracker", trackerResult),
     resultRow("UAT Defect Register", defectRegisterResult),
     resultRow("UAT Signoff Register", signoffRegisterResult),
@@ -151,7 +156,7 @@ export function generateV1ValidationStatusMarkdown({
   lines.push("");
   lines.push("## Completion Rule");
   lines.push("");
-  lines.push("V1验证通过必须同时满足：readiness PASS、启动治理 validator PASS、UAT启动输入 validator PASS、UAT具名环境证据 validator PASS、UAT证据包 validator PASS、UAT证据清单 validator PASS、UAT执行追踪表 validator PASS、UAT缺陷台账 validator PASS、UAT签署台账 validator PASS、最终 release gate PASS，且项目负责人结论为 `Go`。");
+  lines.push("V1验证通过必须同时满足：readiness PASS、启动治理 validator PASS、UAT启动输入 validator PASS、UAT具名环境证据 validator PASS、UAT证据包 validator PASS、UAT证据清单 validator PASS、证据引用保全检查 PASS、UAT执行追踪表 validator PASS、UAT缺陷台账 validator PASS、UAT签署台账 validator PASS、最终 release gate PASS，且项目负责人结论为 `Go`。");
 
   return `${lines.join("\n")}\n`;
 }
@@ -189,6 +194,7 @@ export function generateV1ValidationStatusFromFiles({
   const evidenceResult = evaluateUatEvidencePack(readFileSync(path.join(rootDir, evidencePath), "utf8"));
   const trackerResult = evaluateUatExecutionTracker(readFileSync(path.join(rootDir, trackerPath), "utf8"));
   const manifestResult = evaluateUatEvidenceManifest(readFileSync(path.join(rootDir, manifestPath), "utf8"));
+  const evidenceReferenceResult = evaluateEvidenceReferencesFromFiles(rootDir, manifestPath);
   const defectRegisterResult = evaluateUatDefectRegister(readFileSync(path.join(rootDir, defectRegisterPath), "utf8"));
   const signoffRegisterResult = evaluateUatSignoffRegister(readFileSync(path.join(rootDir, signoffRegisterPath), "utf8"));
   const releaseGateResult = evaluateV1ReleaseGate({
@@ -199,6 +205,7 @@ export function generateV1ValidationStatusFromFiles({
     uatEvidenceResult: evidenceResult,
     trackerResult,
     evidenceManifestResult: manifestResult,
+    evidenceReferenceResult,
     defectRegisterResult,
     signoffRegisterResult
   });
@@ -212,6 +219,7 @@ export function generateV1ValidationStatusFromFiles({
     environmentResult,
     evidenceResult,
     manifestResult,
+    evidenceReferenceResult,
     trackerResult,
     defectRegisterResult,
     signoffRegisterResult,

@@ -12,6 +12,7 @@ import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
 import { evaluateUatExecutionTracker } from "./v1-uat-execution-tracker-validate.mjs";
 import { evaluateUatLaunchIntake } from "./v1-uat-launch-intake-validate.mjs";
 import { evaluateUatSignoffRegister } from "./v1-uat-signoff-register-validate.mjs";
+import { evaluateEvidenceReferencesFromFiles } from "./v1-evidence-reference-check.mjs";
 
 const DEFAULT_EVIDENCE_PATH = "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md";
 const DEFAULT_TRACKER_PATH = "docs/testing/crm-v1-uat-execution-tracker.md";
@@ -162,6 +163,15 @@ function executionItem(id) {
     };
   }
 
+  if (id === "EVIDENCE-REFERENCES") {
+    return {
+      id,
+      owner: "测试",
+      action: "补齐证据引用保全",
+      evidence: "每个 PASS 行引用的截图、命令输出、会议纪要或外部URL均可访问且已归档"
+    };
+  }
+
   return {
     id,
     owner: "项目/产品",
@@ -178,6 +188,7 @@ function collectExecutionItems({
   signoffRegisterResult,
   launchIntakeResult,
   kickoffResult = { ok: true, failed: [] },
+  evidenceReferenceResult = { ok: true, failed: [] },
   evidenceResult
 }) {
   const messages = collectFailedMessages(
@@ -188,6 +199,7 @@ function collectExecutionItems({
     signoffRegisterResult,
     launchIntakeResult,
     kickoffResult,
+    evidenceReferenceResult,
     evidenceResult
   ).join("\n");
 
@@ -227,6 +239,10 @@ function collectExecutionItems({
     ids.push("DEF-REGISTER");
   }
 
+  if ((evidenceReferenceResult.failed ?? []).length > 0 && !ids.includes("EVIDENCE-REFERENCES")) {
+    ids.push("EVIDENCE-REFERENCES");
+  }
+
   return ids.map(executionItem);
 }
 
@@ -246,6 +262,7 @@ function gateCommands({
     `node scripts/v1-uat-environment-validate.mjs ${environmentPath}`,
     `node scripts/v1-uat-evidence-pack-validate.mjs ${evidencePath}`,
     `node scripts/v1-uat-evidence-manifest-validate.mjs ${manifestPath}`,
+    `node scripts/v1-evidence-reference-check.mjs ${manifestPath}`,
     `node scripts/v1-uat-execution-tracker-validate.mjs ${trackerPath}`,
     `node scripts/v1-uat-defect-register-validate.mjs ${defectRegisterPath}`,
     `node scripts/v1-uat-signoff-register-validate.mjs ${signoffRegisterPath}`,
@@ -262,6 +279,7 @@ export function generateV1UatExecutionPackMarkdown({
   defectRegisterResult,
   signoffRegisterResult,
   launchIntakeResult,
+  evidenceReferenceResult = { ok: true, failed: [] },
   evidenceResult,
   evidencePath = DEFAULT_EVIDENCE_PATH,
   trackerPath = DEFAULT_TRACKER_PATH,
@@ -280,6 +298,7 @@ export function generateV1UatExecutionPackMarkdown({
     defectRegisterResult,
     signoffRegisterResult,
     launchIntakeResult,
+    evidenceReferenceResult,
     evidenceResult
   });
   const overall = items.length === 0 ? "Go" : "No-Go";
@@ -336,6 +355,7 @@ export function generateV1UatExecutionPackFromFiles({
   const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(path.join(rootDir, environmentPath), "utf8"));
   const trackerResult = evaluateUatExecutionTracker(readFileSync(path.join(rootDir, trackerPath), "utf8"));
   const manifestResult = evaluateUatEvidenceManifest(readFileSync(path.join(rootDir, manifestPath), "utf8"));
+  const evidenceReferenceResult = evaluateEvidenceReferencesFromFiles(rootDir, manifestPath);
   const defectRegisterResult = evaluateUatDefectRegister(readFileSync(path.join(rootDir, defectRegisterPath), "utf8"));
   const signoffRegisterResult = evaluateUatSignoffRegister(readFileSync(path.join(rootDir, signoffRegisterPath), "utf8"));
   const launchIntakeResult = evaluateUatLaunchIntake(readFileSync(path.join(rootDir, launchIntakePath), "utf8"));
@@ -350,6 +370,7 @@ export function generateV1UatExecutionPackFromFiles({
     defectRegisterResult,
     signoffRegisterResult,
     launchIntakeResult,
+    evidenceReferenceResult,
     evidenceResult,
     evidencePath,
     trackerPath,

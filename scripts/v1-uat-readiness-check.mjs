@@ -29,6 +29,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-uat-launch-intake-validate.test.mjs",
   "scripts/v1-uat-evidence-manifest-validate.mjs",
   "scripts/v1-uat-evidence-manifest-validate.test.mjs",
+  "scripts/v1-evidence-reference-check.mjs",
+  "scripts/v1-evidence-reference-check.test.mjs",
   "scripts/v1-uat-execution-tracker-validate.mjs",
   "scripts/v1-uat-execution-tracker-validate.test.mjs",
   "scripts/v1-release-gate.mjs",
@@ -485,6 +487,22 @@ export function evaluateReadinessSnapshot(snapshot) {
       "fails the current draft manifest because external UAT evidence is pending"
     ]),
     "UAT evidence manifest validator is tested and enforces evidence inventory completeness, concrete references, and secret redaction."
+  ));
+
+  const evidenceReferenceChecker = snapshot["scripts/v1-evidence-reference-check.mjs"] ?? "";
+  const evidenceReferenceCheckerTest = snapshot["scripts/v1-evidence-reference-check.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "v1-evidence-reference-checker",
+    includesAll(workflow + evidenceReferenceChecker + evidenceReferenceCheckerTest, [
+      "node --test scripts/v1-evidence-reference-check.test.mjs",
+      "node scripts/v1-evidence-reference-check.mjs",
+      "evaluateEvidenceReferences",
+      "evaluateEvidenceReferencesFromFiles",
+      "pass-reference-artifacts",
+      "go-pass-references",
+      "fails a PASS evidence row when its repository artifact path is missing"
+    ]),
+    "V1 evidence reference checker is tested and wired into CI to keep manifest PASS rows tied to retained artifacts or external URLs."
   ));
 
   const executionTrackerValidator = snapshot["scripts/v1-uat-execution-tracker-validate.mjs"] ?? "";

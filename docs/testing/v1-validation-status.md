@@ -1,7 +1,7 @@
 # CRM V1 Validation Status
 
-Generated at: 2026-06-19T02:56:35.434Z
-Git commit: e2eb0ebff2b9de8c3d26d7f135e8804a3e4b2933
+Generated at: 2026-06-19T04:34:27.185Z
+Git commit: 2ba75d708d3a2024d1b5316d75b08654e7f0a590
 
 Overall: No-Go
 
@@ -15,6 +15,7 @@ Overall: No-Go
 | UAT Environment Evidence | FAIL | No-Go | 3 |
 | UAT Evidence Pack | FAIL | No-Go | 7 |
 | UAT Evidence Manifest | FAIL | No-Go | 2 |
+| UAT Evidence References | PASS | No-Go | 0 |
 | UAT Execution Tracker | FAIL | No-Go | 7 |
 | UAT Defect Register | FAIL | No-Go | 3 |
 | UAT Signoff Register | FAIL | No-Go | 2 |
@@ -28,6 +29,7 @@ Overall: No-Go
 - `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md`
 - `node scripts/v1-uat-evidence-pack-validate.mjs docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`
 - `node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md`
+- `node scripts/v1-evidence-reference-check.mjs docs/testing/v1-uat-evidence-manifest.md`
 - `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md`
 - `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md`
 - `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md`
@@ -78,4 +80,4 @@ Overall: No-Go
 
 ## Completion Rule
 
-V1验证通过必须同时满足：readiness PASS、启动治理 validator PASS、UAT启动输入 validator PASS、UAT具名环境证据 validator PASS、UAT证据包 validator PASS、UAT证据清单 validator PASS、UAT执行追踪表 validator PASS、UAT缺陷台账 validator PASS、UAT签署台账 validator PASS、最终 release gate PASS，且项目负责人结论为 `Go`。
+V1验证通过必须同时满足：readiness PASS、启动治理 validator PASS、UAT启动输入 validator PASS、UAT具名环境证据 validator PASS、UAT证据包 validator PASS、UAT证据清单 validator PASS、证据引用保全检查 PASS、UAT执行追踪表 validator PASS、UAT缺陷台账 validator PASS、UAT签署台账 validator PASS、最终 release gate PASS，且项目负责人结论为 `Go`。

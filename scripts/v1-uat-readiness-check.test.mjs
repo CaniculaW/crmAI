@@ -18,6 +18,8 @@ jobs:
       - run: node --test scripts/v1-kickoff-governance-validate.test.mjs
       - run: node --test scripts/v1-uat-launch-intake-validate.test.mjs
       - run: node --test scripts/v1-uat-evidence-manifest-validate.test.mjs
+      - run: node --test scripts/v1-evidence-reference-check.test.mjs
+      - run: node scripts/v1-evidence-reference-check.mjs
       - run: node --test scripts/v1-uat-execution-tracker-validate.test.mjs
       - run: node --test scripts/v1-release-gate.test.mjs
       - run: node --test scripts/v1-validation-status.test.mjs
@@ -69,10 +71,12 @@ jobs:
   "scripts/v1-uat-launch-intake-validate.test.mjs": "fails a draft launch intake because external UAT inputs are pending\n",
   "scripts/v1-uat-evidence-manifest-validate.mjs": "evaluateUatEvidenceManifest\nrequired-items\nevidence-complete\nno-secret-material\n",
   "scripts/v1-uat-evidence-manifest-validate.test.mjs": "fails the current draft manifest because external UAT evidence is pending\n",
+  "scripts/v1-evidence-reference-check.mjs": "evaluateEvidenceReferences\nevaluateEvidenceReferencesFromFiles\npass-reference-artifacts\ngo-pass-references\n",
+  "scripts/v1-evidence-reference-check.test.mjs": "fails a PASS evidence row when its repository artifact path is missing\n",
   "scripts/v1-uat-execution-tracker-validate.mjs": "evaluateUatExecutionTracker\nrequired-items\nrelease-gates\n",
   "scripts/v1-uat-execution-tracker-validate.test.mjs": "fails the current rc8 tracker because external UAT remains pending\n",
-  "scripts/v1-release-gate.mjs": "evaluateV1ReleaseGate\nevaluateV1ReleaseGateFromFiles\nV1 release gate requires Go\nkickoff-governance\nuat-launch-intake\nuat-environment\n",
-  "scripts/v1-release-gate.test.mjs": "fails when kickoff governance remains incomplete\nfails when the UAT launch intake remains incomplete\nfails when the project decision is Conditional Go\n",
+  "scripts/v1-release-gate.mjs": "evaluateV1ReleaseGate\nevaluateV1ReleaseGateFromFiles\nV1 release gate requires Go\nkickoff-governance\nuat-launch-intake\nuat-environment\nuat-evidence-references\n",
+  "scripts/v1-release-gate.test.mjs": "fails when kickoff governance remains incomplete\nfails when the UAT launch intake remains incomplete\nfails when PASS evidence references do not resolve to retained artifacts\nfails when the project decision is Conditional Go\n",
   "scripts/v1-validation-status.mjs": "generateV1ValidationStatusMarkdown\nOverall: No-Go\nKickoff Governance\nUAT Environment Evidence\nUAT Execution Tracker\n",
   "scripts/v1-validation-status.test.mjs": "summarizes a No-Go V1 status with concrete blocker commands\n",
   "scripts/v1-uat-action-plan.mjs": "generateV1UatActionPlanMarkdown\nOverall: No-Go\nRole Workstreams\nKickoff Governance\nUAT Environment Evidence\n",
@@ -232,6 +236,7 @@ SIGNOFF-PM
 GO-NOGO
 不记录明文密码
 node scripts/v1-uat-evidence-manifest-validate.mjs
+node scripts/v1-evidence-reference-check.mjs
 `,
   "docs/testing/evidence/v1-local-uat-2026-06-18.md": "V1-local-uat-20260618\nv1.0.0-rc.8\nFlyway\n14\n/api/health\n/api/bootstrap\nBrowser Use URL policy\nUAT evidence pack validator\nV1演示业务数据\n\"accounts\": 1\n\"contacts\": 1\n\"opportunities\": 1\n\"activities\": 1\n",
   "docs/testing/evidence/v1-compose-uat-2026-06-19.md": "V1-compose-uat-20260619\nv1.0.0-rc.8\n8e9efba2ea50bfe32304ec488cde72ee5262f86b\ndocker.1ms.run/library/postgres:16\nCRM_BACKEND_BUILD_IMAGE=docker.1ms.run/library/maven:3.9-eclipse-temurin-17\nCRM_BACKEND_RUNTIME_IMAGE=docker.1ms.run/library/eclipse-temurin:17-jre\nCRM_FRONTEND_BUILD_IMAGE=docker.1ms.run/library/node:22-alpine\nCRM_FRONTEND_RUNTIME_IMAGE=docker.1ms.run/library/nginx:1.27-alpine\ndocker compose -f compose.v1-test.yml up -d --build\ncrm-ai-v1-test-db-1\ncrm-ai-v1-test-backend-1\ncrm-ai-v1-test-frontend-1\n/api/health\n\"status\":\"UP\"\n/api/bootstrap\n\"permissions_count\":25\n\"accounts\":1\n\"contacts\":1\n\"opportunities\":1\n\"activities\":1\nnpm run smoke:v1:browser\nv1-rc8-compose-browser-smoke-20260619.png\n",
@@ -240,7 +245,7 @@ node scripts/v1-uat-evidence-manifest-validate.mjs
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-external-uat-request.mjs\nv1-generated-docs-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\nv1-uat-coverage-check.mjs\nv1-traceability-check.mjs\nv1-blocker-consistency-check.mjs\nv1-secret-scan-check.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-evidence-reference-check.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-external-uat-request.mjs\nv1-generated-docs-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\nv1-uat-coverage-check.mjs\nv1-traceability-check.mjs\nv1-blocker-consistency-check.mjs\nv1-secret-scan-check.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -265,6 +270,16 @@ test("fails when a required readiness artifact is missing", () => {
 test("fails when the UAT evidence pack generator is missing", () => {
   const snapshot = { ...completeSnapshot };
   delete snapshot["scripts/v1-uat-evidence-pack.mjs"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the evidence reference checker is missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["scripts/v1-evidence-reference-check.mjs"];
 
   const result = evaluateReadinessSnapshot(snapshot);
 

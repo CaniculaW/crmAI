@@ -84,6 +84,11 @@ const failingSignoffRegisterResult = {
   failed: [{ id: "required-signoffs" }, { id: "project-go-decision" }]
 };
 
+const failingEvidenceReferenceResult = {
+  ok: false,
+  failed: [{ id: "pass-reference-artifacts" }]
+};
+
 function goEvidencePack(decision = "Go") {
   const projectDecision = decision === "Conditional Go" ? "Conditional Go" : decision;
 
@@ -239,6 +244,24 @@ test("fails when the UAT launch intake remains incomplete", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "uat-launch-intake"));
+});
+
+test("fails when PASS evidence references do not resolve to retained artifacts", () => {
+  const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    launchIntakeResult: passingLaunchIntakeResult,
+    environmentResult: passingEnvironmentResult,
+    uatEvidenceResult,
+    trackerResult: passingTrackerResult,
+    evidenceManifestResult: passingManifestResult,
+    evidenceReferenceResult: failingEvidenceReferenceResult,
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-evidence-references"));
 });
 
 test("fails when UAT evidence is still a No-Go draft", () => {

@@ -1,6 +1,6 @@
 # CRM V1 Go/No-Go Meeting Pack
 
-Generated at: 2026-06-19T02:48:08.469Z
+Generated at: 2026-06-19T04:34:27.228Z
 
 Decision Recommendation: No-Go
 
@@ -21,6 +21,7 @@ Decision Recommendation: No-Go
 - `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md`
 - `node scripts/v1-uat-evidence-pack-validate.mjs docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`
 - `node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md`
+- `node scripts/v1-evidence-reference-check.mjs docs/testing/v1-uat-evidence-manifest.md`
 - `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md`
 - `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md`
 - `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md`

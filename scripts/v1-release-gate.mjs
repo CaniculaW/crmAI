@@ -13,6 +13,7 @@ import { evaluateUatEnvironmentEvidence } from "./v1-uat-environment-validate.mj
 import { evaluateUatExecutionTracker } from "./v1-uat-execution-tracker-validate.mjs";
 import { evaluateUatLaunchIntake } from "./v1-uat-launch-intake-validate.mjs";
 import { evaluateUatSignoffRegister } from "./v1-uat-signoff-register-validate.mjs";
+import { evaluateEvidenceReferencesFromFiles } from "./v1-evidence-reference-check.mjs";
 
 const DEFAULT_EVIDENCE_PATH = "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md";
 const DEFAULT_TRACKER_PATH = "docs/testing/crm-v1-uat-execution-tracker.md";
@@ -35,6 +36,7 @@ export function evaluateV1ReleaseGate({
   uatEvidenceResult,
   trackerResult,
   evidenceManifestResult,
+  evidenceReferenceResult = { ok: true, failed: [] },
   defectRegisterResult,
   signoffRegisterResult
 }) {
@@ -80,6 +82,13 @@ export function evaluateV1ReleaseGate({
       evidenceManifestResult.ok
         ? "UAT evidence manifest is complete."
         : `UAT evidence manifest failed: ${evidenceManifestResult.failed.map((check) => check.id).join(", ")}`
+    ),
+    makeCheck(
+      "uat-evidence-references",
+      evidenceReferenceResult.ok,
+      evidenceReferenceResult.ok
+        ? "UAT evidence references resolve to retained artifacts."
+        : `UAT evidence references failed: ${evidenceReferenceResult.failed.map((check) => check.id).join(", ")}`
     ),
     makeCheck(
       "uat-defect-register",
@@ -147,6 +156,7 @@ export function evaluateV1ReleaseGateFromFiles(
   const trackerResult = evaluateUatExecutionTracker(readFileSync(absoluteTrackerPath, "utf8"));
   const absoluteManifestPath = path.resolve(rootDir, manifestPath);
   const evidenceManifestResult = evaluateUatEvidenceManifest(readFileSync(absoluteManifestPath, "utf8"));
+  const evidenceReferenceResult = evaluateEvidenceReferencesFromFiles(rootDir, manifestPath);
   const absoluteDefectRegisterPath = path.resolve(rootDir, defectRegisterPath);
   const defectRegisterResult = evaluateUatDefectRegister(readFileSync(absoluteDefectRegisterPath, "utf8"));
   const absoluteSignoffRegisterPath = path.resolve(rootDir, signoffRegisterPath);
@@ -160,6 +170,7 @@ export function evaluateV1ReleaseGateFromFiles(
     uatEvidenceResult,
     trackerResult,
     evidenceManifestResult,
+    evidenceReferenceResult,
     defectRegisterResult,
     signoffRegisterResult
   });
@@ -180,7 +191,7 @@ function printResult(result) {
   }
 
   lines.push("");
-  lines.push("Note: PASS means the V1 candidate has completed engineering readiness, kickoff governance validation, UAT launch intake validation, named UAT environment validation, UAT execution tracking, defect register validation, signoff register validation, evidence manifest validation, formal UAT evidence validation, and an explicit project Go decision.");
+  lines.push("Note: PASS means the V1 candidate has completed engineering readiness, kickoff governance validation, UAT launch intake validation, named UAT environment validation, UAT execution tracking, defect register validation, signoff register validation, evidence manifest validation, evidence reference retention validation, formal UAT evidence validation, and an explicit project Go decision.");
 
   console.log(lines.join("\n"));
 }

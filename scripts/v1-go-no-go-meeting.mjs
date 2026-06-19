@@ -14,6 +14,7 @@ import { evaluateUatDefectRegister } from "./v1-uat-defect-register-validate.mjs
 import { evaluateUatEnvironmentEvidence } from "./v1-uat-environment-validate.mjs";
 import { evaluateUatLaunchIntake } from "./v1-uat-launch-intake-validate.mjs";
 import { evaluateUatSignoffRegister } from "./v1-uat-signoff-register-validate.mjs";
+import { evaluateEvidenceReferencesFromFiles } from "./v1-evidence-reference-check.mjs";
 
 const DEFAULT_EVIDENCE_PATH = "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md";
 const DEFAULT_TRACKER_PATH = "docs/testing/crm-v1-uat-execution-tracker.md";
@@ -51,6 +52,7 @@ function gateCommands(
     `node scripts/v1-uat-environment-validate.mjs ${environmentPath}`,
     `node scripts/v1-uat-evidence-pack-validate.mjs ${evidencePath}`,
     `node scripts/v1-uat-evidence-manifest-validate.mjs ${manifestPath}`,
+    `node scripts/v1-evidence-reference-check.mjs ${manifestPath}`,
     `node scripts/v1-uat-execution-tracker-validate.mjs ${trackerPath}`,
     `node scripts/v1-uat-defect-register-validate.mjs ${defectRegisterPath}`,
     `node scripts/v1-uat-signoff-register-validate.mjs ${signoffRegisterPath}`,
@@ -73,6 +75,7 @@ export function generateV1GoNoGoMeetingMarkdown({
   environmentResult,
   evidenceResult,
   manifestResult,
+  evidenceReferenceResult = { ok: true, failed: [] },
   trackerResult,
   defectRegisterResult,
   signoffRegisterResult,
@@ -95,6 +98,7 @@ export function generateV1GoNoGoMeetingMarkdown({
     ...failedLines("UAT Environment Evidence", environmentResult),
     ...failedLines("UAT Evidence Pack", evidenceResult),
     ...failedLines("UAT Evidence Manifest", manifestResult),
+    ...failedLines("UAT Evidence References", evidenceReferenceResult),
     ...failedLines("UAT Execution Tracker", trackerResult),
     ...failedLines("UAT Defect Register", defectRegisterResult),
     ...failedLines("UAT Signoff Register", signoffRegisterResult),
@@ -171,6 +175,7 @@ export function generateV1GoNoGoMeetingFromFiles({
   const evidenceResult = evaluateUatEvidencePack(readFileSync(path.join(rootDir, evidencePath), "utf8"));
   const trackerResult = evaluateUatExecutionTracker(readFileSync(path.join(rootDir, trackerPath), "utf8"));
   const manifestResult = evaluateUatEvidenceManifest(readFileSync(path.join(rootDir, manifestPath), "utf8"));
+  const evidenceReferenceResult = evaluateEvidenceReferencesFromFiles(rootDir, manifestPath);
   const defectRegisterResult = evaluateUatDefectRegister(readFileSync(path.join(rootDir, defectRegisterPath), "utf8"));
   const signoffRegisterResult = evaluateUatSignoffRegister(readFileSync(path.join(rootDir, signoffRegisterPath), "utf8"));
   const releaseGateResult = evaluateV1ReleaseGate({
@@ -181,6 +186,7 @@ export function generateV1GoNoGoMeetingFromFiles({
     uatEvidenceResult: evidenceResult,
     trackerResult,
     evidenceManifestResult: manifestResult,
+    evidenceReferenceResult,
     defectRegisterResult,
     signoffRegisterResult
   });
@@ -193,6 +199,7 @@ export function generateV1GoNoGoMeetingFromFiles({
     environmentResult,
     evidenceResult,
     manifestResult,
+    evidenceReferenceResult,
     trackerResult,
     defectRegisterResult,
     signoffRegisterResult,
