@@ -25,7 +25,7 @@ GitHub Actions 已配置 V1 自动验证工作流：
 - 前端：`npm test`
 - 前端生产构建：`npm run build`
 - 部署配置：`docker compose -f compose.v1-test.yml config`
-- UAT 准出材料：RC/UAT readiness、启动治理 validator、UAT 启动输入 validator、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT 缺陷台账 validator、UAT 证据清单 validator、UAT 签署台账 validator、验收清单一致性检查、UAT覆盖检查、验证追踪矩阵一致性检查、阻塞项一致性检查、生成文档一致性检查和计划状态一致性检查测试
+- UAT 准出材料：RC/UAT readiness、启动治理 validator、UAT 启动输入 validator、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT 缺陷台账 validator、UAT 证据清单 validator、UAT 签署台账 validator、验收清单一致性检查、UAT覆盖检查、验证追踪矩阵一致性检查、阻塞项一致性检查、证据秘密扫描、生成文档一致性检查和计划状态一致性检查测试
 - 最终放行门禁：`v1-release-gate` 规则测试
 
 ## V1 测试环境部署
@@ -265,6 +265,12 @@ V1 阻塞项一致性检查：
 
 ```bash
 node scripts/v1-blocker-consistency-check.mjs
+```
+
+V1 当前证据秘密扫描：
+
+```bash
+node scripts/v1-secret-scan-check.mjs
 ```
 
 当前启动治理纪要、rc.8 草稿、UAT 执行追踪表、UAT 签署台账和 UAT 逐项执行包仍是 `No-Go`，因此最终放行门禁会失败；待启动负责人和范围冻结、具名测试环境 UAT、缺陷闭环、追踪表、签署台账和签署完成并形成 `Go` 证据包后，该命令才应通过。

@@ -244,6 +244,14 @@ node scripts/v1-blocker-consistency-check.mjs
 
 该检查用于确认当前 release gate 阻塞项均出现在状态报告、行动计划和 Go/No-Go 会议包中，并已拆成 UAT 执行包里的补证行动项。
 
+当前 V1 证据材料更新后，执行秘密扫描：
+
+```bash
+node scripts/v1-secret-scan-check.mjs
+```
+
+该检查用于防止当前 V1 证据文档中出现明文密码、Bearer token、API key 或等价敏感材料；脱敏占位符和 `${TOKEN}` 变量形式可保留。
+
 正式准出前执行最终放行门禁：
 
 ```bash

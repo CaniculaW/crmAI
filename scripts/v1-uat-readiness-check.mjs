@@ -53,6 +53,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-traceability-check.test.mjs",
   "scripts/v1-blocker-consistency-check.mjs",
   "scripts/v1-blocker-consistency-check.test.mjs",
+  "scripts/v1-secret-scan-check.mjs",
+  "scripts/v1-secret-scan-check.test.mjs",
   "docs/releases/v1.0.0-rc.8.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/v1-validation-status.md",
@@ -657,6 +659,20 @@ export function evaluateReadinessSnapshot(snapshot) {
       "fails when a decision document omits a release gate blocker"
     ]),
     "V1 blocker consistency checker is tested and wired into CI to keep current release-gate blockers visible in decision materials and execution actions."
+  ));
+
+  const secretScanChecker = snapshot["scripts/v1-secret-scan-check.mjs"] ?? "";
+  const secretScanCheckerTest = snapshot["scripts/v1-secret-scan-check.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "v1-secret-scan-checker",
+    includesAll(workflow + secretScanChecker + secretScanCheckerTest, [
+      "node --test scripts/v1-secret-scan-check.test.mjs",
+      "node scripts/v1-secret-scan-check.mjs",
+      "evaluateV1SecretScanSnapshot",
+      "current-v1-evidence-no-secrets",
+      "fails when a current V1 evidence document contains a bearer token"
+    ]),
+    "V1 secret scan checker is tested and wired into CI to keep current V1 evidence documents free of obvious plaintext secrets."
   ));
 
   const release = snapshot["docs/releases/v1.0.0-rc.8.md"] ?? "";
