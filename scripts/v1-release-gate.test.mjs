@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 
-import { evaluateV1ReleaseGate } from "./v1-release-gate.mjs";
+import { evaluateV1ReleaseGate, evaluateV1ReleaseGateFromFiles } from "./v1-release-gate.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
 
 const passingReadinessResult = {
@@ -178,6 +181,231 @@ Go/No-Go 结论：
 `;
 }
 
+const completeKickoff = `# CRM研发启动会纪要
+
+日期：2026-06-17
+Decision: Go
+
+| 角色 | 姓名 | 确认状态 | 备注 |
+|---|---|---|---|
+| 产品负责人 | Product Owner | 已确认 | 负责需求冻结、范围管理和业务验收协调 |
+| 业务验收人-销售侧 | Sales Owner | 已确认 | 验收销售主流程 |
+| 业务验收人-管理侧 | Manager Owner | 已确认 | 验收管理视图和权限边界 |
+| 研发负责人 | Dev Owner | 已确认 | 负责技术方案、排期和交付协调 |
+| 前端负责人 | Frontend Owner | 已确认 | 负责 Web 管理端页面交付 |
+| 后端负责人 | Backend Owner | 已确认 | 负责 API、权限、数据和业务服务 |
+| 测试负责人 | QA Owner | 已确认 | 负责测试用例、集成测试和验收验证 |
+
+| 事项 | 当前口径 | 确认状态 |
+|---|---|---|
+| 产品目标 | 替代销售 Excel 中核心客户、商机、行动和周进展管理，先跑通销售基础闭环 | 已确认 |
+| V1 模块范围 | 系统基础与权限管理、客户池、联系人与干系人、商机生命周期、销售行动、商机周进展汇总 | 已确认 |
+| V1 业务闭环 | 登录 -> 创建客户 -> 创建联系人/干系人 -> 创建商机 -> 推进商机阶段与状态 -> 创建销售行动 -> 自动回写客户和商机最近跟进 -> 自动生成商机周进展汇总 | 已确认 |
+| V1 暂不做 | 方案标书、合同、开票、回款、发票与回款多对多核销、经营驾驶舱完整指标、AI 销售助手完整能力 | 已确认 |
+| 上线周期 | 2026-07-29 至 2026-08-12 | 已确认 |
+| 技术栈 | React + Ant Design、Java Spring Boot、PostgreSQL | 已确认 |
+| 验收方式 | 以核心链路和页面验收点为主，销售侧与管理侧共同确认 | 已确认 |
+| V1范围冻结 | V1 仅包含销售基础闭环，超出范围进入后续版本池 | 已冻结 |
+
+## V1 范围
+
+- 系统基础与权限管理
+- 客户池
+- 联系人与干系人
+- 商机生命周期
+- 销售行动
+- 周进展
+
+## V1 不含范围
+
+- 方案与标书模块。
+- 合同管理模块。
+- 开票管理模块。
+- 回款管理模块。
+- 经营驾驶舱完整指标。
+- AI 销售助手完整能力。
+`;
+
+const completeLaunchIntake = `# CRM V1 UAT Launch Intake
+
+Version: v1.0.0-rc.8
+Decision: Go
+
+| Field | Value | Evidence |
+|---|---|---|
+| 测试环境名称 | CRM-V1-UAT-20260619 | deployment-record#env |
+| 前端访问地址 | https://crm-v1-uat.example.test | deployment-record#frontend |
+| 后端 API 地址 | https://crm-v1-uat-api.example.test | deployment-record#backend |
+| Git 提交号 | 09c46ac031469604f2a680ef011621854d2d9e23 | ci-run#27801041679 |
+| UAT窗口 | 2026-06-20 09:00 至 2026-06-21 18:00 | uat-calendar#v1 |
+| 证据归档位置 | evidence/v1-uat/ | evidence-index#root |
+
+| Participant ID | Role | Owner | Contact | Responsibility | Status |
+|---|---|---|---|---|---|
+| UAT-SALES | 销售侧验收人 | Sales Owner | sales@example.test | 验收销售主流程 | 已确认 |
+| UAT-MANAGER | 管理侧验收人 | Manager Owner | manager@example.test | 验收管理视图和权限边界 | 已确认 |
+| UAT-PRODUCT | 产品负责人 | Product Owner | product@example.test | 确认范围和准出口径 | 已确认 |
+| UAT-TEST | 测试负责人 | QA Owner | qa@example.test | 组织执行和证据归档 | 已确认 |
+| UAT-DEV | 研发负责人 | Dev Owner | dev@example.test | 支持环境和缺陷修复 | 已确认 |
+| UAT-PM | 项目负责人 | PM Owner | pm@example.test | 组织 Go/No-Go 会议 | 已确认 |
+
+| Account item | Owner | Status | Evidence |
+|---|---|---|---|
+| 管理员账号 | 测试负责人 | 已准备 | account-custody#admin |
+| 销售个人账号 | 测试负责人 | 已准备 | account-custody#sales |
+| 销售负责人账号 | 测试负责人 | 已准备 | account-custody#manager |
+| 权限样本账号 | 测试负责人 | 已准备 | account-custody#permission-sample |
+`;
+
+const completeEnvironment = `# CRM V1 UAT Environment Evidence
+
+Version: v1.0.0-rc.8
+Decision: Go
+
+## Environment Summary
+
+| Item | Value |
+|---|---|
+| 测试环境名称 | CRM-V1-UAT-20260619 |
+| 前端访问地址 | https://crm-v1-uat.example.com/system |
+| 后端 API 地址 | https://crm-v1-uat-api.example.com |
+| 候选版本 | v1.0.0-rc.8 |
+| Git 提交号 | ce6c06389fbde5cb5910d54b840a9afd6f7127f9 |
+
+## Environment Checks
+
+| Check ID | Check item | Status | Evidence reference | Owner |
+|---|---|---|---|---|
+${Array.from({ length: 8 }, (_, index) => {
+  const id = `ENV-${String(index + 1).padStart(3, "0")}`;
+  return `| ${id} | V1环境检查 | PASS | docs/testing/evidence/${id.toLowerCase()}.png | QA Owner |`;
+}).join("\n")}
+`;
+
+const completeTracker = `# CRM V1 UAT执行派工与证据追踪表
+
+版本：v1.0.0-rc.8
+
+状态：具名测试环境已确认。正式 UAT 已通过，当前结论：Go。
+
+| 角色 | 当前负责人 | 责任 | 状态 |
+|---|---|---|---|
+| 销售侧验收人 | Sales Owner | 验收销售个人主流程 | 已签署 |
+| 管理侧验收人 | Manager Owner | 验收团队查看和权限边界 | 已签署 |
+| 产品负责人 | Product Owner | 确认V1范围 | 已签署 |
+| 测试负责人 | QA Owner | 组织UAT执行 | 已签署 |
+| 研发负责人 | Dev Owner | 提供版本和缺陷修复支持 | 已签署 |
+| 项目负责人 | PM Owner | 做最终准出判定 | Go |
+
+| 编号 | 检查项 | 责任侧 | 证据要求 | 当前状态 |
+|---|---|---|---|---|
+${Array.from({ length: 6 }, (_, index) => {
+  const id = `PRE-${String(index + 1).padStart(3, "0")}`;
+  return `| ${id} | V1前置检查 | 项目/测试 | evidence/${id.toLowerCase()}.png | 通过 |`;
+}).join("\n")}
+
+| 编号 | 验证项 | 责任侧 | 证据要求 | 当前状态 |
+|---|---|---|---|---|
+${Array.from({ length: 5 }, (_, index) => {
+  const id = `SMK-${String(index + 1).padStart(3, "0")}`;
+  return `| ${id} | V1环境Smoke | 测试 | evidence/${id.toLowerCase()}.png | 通过 |`;
+}).join("\n")}
+
+| 编号 | 验收链路 | 主要验收人 | 对应验收项 | 证据要求 | 当前状态 |
+|---|---|---|---|---|---|
+${Array.from({ length: 10 }, (_, index) => {
+  const id = `UAT-${String(index + 1).padStart(3, "0")}`;
+  return `| ${id} | V1业务验收链路 | Sales Owner | AC-${String(index + 1).padStart(3, "0")} | evidence/${id.toLowerCase()}.png | 通过 |`;
+}).join("\n")}
+
+| 等级 | 准出要求 | 当前状态 | 证据 |
+|---|---|---|---|
+| P0 / S1 阻断 | 必须全部关闭并回归通过 | 0未关闭 | defect-summary.md |
+| P1 / S2 严重 | 原则上关闭 | 0未关闭 | defect-summary.md |
+| P2 / S3 一般 | 评估试点影响 | 已评估 | defect-summary.md |
+| P3 / S4 轻微 | 可后续优化 | 已记录 | defect-summary.md |
+
+| 门禁 | 命令或证据 | 通过条件 | 当前状态 |
+|---|---|---|---|
+| UAT证据清单一致性 | \`node scripts/v1-uat-evidence-manifest-validate.mjs v1-uat-evidence-manifest.md\` | 返回 \`PASS\` | PASS |
+| UAT具名环境一致性 | \`node scripts/v1-uat-environment-validate.mjs v1-uat-environment-evidence.md\` | 返回 \`PASS\` | PASS |
+| UAT证据包一致性 | \`node scripts/v1-uat-evidence-pack-validate.mjs crm-v1-uat-evidence-pack.md\` | 返回 \`PASS\` | PASS |
+| UAT缺陷台账一致性 | \`node scripts/v1-uat-defect-register-validate.mjs v1-uat-defect-register.md\` | 返回 \`PASS\` | PASS |
+| UAT签署台账一致性 | \`node scripts/v1-uat-signoff-register-validate.mjs v1-uat-signoff-register.md\` | 返回 \`PASS\` | PASS |
+| V1最终放行门禁 | \`node scripts/v1-release-gate.mjs . crm-v1-uat-evidence-pack.md crm-v1-uat-execution-tracker.md v1-uat-evidence-manifest.md v1-uat-defect-register.md v1-uat-environment-evidence.md v1-uat-signoff-register.md v1-uat-launch-intake.md\` | 返回 \`PASS\` | PASS |
+| 项目签署 | 销售侧验收人、管理侧验收人、产品负责人、测试负责人、研发负责人、项目负责人 | 全部签署完成 | 已完成 |
+
+当前结论：Go。
+`;
+
+const completeDefectRegister = `# CRM V1 UAT Defect Register
+
+Version: v1.0.0-rc.8
+Decision: Go
+
+| Severity | Total | Open | Closure evidence |
+|---|---:|---:|---|
+| P0 / S1 阻断 | 1 | 0 | docs/testing/evidence/defects/p0-regression.md |
+| P1 / S2 严重 | 1 | 0 | docs/testing/evidence/defects/p1-regression.md |
+| P2 / S3 一般 | 1 | 0 | docs/testing/evidence/defects/p2-triage.md |
+| P3 / S4 轻微 | 0 | 0 | docs/testing/evidence/defects/p3-triage.md |
+
+| Defect ID | Severity | Source case | Status | Owner | Resolution | Regression evidence | Business decision |
+|---|---|---|---|---|---|---|---|
+| DEF-001 | P0 / S1 阻断 | UAT-004 | VERIFIED | Dev Owner | 修复客户保存失败 | docs/testing/evidence/defects/def-001-regression.png | 已关闭 |
+| DEF-002 | P1 / S2 严重 | UAT-009 | VERIFIED | Dev Owner | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |
+| DEF-003 | P2 / S3 一般 | UAT-007 | CLOSED | Product Owner | 纳入优化池 | docs/testing/evidence/defects/def-003-triage.md | 不影响试点 |
+`;
+
+const completeSignoffRegister = `# CRM V1 UAT Signoff Register
+
+Version: v1.0.0-rc.8
+Decision: Go
+
+| Signoff ID | Role | Owner | Decision | Signed date | Evidence reference | Notes |
+|---|---|---|---|---|---|---|
+| SIGNOFF-SALES | 销售侧验收人 | Sales Owner | 同意 | 2026-06-19 | meeting-minutes#sales | 销售侧验收通过 |
+| SIGNOFF-MANAGER | 管理侧验收人 | Manager Owner | 同意 | 2026-06-19 | meeting-minutes#manager | 管理侧验收通过 |
+| SIGNOFF-PRODUCT | 产品负责人 | Product Owner | 同意 | 2026-06-19 | meeting-minutes#product | 范围确认 |
+| SIGNOFF-TEST | 测试负责人 | QA Owner | 同意 | 2026-06-19 | test-report#summary | 测试准出 |
+| SIGNOFF-DEV | 研发负责人 | Dev Owner | 同意 | 2026-06-19 | release-note#engineering | 研发准出 |
+| SIGNOFF-PM | 项目负责人 | PM Owner | Go | 2026-06-19 | go-no-go-meeting#decision | 项目同意 V1 试点 |
+`;
+
+const requiredManifestIds = [
+  "ENV-EVIDENCE",
+  ...Array.from({ length: 6 }, (_, index) => `PRE-${String(index + 1).padStart(3, "0")}`),
+  ...Array.from({ length: 5 }, (_, index) => `SMK-${String(index + 1).padStart(3, "0")}`),
+  ...Array.from({ length: 10 }, (_, index) => `UAT-${String(index + 1).padStart(3, "0")}`),
+  "DEF-REGISTER",
+  "DEF-P0",
+  "DEF-P1",
+  "SIGNOFF-REGISTER",
+  "SIGNOFF-SALES",
+  "SIGNOFF-MANAGER",
+  "SIGNOFF-PRODUCT",
+  "SIGNOFF-TEST",
+  "SIGNOFF-DEV",
+  "SIGNOFF-PM",
+  "GO-NOGO"
+];
+
+const completeManifest = `# CRM V1 UAT Evidence Manifest
+
+Version: v1.0.0-rc.8
+Decision: Go
+
+| Evidence ID | Type | Owner | Status | Evidence reference | Notes |
+|---|---|---|---|---|---|
+${requiredManifestIds.map((id) => `| ${id} | UAT evidence | QA Owner | PASS | README.md | Verified |`).join("\n")}
+`;
+
+function writeFixtureFile(rootDir, filename, content) {
+  const filePath = path.join(rootDir, filename);
+  writeFileSync(filePath, content);
+  return filePath;
+}
+
 test("passes only when readiness, UAT environment, UAT evidence, defect register, and project Go are all complete", () => {
   const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
   const result = evaluateV1ReleaseGate({
@@ -189,6 +417,34 @@ test("passes only when readiness, UAT environment, UAT evidence, defect register
     defectRegisterResult: passingDefectRegisterResult,
     signoffRegisterResult: passingSignoffRegisterResult
   });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.decision, "Go");
+  assert.deepEqual(result.failed, []);
+});
+
+test("passes from filled UAT source files when every validator and project Go evidence is complete", () => {
+  const fixtureDir = mkdtempSync(path.join(tmpdir(), "crm-v1-release-gate-go-"));
+  const evidencePath = writeFixtureFile(fixtureDir, "evidence-pack.md", goEvidencePack("Go"));
+  const trackerPath = writeFixtureFile(fixtureDir, "execution-tracker.md", completeTracker);
+  const manifestPath = writeFixtureFile(fixtureDir, "evidence-manifest.md", completeManifest);
+  const defectRegisterPath = writeFixtureFile(fixtureDir, "defect-register.md", completeDefectRegister);
+  const environmentPath = writeFixtureFile(fixtureDir, "environment.md", completeEnvironment);
+  const signoffRegisterPath = writeFixtureFile(fixtureDir, "signoffs.md", completeSignoffRegister);
+  const launchIntakePath = writeFixtureFile(fixtureDir, "launch-intake.md", completeLaunchIntake);
+  const kickoffPath = writeFixtureFile(fixtureDir, "kickoff.md", completeKickoff);
+
+  const result = evaluateV1ReleaseGateFromFiles(
+    process.cwd(),
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath
+  );
 
   assert.equal(result.ok, true);
   assert.equal(result.decision, "Go");

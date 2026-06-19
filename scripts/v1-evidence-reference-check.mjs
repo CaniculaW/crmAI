@@ -140,7 +140,7 @@ export function evaluateEvidenceReferencesFromFiles(
 ) {
   return evaluateEvidenceReferences({
     rootDir,
-    manifestMarkdown: readFileSync(path.join(rootDir, manifestPath), "utf8")
+    manifestMarkdown: readFileSync(path.resolve(rootDir, manifestPath), "utf8")
   });
 }
 
