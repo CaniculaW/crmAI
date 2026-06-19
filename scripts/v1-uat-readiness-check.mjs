@@ -51,6 +51,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-uat-coverage-check.test.mjs",
   "scripts/v1-traceability-check.mjs",
   "scripts/v1-traceability-check.test.mjs",
+  "scripts/v1-blocker-consistency-check.mjs",
+  "scripts/v1-blocker-consistency-check.test.mjs",
   "docs/releases/v1.0.0-rc.8.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/v1-validation-status.md",
@@ -641,6 +643,20 @@ export function evaluateReadinessSnapshot(snapshot) {
       "fails when traceability claims project acceptance while release gate is No-Go"
     ]),
     "V1 traceability checker is tested and wired into CI to keep the AC-001 through AC-017 evidence matrix aligned with release-gate status."
+  ));
+
+  const blockerConsistencyChecker = snapshot["scripts/v1-blocker-consistency-check.mjs"] ?? "";
+  const blockerConsistencyCheckerTest = snapshot["scripts/v1-blocker-consistency-check.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "v1-blocker-consistency-checker",
+    includesAll(workflow + blockerConsistencyChecker + blockerConsistencyCheckerTest, [
+      "node --test scripts/v1-blocker-consistency-check.test.mjs",
+      "node scripts/v1-blocker-consistency-check.mjs",
+      "evaluateV1BlockerConsistencySnapshot",
+      "decision-doc-release-blockers",
+      "fails when a decision document omits a release gate blocker"
+    ]),
+    "V1 blocker consistency checker is tested and wired into CI to keep current release-gate blockers visible in decision materials and execution actions."
   ));
 
   const release = snapshot["docs/releases/v1.0.0-rc.8.md"] ?? "";

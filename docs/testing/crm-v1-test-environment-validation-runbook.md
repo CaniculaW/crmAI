@@ -236,6 +236,14 @@ node scripts/v1-traceability-check.mjs
 
 该检查用于防止 AC-001 至 AC-017 追踪矩阵漏项、研发证据缺失，或在 release gate 仍为 No-Go 时误标项目验收通过。
 
+决策材料、行动计划或执行包更新后，执行阻塞项一致性检查：
+
+```bash
+node scripts/v1-blocker-consistency-check.mjs
+```
+
+该检查用于确认当前 release gate 阻塞项均出现在状态报告、行动计划和 Go/No-Go 会议包中，并已拆成 UAT 执行包里的补证行动项。
+
 正式准出前执行最终放行门禁：
 
 ```bash
