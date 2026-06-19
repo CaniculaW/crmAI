@@ -204,6 +204,14 @@ node scripts/v1-generated-docs-check.mjs
 
 该检查用于防止生成器实现和已提交的 V1 状态/行动/执行/会议文档发生漂移。
 
+计划检查项或 V1 状态页更新后，执行计划状态一致性检查：
+
+```bash
+node scripts/v1-plan-status-check.mjs
+```
+
+该检查用于防止启动计划中仍未完成的启动会、范围冻结和业务验收项被误配成 V1 Go 证据。
+
 正式准出前执行最终放行门禁：
 
 ```bash

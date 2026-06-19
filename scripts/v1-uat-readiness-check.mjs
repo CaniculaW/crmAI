@@ -43,6 +43,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-go-no-go-meeting.test.mjs",
   "scripts/v1-generated-docs-check.mjs",
   "scripts/v1-generated-docs-check.test.mjs",
+  "scripts/v1-plan-status-check.mjs",
+  "scripts/v1-plan-status-check.test.mjs",
   "docs/releases/v1.0.0-rc.8.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/v1-validation-status.md",
@@ -579,6 +581,20 @@ export function evaluateReadinessSnapshot(snapshot) {
     "Generated V1 docs checker is tested and wired into CI to prevent stale generated evidence packs."
   ));
 
+  const planStatusChecker = snapshot["scripts/v1-plan-status-check.mjs"] ?? "";
+  const planStatusCheckerTest = snapshot["scripts/v1-plan-status-check.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "v1-plan-status-checker",
+    includesAll(workflow + planStatusChecker + planStatusCheckerTest, [
+      "node --test scripts/v1-plan-status-check.test.mjs",
+      "node scripts/v1-plan-status-check.mjs",
+      "evaluateV1PlanStatusSnapshot",
+      "open-plan-items-no-go",
+      "fails when open plan items are paired with a Go validation status"
+    ]),
+    "V1 plan status checker is tested and wired into CI to keep launch-plan open items aligned with No-Go evidence."
+  ));
+
   const release = snapshot["docs/releases/v1.0.0-rc.8.md"] ?? "";
   checks.push(makeCheck(
     "rc-release-record",
@@ -724,7 +740,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-kickoff-governance-validate.mjs", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-signoff-register-validate.mjs", "v1-uat-launch-intake-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs", "v1-generated-docs-check.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-kickoff-governance-validate.mjs", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-signoff-register-validate.mjs", "v1-uat-launch-intake-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs", "v1-generated-docs-check.mjs", "v1-plan-status-check.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 

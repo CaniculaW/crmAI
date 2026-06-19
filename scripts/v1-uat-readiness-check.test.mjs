@@ -26,6 +26,8 @@ jobs:
       - run: node --test scripts/v1-go-no-go-meeting.test.mjs
       - run: node --test scripts/v1-generated-docs-check.test.mjs
       - run: node scripts/v1-generated-docs-check.mjs
+      - run: node --test scripts/v1-plan-status-check.test.mjs
+      - run: node scripts/v1-plan-status-check.mjs
   backend:
     steps:
       - run: mvn -B test
@@ -70,6 +72,8 @@ jobs:
   "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\n",
   "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\n",
   "scripts/v1-generated-docs-check.test.mjs": "fails when a generated document drifts from its generator\n",
+  "scripts/v1-plan-status-check.mjs": "evaluateV1PlanStatusSnapshot\nopen-plan-items-no-go\n",
+  "scripts/v1-plan-status-check.test.mjs": "fails when open plan items are paired with a Go validation status\n",
   "scripts/v1-deployment-config-check.mjs": "evaluateDeploymentConfigSnapshot\nCRM_BACKEND_BUILD_IMAGE\nCRM_FRONTEND_RUNTIME_IMAGE\n",
   "scripts/v1-deployment-config-check.test.mjs": "configurable for mirrored registries\n",
   "docs/releases/v1.0.0-rc.8.md": "v1.0.0-rc.8\nGitHub Actions `V1 Validation`\nsuccess\nUAT\nGo/No-Go\nV1-local-uat-20260618\nCRM_BACKEND_BUILD_IMAGE\nv1-uat-evidence-pack-validate\nV1演示业务数据\n仍需在具名测试环境完成验收签署\n",
@@ -212,7 +216,7 @@ node scripts/v1-uat-evidence-manifest-validate.mjs
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-generated-docs-check.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-generated-docs-check.mjs\nv1-plan-status-check.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -546,6 +550,21 @@ test("fails when the V1 generated docs consistency checker is missing from readi
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "v1-generated-docs-checker"));
+});
+
+test("fails when the V1 plan status checker is missing from readiness materials", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-plan-status-check.mjs": "",
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
+      .replace("      - run: node --test scripts/v1-plan-status-check.test.mjs\n", "")
+      .replace("      - run: node scripts/v1-plan-status-check.mjs\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-plan-status-checker"));
 });
 
 test("fails when the V1 UAT execution pack document is missing", () => {
