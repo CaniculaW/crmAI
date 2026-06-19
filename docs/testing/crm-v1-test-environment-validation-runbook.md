@@ -173,7 +173,9 @@ node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-re
 需要项目例会或验收推进页时，生成聚合状态报告：
 
 ```bash
-node scripts/v1-validation-status.mjs --output docs/testing/v1-validation-status.md
+node scripts/v1-validation-status.mjs \
+  --git-commit <git-sha> \
+  --output docs/testing/v1-validation-status.md
 ```
 
 该报告只汇总现有 validators 的结果，不替代 UAT 执行、缺陷闭环或签署。

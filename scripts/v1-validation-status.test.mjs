@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { generateV1ValidationStatusMarkdown } from "./v1-validation-status.mjs";
+import { generateV1ValidationStatusMarkdown, parseArgs } from "./v1-validation-status.mjs";
 
 const passingReadiness = {
   ok: true,
@@ -163,4 +163,14 @@ test("summarizes a Go V1 status only when all gates pass and decision is Go", ()
   assert.match(markdown, /Overall: Go/);
   assert.match(markdown, /Release Gate \| PASS/);
   assert.doesNotMatch(markdown, /## Open Blockers\n\n- FAIL/);
+});
+
+test("parses an explicit git commit for traceable generated status reports", () => {
+  const parsed = parseArgs([
+    "--git-commit", "e2eb0ebff2b9de8c3d26d7f135e8804a3e4b2933",
+    "--output", "docs/testing/v1-validation-status.md"
+  ]);
+
+  assert.equal(parsed.gitCommit, "e2eb0ebff2b9de8c3d26d7f135e8804a3e4b2933");
+  assert.equal(parsed.outputPath, "docs/testing/v1-validation-status.md");
 });

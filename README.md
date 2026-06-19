@@ -208,7 +208,9 @@ node scripts/v1-release-gate.mjs . \
 V1 聚合状态报告：
 
 ```bash
-node scripts/v1-validation-status.mjs --output docs/testing/v1-validation-status.md
+node scripts/v1-validation-status.mjs \
+  --git-commit <git-sha> \
+  --output docs/testing/v1-validation-status.md
 ```
 
 V1 UAT行动计划：

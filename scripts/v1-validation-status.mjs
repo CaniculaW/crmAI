@@ -227,7 +227,7 @@ export function generateV1ValidationStatusFromFiles({
   });
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const parsed = {
     rootDir: process.cwd(),
     evidencePath: DEFAULT_EVIDENCE_PATH,
@@ -238,6 +238,7 @@ function parseArgs(argv) {
     signoffRegisterPath: DEFAULT_SIGNOFF_REGISTER_PATH,
     launchIntakePath: DEFAULT_LAUNCH_INTAKE_PATH,
     kickoffPath: DEFAULT_KICKOFF_PATH,
+    gitCommit: undefined,
     outputPath: null
   };
 
@@ -269,6 +270,9 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--kickoff") {
       parsed.kickoffPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--git-commit") {
+      parsed.gitCommit = argv[index + 1];
       index += 1;
     } else if (arg === "--output") {
       parsed.outputPath = argv[index + 1] ?? DEFAULT_OUTPUT_PATH;
