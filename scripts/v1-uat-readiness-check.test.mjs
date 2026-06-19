@@ -110,6 +110,7 @@ jobs:
   "docs/testing/v1-uat-execution-pack.md": "CRM V1 UAT Execution Pack\nOverall: No-Go\nExecution Items\nENV-001\nPRE-001\nSMK-001\nUAT-001\nDEF-REGISTER\nSIGNOFF-SALES\nGO-NOGO\n",
   "docs/testing/v1-go-no-go-meeting.md": "CRM V1 Go/No-Go Meeting Pack\nDecision Recommendation: No-Go\nFinal Signoff Table\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
   "docs/testing/v1-external-uat-request.md": "CRM V1 External UAT Request Packet\nRequest Status: External UAT Evidence Required\nRequest Board\nProject / Product\nTest\nBusiness UAT\nEngineering\nDo not record plaintext passwords\nKickoff Governance\nUAT Launch Intake\nUAT Environment Evidence\nUAT Evidence Pack\nUAT Evidence Manifest\nUAT Execution Tracker\nUAT Defect Register\nUAT Signoff Register\nRelease Gate\n",
+  "docs/testing/v1-release-gate-status.json": "{\"result\":\"FAIL\",\"decision\":\"No-Go\",\"ok\":false,\"checks\":[{\"id\":\"go-decision\",\"ok\":false}]}\n",
   "docs/meeting-notes/crm-kickoff-minutes.md": `CRM研发启动会纪要
 Decision: No-Go
 产品负责人
@@ -260,6 +261,16 @@ test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
 test("fails when a required readiness artifact is missing", () => {
   const snapshot = { ...completeSnapshot };
   delete snapshot["docs/testing/crm-v1-uat-evidence-pack-template.md"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the release gate JSON snapshot is missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["docs/testing/v1-release-gate-status.json"];
 
   const result = evaluateReadinessSnapshot(snapshot);
 

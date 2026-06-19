@@ -66,6 +66,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/v1-uat-execution-pack.md",
   "docs/testing/v1-go-no-go-meeting.md",
   "docs/testing/v1-external-uat-request.md",
+  "docs/testing/v1-release-gate-status.json",
   "docs/meeting-notes/crm-kickoff-minutes.md",
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",

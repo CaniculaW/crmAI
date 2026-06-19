@@ -8,7 +8,7 @@ V1 当前代码分支已通过自动化验证、本地 PostgreSQL 部署态 API 
 
 具名测试环境执行步骤、证据包结构和验收会议模板见 `docs/testing/crm-v1-test-environment-validation-runbook.md`；验收结果汇总和 Go/No-Go 记录模板见 `docs/testing/crm-v1-uat-evidence-pack-template.md`。
 
-GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compose部署配置校验、RC/UAT readiness 审计、启动治理 validator、UAT 启动输入 validator、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT具名环境证据 validator、UAT缺陷台账 validator、UAT签署台账 validator、UAT执行追踪表 validator、V1最终放行门禁规则、V1聚合状态报告规则、V1 UAT行动计划规则、V1 UAT逐项执行包规则、V1 Go/No-Go会议包规则、V1外部UAT请求包规则、release gate JSON 快照一致性、V1生成文档一致性检查、V1计划状态一致性检查、V1验收清单一致性检查、V1 UAT覆盖检查、V1验证追踪矩阵一致性检查、V1阻塞项一致性检查、V1证据秘密扫描、后端测试、PostgreSQL 集成验证、前端测试和前端生产构建。readiness 审计同时校验 rc.8 UAT 交接草稿保留 `No-Go`、validator `FAIL`、Compose部署态证据、启动治理纪要、UAT启动输入、UAT执行派工追踪表、UAT具名环境证据、UAT逐项执行包、UAT缺陷台账、UAT签署台账、聚合状态报告、UAT行动计划、Go/No-Go会议包、外部UAT请求包、生成文档一致性检查、计划状态一致性检查、验收清单一致性检查、UAT覆盖检查、验证追踪矩阵一致性检查、阻塞项一致性检查、证据秘密扫描和外部 UAT/签署阻塞项。
+GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compose部署配置校验、RC/UAT readiness 审计、启动治理 validator、UAT 启动输入 validator、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT具名环境证据 validator、UAT缺陷台账 validator、UAT签署台账 validator、UAT执行追踪表 validator、V1最终放行门禁规则、V1聚合状态报告规则、V1 UAT行动计划规则、V1 UAT逐项执行包规则、V1 Go/No-Go会议包规则、V1外部UAT请求包规则、release gate JSON 快照一致性、V1生成文档一致性检查、V1计划状态一致性检查、V1验收清单一致性检查、V1 UAT覆盖检查、V1验证追踪矩阵一致性检查、V1阻塞项一致性检查、V1证据秘密扫描、后端测试、PostgreSQL 集成验证、前端测试和前端生产构建。readiness 审计同时校验 rc.8 UAT 交接草稿保留 `No-Go`、validator `FAIL`、Compose部署态证据、启动治理纪要、UAT启动输入、UAT执行派工追踪表、UAT具名环境证据、UAT逐项执行包、UAT缺陷台账、UAT签署台账、聚合状态报告、UAT行动计划、Go/No-Go会议包、外部UAT请求包、release gate JSON 快照、生成文档一致性检查、计划状态一致性检查、验收清单一致性检查、UAT覆盖检查、验证追踪矩阵一致性检查、阻塞项一致性检查、证据秘密扫描和外部 UAT/签署阻塞项。
 
 ## 2. 验证范围
 
@@ -47,7 +47,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `CRM_POSTGRES_IMAGE=docker.1ms.run/library/postgres:16 ... docker compose -f compose.v1-test.yml up -d --build` | Compose build and startup passed；db/backend/frontend 均 Up，db healthy |
 | `node scripts/v1-deployment-config-check.mjs` | V1 deployment config check passed；Dockerfile/Compose 支持可配置基础镜像 |
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
-| `node --test scripts/*.test.mjs` | 152 tests passed |
+| `node --test scripts/*.test.mjs` | 153 tests passed |
 | `node --test scripts/v1-kickoff-governance-validate.test.mjs` | 5 tests passed；覆盖完整启动治理记录、当前草稿 No-Go、缺失负责人、V2/AI 范围误入 V1 和敏感材料拦截 |
 | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | FAIL as expected；当前启动会负责人、V1范围冻结和项目 Go 结论仍为 No-Go |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 4 tests passed |
@@ -64,8 +64,8 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node --test scripts/v1-uat-launch-intake-validate.test.mjs` | 6 tests passed；覆盖完整启动输入、当前草稿 No-Go、缺失参与角色、环境缺证据、账号未准备和敏感材料拦截 |
 | `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md` | FAIL as expected；当前 UAT 启动输入仍为 No-Go |
 | `node scripts/v1-uat-readiness-check.mjs` | RC/UAT readiness check passed |
-| `node --test scripts/v1-uat-readiness-check.test.mjs` | 48 tests passed；包含启动治理纪要、UAT执行派工追踪表、UAT启动输入、UAT具名环境证据、UAT逐项执行包、UAT证据清单、证据引用保全检查、UAT缺陷台账、UAT签署台账、tracker validator gate、聚合状态报告gate、UAT行动计划gate、Go/No-Go会议包gate、外部UAT请求包gate、生成文档一致性gate、计划状态一致性gate、验收清单一致性gate、UAT覆盖gate、验证追踪矩阵gate、阻塞项一致性gate和证据秘密扫描gate |
-| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 48 tests passed；覆盖CI前端job相对路径 |
+| `node --test scripts/v1-uat-readiness-check.test.mjs` | 49 tests passed；包含启动治理纪要、UAT执行派工追踪表、UAT启动输入、UAT具名环境证据、UAT逐项执行包、UAT证据清单、证据引用保全检查、UAT缺陷台账、UAT签署台账、release gate JSON 快照、tracker validator gate、聚合状态报告gate、UAT行动计划gate、Go/No-Go会议包gate、外部UAT请求包gate、生成文档一致性gate、计划状态一致性gate、验收清单一致性gate、UAT覆盖gate、验证追踪矩阵gate、阻塞项一致性gate和证据秘密扫描gate |
+| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 49 tests passed；覆盖CI前端job相对路径 |
 | `node --test scripts/v1-uat-execution-tracker-validate.test.mjs` | 5 tests passed；覆盖完整 Go 追踪表、当前 No-Go 追踪表、缺失证据、缺陷台账门禁未通过和签署台账门禁缺失 |
 | `node --test scripts/v1-validation-status.test.mjs` | 4 tests passed；覆盖 No-Go 聚合状态、绝对路径 UAT 源文档、全量 Go 状态和显式 git commit 参数 |
 | `node scripts/v1-validation-status.mjs --git-commit <git-sha> --output docs/testing/v1-validation-status.md` | 生成当前 `No-Go` 聚合状态报告，并显式绑定被验证提交 |
