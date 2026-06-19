@@ -6,7 +6,8 @@ import path from "node:path";
 
 import {
   evaluateV1BlockerConsistencyFromFiles,
-  evaluateV1BlockerConsistencySnapshot
+  evaluateV1BlockerConsistencySnapshot,
+  parseArgs
 } from "./v1-blocker-consistency-check.mjs";
 
 const DECISION_DOCS = {
@@ -159,6 +160,42 @@ test("checks blocker consistency from absolute UAT source and decision document 
   assert.equal(result.ok, true);
   assert.deepEqual(result.missingReleaseBlockers, []);
   assert.deepEqual(result.missingExecutionItems, []);
+});
+
+test("parses CLI options for external UAT source and decision document paths", () => {
+  const parsed = parseArgs([
+    "--root", "/workspace/crm",
+    "--decision-doc", "/tmp/status.md",
+    "--decision-doc", "/tmp/action-plan.md",
+    "--decision-doc", "/tmp/go-no-go.md",
+    "--decision-doc", "/tmp/external-request.md",
+    "--execution-pack", "/tmp/execution-pack.md",
+    "--evidence", "/tmp/evidence.md",
+    "--tracker", "/tmp/tracker.md",
+    "--manifest", "/tmp/manifest.md",
+    "--defects", "/tmp/defects.md",
+    "--environment", "/tmp/environment.md",
+    "--signoffs", "/tmp/signoffs.md",
+    "--launch-intake", "/tmp/launch-intake.md",
+    "--kickoff", "/tmp/kickoff.md"
+  ]);
+
+  assert.equal(parsed.rootDir, "/workspace/crm");
+  assert.deepEqual(parsed.decisionDocPaths, [
+    "/tmp/status.md",
+    "/tmp/action-plan.md",
+    "/tmp/go-no-go.md",
+    "/tmp/external-request.md"
+  ]);
+  assert.equal(parsed.executionPackPath, "/tmp/execution-pack.md");
+  assert.equal(parsed.evidencePath, "/tmp/evidence.md");
+  assert.equal(parsed.trackerPath, "/tmp/tracker.md");
+  assert.equal(parsed.manifestPath, "/tmp/manifest.md");
+  assert.equal(parsed.defectRegisterPath, "/tmp/defects.md");
+  assert.equal(parsed.environmentPath, "/tmp/environment.md");
+  assert.equal(parsed.signoffRegisterPath, "/tmp/signoffs.md");
+  assert.equal(parsed.launchIntakePath, "/tmp/launch-intake.md");
+  assert.equal(parsed.kickoffPath, "/tmp/kickoff.md");
 });
 
 test("fails when a decision document omits a release gate blocker", () => {

@@ -117,6 +117,68 @@ function normalizeFromFilesOptions(options) {
   return options ?? {};
 }
 
+export function parseArgs(argv) {
+  const parsed = {
+    rootDir: process.cwd(),
+    decisionDocPaths: [],
+    executionPackPath: DEFAULT_EXECUTION_PACK_PATH,
+    evidencePath: undefined,
+    trackerPath: undefined,
+    manifestPath: undefined,
+    defectRegisterPath: undefined,
+    environmentPath: undefined,
+    signoffRegisterPath: undefined,
+    launchIntakePath: undefined,
+    kickoffPath: undefined
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === "--root") {
+      parsed.rootDir = path.resolve(argv[index + 1]);
+      index += 1;
+    } else if (arg === "--decision-doc") {
+      parsed.decisionDocPaths.push(argv[index + 1]);
+      index += 1;
+    } else if (arg === "--execution-pack") {
+      parsed.executionPackPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--evidence") {
+      parsed.evidencePath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--tracker") {
+      parsed.trackerPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--manifest") {
+      parsed.manifestPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--defects") {
+      parsed.defectRegisterPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--environment") {
+      parsed.environmentPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--signoffs") {
+      parsed.signoffRegisterPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--launch-intake") {
+      parsed.launchIntakePath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--kickoff") {
+      parsed.kickoffPath = argv[index + 1];
+      index += 1;
+    } else if (!arg.startsWith("--")) {
+      parsed.rootDir = path.resolve(arg);
+    }
+  }
+
+  if (parsed.decisionDocPaths.length === 0) {
+    parsed.decisionDocPaths = DEFAULT_DECISION_DOC_PATHS;
+  }
+
+  return parsed;
+}
+
 export function evaluateV1BlockerConsistencyFromFiles(options = process.cwd()) {
   const {
     rootDir = process.cwd(),
@@ -177,8 +239,7 @@ function printResult(result) {
 const isCli = process.argv[1] === fileURLToPath(import.meta.url);
 
 if (isCli) {
-  const rootDir = process.argv[2] ? path.resolve(process.argv[2]) : process.cwd();
-  const result = evaluateV1BlockerConsistencyFromFiles(rootDir);
+  const result = evaluateV1BlockerConsistencyFromFiles(parseArgs(process.argv.slice(2)));
   printResult(result);
   process.exitCode = result.ok ? 0 : 1;
 }
