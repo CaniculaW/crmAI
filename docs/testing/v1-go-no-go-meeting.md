@@ -1,6 +1,6 @@
 # CRM V1 Go/No-Go Meeting Pack
 
-Generated at: 2026-06-19T02:06:04.953Z
+Generated at: 2026-06-19T02:27:51.498Z
 
 Decision Recommendation: No-Go
 
@@ -16,13 +16,14 @@ Decision Recommendation: No-Go
 ## Required Gate Commands
 
 - `node scripts/v1-uat-readiness-check.mjs`
+- `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md`
 - `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md`
 - `node scripts/v1-uat-evidence-pack-validate.mjs docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`
 - `node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md`
 - `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md`
 - `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md`
 - `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md`
-- `node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md`
+- `node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md`
 
 ## Meeting Agenda
 
@@ -33,6 +34,10 @@ Decision Recommendation: No-Go
 
 ## Open Approval Blockers
 
+- UAT Launch Intake/environment-intake: Incomplete launch environment fields: 测试环境名称, 前端访问地址, 后端 API 地址, Git 提交号, UAT窗口, 证据归档位置
+- UAT Launch Intake/participant-roster: Incomplete UAT participants: UAT-SALES, UAT-MANAGER, UAT-PRODUCT, UAT-TEST, UAT-DEV, UAT-PM
+- UAT Launch Intake/account-custody: Incomplete account custody items: 管理员账号, 销售个人账号, 销售负责人账号, 权限样本账号
+- UAT Launch Intake/project-go-decision: Launch intake decision is No-Go; UAT launch requires Go.
 - UAT Environment Evidence/environment-summary: Invalid environment summary items: 测试环境名称, 前端访问地址, 后端 API 地址, Git 提交号
 - UAT Environment Evidence/environment-checks: Incomplete environment checks: ENV-001, ENV-002, ENV-003, ENV-004, ENV-005, ENV-006, ENV-007, ENV-008
 - UAT Environment Evidence/go-decision: Environment evidence decision is No-Go; V1 validation requires Go.
@@ -57,6 +62,7 @@ Decision Recommendation: No-Go
 - UAT Defect Register/go-decision: Defect register decision is No-Go; V1 validation requires Go.
 - UAT Signoff Register/required-signoffs: Incomplete signoffs: SIGNOFF-SALES, SIGNOFF-MANAGER, SIGNOFF-PRODUCT, SIGNOFF-TEST, SIGNOFF-DEV, SIGNOFF-PM
 - UAT Signoff Register/project-go-decision: Project signoff is No-Go and register decision is No-Go; V1 validation requires Go.
+- Release Gate/uat-launch-intake: UAT launch intake failed: environment-intake, participant-roster, account-custody, project-go-decision
 - Release Gate/uat-environment: UAT environment evidence failed: environment-summary, environment-checks, go-decision
 - Release Gate/uat-evidence-pack: UAT evidence pack failed: no-placeholders, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete
 - Release Gate/uat-evidence-manifest: UAT evidence manifest failed: evidence-complete, go-decision
@@ -78,4 +84,4 @@ Cannot approve V1 until every validator returns PASS and the project decision is
 | 研发负责人 | 待填写 | 待填写 | 待填写 | 待填写 |
 | 项目负责人 | 待填写 | 待填写 | 待填写 | 待填写 |
 
-Note: This meeting pack organizes final approval evidence. It does not replace UAT execution, named-environment validation, defect closure, signoff-register validation, evidence-pack validation, evidence-manifest validation, tracker validation, defect-register validation, or the final release gate.
+Note: This meeting pack organizes final approval evidence. It does not replace UAT execution, launch-intake validation, named-environment validation, defect closure, signoff-register validation, evidence-pack validation, evidence-manifest validation, tracker validation, defect-register validation, or the final release gate.

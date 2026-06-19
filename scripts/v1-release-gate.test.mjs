@@ -14,6 +14,16 @@ const failingReadinessResult = {
   failed: [{ id: "compose-uat-evidence" }]
 };
 
+const passingLaunchIntakeResult = {
+  ok: true,
+  failed: []
+};
+
+const failingLaunchIntakeResult = {
+  ok: false,
+  failed: [{ id: "participant-roster" }, { id: "account-custody" }]
+};
+
 const passingTrackerResult = {
   ok: true,
   failed: []
@@ -184,6 +194,23 @@ test("fails when RC/UAT readiness has a failed check", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "rc-uat-readiness"));
+});
+
+test("fails when the UAT launch intake remains incomplete", () => {
+  const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    launchIntakeResult: failingLaunchIntakeResult,
+    environmentResult: passingEnvironmentResult,
+    uatEvidenceResult,
+    trackerResult: passingTrackerResult,
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-launch-intake"));
 });
 
 test("fails when UAT evidence is still a No-Go draft", () => {

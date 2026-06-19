@@ -23,6 +23,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-uat-defect-register-validate.test.mjs",
   "scripts/v1-uat-signoff-register-validate.mjs",
   "scripts/v1-uat-signoff-register-validate.test.mjs",
+  "scripts/v1-uat-launch-intake-validate.mjs",
+  "scripts/v1-uat-launch-intake-validate.test.mjs",
   "scripts/v1-uat-evidence-manifest-validate.mjs",
   "scripts/v1-uat-evidence-manifest-validate.test.mjs",
   "scripts/v1-uat-execution-tracker-validate.mjs",
@@ -50,6 +52,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/v1-uat-environment-evidence.md",
   "docs/testing/v1-uat-defect-register.md",
   "docs/testing/v1-uat-signoff-register.md",
+  "docs/testing/v1-uat-launch-intake.md",
   "docs/testing/v1-uat-evidence-manifest.md",
   "docs/testing/evidence/v1-local-uat-2026-06-18.md",
   "docs/testing/evidence/v1-compose-uat-2026-06-19.md",
@@ -238,6 +241,32 @@ function hasUatSignoffRegister(content) {
   ]);
 }
 
+function hasUatLaunchIntake(content) {
+  return includesAll(content, [
+    "CRM V1 UAT Launch Intake",
+    "v1.0.0-rc.8",
+    "Decision: No-Go",
+    "测试环境名称",
+    "前端访问地址",
+    "后端 API 地址",
+    "Git 提交号",
+    "UAT窗口",
+    "证据归档位置",
+    "UAT-SALES",
+    "UAT-MANAGER",
+    "UAT-PRODUCT",
+    "UAT-TEST",
+    "UAT-DEV",
+    "UAT-PM",
+    "管理员账号",
+    "销售个人账号",
+    "销售负责人账号",
+    "权限样本账号",
+    "不记录明文密码",
+    "node scripts/v1-uat-launch-intake-validate.mjs"
+  ]);
+}
+
 function makeCheck(id, ok, message, severity = "fail") {
   return { id, ok, message, severity };
 }
@@ -368,6 +397,22 @@ export function evaluateReadinessSnapshot(snapshot) {
     "UAT signoff register validator is tested and enforces role signoff, project Go decision, and secret redaction."
   ));
 
+  const launchIntakeValidator = snapshot["scripts/v1-uat-launch-intake-validate.mjs"] ?? "";
+  const launchIntakeValidatorTest = snapshot["scripts/v1-uat-launch-intake-validate.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "uat-launch-intake-validator",
+    includesAll(workflow + launchIntakeValidator + launchIntakeValidatorTest, [
+      "node --test scripts/v1-uat-launch-intake-validate.test.mjs",
+      "evaluateUatLaunchIntake",
+      "environment-intake",
+      "participant-roster",
+      "account-custody",
+      "no-secret-material",
+      "fails a draft launch intake because external UAT inputs are pending"
+    ]),
+    "UAT launch intake validator is tested and enforces named environment, participant roster, account custody, and secret redaction."
+  ));
+
   const evidenceManifestValidator = snapshot["scripts/v1-uat-evidence-manifest-validate.mjs"] ?? "";
   const evidenceManifestValidatorTest = snapshot["scripts/v1-uat-evidence-manifest-validate.test.mjs"] ?? "";
   checks.push(makeCheck(
@@ -406,10 +451,11 @@ export function evaluateReadinessSnapshot(snapshot) {
       "evaluateV1ReleaseGate",
       "evaluateV1ReleaseGateFromFiles",
       "V1 release gate requires Go",
+      "uat-launch-intake",
       "uat-environment",
       "fails when the project decision is Conditional Go"
     ]),
-    "Final V1 release gate is tested and requires readiness, formal UAT evidence, and an explicit Go decision."
+    "Final V1 release gate is tested and requires readiness, UAT launch intake, formal UAT evidence, and an explicit Go decision."
   ));
 
   const validationStatus = snapshot["scripts/v1-validation-status.mjs"] ?? "";
@@ -576,6 +622,13 @@ export function evaluateReadinessSnapshot(snapshot) {
     "UAT signoff register inventories sales, management, product, test, development, and project signoffs without secrets."
   ));
 
+  const uatLaunchIntake = snapshot["docs/testing/v1-uat-launch-intake.md"] ?? "";
+  checks.push(makeCheck(
+    "uat-launch-intake",
+    hasUatLaunchIntake(uatLaunchIntake),
+    "UAT launch intake inventories named environment, UAT window, evidence repository, participant roster, and masked account custody without secrets."
+  ));
+
   const uatEvidenceManifest = snapshot["docs/testing/v1-uat-evidence-manifest.md"] ?? "";
   checks.push(makeCheck(
     "uat-evidence-manifest",
@@ -604,7 +657,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-signoff-register-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-signoff-register-validate.mjs", "v1-uat-launch-intake-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 

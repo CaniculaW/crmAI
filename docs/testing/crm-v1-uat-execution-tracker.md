@@ -14,7 +14,7 @@
 - UAT签署台账：`docs/testing/v1-uat-signoff-register.md`
 - rc.8交接草稿：`docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md`
 - Compose部署态证据：`docs/testing/evidence/v1-compose-uat-2026-06-19.md`
-- 最终放行门禁：`node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md> docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md`
+- 最终放行门禁：`node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md> docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md`
 
 ## 1. 执行原则
 
@@ -26,7 +26,7 @@
 - 本追踪表填写后必须执行 `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md`。
 - UAT缺陷台账填写后必须执行 `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md`。
 - UAT签署台账填写后必须执行 `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md`。
-- V1最终验证通过必须执行 `node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md> docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md` 并返回 `PASS`。
+- V1最终验证通过必须执行 `node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md> docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md` 并返回 `PASS`。
 - 当前 rc.8 草稿为 `No-Go`；具名测试环境、业务验收、缺陷闭环和签署完成前，不得改写为 `Go`。
 
 ## 2. 角色与签署责任
@@ -94,7 +94,7 @@
 | UAT证据包一致性 | `node scripts/v1-uat-evidence-pack-validate.mjs <crm-v1-uat-evidence-pack.md>` | 返回 `PASS` | 当前rc.8草稿为 `FAIL / No-Go` |
 | UAT缺陷台账一致性 | `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md` | 返回 `PASS`，且 P0/P1 未关闭数量为 0 或有项目认可结论 | 当前台账为 `FAIL / No-Go` |
 | UAT签署台账一致性 | `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md` | 返回 `PASS`，且六方签署完整、项目负责人选择 `Go` | 当前签署台账为 `FAIL / No-Go` |
-| V1最终放行门禁 | `node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md> docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md` | 返回 `PASS`，且项目负责人选择 `Go` | 当前rc.8草稿为 `FAIL / No-Go` |
+| V1最终放行门禁 | `node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md> docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md` | 返回 `PASS`，且项目负责人选择 `Go` | 当前rc.8草稿为 `FAIL / No-Go` |
 | 项目签署 | 销售侧验收人、管理侧验收人、产品负责人、测试负责人、研发负责人、项目负责人 | 全部签署完成 | 待执行 |
 
 ## 8. 当前结论

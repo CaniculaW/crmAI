@@ -10,6 +10,7 @@ import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
 import { evaluateUatEvidenceManifest } from "./v1-uat-evidence-manifest-validate.mjs";
 import { evaluateUatEnvironmentEvidence } from "./v1-uat-environment-validate.mjs";
 import { evaluateUatExecutionTracker } from "./v1-uat-execution-tracker-validate.mjs";
+import { evaluateUatLaunchIntake } from "./v1-uat-launch-intake-validate.mjs";
 import { evaluateUatSignoffRegister } from "./v1-uat-signoff-register-validate.mjs";
 
 const DEFAULT_EVIDENCE_PATH = "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md";
@@ -18,6 +19,7 @@ const DEFAULT_MANIFEST_PATH = "docs/testing/v1-uat-evidence-manifest.md";
 const DEFAULT_DEFECT_REGISTER_PATH = "docs/testing/v1-uat-defect-register.md";
 const DEFAULT_ENVIRONMENT_PATH = "docs/testing/v1-uat-environment-evidence.md";
 const DEFAULT_SIGNOFF_REGISTER_PATH = "docs/testing/v1-uat-signoff-register.md";
+const DEFAULT_LAUNCH_INTAKE_PATH = "docs/testing/v1-uat-launch-intake.md";
 
 function makeCheck(id, ok, message) {
   return { id, ok, message };
@@ -25,6 +27,7 @@ function makeCheck(id, ok, message) {
 
 export function evaluateV1ReleaseGate({
   readinessResult,
+  launchIntakeResult = { ok: true, failed: [] },
   environmentResult,
   uatEvidenceResult,
   trackerResult,
@@ -39,6 +42,13 @@ export function evaluateV1ReleaseGate({
       readinessResult.ok
         ? "RC/UAT engineering readiness evidence is complete."
         : `RC/UAT readiness failed: ${readinessResult.failed.map((check) => check.id).join(", ")}`
+    ),
+    makeCheck(
+      "uat-launch-intake",
+      launchIntakeResult.ok,
+      launchIntakeResult.ok
+        ? "UAT launch intake is complete."
+        : `UAT launch intake failed: ${launchIntakeResult.failed.map((check) => check.id).join(", ")}`
     ),
     makeCheck(
       "uat-environment",
@@ -110,9 +120,12 @@ export function evaluateV1ReleaseGateFromFiles(
   manifestPath = DEFAULT_MANIFEST_PATH,
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
-  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH
+  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH
 ) {
   const readinessResult = evaluateReadinessSnapshot(readSnapshot(rootDir));
+  const absoluteLaunchIntakePath = path.resolve(rootDir, launchIntakePath);
+  const launchIntakeResult = evaluateUatLaunchIntake(readFileSync(absoluteLaunchIntakePath, "utf8"));
   const absoluteEnvironmentPath = path.resolve(rootDir, environmentPath);
   const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(absoluteEnvironmentPath, "utf8"));
   const absoluteEvidencePath = path.resolve(rootDir, evidencePath);
@@ -128,6 +141,7 @@ export function evaluateV1ReleaseGateFromFiles(
 
   return evaluateV1ReleaseGate({
     readinessResult,
+    launchIntakeResult,
     environmentResult,
     uatEvidenceResult,
     trackerResult,
@@ -152,13 +166,13 @@ function printResult(result) {
   }
 
   lines.push("");
-  lines.push("Note: PASS means the V1 candidate has completed engineering readiness, named UAT environment validation, UAT execution tracking, defect register validation, signoff register validation, evidence manifest validation, formal UAT evidence validation, and an explicit project Go decision.");
+  lines.push("Note: PASS means the V1 candidate has completed engineering readiness, UAT launch intake validation, named UAT environment validation, UAT execution tracking, defect register validation, signoff register validation, evidence manifest validation, formal UAT evidence validation, and an explicit project Go decision.");
 
   console.log(lines.join("\n"));
 }
 
 function printUsage() {
-  console.error("Usage: node scripts/v1-release-gate.mjs [root-dir] [uat-evidence-pack.md] [uat-execution-tracker.md] [uat-evidence-manifest.md] [uat-defect-register.md] [uat-environment-evidence.md] [uat-signoff-register.md]");
+  console.error("Usage: node scripts/v1-release-gate.mjs [root-dir] [uat-evidence-pack.md] [uat-execution-tracker.md] [uat-evidence-manifest.md] [uat-defect-register.md] [uat-environment-evidence.md] [uat-signoff-register.md] [v1-uat-launch-intake.md]");
 }
 
 const isCli = process.argv[1] === fileURLToPath(import.meta.url);
@@ -172,7 +186,8 @@ if (isCli) {
     const defectRegisterPath = process.argv[6] ?? DEFAULT_DEFECT_REGISTER_PATH;
     const environmentPath = process.argv[7] ?? DEFAULT_ENVIRONMENT_PATH;
     const signoffRegisterPath = process.argv[8] ?? DEFAULT_SIGNOFF_REGISTER_PATH;
-    const result = evaluateV1ReleaseGateFromFiles(rootDir, evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath, signoffRegisterPath);
+    const launchIntakePath = process.argv[9] ?? DEFAULT_LAUNCH_INTAKE_PATH;
+    const result = evaluateV1ReleaseGateFromFiles(rootDir, evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath, signoffRegisterPath, launchIntakePath);
     printResult(result);
     process.exitCode = result.ok ? 0 : 1;
   } catch (error) {

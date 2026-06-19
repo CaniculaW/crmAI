@@ -15,6 +15,7 @@ jobs:
       - run: node --test scripts/v1-uat-evidence-pack-validate.test.mjs
       - run: node --test scripts/v1-uat-defect-register-validate.test.mjs
       - run: node --test scripts/v1-uat-signoff-register-validate.test.mjs
+      - run: node --test scripts/v1-uat-launch-intake-validate.test.mjs
       - run: node --test scripts/v1-uat-evidence-manifest-validate.test.mjs
       - run: node --test scripts/v1-uat-execution-tracker-validate.test.mjs
       - run: node --test scripts/v1-release-gate.test.mjs
@@ -46,12 +47,14 @@ jobs:
   "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\n",
   "scripts/v1-uat-signoff-register-validate.mjs": "evaluateUatSignoffRegister\nrequired-signoffs\nproject-go-decision\nno-secret-material\n",
   "scripts/v1-uat-signoff-register-validate.test.mjs": "fails the draft signoff register because signoffs are pending\n",
+  "scripts/v1-uat-launch-intake-validate.mjs": "evaluateUatLaunchIntake\nenvironment-intake\nparticipant-roster\naccount-custody\nno-secret-material\n",
+  "scripts/v1-uat-launch-intake-validate.test.mjs": "fails a draft launch intake because external UAT inputs are pending\n",
   "scripts/v1-uat-evidence-manifest-validate.mjs": "evaluateUatEvidenceManifest\nrequired-items\nevidence-complete\nno-secret-material\n",
   "scripts/v1-uat-evidence-manifest-validate.test.mjs": "fails the current draft manifest because external UAT evidence is pending\n",
   "scripts/v1-uat-execution-tracker-validate.mjs": "evaluateUatExecutionTracker\nrequired-items\nrelease-gates\n",
   "scripts/v1-uat-execution-tracker-validate.test.mjs": "fails the current rc8 tracker because external UAT remains pending\n",
-  "scripts/v1-release-gate.mjs": "evaluateV1ReleaseGate\nevaluateV1ReleaseGateFromFiles\nV1 release gate requires Go\nuat-environment\n",
-  "scripts/v1-release-gate.test.mjs": "fails when the project decision is Conditional Go\n",
+  "scripts/v1-release-gate.mjs": "evaluateV1ReleaseGate\nevaluateV1ReleaseGateFromFiles\nV1 release gate requires Go\nuat-launch-intake\nuat-environment\n",
+  "scripts/v1-release-gate.test.mjs": "fails when the UAT launch intake remains incomplete\nfails when the project decision is Conditional Go\n",
   "scripts/v1-validation-status.mjs": "generateV1ValidationStatusMarkdown\nOverall: No-Go\nUAT Environment Evidence\nUAT Execution Tracker\n",
   "scripts/v1-validation-status.test.mjs": "summarizes a No-Go V1 status with concrete blocker commands\n",
   "scripts/v1-uat-action-plan.mjs": "generateV1UatActionPlanMarkdown\nOverall: No-Go\nRole Workstreams\nUAT Environment Evidence\n",
@@ -131,6 +134,28 @@ SIGNOFF-PM
 不记录明文密码
 node scripts/v1-uat-signoff-register-validate.mjs
 `,
+  "docs/testing/v1-uat-launch-intake.md": `CRM V1 UAT Launch Intake
+v1.0.0-rc.8
+Decision: No-Go
+测试环境名称
+前端访问地址
+后端 API 地址
+Git 提交号
+UAT窗口
+证据归档位置
+UAT-SALES
+UAT-MANAGER
+UAT-PRODUCT
+UAT-TEST
+UAT-DEV
+UAT-PM
+管理员账号
+销售个人账号
+销售负责人账号
+权限样本账号
+不记录明文密码
+node scripts/v1-uat-launch-intake-validate.mjs
+`,
   "docs/testing/v1-uat-evidence-manifest.md": `CRM V1 UAT Evidence Manifest
 v1.0.0-rc.8
 Decision: No-Go
@@ -161,7 +186,7 @@ node scripts/v1-uat-evidence-manifest-validate.mjs
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -338,6 +363,22 @@ test("fails when the UAT signoff register validator is missing from readiness ma
   assert.ok(result.failed.some((check) => check.id === "uat-signoff-register-validator"));
 });
 
+test("fails when the UAT launch intake validator is missing from readiness materials", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-launch-intake-validate.mjs": "",
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"].replace(
+      "      - run: node --test scripts/v1-uat-launch-intake-validate.test.mjs\n",
+      ""
+    )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-launch-intake-validator"));
+});
+
 test("fails when the UAT evidence manifest validator is missing from readiness materials", () => {
   const snapshot = {
     ...completeSnapshot,
@@ -510,6 +551,28 @@ test("fails when the UAT signoff register is missing", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the UAT launch intake is missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["docs/testing/v1-uat-launch-intake.md"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the UAT launch intake omits account custody rows", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "docs/testing/v1-uat-launch-intake.md": "CRM V1 UAT Launch Intake\nDecision: No-Go\nUAT-SALES\n测试环境名称\n"
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-launch-intake"));
 });
 
 test("fails when the UAT signoff register omits required signoff rows", () => {

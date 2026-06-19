@@ -25,7 +25,7 @@ GitHub Actions 已配置 V1 自动验证工作流：
 - 前端：`npm test`
 - 前端生产构建：`npm run build`
 - 部署配置：`docker compose -f compose.v1-test.yml config`
-- UAT 准出材料：RC/UAT readiness、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT 缺陷台账 validator、UAT 证据清单 validator、UAT 签署台账 validator 测试
+- UAT 准出材料：RC/UAT readiness、UAT 启动输入 validator、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT 缺陷台账 validator、UAT 证据清单 validator、UAT 签署台账 validator 测试
 - 最终放行门禁：`v1-release-gate` 规则测试
 
 ## V1 测试环境部署
@@ -87,6 +87,18 @@ node --test scripts/v1-uat-readiness-check.test.mjs
 
 ```bash
 node scripts/v1-deployment-config-check.mjs
+```
+
+UAT 启动输入：
+
+```text
+docs/testing/v1-uat-launch-intake.md
+```
+
+UAT 启动输入校验：
+
+```bash
+node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md
 ```
 
 UAT 证据包草稿生成：
@@ -176,7 +188,8 @@ node scripts/v1-release-gate.mjs . \
   docs/testing/v1-uat-evidence-manifest.md \
   docs/testing/v1-uat-defect-register.md \
   docs/testing/v1-uat-environment-evidence.md \
-  docs/testing/v1-uat-signoff-register.md
+  docs/testing/v1-uat-signoff-register.md \
+  docs/testing/v1-uat-launch-intake.md
 ```
 
 V1 聚合状态报告：

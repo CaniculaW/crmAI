@@ -52,6 +52,9 @@ jobs:
       - name: Run V1 UAT signoff register validator tests
         run: node --test scripts/v1-uat-signoff-register-validate.test.mjs
 
+      - name: Run V1 UAT launch intake validator tests
+        run: node --test scripts/v1-uat-launch-intake-validate.test.mjs
+
       - name: Run V1 UAT evidence manifest validator tests
         run: node --test scripts/v1-uat-evidence-manifest-validate.test.mjs
 

@@ -140,7 +140,8 @@ node scripts/v1-release-gate.mjs . \
   docs/testing/v1-uat-evidence-manifest.md \
   docs/testing/v1-uat-defect-register.md \
   docs/testing/v1-uat-environment-evidence.md \
-  docs/testing/v1-uat-signoff-register.md
+  docs/testing/v1-uat-signoff-register.md \
+  docs/testing/v1-uat-launch-intake.md
 ```
 
 ```text

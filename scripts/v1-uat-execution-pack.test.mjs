@@ -57,6 +57,16 @@ const failingSignoffRegister = {
   ]
 };
 
+const failingLaunchIntake = {
+  ok: false,
+  decision: "No-Go",
+  failed: [
+    { id: "environment-intake", message: "Incomplete launch environment fields: 测试环境名称, UAT窗口" },
+    { id: "participant-roster", message: "Incomplete UAT participants: UAT-SALES, UAT-PM" },
+    { id: "account-custody", message: "Incomplete account custody items: 销售个人账号" }
+  ]
+};
+
 test("generates an executable UAT evidence collection pack from failed gates", () => {
   const markdown = generateV1UatExecutionPackMarkdown({
     generatedAt: "2026-06-19T04:00:00+08:00",
@@ -65,6 +75,7 @@ test("generates an executable UAT evidence collection pack from failed gates", (
     manifestResult: failingManifest,
     defectRegisterResult: failingDefectRegister,
     signoffRegisterResult: failingSignoffRegister,
+    launchIntakeResult: failingLaunchIntake,
     evidenceResult: failingEvidence
   });
 
@@ -77,11 +88,14 @@ test("generates an executable UAT evidence collection pack from failed gates", (
   assert.match(markdown, /SMK-005 \| 测试 \| 完成具名环境 Smoke 检查/);
   assert.match(markdown, /UAT-010 \| 业务UAT \| 完成业务验收用例/);
   assert.match(markdown, /DEF-REGISTER \| 测试 \| 补齐缺陷台账/);
+  assert.match(markdown, /LAUNCH-ROSTER \| 项目\/产品 \| 补齐UAT启动参与人/);
+  assert.match(markdown, /LAUNCH-ACCOUNTS \| 测试 \| 补齐UAT账号保管证据/);
   assert.match(markdown, /SIGNOFF-SALES \| 业务UAT \| 补齐签署证据/);
   assert.match(markdown, /SIGNOFF-PM \| 项目\/产品 \| 补齐签署证据/);
   assert.match(markdown, /GO-NOGO \| 项目\/产品 \| 完成 Go\/No-Go 会议结论/);
   assert.match(markdown, /node scripts\/v1-uat-environment-validate\.mjs docs\/testing\/v1-uat-environment-evidence\.md/);
   assert.match(markdown, /node scripts\/v1-uat-signoff-register-validate\.mjs docs\/testing\/v1-uat-signoff-register\.md/);
+  assert.match(markdown, /node scripts\/v1-uat-launch-intake-validate\.mjs docs\/testing\/v1-uat-launch-intake\.md/);
   assert.match(markdown, /node scripts\/v1-release-gate\.mjs/);
   assert.doesNotMatch(markdown, /undefined/);
 });
@@ -95,6 +109,7 @@ test("generates a Go execution pack only when there are no failed gate items", (
     manifestResult: passing,
     defectRegisterResult: passing,
     signoffRegisterResult: passing,
+    launchIntakeResult: passing,
     evidenceResult: passing
   });
 

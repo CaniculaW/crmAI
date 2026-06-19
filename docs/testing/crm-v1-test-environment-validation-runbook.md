@@ -14,10 +14,12 @@
 
 - `docs/testing/crm-v1-uat-evidence-pack-template.md`：用于汇总验收证据、缺陷状态、Go/No-Go 判定和签署记录。
 - `docs/testing/crm-v1-uat-execution-tracker.md`：用于把 PRE、SMK、UAT-001 至 UAT-010、缺陷和签署逐项派工、追踪和归档。
+- `docs/testing/v1-uat-launch-intake.md`：用于在正式 UAT 启动前收敛具名环境、UAT窗口、证据归档位置、参与人和账号准备状态。
 - `docs/testing/v1-uat-environment-evidence.md`：用于记录具名测试环境、前后端地址、账号 Smoke、权限样本和浏览器 Smoke 证据。
 - `docs/testing/v1-uat-defect-register.md`：用于记录 P0/P1 缺陷闭环、回归证据和项目准出结论。
 - `docs/testing/v1-uat-signoff-register.md`：用于记录销售侧、管理侧、产品、测试、研发和项目负责人六方签署结论。
 - `scripts/v1-uat-evidence-pack.mjs`：用于按具名测试环境参数生成 UAT 证据包草稿，不写入明文密码或 API Token。
+- `scripts/v1-uat-launch-intake-validate.mjs`：用于在正式 UAT 启动前校验具名环境、参与人、账号保管、UAT窗口和证据归档位置。
 - `scripts/v1-uat-evidence-pack-validate.mjs`：用于在证据包填写完成后校验 Go/No-Go 条件、P0/P1 缺陷和签署是否一致。
 - `scripts/v1-uat-environment-validate.mjs`：用于在具名环境证据填写完成后校验 ENV-001 至 ENV-008、环境元数据和敏感材料。
 - `scripts/v1-uat-defect-register-validate.mjs`：用于在缺陷台账填写完成后校验 P0/P1 未关闭数量、回归证据、敏感材料和 Go/No-Go 条件。
@@ -110,6 +112,14 @@ node scripts/v1-uat-evidence-pack.mjs \
 
 注意：不要向生成器传入明文密码、生产密钥或 API Token。
 
+UAT启动输入填写后执行状态校验：
+
+```bash
+node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md
+```
+
+要求：正式 UAT 执行前，启动输入 validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐测试环境、UAT窗口、证据归档位置、参与人、联系方式或账号保管证据。
+
 证据包填写完成后执行准出一致性校验：
 
 ```bash
@@ -183,10 +193,11 @@ node scripts/v1-release-gate.mjs . \
   docs/testing/v1-uat-evidence-manifest.md \
   docs/testing/v1-uat-defect-register.md \
   docs/testing/v1-uat-environment-evidence.md \
-  docs/testing/v1-uat-signoff-register.md
+  docs/testing/v1-uat-signoff-register.md \
+  docs/testing/v1-uat-launch-intake.md
 ```
 
-该门禁必须在 UAT 具名环境证据、UAT 证据包、执行追踪表、证据清单、缺陷台账和签署台账全部 `PASS`，且项目负责人选择 `Go` 后返回 `PASS`。
+该门禁必须在 UAT 启动输入、UAT 具名环境证据、UAT 证据包、执行追踪表、证据清单、缺陷台账和签署台账全部 `PASS`，且项目负责人选择 `Go` 后返回 `PASS`。
 
 ## 3. 测试环境 Smoke 步骤
 
@@ -250,6 +261,7 @@ v1-uat-evidence/
   04-signoff/
     crm-v1-uat-evidence-pack.md
     v1-uat-signoff-register.md
+    v1-uat-launch-intake.md
     meeting-minutes.md
     defect-summary.md
     v1-uat-defect-register.md
@@ -265,6 +277,7 @@ v1-uat-evidence/
 | 自动化验证 | `mvn test`、`mvn verify -Ppostgres-it`、`npm test`、`npm run build` 通过 | 回退到研发修复 |
 | 部署态 Smoke | `npm run smoke:v1:browser` 和 `/api/bootstrap` 通过 | 先定位环境、账号、代理或权限配置 |
 | 环境证据 validator | `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md` 返回 PASS | 修正环境元数据、账号证据、权限样本或 Smoke 证据 |
+| UAT启动输入 validator | `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md` 返回 PASS | 补齐具名环境、UAT窗口、证据归档位置、参与人或账号保管证据 |
 | P0 用例 | P0 全部通过，无阻断缺陷 | 不准出 |
 | P1 用例 | P1 完成执行，遗留问题有项目/业务确认 | 形成规避方案或延期单 |
 | 缺陷台账 validator | `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md` 返回 PASS | 修正缺陷汇总、关闭状态、回归证据或 Go/No-Go 结论 |
