@@ -14,6 +14,7 @@ jobs:
       - run: node --test scripts/v1-uat-environment-validate.test.mjs
       - run: node --test scripts/v1-uat-evidence-pack-validate.test.mjs
       - run: node --test scripts/v1-uat-defect-register-validate.test.mjs
+      - run: node --test scripts/v1-uat-signoff-register-validate.test.mjs
       - run: node --test scripts/v1-uat-evidence-manifest-validate.test.mjs
       - run: node --test scripts/v1-uat-execution-tracker-validate.test.mjs
       - run: node --test scripts/v1-release-gate.test.mjs
@@ -43,6 +44,8 @@ jobs:
   "scripts/v1-uat-evidence-pack-validate.test.mjs": "fails a Go evidence pack when a P0 defect remains open\n",
   "scripts/v1-uat-defect-register-validate.mjs": "evaluateUatDefectRegister\np0-p1-summary\nregression-evidence\nno-secret-material\n",
   "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\n",
+  "scripts/v1-uat-signoff-register-validate.mjs": "evaluateUatSignoffRegister\nrequired-signoffs\nproject-go-decision\nno-secret-material\n",
+  "scripts/v1-uat-signoff-register-validate.test.mjs": "fails the draft signoff register because signoffs are pending\n",
   "scripts/v1-uat-evidence-manifest-validate.mjs": "evaluateUatEvidenceManifest\nrequired-items\nevidence-complete\nno-secret-material\n",
   "scripts/v1-uat-evidence-manifest-validate.test.mjs": "fails the current draft manifest because external UAT evidence is pending\n",
   "scripts/v1-uat-execution-tracker-validate.mjs": "evaluateUatExecutionTracker\nrequired-items\nrelease-gates\n",
@@ -116,6 +119,18 @@ DEF-DRAFT
 不记录明文密码
 node scripts/v1-uat-defect-register-validate.mjs
 `,
+  "docs/testing/v1-uat-signoff-register.md": `CRM V1 UAT Signoff Register
+v1.0.0-rc.8
+Decision: No-Go
+SIGNOFF-SALES
+SIGNOFF-MANAGER
+SIGNOFF-PRODUCT
+SIGNOFF-TEST
+SIGNOFF-DEV
+SIGNOFF-PM
+不记录明文密码
+node scripts/v1-uat-signoff-register-validate.mjs
+`,
   "docs/testing/v1-uat-evidence-manifest.md": `CRM V1 UAT Evidence Manifest
 v1.0.0-rc.8
 Decision: No-Go
@@ -128,6 +143,7 @@ ${Array.from({ length: 10 }, (_, index) => `UAT-${String(index + 1).padStart(3, 
 DEF-P0
 DEF-P1
 DEF-REGISTER
+SIGNOFF-REGISTER
 SIGNOFF-SALES
 SIGNOFF-MANAGER
 SIGNOFF-PRODUCT
@@ -145,7 +161,7 @@ node scripts/v1-uat-evidence-manifest-validate.mjs
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -304,6 +320,22 @@ test("fails when the UAT defect register validator is missing from readiness mat
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "uat-defect-register-validator"));
+});
+
+test("fails when the UAT signoff register validator is missing from readiness materials", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-signoff-register-validate.mjs": "",
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"].replace(
+      "      - run: node --test scripts/v1-uat-signoff-register-validate.test.mjs\n",
+      ""
+    )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-signoff-register-validator"));
 });
 
 test("fails when the UAT evidence manifest validator is missing from readiness materials", () => {
@@ -468,6 +500,28 @@ test("fails when the UAT defect register is missing", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the UAT signoff register is missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["docs/testing/v1-uat-signoff-register.md"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the UAT signoff register omits required signoff rows", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "docs/testing/v1-uat-signoff-register.md": "CRM V1 UAT Signoff Register\nDecision: No-Go\nSIGNOFF-SALES\n"
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-signoff-register"));
 });
 
 test("fails when the UAT defect register omits P0 or P1 summary rows", () => {

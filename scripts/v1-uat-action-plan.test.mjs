@@ -57,6 +57,14 @@ const failingDefectRegister = {
   ]
 };
 
+const failingSignoffRegister = {
+  ok: false,
+  decision: "No-Go",
+  failed: [
+    { id: "required-signoffs", message: "Incomplete signoffs: SIGNOFF-SALES, SIGNOFF-PM" }
+  ]
+};
+
 const failingReleaseGate = {
   ok: false,
   decision: "No-Go",
@@ -65,6 +73,7 @@ const failingReleaseGate = {
     { id: "uat-evidence-pack", message: "UAT evidence pack failed: environment-results, uat-business-cases, p0-defects, signoff-complete" },
     { id: "uat-evidence-manifest", message: "UAT evidence manifest failed: evidence-complete, go-decision" },
     { id: "uat-defect-register", message: "UAT defect register failed: p0-p1-summary" },
+    { id: "uat-signoff-register", message: "UAT signoff register failed: required-signoffs" },
     { id: "go-decision", message: "Project decision is No-Go; V1 release gate requires Go." }
   ]
 };
@@ -77,6 +86,7 @@ test("generates a No-Go UAT action plan grouped by project, test, business, and 
     evidenceResult: failingEvidence,
     manifestResult: failingManifest,
     defectRegisterResult: failingDefectRegister,
+    signoffRegisterResult: failingSignoffRegister,
     trackerResult: failingTracker,
     releaseGateResult: failingReleaseGate
   });
@@ -89,12 +99,14 @@ test("generates a No-Go UAT action plan grouped by project, test, business, and 
   assert.match(markdown, /Engineering \| 研发 \| 支持具名测试环境、账号权限、Smoke问题定位，并在证据补齐后重跑最终放行门禁/);
   assert.match(markdown, /node scripts\/v1-uat-environment-validate\.mjs docs\/testing\/v1-uat-environment-evidence\.md/);
   assert.match(markdown, /node scripts\/v1-uat-defect-register-validate\.mjs docs\/testing\/v1-uat-defect-register\.md/);
+  assert.match(markdown, /node scripts\/v1-uat-signoff-register-validate\.mjs docs\/testing\/v1-uat-signoff-register\.md/);
   assert.match(markdown, /node scripts\/v1-uat-evidence-manifest-validate\.mjs docs\/testing\/v1-uat-evidence-manifest\.md/);
   assert.match(markdown, /node scripts\/v1-uat-execution-tracker-validate\.mjs docs\/testing\/crm-v1-uat-execution-tracker\.md/);
-  assert.match(markdown, /node scripts\/v1-release-gate\.mjs \. docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md docs\/testing\/crm-v1-uat-execution-tracker\.md docs\/testing\/v1-uat-evidence-manifest\.md docs\/testing\/v1-uat-defect-register\.md docs\/testing\/v1-uat-environment-evidence\.md/);
+  assert.match(markdown, /node scripts\/v1-release-gate\.mjs \. docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md docs\/testing\/crm-v1-uat-execution-tracker\.md docs\/testing\/v1-uat-evidence-manifest\.md docs\/testing\/v1-uat-defect-register\.md docs\/testing\/v1-uat-environment-evidence\.md docs\/testing\/v1-uat-signoff-register\.md/);
   assert.match(markdown, /UAT Environment Evidence\/environment-summary: Invalid environment summary items/);
   assert.match(markdown, /UAT Evidence Manifest\/evidence-complete: Evidence rows not marked PASS/);
   assert.match(markdown, /UAT Defect Register\/p0-p1-summary: Invalid P0\/P1 summary rows/);
+  assert.match(markdown, /UAT Signoff Register\/required-signoffs: Incomplete signoffs/);
   assert.match(markdown, /Do not mark V1 as Go until every listed gate is PASS and the project decision is Go/);
 });
 
@@ -107,6 +119,7 @@ test("generates a Go action plan with no open blockers only when all gates pass"
     evidenceResult: passing,
     manifestResult: passing,
     defectRegisterResult: passing,
+    signoffRegisterResult: passing,
     trackerResult: passing,
     releaseGateResult: passing
   });

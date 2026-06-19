@@ -21,6 +21,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-uat-evidence-pack-validate.test.mjs",
   "scripts/v1-uat-defect-register-validate.mjs",
   "scripts/v1-uat-defect-register-validate.test.mjs",
+  "scripts/v1-uat-signoff-register-validate.mjs",
+  "scripts/v1-uat-signoff-register-validate.test.mjs",
   "scripts/v1-uat-evidence-manifest-validate.mjs",
   "scripts/v1-uat-evidence-manifest-validate.test.mjs",
   "scripts/v1-uat-execution-tracker-validate.mjs",
@@ -47,6 +49,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/crm-v1-uat-execution-tracker.md",
   "docs/testing/v1-uat-environment-evidence.md",
   "docs/testing/v1-uat-defect-register.md",
+  "docs/testing/v1-uat-signoff-register.md",
   "docs/testing/v1-uat-evidence-manifest.md",
   "docs/testing/evidence/v1-local-uat-2026-06-18.md",
   "docs/testing/evidence/v1-compose-uat-2026-06-19.md",
@@ -219,6 +222,22 @@ function hasUatDefectRegister(content) {
   ]);
 }
 
+function hasUatSignoffRegister(content) {
+  return includesAll(content, [
+    "CRM V1 UAT Signoff Register",
+    "v1.0.0-rc.8",
+    "Decision: No-Go",
+    "SIGNOFF-SALES",
+    "SIGNOFF-MANAGER",
+    "SIGNOFF-PRODUCT",
+    "SIGNOFF-TEST",
+    "SIGNOFF-DEV",
+    "SIGNOFF-PM",
+    "不记录明文密码",
+    "node scripts/v1-uat-signoff-register-validate.mjs"
+  ]);
+}
+
 function makeCheck(id, ok, message, severity = "fail") {
   return { id, ok, message, severity };
 }
@@ -332,6 +351,21 @@ export function evaluateReadinessSnapshot(snapshot) {
       "fails the current draft defect register because P0 and P1 closure evidence is pending"
     ]),
     "UAT defect register validator is tested and enforces P0/P1 summary, closure, regression evidence, and secret redaction."
+  ));
+
+  const signoffRegisterValidator = snapshot["scripts/v1-uat-signoff-register-validate.mjs"] ?? "";
+  const signoffRegisterValidatorTest = snapshot["scripts/v1-uat-signoff-register-validate.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "uat-signoff-register-validator",
+    includesAll(workflow + signoffRegisterValidator + signoffRegisterValidatorTest, [
+      "node --test scripts/v1-uat-signoff-register-validate.test.mjs",
+      "evaluateUatSignoffRegister",
+      "required-signoffs",
+      "project-go-decision",
+      "no-secret-material",
+      "fails the draft signoff register because signoffs are pending"
+    ]),
+    "UAT signoff register validator is tested and enforces role signoff, project Go decision, and secret redaction."
   ));
 
   const evidenceManifestValidator = snapshot["scripts/v1-uat-evidence-manifest-validate.mjs"] ?? "";
@@ -535,6 +569,13 @@ export function evaluateReadinessSnapshot(snapshot) {
     "UAT defect register inventories P0/P1 closure and regression evidence without secrets."
   ));
 
+  const uatSignoffRegister = snapshot["docs/testing/v1-uat-signoff-register.md"] ?? "";
+  checks.push(makeCheck(
+    "uat-signoff-register",
+    hasUatSignoffRegister(uatSignoffRegister),
+    "UAT signoff register inventories sales, management, product, test, development, and project signoffs without secrets."
+  ));
+
   const uatEvidenceManifest = snapshot["docs/testing/v1-uat-evidence-manifest.md"] ?? "";
   checks.push(makeCheck(
     "uat-evidence-manifest",
@@ -563,7 +604,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-signoff-register-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 

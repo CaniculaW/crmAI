@@ -40,6 +40,7 @@ Rules:
 | DEF-REGISTER | 缺陷闭环 | 测试负责人 | PENDING | 待补充 | 缺陷台账和回归证据待补充 |
 | DEF-P0 | 缺陷闭环 | 测试负责人 | PENDING | 待补充 | P0/S1缺陷汇总和回归证据待补充 |
 | DEF-P1 | 缺陷闭环 | 测试负责人 | PENDING | 待补充 | P1/S2缺陷汇总、关闭或规避方案待补充 |
+| SIGNOFF-REGISTER | 签署 | 项目负责人 | PENDING | 待补充 | 签署台账和项目Go结论待补充 |
 | SIGNOFF-SALES | 签署 | 销售侧验收人 | PENDING | 待补充 | 销售侧签署待完成 |
 | SIGNOFF-MANAGER | 签署 | 管理侧验收人 | PENDING | 待补充 | 管理侧签署待完成 |
 | SIGNOFF-PRODUCT | 签署 | 产品负责人 | PENDING | 待补充 | 产品范围确认待完成 |

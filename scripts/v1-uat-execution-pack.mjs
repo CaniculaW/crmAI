@@ -9,12 +9,14 @@ import { evaluateUatEnvironmentEvidence } from "./v1-uat-environment-validate.mj
 import { evaluateUatEvidenceManifest } from "./v1-uat-evidence-manifest-validate.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
 import { evaluateUatExecutionTracker } from "./v1-uat-execution-tracker-validate.mjs";
+import { evaluateUatSignoffRegister } from "./v1-uat-signoff-register-validate.mjs";
 
 const DEFAULT_EVIDENCE_PATH = "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md";
 const DEFAULT_TRACKER_PATH = "docs/testing/crm-v1-uat-execution-tracker.md";
 const DEFAULT_MANIFEST_PATH = "docs/testing/v1-uat-evidence-manifest.md";
 const DEFAULT_DEFECT_REGISTER_PATH = "docs/testing/v1-uat-defect-register.md";
 const DEFAULT_ENVIRONMENT_PATH = "docs/testing/v1-uat-environment-evidence.md";
+const DEFAULT_SIGNOFF_REGISTER_PATH = "docs/testing/v1-uat-signoff-register.md";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-uat-execution-pack.md";
 
 const SIGNOFF_OWNER = new Map([
@@ -106,6 +108,7 @@ function collectExecutionItems({
   trackerResult,
   manifestResult,
   defectRegisterResult,
+  signoffRegisterResult,
   evidenceResult
 }) {
   const messages = collectFailedMessages(
@@ -113,6 +116,7 @@ function collectExecutionItems({
     trackerResult,
     manifestResult,
     defectRegisterResult,
+    signoffRegisterResult,
     evidenceResult
   ).join("\n");
 
@@ -138,7 +142,8 @@ function gateCommands({
   trackerPath = DEFAULT_TRACKER_PATH,
   manifestPath = DEFAULT_MANIFEST_PATH,
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
-  environmentPath = DEFAULT_ENVIRONMENT_PATH
+  environmentPath = DEFAULT_ENVIRONMENT_PATH,
+  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH
 }) {
   return [
     `node scripts/v1-uat-environment-validate.mjs ${environmentPath}`,
@@ -146,7 +151,8 @@ function gateCommands({
     `node scripts/v1-uat-evidence-manifest-validate.mjs ${manifestPath}`,
     `node scripts/v1-uat-execution-tracker-validate.mjs ${trackerPath}`,
     `node scripts/v1-uat-defect-register-validate.mjs ${defectRegisterPath}`,
-    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath} ${environmentPath}`
+    `node scripts/v1-uat-signoff-register-validate.mjs ${signoffRegisterPath}`,
+    `node scripts/v1-release-gate.mjs . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath} ${environmentPath} ${signoffRegisterPath}`
   ];
 }
 
@@ -156,18 +162,21 @@ export function generateV1UatExecutionPackMarkdown({
   trackerResult,
   manifestResult,
   defectRegisterResult,
+  signoffRegisterResult,
   evidenceResult,
   evidencePath = DEFAULT_EVIDENCE_PATH,
   trackerPath = DEFAULT_TRACKER_PATH,
   manifestPath = DEFAULT_MANIFEST_PATH,
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
-  environmentPath = DEFAULT_ENVIRONMENT_PATH
+  environmentPath = DEFAULT_ENVIRONMENT_PATH,
+  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH
 }) {
   const items = collectExecutionItems({
     environmentResult,
     trackerResult,
     manifestResult,
     defectRegisterResult,
+    signoffRegisterResult,
     evidenceResult
   });
   const overall = items.length === 0 ? "Go" : "No-Go";
@@ -196,7 +205,7 @@ export function generateV1UatExecutionPackMarkdown({
   lines.push("");
   lines.push("## Verification Commands");
   lines.push("");
-  for (const command of gateCommands({ evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath })) {
+  for (const command of gateCommands({ evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath, signoffRegisterPath })) {
     lines.push(`- \`${command}\``);
   }
 
@@ -215,12 +224,14 @@ export function generateV1UatExecutionPackFromFiles({
   manifestPath = DEFAULT_MANIFEST_PATH,
   defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
   environmentPath = DEFAULT_ENVIRONMENT_PATH,
+  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
   generatedAt = new Date().toISOString()
 } = {}) {
   const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(path.join(rootDir, environmentPath), "utf8"));
   const trackerResult = evaluateUatExecutionTracker(readFileSync(path.join(rootDir, trackerPath), "utf8"));
   const manifestResult = evaluateUatEvidenceManifest(readFileSync(path.join(rootDir, manifestPath), "utf8"));
   const defectRegisterResult = evaluateUatDefectRegister(readFileSync(path.join(rootDir, defectRegisterPath), "utf8"));
+  const signoffRegisterResult = evaluateUatSignoffRegister(readFileSync(path.join(rootDir, signoffRegisterPath), "utf8"));
   const evidenceResult = evaluateUatEvidencePack(readFileSync(path.join(rootDir, evidencePath), "utf8"));
 
   return generateV1UatExecutionPackMarkdown({
@@ -229,12 +240,14 @@ export function generateV1UatExecutionPackFromFiles({
     trackerResult,
     manifestResult,
     defectRegisterResult,
+    signoffRegisterResult,
     evidenceResult,
     evidencePath,
     trackerPath,
     manifestPath,
     defectRegisterPath,
-    environmentPath
+    environmentPath,
+    signoffRegisterPath
   });
 }
 
@@ -246,6 +259,7 @@ function parseArgs(argv) {
     manifestPath: DEFAULT_MANIFEST_PATH,
     defectRegisterPath: DEFAULT_DEFECT_REGISTER_PATH,
     environmentPath: DEFAULT_ENVIRONMENT_PATH,
+    signoffRegisterPath: DEFAULT_SIGNOFF_REGISTER_PATH,
     outputPath: null
   };
 
@@ -268,6 +282,9 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--environment") {
       parsed.environmentPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--signoffs") {
+      parsed.signoffRegisterPath = argv[index + 1];
       index += 1;
     } else if (arg === "--output") {
       parsed.outputPath = argv[index + 1] ?? DEFAULT_OUTPUT_PATH;

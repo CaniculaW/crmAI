@@ -60,9 +60,12 @@ ${Array.from({ length: 10 }, (_, index) => {
 
 | 门禁 | 命令或证据 | 通过条件 | 当前状态 |
 |---|---|---|---|
+| UAT证据清单一致性 | \`node scripts/v1-uat-evidence-manifest-validate.mjs v1-uat-evidence-manifest.md\` | 返回 \`PASS\` | PASS |
+| UAT具名环境一致性 | \`node scripts/v1-uat-environment-validate.mjs v1-uat-environment-evidence.md\` | 返回 \`PASS\` | PASS |
 | UAT证据包一致性 | \`node scripts/v1-uat-evidence-pack-validate.mjs crm-v1-uat-evidence-pack.md\` | 返回 \`PASS\` | PASS |
 | UAT缺陷台账一致性 | \`node scripts/v1-uat-defect-register-validate.mjs v1-uat-defect-register.md\` | 返回 \`PASS\` | PASS |
-| V1最终放行门禁 | \`node scripts/v1-release-gate.mjs . crm-v1-uat-evidence-pack.md crm-v1-uat-execution-tracker.md v1-uat-evidence-manifest.md v1-uat-defect-register.md\` | 返回 \`PASS\` | PASS |
+| UAT签署台账一致性 | \`node scripts/v1-uat-signoff-register-validate.mjs v1-uat-signoff-register.md\` | 返回 \`PASS\` | PASS |
+| V1最终放行门禁 | \`node scripts/v1-release-gate.mjs . crm-v1-uat-evidence-pack.md crm-v1-uat-execution-tracker.md v1-uat-evidence-manifest.md v1-uat-defect-register.md v1-uat-environment-evidence.md v1-uat-signoff-register.md\` | 返回 \`PASS\` | PASS |
 | 项目签署 | 销售侧验收人、管理侧验收人、产品负责人、测试负责人、研发负责人、项目负责人 | 全部签署完成 | 已完成 |
 
 ## 8. 当前结论
@@ -133,5 +136,19 @@ test("fails when the UAT defect register gate is not PASS", () => {
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => (
     check.id === "release-gates" && check.message.includes("UAT缺陷台账一致性")
+  )));
+});
+
+test("fails when the UAT signoff register gate is missing", () => {
+  const tracker = completeTracker.replace(
+    "| UAT签署台账一致性 | `node scripts/v1-uat-signoff-register-validate.mjs v1-uat-signoff-register.md` | 返回 `PASS` | PASS |\n",
+    ""
+  );
+
+  const result = evaluateUatExecutionTracker(tracker);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => (
+    check.id === "release-gates" && check.message.includes("UAT签署台账一致性")
   )));
 });

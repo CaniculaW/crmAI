@@ -1,6 +1,6 @@
 # CRM V1 UAT Execution Pack
 
-Generated at: 2026-06-18T20:06:25.146Z
+Generated at: 2026-06-19T02:06:04.953Z
 
 Overall: No-Go
 
@@ -41,6 +41,7 @@ Overall: No-Go
 | DEF-P0 | 测试 | 补齐缺陷台账 | P0/P1 缺陷汇总、关闭状态和回归验证证据 |
 | DEF-P1 | 测试 | 补齐缺陷台账 | P0/P1 缺陷汇总、关闭状态和回归验证证据 |
 | DEF-DRAFT | 测试 | 补齐缺陷台账 | P0/P1 缺陷汇总、关闭状态和回归验证证据 |
+| SIGNOFF-REGISTER | 项目/产品 | 补齐签署证据 | 具名签署人、签署日期、签署结论和会议纪要 |
 | SIGNOFF-SALES | 业务UAT | 补齐签署证据 | 具名签署人、签署日期、签署结论和会议纪要 |
 | SIGNOFF-MANAGER | 业务UAT | 补齐签署证据 | 具名签署人、签署日期、签署结论和会议纪要 |
 | SIGNOFF-PRODUCT | 项目/产品 | 补齐签署证据 | 具名签署人、签署日期、签署结论和会议纪要 |
@@ -56,7 +57,8 @@ Overall: No-Go
 - `node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md`
 - `node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md`
 - `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md`
-- `node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md`
+- `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md`
+- `node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md`
 
 ## Completion Rule
 

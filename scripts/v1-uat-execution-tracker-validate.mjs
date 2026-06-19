@@ -30,6 +30,7 @@ const REQUIRED_UAT_CASES = Array.from(
 const REQUIRED_GATES = [
   "UAT证据包一致性",
   "UAT缺陷台账一致性",
+  "UAT签署台账一致性",
   "V1最终放行门禁",
   "项目签署"
 ];

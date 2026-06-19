@@ -139,13 +139,14 @@ node scripts/v1-release-gate.mjs . \
   docs/testing/crm-v1-uat-execution-tracker.md \
   docs/testing/v1-uat-evidence-manifest.md \
   docs/testing/v1-uat-defect-register.md \
-  docs/testing/v1-uat-environment-evidence.md
+  docs/testing/v1-uat-environment-evidence.md \
+  docs/testing/v1-uat-signoff-register.md
 ```
 
 ```text
 实测结果：FAIL。
 Decision: No-Go。
-失败项：当前证据包未通过正式 UAT validator，UAT具名环境证据、UAT执行追踪表、证据清单和缺陷台账仍未完成，且项目决策不是 Go。该结果符合草稿态预期。
+失败项：当前证据包未通过正式 UAT validator，UAT具名环境证据、UAT执行追踪表、证据清单、缺陷台账和签署台账仍未完成，且项目决策不是 Go。该结果符合草稿态预期。
 ```
 
 ## 8. 签署

@@ -16,10 +16,12 @@
 - `docs/testing/crm-v1-uat-execution-tracker.md`：用于把 PRE、SMK、UAT-001 至 UAT-010、缺陷和签署逐项派工、追踪和归档。
 - `docs/testing/v1-uat-environment-evidence.md`：用于记录具名测试环境、前后端地址、账号 Smoke、权限样本和浏览器 Smoke 证据。
 - `docs/testing/v1-uat-defect-register.md`：用于记录 P0/P1 缺陷闭环、回归证据和项目准出结论。
+- `docs/testing/v1-uat-signoff-register.md`：用于记录销售侧、管理侧、产品、测试、研发和项目负责人六方签署结论。
 - `scripts/v1-uat-evidence-pack.mjs`：用于按具名测试环境参数生成 UAT 证据包草稿，不写入明文密码或 API Token。
 - `scripts/v1-uat-evidence-pack-validate.mjs`：用于在证据包填写完成后校验 Go/No-Go 条件、P0/P1 缺陷和签署是否一致。
 - `scripts/v1-uat-environment-validate.mjs`：用于在具名环境证据填写完成后校验 ENV-001 至 ENV-008、环境元数据和敏感材料。
 - `scripts/v1-uat-defect-register-validate.mjs`：用于在缺陷台账填写完成后校验 P0/P1 未关闭数量、回归证据、敏感材料和 Go/No-Go 条件。
+- `scripts/v1-uat-signoff-register-validate.mjs`：用于在签署台账填写完成后校验六方签署、项目 `Go` 结论、证据引用和敏感材料。
 - `scripts/v1-deployment-config-check.mjs`：用于确认 Compose、Dockerfile 和部署手册支持企业镜像代理或内网镜像仓库覆盖基础镜像。
 
 不适用范围：
@@ -140,6 +142,14 @@ node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-regi
 
 要求：正式准出前，缺陷台账 validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐 P0/P1 汇总、缺陷明细、回归证据或项目 Go/No-Go 结论。
 
+UAT签署台账填写后执行状态校验：
+
+```bash
+node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md
+```
+
+要求：正式准出前，签署台账 validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐具名签署人、签署日期、签署结论、会议纪要或项目 `Go` 结论。
+
 需要项目例会或验收推进页时，生成聚合状态报告：
 
 ```bash
@@ -172,10 +182,11 @@ node scripts/v1-release-gate.mjs . \
   docs/testing/crm-v1-uat-execution-tracker.md \
   docs/testing/v1-uat-evidence-manifest.md \
   docs/testing/v1-uat-defect-register.md \
-  docs/testing/v1-uat-environment-evidence.md
+  docs/testing/v1-uat-environment-evidence.md \
+  docs/testing/v1-uat-signoff-register.md
 ```
 
-该门禁必须在 UAT 具名环境证据、UAT 证据包、执行追踪表、证据清单、缺陷台账全部 `PASS`，且项目负责人选择 `Go` 后返回 `PASS`。
+该门禁必须在 UAT 具名环境证据、UAT 证据包、执行追踪表、证据清单、缺陷台账和签署台账全部 `PASS`，且项目负责人选择 `Go` 后返回 `PASS`。
 
 ## 3. 测试环境 Smoke 步骤
 
@@ -238,6 +249,7 @@ v1-uat-evidence/
     uat-010-audit-log.png
   04-signoff/
     crm-v1-uat-evidence-pack.md
+    v1-uat-signoff-register.md
     meeting-minutes.md
     defect-summary.md
     v1-uat-defect-register.md
@@ -257,6 +269,7 @@ v1-uat-evidence/
 | P1 用例 | P1 完成执行，遗留问题有项目/业务确认 | 形成规避方案或延期单 |
 | 缺陷台账 validator | `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md` 返回 PASS | 修正缺陷汇总、关闭状态、回归证据或 Go/No-Go 结论 |
 | 业务验收 | 销售侧、管理侧验收人完成演示或试用确认 | 安排补验 |
+| 签署台账 validator | `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md` 返回 PASS | 补齐六方具名签署、签署日期、证据引用或项目 `Go` 结论 |
 | 上线风险 | 遗留缺陷、观察项、回滚条件已记录 | 补充上线风险清单 |
 | 证据包 validator | `node scripts/v1-uat-evidence-pack-validate.mjs <证据包>` 返回 PASS | 修正证据包、缺陷状态或准出结论 |
 

@@ -49,6 +49,14 @@ const failingEvidence = {
   ]
 };
 
+const failingSignoffRegister = {
+  ok: false,
+  decision: "No-Go",
+  failed: [
+    { id: "required-signoffs", message: "Incomplete signoffs: SIGNOFF-SALES, SIGNOFF-PM" }
+  ]
+};
+
 test("generates an executable UAT evidence collection pack from failed gates", () => {
   const markdown = generateV1UatExecutionPackMarkdown({
     generatedAt: "2026-06-19T04:00:00+08:00",
@@ -56,6 +64,7 @@ test("generates an executable UAT evidence collection pack from failed gates", (
     trackerResult: failingTracker,
     manifestResult: failingManifest,
     defectRegisterResult: failingDefectRegister,
+    signoffRegisterResult: failingSignoffRegister,
     evidenceResult: failingEvidence
   });
 
@@ -69,8 +78,10 @@ test("generates an executable UAT evidence collection pack from failed gates", (
   assert.match(markdown, /UAT-010 \| 业务UAT \| 完成业务验收用例/);
   assert.match(markdown, /DEF-REGISTER \| 测试 \| 补齐缺陷台账/);
   assert.match(markdown, /SIGNOFF-SALES \| 业务UAT \| 补齐签署证据/);
+  assert.match(markdown, /SIGNOFF-PM \| 项目\/产品 \| 补齐签署证据/);
   assert.match(markdown, /GO-NOGO \| 项目\/产品 \| 完成 Go\/No-Go 会议结论/);
   assert.match(markdown, /node scripts\/v1-uat-environment-validate\.mjs docs\/testing\/v1-uat-environment-evidence\.md/);
+  assert.match(markdown, /node scripts\/v1-uat-signoff-register-validate\.mjs docs\/testing\/v1-uat-signoff-register\.md/);
   assert.match(markdown, /node scripts\/v1-release-gate\.mjs/);
   assert.doesNotMatch(markdown, /undefined/);
 });
@@ -83,6 +94,7 @@ test("generates a Go execution pack only when there are no failed gate items", (
     trackerResult: passing,
     manifestResult: passing,
     defectRegisterResult: passing,
+    signoffRegisterResult: passing,
     evidenceResult: passing
   });
 

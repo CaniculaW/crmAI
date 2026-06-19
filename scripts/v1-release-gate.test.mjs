@@ -54,6 +54,16 @@ const failingDefectRegisterResult = {
   failed: [{ id: "p0-p1-summary" }, { id: "go-decision" }]
 };
 
+const passingSignoffRegisterResult = {
+  ok: true,
+  failed: []
+};
+
+const failingSignoffRegisterResult = {
+  ok: false,
+  failed: [{ id: "required-signoffs" }, { id: "project-go-decision" }]
+};
+
 function goEvidencePack(decision = "Go") {
   const projectDecision = decision === "Conditional Go" ? "Conditional Go" : decision;
 
@@ -151,7 +161,8 @@ test("passes only when readiness, UAT environment, UAT evidence, defect register
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
     evidenceManifestResult: passingManifestResult,
-    defectRegisterResult: passingDefectRegisterResult
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
   });
 
   assert.equal(result.ok, true);
@@ -167,7 +178,8 @@ test("fails when RC/UAT readiness has a failed check", () => {
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
     evidenceManifestResult: passingManifestResult,
-    defectRegisterResult: passingDefectRegisterResult
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
   });
 
   assert.equal(result.ok, false);
@@ -182,7 +194,8 @@ test("fails when UAT evidence is still a No-Go draft", () => {
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
     evidenceManifestResult: passingManifestResult,
-    defectRegisterResult: passingDefectRegisterResult
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
   });
 
   assert.equal(result.ok, false);
@@ -197,7 +210,8 @@ test("fails when the project decision is Conditional Go", () => {
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
     evidenceManifestResult: passingManifestResult,
-    defectRegisterResult: passingDefectRegisterResult
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
   });
 
   assert.equal(result.ok, false);
@@ -212,7 +226,8 @@ test("fails when UAT evidence is Go but the execution tracker remains incomplete
     uatEvidenceResult,
     trackerResult: failingTrackerResult,
     evidenceManifestResult: passingManifestResult,
-    defectRegisterResult: passingDefectRegisterResult
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
   });
 
   assert.equal(result.ok, false);
@@ -227,7 +242,8 @@ test("fails when the UAT evidence manifest remains incomplete", () => {
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
     evidenceManifestResult: failingManifestResult,
-    defectRegisterResult: passingDefectRegisterResult
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
   });
 
   assert.equal(result.ok, false);
@@ -242,7 +258,8 @@ test("fails when the named UAT environment evidence remains incomplete", () => {
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
     evidenceManifestResult: passingManifestResult,
-    defectRegisterResult: passingDefectRegisterResult
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
   });
 
   assert.equal(result.ok, false);
@@ -257,9 +274,26 @@ test("fails when the UAT defect register remains incomplete", () => {
     uatEvidenceResult,
     trackerResult: passingTrackerResult,
     evidenceManifestResult: passingManifestResult,
-    defectRegisterResult: failingDefectRegisterResult
+    defectRegisterResult: failingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
   });
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "uat-defect-register"));
+});
+
+test("fails when the UAT signoff register remains incomplete", () => {
+  const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    environmentResult: passingEnvironmentResult,
+    uatEvidenceResult,
+    trackerResult: passingTrackerResult,
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: failingSignoffRegisterResult
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-signoff-register"));
 });

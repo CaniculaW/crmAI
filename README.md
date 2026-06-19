@@ -25,7 +25,7 @@ GitHub Actions 已配置 V1 自动验证工作流：
 - 前端：`npm test`
 - 前端生产构建：`npm run build`
 - 部署配置：`docker compose -f compose.v1-test.yml config`
-- UAT 准出材料：RC/UAT readiness、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT 缺陷台账 validator、UAT 证据清单 validator 测试
+- UAT 准出材料：RC/UAT readiness、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT 缺陷台账 validator、UAT 证据清单 validator、UAT 签署台账 validator 测试
 - 最终放行门禁：`v1-release-gate` 规则测试
 
 ## V1 测试环境部署
@@ -155,6 +155,18 @@ UAT 执行追踪表校验：
 node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md
 ```
 
+UAT 签署台账：
+
+```text
+docs/testing/v1-uat-signoff-register.md
+```
+
+UAT 签署台账校验：
+
+```bash
+node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md
+```
+
 V1 最终放行门禁：
 
 ```bash
@@ -163,7 +175,8 @@ node scripts/v1-release-gate.mjs . \
   docs/testing/crm-v1-uat-execution-tracker.md \
   docs/testing/v1-uat-evidence-manifest.md \
   docs/testing/v1-uat-defect-register.md \
-  docs/testing/v1-uat-environment-evidence.md
+  docs/testing/v1-uat-environment-evidence.md \
+  docs/testing/v1-uat-signoff-register.md
 ```
 
 V1 聚合状态报告：
@@ -190,7 +203,7 @@ V1 Go/No-Go会议包：
 node scripts/v1-go-no-go-meeting.mjs --output docs/testing/v1-go-no-go-meeting.md
 ```
 
-当前 rc.8 草稿、UAT 执行追踪表和 UAT 逐项执行包仍是 `No-Go`，因此最终放行门禁会失败；待具名测试环境 UAT、缺陷闭环、追踪表和签署完成并形成 `Go` 证据包后，该命令才应通过。
+当前 rc.8 草稿、UAT 执行追踪表、UAT 签署台账和 UAT 逐项执行包仍是 `No-Go`，因此最终放行门禁会失败；待具名测试环境 UAT、缺陷闭环、追踪表、签署台账和签署完成并形成 `Go` 证据包后，该命令才应通过。
 
 ## 后端
 

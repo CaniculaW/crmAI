@@ -11,6 +11,7 @@ const requiredIds = [
   "DEF-REGISTER",
   "DEF-P0",
   "DEF-P1",
+  "SIGNOFF-REGISTER",
   "SIGNOFF-SALES",
   "SIGNOFF-MANAGER",
   "SIGNOFF-PRODUCT",
