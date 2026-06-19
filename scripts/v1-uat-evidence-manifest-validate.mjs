@@ -38,6 +38,11 @@ function hasSecretMaterial(value) {
   return /\b(password|passwd|pwd|token|secret|api[_-]?key|authorization)\s*[:=]/i.test(value);
 }
 
+function isNamedOwner(value) {
+  return isConcreteReference(value)
+    && !/(Owner|负责人|验收人|测试|研发|产品|项目|销售|管理|运维|QA|Dev|PM|Manager|Product|Sales|Test|Frontend|Backend|DevOps)/i.test(value);
+}
+
 function makeCheck(id, ok, message) {
   return { id, ok, message };
 }
@@ -114,6 +119,17 @@ export function evaluateUatEvidenceManifest(markdown) {
       : `PASS evidence references are not retained: ${unretainedEvidenceRows.join(", ")}`
   ));
 
+  const invalidPassOwnerRows = rows
+    .filter((row) => row[3] === "PASS" && !isNamedOwner(row[2] ?? ""))
+    .map((row) => row[0]);
+  checks.push(makeCheck(
+    "pass-owner-name-format",
+    invalidPassOwnerRows.length === 0,
+    invalidPassOwnerRows.length === 0
+      ? "All PASS evidence owners are named people rather than role labels."
+      : `PASS evidence owners use role labels instead of named people: ${invalidPassOwnerRows.join(", ")}`
+  ));
+
   checks.push(makeCheck(
     "no-secret-material",
     !hasSecretMaterial(markdown),
@@ -139,7 +155,8 @@ export function evaluateUatEvidenceManifest(markdown) {
     passed,
     failed,
     checks,
-    unretainedEvidenceRows
+    unretainedEvidenceRows,
+    invalidPassOwnerRows
   };
 }
 

@@ -182,6 +182,8 @@ UAT 证据清单校验：
 node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md
 ```
 
+证据清单中每个 `PASS` 行必须填写具体 Owner 姓名，不能用“测试负责人”“销售侧验收人”或 `QA Owner` 等角色标签替代；证据引用必须指向 `docs/` 下已归档工件或外部 `http(s)` URL。
+
 UAT 证据引用保全检查：
 
 ```bash

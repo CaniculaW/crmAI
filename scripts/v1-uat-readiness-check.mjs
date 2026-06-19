@@ -527,11 +527,13 @@ export function evaluateReadinessSnapshot(snapshot) {
       "required-items",
       "evidence-complete",
       "evidence-references-retained",
+      "pass-owner-name-format",
       "no-secret-material",
       "fails the current draft manifest because external UAT evidence is pending",
-      "fails when PASS evidence references are not retained"
+      "fails when PASS evidence references are not retained",
+      "fails when a PASS evidence owner is only a role label"
     ]),
-    "UAT evidence manifest validator is tested and enforces evidence inventory completeness, concrete retained references, and secret redaction."
+    "UAT evidence manifest validator is tested and enforces evidence inventory completeness, named PASS evidence owners, concrete retained references, and secret redaction."
   ));
 
   const evidenceReferenceChecker = snapshot["scripts/v1-evidence-reference-check.mjs"] ?? "";

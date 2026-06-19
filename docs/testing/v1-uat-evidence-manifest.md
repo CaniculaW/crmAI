@@ -9,6 +9,7 @@ Purpose: centralize the evidence reference that must be filled before V1 can pas
 Rules:
 
 - 不记录明文密码、生产密钥、API tokens 或个人敏感信息。
+- Every `PASS` row owner must be a named person rather than a role label such as test owner, sales owner, or QA Owner.
 - Every `PASS` row must include a concrete evidence reference that points to a retained `docs/` artifact or an external `http(s)` URL.
 - Keep this manifest aligned with `docs/testing/crm-v1-uat-execution-tracker.md` and the final UAT evidence pack.
 - Validate with `node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md`.

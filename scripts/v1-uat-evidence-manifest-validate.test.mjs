@@ -28,7 +28,7 @@ Decision: Go
 
 | Evidence ID | Type | Owner | Status | Evidence reference | Notes |
 |---|---|---|---|---|---|
-${requiredIds.map((id) => `| ${id} | UAT evidence | QA Owner | PASS | docs/testing/evidence/${id.toLowerCase()}.png | Verified |`).join("\n")}
+${requiredIds.map((id) => `| ${id} | UAT evidence | Chen Min | PASS | docs/testing/evidence/${id.toLowerCase()}.png | Verified |`).join("\n")}
 `;
 
 test("passes a complete UAT evidence manifest with every required evidence item", () => {
@@ -66,8 +66,8 @@ Decision: No-Go
 
 test("fails when a PASS evidence row lacks a concrete reference", () => {
   const manifest = completeManifest.replace(
-    "| UAT-006 | UAT evidence | QA Owner | PASS | docs/testing/evidence/uat-006.png | Verified |",
-    "| UAT-006 | UAT evidence | QA Owner | PASS | 待补充 | Verified |"
+    "| UAT-006 | UAT evidence | Chen Min | PASS | docs/testing/evidence/uat-006.png | Verified |",
+    "| UAT-006 | UAT evidence | Chen Min | PASS | 待补充 | Verified |"
   );
 
   const result = evaluateUatEvidenceManifest(manifest);
@@ -78,8 +78,8 @@ test("fails when a PASS evidence row lacks a concrete reference", () => {
 
 test("fails when PASS evidence references are not retained", () => {
   const manifest = completeManifest.replace(
-    "| UAT-006 | UAT evidence | QA Owner | PASS | docs/testing/evidence/uat-006.png | Verified |",
-    "| UAT-006 | UAT evidence | QA Owner | PASS | 会议纪要确认 | Verified |"
+    "| UAT-006 | UAT evidence | Chen Min | PASS | docs/testing/evidence/uat-006.png | Verified |",
+    "| UAT-006 | UAT evidence | Chen Min | PASS | 会议纪要确认 | Verified |"
   );
 
   const result = evaluateUatEvidenceManifest(manifest);
@@ -89,10 +89,23 @@ test("fails when PASS evidence references are not retained", () => {
   assert.ok(result.failed.some((check) => check.id === "evidence-references-retained"));
 });
 
+test("fails when a PASS evidence owner is only a role label", () => {
+  const manifest = completeManifest.replace(
+    "| UAT-006 | UAT evidence | Chen Min | PASS | docs/testing/evidence/uat-006.png | Verified |",
+    "| UAT-006 | UAT evidence | 测试负责人 | PASS | docs/testing/evidence/uat-006.png | Verified |"
+  );
+
+  const result = evaluateUatEvidenceManifest(manifest);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidPassOwnerRows, ["UAT-006"]);
+  assert.ok(result.failed.some((check) => check.id === "pass-owner-name-format"));
+});
+
 test("fails when manifest text contains secret-like material", () => {
   const manifest = completeManifest.replace(
-    "| SMK-003 | UAT evidence | QA Owner | PASS | docs/testing/evidence/smk-003.png | Verified |",
-    "| SMK-003 | UAT evidence | QA Owner | PASS | docs/testing/evidence/smk-003.png | password=S3cure!123 |"
+    "| SMK-003 | UAT evidence | Chen Min | PASS | docs/testing/evidence/smk-003.png | Verified |",
+    "| SMK-003 | UAT evidence | Chen Min | PASS | docs/testing/evidence/smk-003.png | password=S3cure!123 |"
   );
 
   const result = evaluateUatEvidenceManifest(manifest);
