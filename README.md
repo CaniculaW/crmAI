@@ -118,6 +118,7 @@ docs/meeting-notes/crm-kickoff-minutes.md
 node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md
 ```
 
+已确认启动治理负责人和业务验收人必须填写具体姓名，不能用“产品负责人”“业务验收人-销售侧”等角色标签替代。
 启动治理中的上线周期正式确认后必须使用 `YYYY-MM-DD 至 YYYY-MM-DD`，结束日期晚于开始日期。
 
 UAT 证据包草稿生成：

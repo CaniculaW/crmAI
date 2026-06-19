@@ -188,13 +188,13 @@ Decision: Go
 
 | 角色 | 姓名 | 确认状态 | Evidence | 备注 |
 |---|---|---|---|---|
-| 产品负责人 | Product Owner | 已确认 | docs/meeting-notes/evidence/kickoff/product-owner.md | 负责需求冻结、范围管理和业务验收协调 |
-| 业务验收人-销售侧 | Sales Owner | 已确认 | docs/meeting-notes/evidence/kickoff/sales-owner.md | 验收销售主流程 |
-| 业务验收人-管理侧 | Manager Owner | 已确认 | docs/meeting-notes/evidence/kickoff/manager-owner.md | 验收管理视图和权限边界 |
-| 研发负责人 | Dev Owner | 已确认 | docs/meeting-notes/evidence/kickoff/dev-owner.md | 负责技术方案、排期和交付协调 |
-| 前端负责人 | Frontend Owner | 已确认 | docs/meeting-notes/evidence/kickoff/frontend-owner.md | 负责 Web 管理端页面交付 |
-| 后端负责人 | Backend Owner | 已确认 | docs/meeting-notes/evidence/kickoff/backend-owner.md | 负责 API、权限、数据和业务服务 |
-| 测试负责人 | QA Owner | 已确认 | docs/meeting-notes/evidence/kickoff/qa-owner.md | 负责测试用例、集成测试和验收验证 |
+| 产品负责人 | Wang Qiang | 已确认 | docs/meeting-notes/evidence/kickoff/product-owner.md | 负责需求冻结、范围管理和业务验收协调 |
+| 业务验收人-销售侧 | Li Na | 已确认 | docs/meeting-notes/evidence/kickoff/sales-owner.md | 验收销售主流程 |
+| 业务验收人-管理侧 | Zhou Rui | 已确认 | docs/meeting-notes/evidence/kickoff/manager-owner.md | 验收管理视图和权限边界 |
+| 研发负责人 | Liu Yang | 已确认 | docs/meeting-notes/evidence/kickoff/dev-owner.md | 负责技术方案、排期和交付协调 |
+| 前端负责人 | Sun Hao | 已确认 | docs/meeting-notes/evidence/kickoff/frontend-owner.md | 负责 Web 管理端页面交付 |
+| 后端负责人 | He Lei | 已确认 | docs/meeting-notes/evidence/kickoff/backend-owner.md | 负责 API、权限、数据和业务服务 |
+| 测试负责人 | Chen Min | 已确认 | docs/meeting-notes/evidence/kickoff/qa-owner.md | 负责测试用例、集成测试和验收验证 |
 
 | 事项 | 当前口径 | 确认状态 | Evidence |
 |---|---|---|---|

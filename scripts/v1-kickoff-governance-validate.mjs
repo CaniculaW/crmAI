@@ -69,6 +69,11 @@ function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value);
 }
 
+function isNamedOwner(value) {
+  return isConcrete(value)
+    && !/(Owner|负责人|验收人|测试|研发|产品|项目|销售|管理|QA|Dev|PM|Manager|Product|Sales|Test|Frontend|Backend)/i.test(value);
+}
+
 function evidenceReferenceTokens(value) {
   return value
     .split(/[\s,，;；]+/)
@@ -143,6 +148,24 @@ export function evaluateKickoffGovernance(markdown) {
     incompleteOwners.length === 0
       ? "Kickoff owners and business acceptance owners are named and confirmed."
       : `Incomplete kickoff owners: ${incompleteOwners.join(", ")}`
+  ));
+
+  const invalidOwnerNameRoles = REQUIRED_OWNER_ROLES.filter((role) => {
+    const row = findRow(rows, role);
+    if (!row) {
+      return false;
+    }
+    const owner = row[1] ?? "";
+    const status = row[2] ?? "";
+    return status === "已确认" && isConcrete(owner) && !isNamedOwner(owner);
+  });
+
+  checks.push(makeCheck(
+    "owner-name-format",
+    invalidOwnerNameRoles.length === 0,
+    invalidOwnerNameRoles.length === 0
+      ? "Confirmed kickoff owners are named people rather than role labels."
+      : `Confirmed kickoff owners use role labels instead of named people: ${invalidOwnerNameRoles.join(", ")}`
   ));
 
   const incompleteScopeItems = REQUIRED_SCOPE_ITEMS.filter((item) => {
@@ -243,6 +266,7 @@ export function evaluateKickoffGovernance(markdown) {
     ok: failed.length === 0,
     decision,
     invalidScheduleFields,
+    invalidOwnerNameRoles,
     unretainedOwnerEvidenceRoles,
     unretainedScopeEvidenceItems,
     passed,
