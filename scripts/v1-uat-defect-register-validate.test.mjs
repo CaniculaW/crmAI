@@ -21,9 +21,9 @@ Decision: Go
 
 | Defect ID | Severity | Source case | Status | Owner | Resolution | Regression evidence | Business decision |
 |---|---|---|---|---|---|---|---|
-| DEF-001 | P0 / S1 阻断 | UAT-004 | VERIFIED | Dev Owner | 修复客户保存失败 | docs/testing/evidence/defects/def-001-regression.png | 已关闭 |
-| DEF-002 | P1 / S2 严重 | UAT-009 | VERIFIED | Dev Owner | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |
-| DEF-003 | P2 / S3 一般 | UAT-007 | CLOSED | Product Owner | 纳入优化池 | docs/testing/evidence/defects/def-003-triage.md | 不影响试点 |
+| DEF-001 | P0 / S1 阻断 | UAT-004 | VERIFIED | Liu Yang | 修复客户保存失败 | docs/testing/evidence/defects/def-001-regression.png | 已关闭 |
+| DEF-002 | P1 / S2 严重 | UAT-009 | VERIFIED | Liu Yang | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |
+| DEF-003 | P2 / S3 一般 | UAT-007 | CLOSED | Wang Qiang | 纳入优化池 | docs/testing/evidence/defects/def-003-triage.md | 不影响试点 |
 `;
 
 test("passes a complete defect register with closed P0 and P1 defects", () => {
@@ -64,8 +64,8 @@ test("fails when a P0 or P1 defect remains open", () => {
     "| P1 / S2 严重 | 1 | 0 | docs/testing/evidence/defects/p1-regression.md |",
     "| P1 / S2 严重 | 1 | 1 | docs/testing/evidence/defects/p1-regression.md |"
   ).replace(
-    "| DEF-002 | P1 / S2 严重 | UAT-009 | VERIFIED | Dev Owner | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |",
-    "| DEF-002 | P1 / S2 严重 | UAT-009 | OPEN | Dev Owner | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 待关闭 |"
+    "| DEF-002 | P1 / S2 严重 | UAT-009 | VERIFIED | Liu Yang | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |",
+    "| DEF-002 | P1 / S2 严重 | UAT-009 | OPEN | Liu Yang | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 待关闭 |"
   );
 
   const result = evaluateUatDefectRegister(register);
@@ -76,8 +76,8 @@ test("fails when a P0 or P1 defect remains open", () => {
 
 test("fails when a closed P0 or P1 defect lacks regression evidence", () => {
   const register = completeRegister.replace(
-    "| DEF-001 | P0 / S1 阻断 | UAT-004 | VERIFIED | Dev Owner | 修复客户保存失败 | docs/testing/evidence/defects/def-001-regression.png | 已关闭 |",
-    "| DEF-001 | P0 / S1 阻断 | UAT-004 | VERIFIED | Dev Owner | 修复客户保存失败 | 待补充 | 已关闭 |"
+    "| DEF-001 | P0 / S1 阻断 | UAT-004 | VERIFIED | Liu Yang | 修复客户保存失败 | docs/testing/evidence/defects/def-001-regression.png | 已关闭 |",
+    "| DEF-001 | P0 / S1 阻断 | UAT-004 | VERIFIED | Liu Yang | 修复客户保存失败 | 待补充 | 已关闭 |"
   );
 
   const result = evaluateUatDefectRegister(register);
@@ -88,8 +88,8 @@ test("fails when a closed P0 or P1 defect lacks regression evidence", () => {
 
 test("fails when a P0 or P1 defect source case is not traceable", () => {
   const register = completeRegister.replace(
-    "| DEF-002 | P1 / S2 严重 | UAT-009 | VERIFIED | Dev Owner | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |",
-    "| DEF-002 | P1 / S2 严重 | 管理视图问题 | VERIFIED | Dev Owner | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |"
+    "| DEF-002 | P1 / S2 严重 | UAT-009 | VERIFIED | Liu Yang | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |",
+    "| DEF-002 | P1 / S2 严重 | 管理视图问题 | VERIFIED | Liu Yang | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |"
   );
 
   const result = evaluateUatDefectRegister(register);
@@ -97,6 +97,19 @@ test("fails when a P0 or P1 defect source case is not traceable", () => {
   assert.equal(result.ok, false);
   assert.deepEqual(result.invalidSourceCaseDefects, ["DEF-002"]);
   assert.ok(result.failed.some((check) => check.id === "defect-source-case-format"));
+});
+
+test("fails when a P0 or P1 defect owner is only a role label", () => {
+  const register = completeRegister.replace(
+    "| DEF-001 | P0 / S1 阻断 | UAT-004 | VERIFIED | Liu Yang | 修复客户保存失败 | docs/testing/evidence/defects/def-001-regression.png | 已关闭 |",
+    "| DEF-001 | P0 / S1 阻断 | UAT-004 | VERIFIED | 研发负责人 | 修复客户保存失败 | docs/testing/evidence/defects/def-001-regression.png | 已关闭 |"
+  );
+
+  const result = evaluateUatDefectRegister(register);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidDefectOwnerRows, ["DEF-001"]);
+  assert.ok(result.failed.some((check) => check.id === "defect-owner-name-format"));
 });
 
 test("fails when closed P0 or P1 regression evidence is not retained", () => {
@@ -114,8 +127,8 @@ test("fails when closed P0 or P1 regression evidence is not retained", () => {
 
 test("fails when defect register contains secret-like material", () => {
   const register = completeRegister.replace(
-    "| DEF-003 | P2 / S3 一般 | UAT-007 | CLOSED | Product Owner | 纳入优化池 | docs/testing/evidence/defects/def-003-triage.md | 不影响试点 |",
-    "| DEF-003 | P2 / S3 一般 | UAT-007 | CLOSED | Product Owner | password=S3cure!123 | docs/testing/evidence/defects/def-003-triage.md | 不影响试点 |"
+    "| DEF-003 | P2 / S3 一般 | UAT-007 | CLOSED | Wang Qiang | 纳入优化池 | docs/testing/evidence/defects/def-003-triage.md | 不影响试点 |",
+    "| DEF-003 | P2 / S3 一般 | UAT-007 | CLOSED | Wang Qiang | password=S3cure!123 | docs/testing/evidence/defects/def-003-triage.md | 不影响试点 |"
   );
 
   const result = evaluateUatDefectRegister(register);

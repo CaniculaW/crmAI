@@ -436,14 +436,16 @@ export function evaluateReadinessSnapshot(snapshot) {
       "evaluateUatDefectRegister",
       "p0-p1-summary",
       "defect-source-case-format",
+      "defect-owner-name-format",
       "regression-evidence",
       "defect-evidence-retained",
       "no-secret-material",
       "fails the current draft defect register because P0 and P1 closure evidence is pending",
       "fails when a P0 or P1 defect source case is not traceable",
+      "fails when a P0 or P1 defect owner is only a role label",
       "fails when closed P0 or P1 regression evidence is not retained"
     ]),
-    "UAT defect register validator is tested and enforces P0/P1 summary, traceable source cases, closure, retained regression evidence, and secret redaction."
+    "UAT defect register validator is tested and enforces P0/P1 summary, traceable source cases, named defect owners, closure, retained regression evidence, and secret redaction."
   ));
 
   const signoffRegisterValidator = snapshot["scripts/v1-uat-signoff-register-validate.mjs"] ?? "";

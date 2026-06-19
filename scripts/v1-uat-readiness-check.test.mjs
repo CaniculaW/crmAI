@@ -67,8 +67,8 @@ jobs:
   "scripts/v1-uat-environment-validate.test.mjs": "fails a draft environment record when named environment evidence is pending\nfails when environment URLs or git commit are not structured\nfails when a PASS environment check owner is only a role label\nfails when PASS environment evidence reference is not retained\n",
   "scripts/v1-uat-evidence-pack-validate.mjs": "evaluateUatEvidencePack\np0-defects\nsignoff-complete\ngo-hard-gates\nevidence-references-retained\n",
   "scripts/v1-uat-evidence-pack-validate.test.mjs": "fails a Go evidence pack when a P0 defect remains open\nfails when passed UAT evidence references are not retained\n",
-  "scripts/v1-uat-defect-register-validate.mjs": "evaluateUatDefectRegister\np0-p1-summary\ndefect-source-case-format\nregression-evidence\ndefect-evidence-retained\nno-secret-material\n",
-  "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\nfails when a P0 or P1 defect source case is not traceable\nfails when closed P0 or P1 regression evidence is not retained\n",
+  "scripts/v1-uat-defect-register-validate.mjs": "evaluateUatDefectRegister\np0-p1-summary\ndefect-source-case-format\ndefect-owner-name-format\nregression-evidence\ndefect-evidence-retained\nno-secret-material\n",
+  "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\nfails when a P0 or P1 defect source case is not traceable\nfails when a P0 or P1 defect owner is only a role label\nfails when closed P0 or P1 regression evidence is not retained\n",
   "scripts/v1-uat-signoff-register-validate.mjs": "evaluateUatSignoffRegister\nrequired-signoffs\nsignoff-owner-name-format\nsigned-date-format\nsignoff-evidence-retained\nproject-go-decision\nno-secret-material\n",
   "scripts/v1-uat-signoff-register-validate.test.mjs": "fails the draft signoff register because signoffs are pending\nfails when an approved signoff owner is only a role label\nfails when an approved signoff uses a non-ISO signed date\nfails when an approved signoff evidence reference is not retained\n",
   "scripts/v1-kickoff-governance-validate.mjs": "evaluateKickoffGovernance\nrequired-owners\nowner-name-format\nscope-freeze\nscope-boundary\nschedule-format\nkickoff-evidence-retained\nno-secret-material\n",
@@ -509,6 +509,19 @@ test("fails when the UAT defect register validator omits source case format guar
     ...completeSnapshot,
     "scripts/v1-uat-defect-register-validate.mjs": completeSnapshot["scripts/v1-uat-defect-register-validate.mjs"].replace("defect-source-case-format\n", ""),
     "scripts/v1-uat-defect-register-validate.test.mjs": completeSnapshot["scripts/v1-uat-defect-register-validate.test.mjs"].replace("fails when a P0 or P1 defect source case is not traceable\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-defect-register-validator"));
+});
+
+test("fails when the UAT defect register validator omits named defect owner guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-defect-register-validate.mjs": completeSnapshot["scripts/v1-uat-defect-register-validate.mjs"].replace("defect-owner-name-format\n", ""),
+    "scripts/v1-uat-defect-register-validate.test.mjs": completeSnapshot["scripts/v1-uat-defect-register-validate.test.mjs"].replace("fails when a P0 or P1 defect owner is only a role label\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

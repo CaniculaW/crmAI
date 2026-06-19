@@ -352,9 +352,9 @@ Decision: Go
 
 | Defect ID | Severity | Source case | Status | Owner | Resolution | Regression evidence | Business decision |
 |---|---|---|---|---|---|---|---|
-| DEF-001 | P0 / S1 阻断 | UAT-004 | VERIFIED | Dev Owner | 修复客户保存失败 | docs/testing/evidence/defects/def-001-regression.png | 已关闭 |
-| DEF-002 | P1 / S2 严重 | UAT-009 | VERIFIED | Dev Owner | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |
-| DEF-003 | P2 / S3 一般 | UAT-007 | CLOSED | Product Owner | 纳入优化池 | docs/testing/evidence/defects/def-003-triage.md | 不影响试点 |
+| DEF-001 | P0 / S1 阻断 | UAT-004 | VERIFIED | Liu Yang | 修复客户保存失败 | docs/testing/evidence/defects/def-001-regression.png | 已关闭 |
+| DEF-002 | P1 / S2 严重 | UAT-009 | VERIFIED | Liu Yang | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |
+| DEF-003 | P2 / S3 一般 | UAT-007 | CLOSED | Wang Qiang | 纳入优化池 | docs/testing/evidence/defects/def-003-triage.md | 不影响试点 |
 `;
 
 const completeSignoffRegister = `# CRM V1 UAT Signoff Register

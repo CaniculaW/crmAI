@@ -12,6 +12,7 @@ Rules:
 - P0/S1 and P1/S2 open counts must be `0` before V1 can be marked `Go`.
 - Every P0/S1 or P1/S2 defect source case must reference a traceable `PRE-###`, `SMK-###`, or `UAT-###` case ID.
 - Every closed P0/S1 or P1/S2 defect must include owner, resolution, regression evidence, and business decision.
+- Every P0/S1 or P1/S2 defect owner must be a named person; role labels such as `研发负责人`, `测试负责人`, or `Dev Owner` are not sufficient.
 - Closed P0/S1 or P1/S2 regression evidence must reference a retained repository artifact under `docs/` or an external `http(s)` URL; meeting-note anchors or free-text references are not sufficient.
 - Validate with `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md`.
 

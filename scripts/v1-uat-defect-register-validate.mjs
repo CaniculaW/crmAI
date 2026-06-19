@@ -42,6 +42,11 @@ function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value) && !/^[-—无]+$/.test(value);
 }
 
+function isNamedOwner(value) {
+  return isConcrete(value)
+    && !/(Owner|负责人|验收人|测试|研发|产品|项目|销售|管理|运维|QA|Dev|PM|Manager|Product|Sales|Test|Frontend|Backend|DevOps)/i.test(value);
+}
+
 function evidenceReferenceTokens(value) {
   return String(value ?? "")
     .replace(/`/g, "")
@@ -149,6 +154,17 @@ export function evaluateUatDefectRegister(markdown) {
       : `P0/P1 defects have untraceable source cases: ${invalidSourceCaseDefects.join(", ")}`
   ));
 
+  const invalidDefectOwnerRows = p0p1Defects
+    .filter((row) => isConcrete(row[4]) && !isNamedOwner(row[4]))
+    .map((row) => row[0]);
+  checks.push(makeCheck(
+    "defect-owner-name-format",
+    invalidDefectOwnerRows.length === 0,
+    invalidDefectOwnerRows.length === 0
+      ? "P0/S1 and P1/S2 defect owners are named people rather than role labels."
+      : `P0/P1 defects use role labels instead of named people: ${invalidDefectOwnerRows.join(", ")}`
+  ));
+
   const missingRegression = p0p1Defects
     .filter((row) => rowClosed(row) && !isConcrete(row[6]))
     .map((row) => row[0]);
@@ -194,6 +210,7 @@ export function evaluateUatDefectRegister(markdown) {
     ok: failed.length === 0,
     decision,
     invalidSourceCaseDefects,
+    invalidDefectOwnerRows,
     unretainedRegressionEvidenceDefects,
     passed,
     failed,

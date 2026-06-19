@@ -168,7 +168,7 @@ UAT 缺陷台账校验：
 node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md
 ```
 
-P0/P1 缺陷来源用例必须引用 `PRE-001`、`SMK-001` 或 `UAT-001` 这类可追溯编号；已关闭 P0/P1 回归证据必须引用 `docs/` 下留存文件或外部 `http(s)` 系统链接。
+P0/P1 缺陷来源用例必须引用 `PRE-001`、`SMK-001` 或 `UAT-001` 这类可追溯编号；P0/P1 缺陷 Owner 必须填写具体姓名，不能用“研发负责人”“测试负责人”等角色标签替代；已关闭 P0/P1 回归证据必须引用 `docs/` 下留存文件或外部 `http(s)` 系统链接。
 
 UAT 证据清单：
 
