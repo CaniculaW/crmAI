@@ -51,6 +51,7 @@
 | 本地 API Smoke | 演示账号登录和 `/api/bootstrap` 部署态探针 | HTTP 200，`permissions_count` 返回当前启用权限总数（本次Smoke观测为25） |
 | `npm run smoke:v1:browser` | 登录后系统管理页展示演示组织、用户、角色 | console 0 warning/error |
 | `node scripts/v1-uat-coverage-check.mjs` | UAT-001 至 UAT-010 对 AC-001 至 AC-017 的验收覆盖映射 | 17/17 acceptance items covered |
+| `node scripts/v1-traceability-check.mjs` | AC-001 至 AC-017 追踪矩阵完整性、研发证据和 release gate 对齐 | Traceability check passed |
 | `node scripts/v1-uat-evidence-pack-validate.mjs <证据包>` | UAT 证据包 Go/No-Go、P0/P1缺陷、业务签署和证据完整性准出校验 | 待具名测试环境 UAT 证据包填写后执行 |
 
 ## 4. 不应由研发侧伪造的完成项

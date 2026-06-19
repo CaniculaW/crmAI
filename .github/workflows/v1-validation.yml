@@ -103,6 +103,12 @@ jobs:
       - name: Validate V1 UAT coverage
         run: node scripts/v1-uat-coverage-check.mjs
 
+      - name: Run V1 traceability consistency tests
+        run: node --test scripts/v1-traceability-check.test.mjs
+
+      - name: Validate V1 traceability consistency
+        run: node scripts/v1-traceability-check.mjs
+
       - name: Validate V1 UAT evidence pack generator
         run: node scripts/v1-uat-evidence-pack.mjs --environment ci-v1-uat-template --frontend-url https://crm.example.invalid --backend-url https://crm-api.example.invalid --git-commit "$GITHUB_SHA" --rc ci-snapshot --test-owner QA --product-owner Product --dev-owner Dev --username demo_admin
 

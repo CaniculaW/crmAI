@@ -49,6 +49,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-acceptance-checklist-check.test.mjs",
   "scripts/v1-uat-coverage-check.mjs",
   "scripts/v1-uat-coverage-check.test.mjs",
+  "scripts/v1-traceability-check.mjs",
+  "scripts/v1-traceability-check.test.mjs",
   "docs/releases/v1.0.0-rc.8.md",
   "docs/testing/v1-automated-validation-report-2026-06-18.md",
   "docs/testing/v1-validation-status.md",
@@ -627,6 +629,20 @@ export function evaluateReadinessSnapshot(snapshot) {
     "V1 UAT coverage checker is tested and wired into CI to keep UAT-001 through UAT-010 mapped to every AC-001 through AC-017 acceptance item."
   ));
 
+  const traceabilityChecker = snapshot["scripts/v1-traceability-check.mjs"] ?? "";
+  const traceabilityCheckerTest = snapshot["scripts/v1-traceability-check.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "v1-traceability-checker",
+    includesAll(workflow + traceabilityChecker + traceabilityCheckerTest, [
+      "node --test scripts/v1-traceability-check.test.mjs",
+      "node scripts/v1-traceability-check.mjs",
+      "evaluateV1TraceabilitySnapshot",
+      "traceability-release-alignment",
+      "fails when traceability claims project acceptance while release gate is No-Go"
+    ]),
+    "V1 traceability checker is tested and wired into CI to keep the AC-001 through AC-017 evidence matrix aligned with release-gate status."
+  ));
+
   const release = snapshot["docs/releases/v1.0.0-rc.8.md"] ?? "";
   checks.push(makeCheck(
     "rc-release-record",
@@ -772,7 +788,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
-    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-kickoff-governance-validate.mjs", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-signoff-register-validate.mjs", "v1-uat-launch-intake-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs", "v1-generated-docs-check.mjs", "v1-plan-status-check.mjs", "v1-acceptance-checklist-check.mjs", "v1-uat-coverage-check.mjs"]),
+    includesAll(readme, ["compose.v1-test.yml", "docs/releases/v1.0.0-rc.8.md", "v1-kickoff-governance-validate.mjs", "v1-uat-environment-validate.mjs", "v1-uat-evidence-pack-validate.mjs", "v1-uat-defect-register-validate.mjs", "v1-uat-signoff-register-validate.mjs", "v1-uat-launch-intake-validate.mjs", "v1-uat-evidence-manifest-validate.mjs", "v1-validation-status.mjs", "v1-uat-action-plan.mjs", "v1-uat-execution-pack.mjs", "v1-go-no-go-meeting.mjs", "v1-generated-docs-check.mjs", "v1-plan-status-check.mjs", "v1-acceptance-checklist-check.mjs", "v1-uat-coverage-check.mjs", "v1-traceability-check.mjs"]),
     "README links the test environment and V1 RC record."
   ));
 

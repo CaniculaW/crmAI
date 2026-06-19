@@ -228,6 +228,14 @@ node scripts/v1-uat-coverage-check.mjs
 
 该检查用于防止 UAT-001 至 UAT-010 漏覆盖 AC-001 至 AC-017 中的任何验收项。
 
+验证追踪矩阵更新后，执行追踪矩阵一致性检查：
+
+```bash
+node scripts/v1-traceability-check.mjs
+```
+
+该检查用于防止 AC-001 至 AC-017 追踪矩阵漏项、研发证据缺失，或在 release gate 仍为 No-Go 时误标项目验收通过。
+
 正式准出前执行最终放行门禁：
 
 ```bash
