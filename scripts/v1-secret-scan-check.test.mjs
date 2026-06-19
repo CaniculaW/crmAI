@@ -10,6 +10,10 @@ test("tracks the external UAT request packet as current V1 evidence", () => {
   assert.ok(CURRENT_V1_EVIDENCE_DOCS.includes("docs/testing/v1-external-uat-request.md"));
 });
 
+test("tracks the release gate JSON snapshot as current V1 evidence", () => {
+  assert.ok(CURRENT_V1_EVIDENCE_DOCS.includes("docs/testing/v1-release-gate-status.json"));
+});
+
 test("passes when current V1 evidence uses redacted placeholders", () => {
   const result = evaluateV1SecretScanSnapshot({
     documents: {
