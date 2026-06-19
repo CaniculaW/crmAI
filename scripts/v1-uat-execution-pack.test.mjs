@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 
-import { generateV1UatExecutionPackMarkdown } from "./v1-uat-execution-pack.mjs";
+import {
+  generateV1UatExecutionPackFromFiles,
+  generateV1UatExecutionPackMarkdown
+} from "./v1-uat-execution-pack.mjs";
 
 const failingEnvironment = {
   ok: false,
@@ -77,6 +83,12 @@ const failingKickoff = {
   ]
 };
 
+function copyFixture(rootDir, filename, sourcePath) {
+  const targetPath = path.join(rootDir, filename);
+  writeFileSync(targetPath, readFileSync(sourcePath, "utf8"));
+  return targetPath;
+}
+
 test("generates an executable UAT evidence collection pack from failed gates", () => {
   const markdown = generateV1UatExecutionPackMarkdown({
     generatedAt: "2026-06-19T04:00:00+08:00",
@@ -113,6 +125,68 @@ test("generates an executable UAT evidence collection pack from failed gates", (
   assert.match(markdown, /node scripts\/v1-uat-launch-intake-validate\.mjs docs\/testing\/v1-uat-launch-intake\.md/);
   assert.match(markdown, /node scripts\/v1-release-gate\.mjs/);
   assert.doesNotMatch(markdown, /undefined/);
+});
+
+test("generates execution pack from absolute UAT source document paths", () => {
+  const fixtureDir = mkdtempSync(path.join(tmpdir(), "crm-v1-uat-execution-pack-"));
+  const evidencePath = copyFixture(
+    fixtureDir,
+    "evidence-pack.md",
+    "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md"
+  );
+  const trackerPath = copyFixture(
+    fixtureDir,
+    "execution-tracker.md",
+    "docs/testing/crm-v1-uat-execution-tracker.md"
+  );
+  const manifestPath = copyFixture(
+    fixtureDir,
+    "evidence-manifest.md",
+    "docs/testing/v1-uat-evidence-manifest.md"
+  );
+  const defectRegisterPath = copyFixture(
+    fixtureDir,
+    "defect-register.md",
+    "docs/testing/v1-uat-defect-register.md"
+  );
+  const environmentPath = copyFixture(
+    fixtureDir,
+    "environment.md",
+    "docs/testing/v1-uat-environment-evidence.md"
+  );
+  const signoffRegisterPath = copyFixture(
+    fixtureDir,
+    "signoff-register.md",
+    "docs/testing/v1-uat-signoff-register.md"
+  );
+  const launchIntakePath = copyFixture(
+    fixtureDir,
+    "launch-intake.md",
+    "docs/testing/v1-uat-launch-intake.md"
+  );
+  const kickoffPath = copyFixture(
+    fixtureDir,
+    "kickoff.md",
+    "docs/meeting-notes/crm-kickoff-minutes.md"
+  );
+
+  const markdown = generateV1UatExecutionPackFromFiles({
+    rootDir: process.cwd(),
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath,
+    generatedAt: "2026-06-19T04:00:00+08:00"
+  });
+
+  assert.match(markdown, /Overall: No-Go/);
+  assert.match(markdown, /KICKOFF-OWNERS \| 项目\/产品 \| 补齐启动会负责人和业务验收人/);
+  assert.match(markdown, new RegExp(`node scripts/v1-uat-evidence-pack-validate\\.mjs ${evidencePath}`));
+  assert.match(markdown, /GO-NOGO \| 项目\/产品 \| 完成 Go\/No-Go 会议结论/);
 });
 
 test("generates a Go execution pack only when there are no failed gate items", () => {
