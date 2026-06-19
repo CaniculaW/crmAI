@@ -54,6 +54,10 @@ function failedCheckLines(label, result) {
   return (result.failed ?? []).map((check) => `- ${label}/${check.id}: ${check.message}`);
 }
 
+function resolveFromRoot(rootDir, filePath) {
+  return path.resolve(rootDir, filePath);
+}
+
 function workstreamRows(hasBlockers) {
   if (!hasBlockers) {
     return [];
@@ -159,15 +163,15 @@ export function generateV1UatActionPlanFromFiles({
   generatedAt = new Date().toISOString()
 } = {}) {
   const readinessResult = evaluateReadinessSnapshot(readSnapshot(rootDir));
-  const kickoffResult = evaluateKickoffGovernance(readFileSync(path.join(rootDir, kickoffPath), "utf8"));
-  const launchIntakeResult = evaluateUatLaunchIntake(readFileSync(path.join(rootDir, launchIntakePath), "utf8"));
-  const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(path.join(rootDir, environmentPath), "utf8"));
-  const evidenceResult = evaluateUatEvidencePack(readFileSync(path.join(rootDir, evidencePath), "utf8"));
-  const trackerResult = evaluateUatExecutionTracker(readFileSync(path.join(rootDir, trackerPath), "utf8"));
-  const manifestResult = evaluateUatEvidenceManifest(readFileSync(path.join(rootDir, manifestPath), "utf8"));
+  const kickoffResult = evaluateKickoffGovernance(readFileSync(resolveFromRoot(rootDir, kickoffPath), "utf8"));
+  const launchIntakeResult = evaluateUatLaunchIntake(readFileSync(resolveFromRoot(rootDir, launchIntakePath), "utf8"));
+  const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(resolveFromRoot(rootDir, environmentPath), "utf8"));
+  const evidenceResult = evaluateUatEvidencePack(readFileSync(resolveFromRoot(rootDir, evidencePath), "utf8"));
+  const trackerResult = evaluateUatExecutionTracker(readFileSync(resolveFromRoot(rootDir, trackerPath), "utf8"));
+  const manifestResult = evaluateUatEvidenceManifest(readFileSync(resolveFromRoot(rootDir, manifestPath), "utf8"));
   const evidenceReferenceResult = evaluateEvidenceReferencesFromFiles(rootDir, manifestPath);
-  const defectRegisterResult = evaluateUatDefectRegister(readFileSync(path.join(rootDir, defectRegisterPath), "utf8"));
-  const signoffRegisterResult = evaluateUatSignoffRegister(readFileSync(path.join(rootDir, signoffRegisterPath), "utf8"));
+  const defectRegisterResult = evaluateUatDefectRegister(readFileSync(resolveFromRoot(rootDir, defectRegisterPath), "utf8"));
+  const signoffRegisterResult = evaluateUatSignoffRegister(readFileSync(resolveFromRoot(rootDir, signoffRegisterPath), "utf8"));
   const releaseGateResult = evaluateV1ReleaseGate({
     readinessResult,
     kickoffResult,
@@ -263,7 +267,7 @@ if (isCli) {
   const args = parseArgs(process.argv.slice(2));
   const markdown = generateV1UatActionPlanFromFiles(args);
   if (args.outputPath) {
-    writeFileSync(path.join(args.rootDir, args.outputPath), markdown);
+    writeFileSync(resolveFromRoot(args.rootDir, args.outputPath), markdown);
   } else {
     console.log(markdown.trimEnd());
   }
