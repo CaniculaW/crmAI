@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { evaluateV1ReleaseGate, evaluateV1ReleaseGateFromFiles } from "./v1-release-gate.mjs";
+import { evaluateV1ReleaseGate, evaluateV1ReleaseGateFromFiles, parseArgs } from "./v1-release-gate.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
 
 const passingReadinessResult = {
@@ -449,6 +449,39 @@ test("passes from filled UAT source files when every validator and project Go ev
   assert.equal(result.ok, true);
   assert.equal(result.decision, "Go");
   assert.deepEqual(result.failed, []);
+});
+
+test("parses named CLI options for external V1 release gate source paths", () => {
+  const parsed = parseArgs([
+    "--root",
+    "/workspace/crm",
+    "--evidence",
+    "/tmp/evidence-pack.md",
+    "--tracker",
+    "/tmp/execution-tracker.md",
+    "--manifest",
+    "/tmp/evidence-manifest.md",
+    "--defects",
+    "/tmp/defect-register.md",
+    "--environment",
+    "/tmp/environment.md",
+    "--signoffs",
+    "/tmp/signoffs.md",
+    "--launch-intake",
+    "/tmp/launch-intake.md",
+    "--kickoff",
+    "/tmp/kickoff.md"
+  ]);
+
+  assert.equal(parsed.rootDir, "/workspace/crm");
+  assert.equal(parsed.evidencePath, "/tmp/evidence-pack.md");
+  assert.equal(parsed.trackerPath, "/tmp/execution-tracker.md");
+  assert.equal(parsed.manifestPath, "/tmp/evidence-manifest.md");
+  assert.equal(parsed.defectRegisterPath, "/tmp/defect-register.md");
+  assert.equal(parsed.environmentPath, "/tmp/environment.md");
+  assert.equal(parsed.signoffRegisterPath, "/tmp/signoffs.md");
+  assert.equal(parsed.launchIntakePath, "/tmp/launch-intake.md");
+  assert.equal(parsed.kickoffPath, "/tmp/kickoff.md");
 });
 
 test("fails when RC/UAT readiness has a failed check", () => {

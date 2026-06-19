@@ -24,8 +24,77 @@ const DEFAULT_SIGNOFF_REGISTER_PATH = "docs/testing/v1-uat-signoff-register.md";
 const DEFAULT_LAUNCH_INTAKE_PATH = "docs/testing/v1-uat-launch-intake.md";
 const DEFAULT_KICKOFF_PATH = "docs/meeting-notes/crm-kickoff-minutes.md";
 
+const POSITIONAL_KEYS = [
+  "rootDir",
+  "evidencePath",
+  "trackerPath",
+  "manifestPath",
+  "defectRegisterPath",
+  "environmentPath",
+  "signoffRegisterPath",
+  "launchIntakePath",
+  "kickoffPath"
+];
+
+const NAMED_OPTIONS = new Map([
+  ["--root", "rootDir"],
+  ["--evidence", "evidencePath"],
+  ["--tracker", "trackerPath"],
+  ["--manifest", "manifestPath"],
+  ["--defects", "defectRegisterPath"],
+  ["--defect-register", "defectRegisterPath"],
+  ["--environment", "environmentPath"],
+  ["--signoffs", "signoffRegisterPath"],
+  ["--signoff-register", "signoffRegisterPath"],
+  ["--launch-intake", "launchIntakePath"],
+  ["--kickoff", "kickoffPath"]
+]);
+
 function makeCheck(id, ok, message) {
   return { id, ok, message };
+}
+
+export function parseArgs(argv) {
+  const parsed = {
+    rootDir: process.cwd(),
+    evidencePath: DEFAULT_EVIDENCE_PATH,
+    trackerPath: DEFAULT_TRACKER_PATH,
+    manifestPath: DEFAULT_MANIFEST_PATH,
+    defectRegisterPath: DEFAULT_DEFECT_REGISTER_PATH,
+    environmentPath: DEFAULT_ENVIRONMENT_PATH,
+    signoffRegisterPath: DEFAULT_SIGNOFF_REGISTER_PATH,
+    launchIntakePath: DEFAULT_LAUNCH_INTAKE_PATH,
+    kickoffPath: DEFAULT_KICKOFF_PATH
+  };
+  const positional = [];
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    const optionKey = NAMED_OPTIONS.get(arg);
+
+    if (optionKey) {
+      const value = argv[index + 1];
+      if (!value || value.startsWith("--")) {
+        throw new Error(`Missing value for ${arg}`);
+      }
+      parsed[optionKey] = optionKey === "rootDir" ? path.resolve(value) : value;
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith("--")) {
+      throw new Error(`Unknown option ${arg}`);
+    }
+
+    positional.push(arg);
+  }
+
+  for (let index = 0; index < positional.length && index < POSITIONAL_KEYS.length; index += 1) {
+    const key = POSITIONAL_KEYS[index];
+    parsed[key] = key === "rootDir" ? path.resolve(positional[index]) : positional[index];
+  }
+
+  return parsed;
 }
 
 export function evaluateV1ReleaseGate({
@@ -198,21 +267,24 @@ function printResult(result) {
 
 function printUsage() {
   console.error("Usage: node scripts/v1-release-gate.mjs [root-dir] [uat-evidence-pack.md] [uat-execution-tracker.md] [uat-evidence-manifest.md] [uat-defect-register.md] [uat-environment-evidence.md] [uat-signoff-register.md] [v1-uat-launch-intake.md] [crm-kickoff-minutes.md]");
+  console.error("   or: node scripts/v1-release-gate.mjs --root <root-dir> --evidence <uat-evidence-pack.md> --tracker <uat-execution-tracker.md> --manifest <uat-evidence-manifest.md> --defects <uat-defect-register.md> --environment <uat-environment-evidence.md> --signoffs <uat-signoff-register.md> --launch-intake <v1-uat-launch-intake.md> --kickoff <crm-kickoff-minutes.md>");
 }
 
 const isCli = process.argv[1] === fileURLToPath(import.meta.url);
 
 if (isCli) {
   try {
-    const rootDir = process.argv[2] ? path.resolve(process.argv[2]) : process.cwd();
-    const evidencePath = process.argv[3] ?? DEFAULT_EVIDENCE_PATH;
-    const trackerPath = process.argv[4] ?? DEFAULT_TRACKER_PATH;
-    const manifestPath = process.argv[5] ?? DEFAULT_MANIFEST_PATH;
-    const defectRegisterPath = process.argv[6] ?? DEFAULT_DEFECT_REGISTER_PATH;
-    const environmentPath = process.argv[7] ?? DEFAULT_ENVIRONMENT_PATH;
-    const signoffRegisterPath = process.argv[8] ?? DEFAULT_SIGNOFF_REGISTER_PATH;
-    const launchIntakePath = process.argv[9] ?? DEFAULT_LAUNCH_INTAKE_PATH;
-    const kickoffPath = process.argv[10] ?? DEFAULT_KICKOFF_PATH;
+    const {
+      rootDir,
+      evidencePath,
+      trackerPath,
+      manifestPath,
+      defectRegisterPath,
+      environmentPath,
+      signoffRegisterPath,
+      launchIntakePath,
+      kickoffPath
+    } = parseArgs(process.argv.slice(2));
     const result = evaluateV1ReleaseGateFromFiles(rootDir, evidencePath, trackerPath, manifestPath, defectRegisterPath, environmentPath, signoffRegisterPath, launchIntakePath, kickoffPath);
     printResult(result);
     process.exitCode = result.ok ? 0 : 1;
