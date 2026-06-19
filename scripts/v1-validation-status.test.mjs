@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 
-import { generateV1ValidationStatusMarkdown, parseArgs } from "./v1-validation-status.mjs";
+import {
+  generateV1ValidationStatusFromFiles,
+  generateV1ValidationStatusMarkdown,
+  parseArgs
+} from "./v1-validation-status.mjs";
 
 const passingReadiness = {
   ok: true,
@@ -97,6 +104,12 @@ const failingReleaseGate = {
   ]
 };
 
+function copyFixture(rootDir, filename, sourcePath) {
+  const targetPath = path.join(rootDir, filename);
+  writeFileSync(targetPath, readFileSync(sourcePath, "utf8"));
+  return targetPath;
+}
+
 test("summarizes a No-Go V1 status with concrete blocker commands", () => {
   const markdown = generateV1ValidationStatusMarkdown({
     generatedAt: "2026-06-19T02:40:00+08:00",
@@ -141,6 +154,68 @@ test("summarizes a No-Go V1 status with concrete blocker commands", () => {
   assert.match(markdown, /Incomplete signoffs: SIGNOFF-SALES, SIGNOFF-PM/);
   assert.match(markdown, /Incomplete UAT participants: UAT-SALES, UAT-PM/);
   assert.match(markdown, /Incomplete PRE checks: PRE-001, PRE-006/);
+});
+
+test("summarizes status from absolute UAT source document paths", () => {
+  const fixtureDir = mkdtempSync(path.join(tmpdir(), "crm-v1-validation-status-"));
+  const evidencePath = copyFixture(
+    fixtureDir,
+    "evidence-pack.md",
+    "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md"
+  );
+  const trackerPath = copyFixture(
+    fixtureDir,
+    "execution-tracker.md",
+    "docs/testing/crm-v1-uat-execution-tracker.md"
+  );
+  const manifestPath = copyFixture(
+    fixtureDir,
+    "evidence-manifest.md",
+    "docs/testing/v1-uat-evidence-manifest.md"
+  );
+  const defectRegisterPath = copyFixture(
+    fixtureDir,
+    "defect-register.md",
+    "docs/testing/v1-uat-defect-register.md"
+  );
+  const environmentPath = copyFixture(
+    fixtureDir,
+    "environment.md",
+    "docs/testing/v1-uat-environment-evidence.md"
+  );
+  const signoffRegisterPath = copyFixture(
+    fixtureDir,
+    "signoff-register.md",
+    "docs/testing/v1-uat-signoff-register.md"
+  );
+  const launchIntakePath = copyFixture(
+    fixtureDir,
+    "launch-intake.md",
+    "docs/testing/v1-uat-launch-intake.md"
+  );
+  const kickoffPath = copyFixture(
+    fixtureDir,
+    "kickoff.md",
+    "docs/meeting-notes/crm-kickoff-minutes.md"
+  );
+
+  const markdown = generateV1ValidationStatusFromFiles({
+    rootDir: process.cwd(),
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath,
+    generatedAt: "2026-06-19T04:00:00+08:00",
+    gitCommit: "867b71c25b4e9d227946557660cb4b7538689987"
+  });
+
+  assert.match(markdown, /Overall: No-Go/);
+  assert.match(markdown, new RegExp(`node scripts/v1-uat-evidence-pack-validate\\.mjs ${evidencePath}`));
+  assert.match(markdown, /Release Gate\/go-decision: Project decision is No-Go/);
 });
 
 test("summarizes a Go V1 status only when all gates pass and decision is Go", () => {
