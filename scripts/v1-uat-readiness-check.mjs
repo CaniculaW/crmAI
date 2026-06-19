@@ -442,11 +442,13 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node --test scripts/v1-uat-signoff-register-validate.test.mjs",
       "evaluateUatSignoffRegister",
       "required-signoffs",
+      "signoff-evidence-retained",
       "project-go-decision",
       "no-secret-material",
-      "fails the draft signoff register because signoffs are pending"
+      "fails the draft signoff register because signoffs are pending",
+      "fails when an approved signoff evidence reference is not retained"
     ]),
-    "UAT signoff register validator is tested and enforces role signoff, project Go decision, and secret redaction."
+    "UAT signoff register validator is tested and enforces role signoff, retained evidence references, project Go decision, and secret redaction."
   ));
 
   const kickoffValidator = snapshot["scripts/v1-kickoff-governance-validate.mjs"] ?? "";

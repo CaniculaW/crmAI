@@ -69,8 +69,8 @@ jobs:
   "scripts/v1-uat-evidence-pack-validate.test.mjs": "fails a Go evidence pack when a P0 defect remains open\n",
   "scripts/v1-uat-defect-register-validate.mjs": "evaluateUatDefectRegister\np0-p1-summary\nregression-evidence\nno-secret-material\n",
   "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\n",
-  "scripts/v1-uat-signoff-register-validate.mjs": "evaluateUatSignoffRegister\nrequired-signoffs\nproject-go-decision\nno-secret-material\n",
-  "scripts/v1-uat-signoff-register-validate.test.mjs": "fails the draft signoff register because signoffs are pending\n",
+  "scripts/v1-uat-signoff-register-validate.mjs": "evaluateUatSignoffRegister\nrequired-signoffs\nsignoff-evidence-retained\nproject-go-decision\nno-secret-material\n",
+  "scripts/v1-uat-signoff-register-validate.test.mjs": "fails the draft signoff register because signoffs are pending\nfails when an approved signoff evidence reference is not retained\n",
   "scripts/v1-kickoff-governance-validate.mjs": "evaluateKickoffGovernance\nrequired-owners\nscope-freeze\nscope-boundary\nno-secret-material\n",
   "scripts/v1-kickoff-governance-validate.test.mjs": "fails the current kickoff draft because owners and scope freeze remain pending\n",
   "scripts/v1-uat-launch-intake-validate.mjs": "evaluateUatLaunchIntake\nenvironment-intake\nparticipant-roster\naccount-custody\nno-secret-material\n",
@@ -447,6 +447,19 @@ test("fails when the UAT signoff register validator is missing from readiness ma
       "      - run: node --test scripts/v1-uat-signoff-register-validate.test.mjs\n",
       ""
     )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-signoff-register-validator"));
+});
+
+test("fails when the UAT signoff register validator omits retained evidence guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-signoff-register-validate.mjs": completeSnapshot["scripts/v1-uat-signoff-register-validate.mjs"].replace("signoff-evidence-retained\n", ""),
+    "scripts/v1-uat-signoff-register-validate.test.mjs": completeSnapshot["scripts/v1-uat-signoff-register-validate.test.mjs"].replace("fails when an approved signoff evidence reference is not retained\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

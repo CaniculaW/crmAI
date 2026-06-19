@@ -41,6 +41,20 @@ function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value);
 }
 
+function evidenceReferenceTokens(value) {
+  return String(value ?? "")
+    .replace(/`/g, "")
+    .split(/[,\s;]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function isRetainedEvidenceReference(value) {
+  return isConcrete(value) && evidenceReferenceTokens(value).some((token) =>
+    token.startsWith("docs/") || /^https?:\/\//i.test(token)
+  );
+}
+
 function extractDecision(markdown) {
   const match = markdown.match(/^Decision:\s*(Go|Conditional Go|No-Go)\s*$/m);
   return match?.[1] ?? "";
@@ -91,6 +105,33 @@ export function evaluateUatSignoffRegister(markdown) {
       : `Incomplete signoffs: ${incompleteSignoffs.join(", ")}`
   ));
 
+  const unretainedEvidenceSignoffs = REQUIRED_SIGNOFFS
+    .filter((required) => {
+      const row = findRow(rows, required.id);
+      if (!row) {
+        return false;
+      }
+      const owner = row[2] ?? "";
+      const rowDecision = row[3] ?? "";
+      const signedDate = row[4] ?? "";
+      const evidence = row[5] ?? "";
+      const completedSignoff = rowDecision === required.decision
+        && isConcrete(owner)
+        && isConcrete(signedDate)
+        && isConcrete(evidence);
+
+      return completedSignoff && !isRetainedEvidenceReference(evidence);
+    })
+    .map((required) => required.id);
+
+  checks.push(makeCheck(
+    "signoff-evidence-retained",
+    unretainedEvidenceSignoffs.length === 0,
+    unretainedEvidenceSignoffs.length === 0
+      ? "Approved signoff evidence references point to retained artifacts or external URLs."
+      : `Approved signoffs have unretained evidence references: ${unretainedEvidenceSignoffs.join(", ")}`
+  ));
+
   const projectRow = findRow(rows, "SIGNOFF-PM");
   checks.push(makeCheck(
     "project-go-decision",
@@ -114,6 +155,7 @@ export function evaluateUatSignoffRegister(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    unretainedEvidenceSignoffs,
     passed,
     failed,
     checks

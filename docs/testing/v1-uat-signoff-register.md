@@ -9,6 +9,7 @@ Rules:
 
 - 不记录明文密码、生产密钥、API tokens 或个人敏感信息。
 - Every signoff row must include a named owner, decision, signed date, and concrete evidence reference.
+- Completed signoff evidence must reference a retained repository artifact under `docs/` or an external `http(s)` URL; meeting-note anchors or free-text references are not sufficient.
 - `SIGNOFF-PM` must be `Go` before V1 can be marked validated.
 - Validate with `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md`.
 
