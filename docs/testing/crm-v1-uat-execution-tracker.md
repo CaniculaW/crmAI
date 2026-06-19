@@ -154,4 +154,4 @@ node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evi
 node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md
 ```
 
-当前预期结果：`FAIL / No-Go`。该结果用于暴露 P0/P1 汇总、缺陷明细、回归证据和项目 Go/No-Go 结论未补齐的项目。
+当前预期结果：`FAIL / No-Go`。该结果用于暴露 P0/P1 汇总、缺陷明细、可留存回归证据和项目 Go/No-Go 结论未补齐的项目。

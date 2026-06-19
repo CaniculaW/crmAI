@@ -67,8 +67,8 @@ jobs:
   "scripts/v1-uat-environment-validate.test.mjs": "fails a draft environment record when named environment evidence is pending\n",
   "scripts/v1-uat-evidence-pack-validate.mjs": "evaluateUatEvidencePack\np0-defects\nsignoff-complete\ngo-hard-gates\n",
   "scripts/v1-uat-evidence-pack-validate.test.mjs": "fails a Go evidence pack when a P0 defect remains open\n",
-  "scripts/v1-uat-defect-register-validate.mjs": "evaluateUatDefectRegister\np0-p1-summary\nregression-evidence\nno-secret-material\n",
-  "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\n",
+  "scripts/v1-uat-defect-register-validate.mjs": "evaluateUatDefectRegister\np0-p1-summary\nregression-evidence\ndefect-evidence-retained\nno-secret-material\n",
+  "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\nfails when closed P0 or P1 regression evidence is not retained\n",
   "scripts/v1-uat-signoff-register-validate.mjs": "evaluateUatSignoffRegister\nrequired-signoffs\nsignoff-evidence-retained\nproject-go-decision\nno-secret-material\n",
   "scripts/v1-uat-signoff-register-validate.test.mjs": "fails the draft signoff register because signoffs are pending\nfails when an approved signoff evidence reference is not retained\n",
   "scripts/v1-kickoff-governance-validate.mjs": "evaluateKickoffGovernance\nrequired-owners\nscope-freeze\nscope-boundary\nno-secret-material\n",
@@ -431,6 +431,19 @@ test("fails when the UAT defect register validator is missing from readiness mat
       "      - run: node --test scripts/v1-uat-defect-register-validate.test.mjs\n",
       ""
     )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-defect-register-validator"));
+});
+
+test("fails when the UAT defect register validator omits retained regression evidence guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-defect-register-validate.mjs": completeSnapshot["scripts/v1-uat-defect-register-validate.mjs"].replace("defect-evidence-retained\n", ""),
+    "scripts/v1-uat-defect-register-validate.test.mjs": completeSnapshot["scripts/v1-uat-defect-register-validate.test.mjs"].replace("fails when closed P0 or P1 regression evidence is not retained\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

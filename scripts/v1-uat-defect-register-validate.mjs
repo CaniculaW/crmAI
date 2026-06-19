@@ -42,6 +42,20 @@ function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value) && !/^[-—无]+$/.test(value);
 }
 
+function evidenceReferenceTokens(value) {
+  return String(value ?? "")
+    .replace(/`/g, "")
+    .split(/[,\s;]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function isRetainedEvidenceReference(value) {
+  return isConcrete(value) && evidenceReferenceTokens(value).some((token) =>
+    token.startsWith("docs/") || /^https?:\/\//i.test(token)
+  );
+}
+
 function extractDecision(markdown) {
   const match = markdown.match(/Decision:\s*(Conditional Go|No-Go|Go)/i);
   return match?.[1] ?? "";
@@ -131,6 +145,17 @@ export function evaluateUatDefectRegister(markdown) {
       : `Closed P0/P1 defects missing regression evidence: ${missingRegression.join(", ")}`
   ));
 
+  const unretainedRegressionEvidenceDefects = p0p1Defects
+    .filter((row) => rowClosed(row) && isConcrete(row[6]) && !isRetainedEvidenceReference(row[6]))
+    .map((row) => row[0]);
+  checks.push(makeCheck(
+    "defect-evidence-retained",
+    unretainedRegressionEvidenceDefects.length === 0,
+    unretainedRegressionEvidenceDefects.length === 0
+      ? "Closed P0/S1 and P1/S2 regression evidence references point to retained artifacts or external URLs."
+      : `Closed P0/P1 defects have unretained regression evidence references: ${unretainedRegressionEvidenceDefects.join(", ")}`
+  ));
+
   checks.push(makeCheck(
     "no-secret-material",
     !hasSecretMaterial(markdown),
@@ -153,6 +178,7 @@ export function evaluateUatDefectRegister(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    unretainedRegressionEvidenceDefects,
     passed,
     failed,
     checks

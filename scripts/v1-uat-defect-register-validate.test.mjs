@@ -86,6 +86,19 @@ test("fails when a closed P0 or P1 defect lacks regression evidence", () => {
   assert.ok(result.failed.some((check) => check.id === "regression-evidence"));
 });
 
+test("fails when closed P0 or P1 regression evidence is not retained", () => {
+  const register = completeRegister.replace(
+    "docs/testing/evidence/defects/def-001-regression.png",
+    "regression-note#def-001"
+  );
+
+  const result = evaluateUatDefectRegister(register);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.unretainedRegressionEvidenceDefects, ["DEF-001"]);
+  assert.ok(result.failed.some((check) => check.id === "defect-evidence-retained"));
+});
+
 test("fails when defect register contains secret-like material", () => {
   const register = completeRegister.replace(
     "| DEF-003 | P2 / S3 一般 | UAT-007 | CLOSED | Product Owner | 纳入优化池 | docs/testing/evidence/defects/def-003-triage.md | 不影响试点 |",
