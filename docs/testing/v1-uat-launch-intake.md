@@ -9,6 +9,7 @@ Rules:
 
 - 不记录明文密码、生产密钥、API tokens 或个人敏感信息。
 - Every environment field must include a concrete value and evidence reference.
+- Frontend and backend API addresses must be `http(s)` URLs, and Git commit must be a 40-character SHA.
 - UAT窗口 must use `YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm`, and the end must be later than the start.
 - Environment and account custody evidence references must point to a retained `docs/` artifact or an external `http(s)` system URL; free-text anchors are not sufficient.
 - Every required participant must be named and confirmed before UAT execution starts.

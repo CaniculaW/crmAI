@@ -102,6 +102,7 @@ node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake
 ```
 
 `UAT窗口` 必须使用 `YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm`，结束时间晚于开始时间。
+前端访问地址和后端 API 地址必须为 `http(s)` URL，Git 提交号必须为40位提交 SHA。
 
 启动治理纪要：
 

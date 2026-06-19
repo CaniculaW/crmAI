@@ -107,6 +107,19 @@ test("fails when a required environment field lacks evidence", () => {
   assert.ok(result.failed.some((check) => check.id === "environment-intake"));
 });
 
+test("fails when launch environment URLs or git commit are not structured", () => {
+  const intake = completeIntake
+    .replace("https://crm-v1-uat.example.test", "crm-v1-uat")
+    .replace("https://crm-v1-uat-api.example.test", "api host")
+    .replace("09c46ac031469604f2a680ef011621854d2d9e23", "latest");
+
+  const result = evaluateUatLaunchIntake(intake);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidEnvironmentFormats, ["前端访问地址", "后端 API 地址", "Git 提交号"]);
+  assert.ok(result.failed.some((check) => check.id === "environment-format"));
+});
+
 test("fails when the UAT launch window is not a structured date time range", () => {
   const looseWindow = completeIntake.replace(
     "| UAT窗口 | 2026-06-20 09:00 至 2026-06-21 18:00 | docs/testing/evidence/launch/uat-calendar.md |",

@@ -88,6 +88,19 @@ function parseLaunchWindow(value) {
   return { start, end };
 }
 
+function isHttpUrl(value) {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function isGitSha(value) {
+  return /^[a-f0-9]{40}$/i.test(value ?? "");
+}
+
 function evidenceReferenceTokens(value) {
   return value
     .split(/[\s,，;；]+/)
@@ -123,6 +136,27 @@ export function evaluateUatLaunchIntake(markdown) {
     incompleteEnvironment.length === 0
       ? "UAT launch environment, window, commit, and evidence repository are concrete."
       : `Incomplete launch environment fields: ${incompleteEnvironment.join(", ")}`
+  ));
+
+  const environmentFormatRules = [
+    { field: "前端访问地址", valid: isHttpUrl },
+    { field: "后端 API 地址", valid: isHttpUrl },
+    { field: "Git 提交号", valid: isGitSha }
+  ];
+  const invalidEnvironmentFormats = environmentFormatRules
+    .filter(({ field, valid }) => {
+      const row = findRow(rows, field);
+      const value = row?.[1] ?? "";
+      return isConcrete(value) && !valid(value);
+    })
+    .map(({ field }) => field);
+
+  checks.push(makeCheck(
+    "environment-format",
+    invalidEnvironmentFormats.length === 0,
+    invalidEnvironmentFormats.length === 0
+      ? "Launch environment URLs are http(s) and Git commit is a 40-character SHA."
+      : `Invalid launch environment formats: ${invalidEnvironmentFormats.join(", ")}`
   ));
 
   const launchWindowRow = findRow(rows, "UAT窗口");
@@ -233,6 +267,7 @@ export function evaluateUatLaunchIntake(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    invalidEnvironmentFormats,
     invalidLaunchWindowFields,
     unretainedLaunchEvidenceFields,
     unretainedAccountEvidenceItems,

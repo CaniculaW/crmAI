@@ -73,8 +73,8 @@ jobs:
   "scripts/v1-uat-signoff-register-validate.test.mjs": "fails the draft signoff register because signoffs are pending\nfails when an approved signoff uses a non-ISO signed date\nfails when an approved signoff evidence reference is not retained\n",
   "scripts/v1-kickoff-governance-validate.mjs": "evaluateKickoffGovernance\nrequired-owners\nscope-freeze\nscope-boundary\nkickoff-evidence-retained\nno-secret-material\n",
   "scripts/v1-kickoff-governance-validate.test.mjs": "fails the current kickoff draft because owners and scope freeze remain pending\nfails when confirmed kickoff governance evidence is not retained\n",
-  "scripts/v1-uat-launch-intake-validate.mjs": "evaluateUatLaunchIntake\nenvironment-intake\nlaunch-window-format\nparticipant-roster\naccount-custody\nlaunch-evidence-retained\nno-secret-material\n",
-  "scripts/v1-uat-launch-intake-validate.test.mjs": "fails a draft launch intake because external UAT inputs are pending\nfails when the UAT launch window is not a structured date time range\nfails when UAT launch evidence references are not retained\n",
+  "scripts/v1-uat-launch-intake-validate.mjs": "evaluateUatLaunchIntake\nenvironment-intake\nenvironment-format\nlaunch-window-format\nparticipant-roster\naccount-custody\nlaunch-evidence-retained\nno-secret-material\n",
+  "scripts/v1-uat-launch-intake-validate.test.mjs": "fails a draft launch intake because external UAT inputs are pending\nfails when launch environment URLs or git commit are not structured\nfails when the UAT launch window is not a structured date time range\nfails when UAT launch evidence references are not retained\n",
   "scripts/v1-uat-evidence-manifest-validate.mjs": "evaluateUatEvidenceManifest\nrequired-items\nevidence-complete\nevidence-references-retained\nno-secret-material\n",
   "scripts/v1-uat-evidence-manifest-validate.test.mjs": "fails the current draft manifest because external UAT evidence is pending\nfails when PASS evidence references are not retained\n",
   "scripts/v1-evidence-reference-check.mjs": "evaluateEvidenceReferences\nevaluateEvidenceReferencesFromFiles\npass-reference-artifacts\ngo-pass-references\n",
@@ -554,6 +554,19 @@ test("fails when the UAT launch intake validator omits launch window format guar
     ...completeSnapshot,
     "scripts/v1-uat-launch-intake-validate.mjs": completeSnapshot["scripts/v1-uat-launch-intake-validate.mjs"].replace("launch-window-format\n", ""),
     "scripts/v1-uat-launch-intake-validate.test.mjs": completeSnapshot["scripts/v1-uat-launch-intake-validate.test.mjs"].replace("fails when the UAT launch window is not a structured date time range\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-launch-intake-validator"));
+});
+
+test("fails when the UAT launch intake validator omits environment format guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-launch-intake-validate.mjs": completeSnapshot["scripts/v1-uat-launch-intake-validate.mjs"].replace("environment-format\n", ""),
+    "scripts/v1-uat-launch-intake-validate.test.mjs": completeSnapshot["scripts/v1-uat-launch-intake-validate.test.mjs"].replace("fails when launch environment URLs or git commit are not structured\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);
