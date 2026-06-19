@@ -375,7 +375,7 @@ v1-uat-evidence/
 | UAT启动输入 validator | `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md` 返回 PASS | 补齐具名环境、前后端 `http(s)` URL、40位 Git 提交号、`YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm` UAT窗口、证据归档位置、参与人、账号保管证据或可留存证据引用 |
 | P0 用例 | P0 全部通过，无阻断缺陷 | 不准出 |
 | P1 用例 | P1 完成执行，遗留问题有项目/业务确认 | 形成规避方案或延期单 |
-| 缺陷台账 validator | `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md` 返回 PASS | 修正缺陷汇总、关闭状态、可留存回归证据或 Go/No-Go 结论 |
+| 缺陷台账 validator | `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md` 返回 PASS | 修正缺陷汇总、`PRE-###`/`SMK-###`/`UAT-###` 来源用例、关闭状态、可留存回归证据或 Go/No-Go 结论 |
 | 业务验收 | 销售侧、管理侧验收人完成演示或试用确认 | 安排补验 |
 | 签署台账 validator | `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md` 返回 PASS | 补齐六方具名签署、`YYYY-MM-DD` 签署日期、可留存证据路径/URL或项目 `Go` 结论 |
 | 上线风险 | 遗留缺陷、观察项、回滚条件已记录 | 补充上线风险清单 |

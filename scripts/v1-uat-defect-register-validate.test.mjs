@@ -86,6 +86,19 @@ test("fails when a closed P0 or P1 defect lacks regression evidence", () => {
   assert.ok(result.failed.some((check) => check.id === "regression-evidence"));
 });
 
+test("fails when a P0 or P1 defect source case is not traceable", () => {
+  const register = completeRegister.replace(
+    "| DEF-002 | P1 / S2 严重 | UAT-009 | VERIFIED | Dev Owner | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |",
+    "| DEF-002 | P1 / S2 严重 | 管理视图问题 | VERIFIED | Dev Owner | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |"
+  );
+
+  const result = evaluateUatDefectRegister(register);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidSourceCaseDefects, ["DEF-002"]);
+  assert.ok(result.failed.some((check) => check.id === "defect-source-case-format"));
+});
+
 test("fails when closed P0 or P1 regression evidence is not retained", () => {
   const register = completeRegister.replace(
     "docs/testing/evidence/defects/def-001-regression.png",

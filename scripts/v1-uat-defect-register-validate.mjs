@@ -77,6 +77,10 @@ function rowClosed(row) {
   return CLOSED_STATUSES.has(row[3]);
 }
 
+function isTraceableSourceCase(value) {
+  return /^(PRE|SMK|UAT)-\d{3}$/.test(value ?? "");
+}
+
 export function evaluateUatDefectRegister(markdown) {
   const rows = tableRows(markdown);
   const decision = extractDecision(markdown);
@@ -134,6 +138,17 @@ export function evaluateUatDefectRegister(markdown) {
       : `Incomplete defect details: ${[...expectedDetailCounts, ...incompleteDetails, ...placeholderDetails].join(", ")}`
   ));
 
+  const invalidSourceCaseDefects = p0p1Defects
+    .filter((row) => !isTraceableSourceCase(row[2]))
+    .map((row) => row[0]);
+  checks.push(makeCheck(
+    "defect-source-case-format",
+    invalidSourceCaseDefects.length === 0,
+    invalidSourceCaseDefects.length === 0
+      ? "P0/S1 and P1/S2 defect source cases reference PRE, SMK, or UAT case IDs."
+      : `P0/P1 defects have untraceable source cases: ${invalidSourceCaseDefects.join(", ")}`
+  ));
+
   const missingRegression = p0p1Defects
     .filter((row) => rowClosed(row) && !isConcrete(row[6]))
     .map((row) => row[0]);
@@ -178,6 +193,7 @@ export function evaluateUatDefectRegister(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    invalidSourceCaseDefects,
     unretainedRegressionEvidenceDefects,
     passed,
     failed,
