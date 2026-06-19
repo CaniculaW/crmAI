@@ -204,6 +204,14 @@ node scripts/v1-generated-docs-check.mjs
 
 该检查用于防止生成器实现和已提交的 V1 状态/行动/执行/会议文档发生漂移。
 
+生成或更新 release gate JSON 快照后，执行机器可读结构校验：
+
+```bash
+node scripts/v1-release-gate-status-check.mjs
+```
+
+该检查用于防止 `docs/testing/v1-release-gate-status.json` 的 `result`、`ok`、`decision` 和 release gate check id 结构漂移，确保看板或验收机器人可稳定读取当前准出状态。
+
 计划检查项或 V1 状态页更新后，执行计划状态一致性检查：
 
 ```bash

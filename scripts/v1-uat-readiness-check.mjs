@@ -47,6 +47,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-external-uat-request.test.mjs",
   "scripts/v1-generated-docs-check.mjs",
   "scripts/v1-generated-docs-check.test.mjs",
+  "scripts/v1-release-gate-status-check.mjs",
+  "scripts/v1-release-gate-status-check.test.mjs",
   "scripts/v1-plan-status-check.mjs",
   "scripts/v1-plan-status-check.test.mjs",
   "scripts/v1-acceptance-checklist-check.mjs",
@@ -625,6 +627,21 @@ export function evaluateReadinessSnapshot(snapshot) {
       "fails when a generated document drifts from its generator"
     ]),
     "Generated V1 docs checker is tested and wired into CI to prevent stale generated evidence packs."
+  ));
+
+  const releaseGateStatusChecker = snapshot["scripts/v1-release-gate-status-check.mjs"] ?? "";
+  const releaseGateStatusCheckerTest = snapshot["scripts/v1-release-gate-status-check.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "v1-release-gate-status-checker",
+    includesAll(workflow + releaseGateStatusChecker + releaseGateStatusCheckerTest, [
+      "node --test scripts/v1-release-gate-status-check.test.mjs",
+      "node scripts/v1-release-gate-status-check.mjs",
+      "evaluateV1ReleaseGateStatusSnapshot",
+      "required-checks",
+      "result-shape",
+      "fails when the release gate JSON snapshot omits a required check"
+    ]),
+    "V1 release gate JSON status checker is tested and wired into CI to keep the machine-readable release gate snapshot schema stable."
   ));
 
   const planStatusChecker = snapshot["scripts/v1-plan-status-check.mjs"] ?? "";
