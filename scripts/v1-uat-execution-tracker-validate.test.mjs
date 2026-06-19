@@ -13,12 +13,12 @@ const completeTracker = `# CRM V1 UAT执行派工与证据追踪表
 
 | 角色 | 当前负责人 | 责任 | 状态 |
 |---|---|---|---|
-| 销售侧验收人 | Sales Owner | 验收销售个人主流程 | 已签署 |
-| 管理侧验收人 | Manager Owner | 验收团队查看和权限边界 | 已签署 |
-| 产品负责人 | Product Owner | 确认V1范围 | 已签署 |
-| 测试负责人 | QA Owner | 组织UAT执行 | 已签署 |
-| 研发负责人 | Dev Owner | 提供版本和缺陷修复支持 | 已签署 |
-| 项目负责人 | PM Owner | 做最终准出判定 | Go |
+| 销售侧验收人 | Zhang Wei | 验收销售个人主流程 | 已签署 |
+| 管理侧验收人 | Chen Li | 验收团队查看和权限边界 | 已签署 |
+| 产品负责人 | Wang Qiang | 确认V1范围 | 已签署 |
+| 测试负责人 | Zhao Min | 组织UAT执行 | 已签署 |
+| 研发负责人 | Liu Yang | 提供版本和缺陷修复支持 | 已签署 |
+| 项目负责人 | Li Na | 做最终准出判定 | Go |
 
 ## 3. 前置检查派工
 
@@ -44,7 +44,7 @@ ${Array.from({ length: 5 }, (_, index) => {
 |---|---|---|---|---|---|
 ${Array.from({ length: 10 }, (_, index) => {
   const id = `UAT-${String(index + 1).padStart(3, "0")}`;
-  return `| ${id} | V1业务验收链路 | Sales Owner | AC-${String(index + 1).padStart(3, "0")} | docs/testing/evidence/tracker/${id.toLowerCase()}.png | 通过 |`;
+  return `| ${id} | V1业务验收链路 | Zhang Wei | AC-${String(index + 1).padStart(3, "0")} | docs/testing/evidence/tracker/${id.toLowerCase()}.png | 通过 |`;
 }).join("\n")}
 
 ## 6. 缺陷与回归追踪
@@ -115,14 +115,40 @@ test("fails the current rc8 tracker because external UAT remains pending", () =>
 
 test("fails when a passed UAT row lacks concrete evidence", () => {
   const tracker = completeTracker.replace(
-    "| UAT-006 | V1业务验收链路 | Sales Owner | AC-006 | docs/testing/evidence/tracker/uat-006.png | 通过 |",
-    "| UAT-006 | V1业务验收链路 | Sales Owner | AC-006 | 待填写 | 通过 |"
+    "| UAT-006 | V1业务验收链路 | Zhang Wei | AC-006 | docs/testing/evidence/tracker/uat-006.png | 通过 |",
+    "| UAT-006 | V1业务验收链路 | Zhang Wei | AC-006 | 待填写 | 通过 |"
   );
 
   const result = evaluateUatExecutionTracker(tracker);
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "uat-cases"));
+});
+
+test("fails when a signed tracker role owner is only a role label", () => {
+  const tracker = completeTracker.replace(
+    "| 销售侧验收人 | Zhang Wei | 验收销售个人主流程 | 已签署 |",
+    "| 销售侧验收人 | Sales Owner | 验收销售个人主流程 | 已签署 |"
+  );
+
+  const result = evaluateUatExecutionTracker(tracker);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidTrackerRoleOwnerRows, ["销售侧验收人"]);
+  assert.ok(result.failed.some((check) => check.id === "tracker-role-owner-name-format"));
+});
+
+test("fails when a passed UAT case owner is only a role label", () => {
+  const tracker = completeTracker.replace(
+    "| UAT-006 | V1业务验收链路 | Zhang Wei | AC-006 | docs/testing/evidence/tracker/uat-006.png | 通过 |",
+    "| UAT-006 | V1业务验收链路 | 测试负责人 | AC-006 | docs/testing/evidence/tracker/uat-006.png | 通过 |"
+  );
+
+  const result = evaluateUatExecutionTracker(tracker);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidUatCaseOwnerRows, ["UAT-006"]);
+  assert.ok(result.failed.some((check) => check.id === "uat-case-owner-name-format"));
 });
 
 test("fails when passed tracker evidence references are not retained", () => {

@@ -64,6 +64,11 @@ function isConcreteEvidence(value) {
   return Boolean(value) && !hasPlaceholder(value) && !/证据要求|截图、命令输出、缺陷单或会议纪要之一/.test(value);
 }
 
+function isNamedOwner(value) {
+  return isConcreteEvidence(value)
+    && !/(Owner|负责人|验收人|测试|研发|产品|项目|销售|管理|运维|QA|Dev|PM|Manager|Product|Sales|Test|Frontend|Backend|DevOps)/i.test(value);
+}
+
 function evidenceReferenceTokens(value) {
   return String(value ?? "")
     .replace(/`/g, "")
@@ -128,6 +133,18 @@ export function evaluateUatExecutionTracker(markdown) {
       : `Roles pending assignment or status: ${incompleteRoles.join(", ")}`
   ));
 
+  const invalidTrackerRoleOwnerRows = REQUIRED_ROLES
+    .map((role) => findRow(rows, role))
+    .filter((row) => isConcreteEvidence(row?.[1] ?? "") && isConcreteEvidence(row?.[3] ?? "") && !isNamedOwner(row[1]))
+    .map((row) => row[0]);
+  checks.push(makeCheck(
+    "tracker-role-owner-name-format",
+    invalidTrackerRoleOwnerRows.length === 0,
+    invalidTrackerRoleOwnerRows.length === 0
+      ? "Assigned tracker role owners are named people rather than role labels."
+      : `Tracker role owners use role labels instead of named people: ${invalidTrackerRoleOwnerRows.join(", ")}`
+  ));
+
   const incompletePreChecks = REQUIRED_PRE_CHECKS.filter((id) => {
     const row = findRow(rows, id);
     return !rowPassedWithEvidence(row, 4, 3);
@@ -163,6 +180,18 @@ export function evaluateUatExecutionTracker(markdown) {
     incompleteUatCases.length === 0
       ? "UAT-001 through UAT-010 are passed with owner and concrete evidence."
       : `Incomplete UAT cases: ${incompleteUatCases.join(", ")}`
+  ));
+
+  const invalidUatCaseOwnerRows = REQUIRED_UAT_CASES
+    .map((id) => findRow(rows, id))
+    .filter((row) => row?.[5] === "通过" && isConcreteEvidence(row?.[2] ?? "") && !isNamedOwner(row[2]))
+    .map((row) => row[0]);
+  checks.push(makeCheck(
+    "uat-case-owner-name-format",
+    invalidUatCaseOwnerRows.length === 0,
+    invalidUatCaseOwnerRows.length === 0
+      ? "Passed UAT case owners are named people rather than role labels."
+      : `Passed UAT cases use role labels instead of named people: ${invalidUatCaseOwnerRows.join(", ")}`
   ));
 
   const p0 = findRow(rows, "P0 / S1 阻断");
@@ -246,6 +275,8 @@ export function evaluateUatExecutionTracker(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    invalidTrackerRoleOwnerRows,
+    invalidUatCaseOwnerRows,
     unretainedEvidenceReferences,
     passed,
     failed,

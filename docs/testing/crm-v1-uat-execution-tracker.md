@@ -30,6 +30,7 @@
 - 启动治理纪要填写后必须执行 `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md`。
 - V1最终验证通过必须执行 `node scripts/v1-release-gate.mjs . <crm-v1-uat-evidence-pack.md> docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md` 并返回 `PASS`。
 - 当前 rc.8 草稿为 `No-Go`；具名测试环境、业务验收、缺陷闭环和签署完成前，不得改写为 `Go`。
+- 已签署角色负责人和已通过 UAT 用例验收人必须填写具体姓名，不能用“销售侧验收人”“测试负责人”等角色标签替代。
 
 ## 2. 角色与签署责任
 

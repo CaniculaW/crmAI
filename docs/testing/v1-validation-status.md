@@ -1,7 +1,7 @@
 # CRM V1 Validation Status
 
-Generated at: 2026-06-19T04:34:27.185Z
-Git commit: 2ba75d708d3a2024d1b5316d75b08654e7f0a590
+Generated at: 2026-06-19T16:18:23.967Z
+Git commit: 35f1b5460079b84ddb0076edb440b5b00eab4d7d
 
 Overall: No-Go
 
@@ -16,7 +16,7 @@ Overall: No-Go
 | UAT Evidence Pack | FAIL | No-Go | 7 |
 | UAT Evidence Manifest | FAIL | No-Go | 2 |
 | UAT Evidence References | PASS | No-Go | 0 |
-| UAT Execution Tracker | FAIL | No-Go | 7 |
+| UAT Execution Tracker | FAIL | No-Go | 8 |
 | UAT Defect Register | FAIL | No-Go | 3 |
 | UAT Signoff Register | FAIL | No-Go | 2 |
 | Release Gate | FAIL | No-Go | 9 |
@@ -57,6 +57,7 @@ Overall: No-Go
 - FAIL UAT Evidence Manifest/evidence-complete: Evidence rows not marked PASS: ENV-EVIDENCE, PRE-001, PRE-002, PRE-003, PRE-004, PRE-005, PRE-006, SMK-001, SMK-002, SMK-003, SMK-004, SMK-005, UAT-001, UAT-002, UAT-003, UAT-004, UAT-005, UAT-006, UAT-007, UAT-008, UAT-009, UAT-010, DEF-REGISTER, DEF-P0, DEF-P1, SIGNOFF-REGISTER, SIGNOFF-SALES, SIGNOFF-MANAGER, SIGNOFF-PRODUCT, SIGNOFF-TEST, SIGNOFF-DEV, SIGNOFF-PM, GO-NOGO
 - FAIL UAT Evidence Manifest/go-decision: Manifest decision is No-Go; V1 validation requires Go.
 - FAIL UAT Execution Tracker/roles-assigned: Roles pending assignment or status: 销售侧验收人, 管理侧验收人, 产品负责人, 测试负责人, 项目负责人
+- FAIL UAT Execution Tracker/tracker-role-owner-name-format: Tracker role owners use role labels instead of named people: 研发负责人
 - FAIL UAT Execution Tracker/pre-checks: Incomplete PRE checks: PRE-001, PRE-002, PRE-003, PRE-004, PRE-005, PRE-006
 - FAIL UAT Execution Tracker/smoke-checks: Incomplete SMK checks: SMK-001, SMK-002, SMK-003, SMK-004, SMK-005
 - FAIL UAT Execution Tracker/uat-cases: Incomplete UAT cases: UAT-001, UAT-002, UAT-003, UAT-004, UAT-005, UAT-006, UAT-007, UAT-008, UAT-009, UAT-010
@@ -75,7 +76,7 @@ Overall: No-Go
 - FAIL Release Gate/uat-evidence-manifest: UAT evidence manifest failed: evidence-complete, go-decision
 - FAIL Release Gate/uat-defect-register: UAT defect register failed: p0-p1-summary, defect-details, go-decision
 - FAIL Release Gate/uat-signoff-register: UAT signoff register failed: required-signoffs, project-go-decision
-- FAIL Release Gate/uat-execution-tracker: UAT execution tracker failed: roles-assigned, pre-checks, smoke-checks, uat-cases, p0-p1-defects, release-gates, go-decision
+- FAIL Release Gate/uat-execution-tracker: UAT execution tracker failed: roles-assigned, tracker-role-owner-name-format, pre-checks, smoke-checks, uat-cases, p0-p1-defects, release-gates, go-decision
 - FAIL Release Gate/go-decision: Project decision is No-Go; V1 release gate requires Go.
 
 ## Completion Rule

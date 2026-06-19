@@ -51,7 +51,7 @@
     {
       "id": "uat-execution-tracker",
       "ok": false,
-      "message": "UAT execution tracker failed: roles-assigned, pre-checks, smoke-checks, uat-cases, p0-p1-defects, release-gates, go-decision"
+      "message": "UAT execution tracker failed: roles-assigned, tracker-role-owner-name-format, pre-checks, smoke-checks, uat-cases, p0-p1-defects, release-gates, go-decision"
     },
     {
       "id": "go-decision",

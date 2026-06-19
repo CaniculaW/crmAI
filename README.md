@@ -200,7 +200,7 @@ UAT 执行追踪表校验：
 node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md
 ```
 
-已通过的 PRE、SMK、UAT 和 P0/P1 缺陷证据需引用 `docs/` 下留存文件或外部 `http(s)` 系统链接。
+已签署角色负责人和已通过 UAT 用例验收人必须填写具体姓名，不能用“销售侧验收人”“测试负责人”等角色标签替代；已通过的 PRE、SMK、UAT 和 P0/P1 缺陷证据需引用 `docs/` 下留存文件或外部 `http(s)` 系统链接。
 
 UAT 签署台账：
 
