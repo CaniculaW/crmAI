@@ -65,8 +65,8 @@ jobs:
   "scripts/v1-uat-evidence-pack.test.mjs": "generates a V1 UAT evidence pack\n",
   "scripts/v1-uat-environment-validate.mjs": "evaluateUatEnvironmentEvidence\nenvironment-summary\nenvironment-summary-format\nenvironment-checks\nenvironment-owner-name-format\nenvironment-evidence-retained\nno-secret-material\n",
   "scripts/v1-uat-environment-validate.test.mjs": "fails a draft environment record when named environment evidence is pending\nfails when environment URLs or git commit are not structured\nfails when a PASS environment check owner is only a role label\nfails when PASS environment evidence reference is not retained\n",
-  "scripts/v1-uat-evidence-pack-validate.mjs": "evaluateUatEvidencePack\np0-defects\nsignoff-complete\ngo-hard-gates\nevidence-references-retained\n",
-  "scripts/v1-uat-evidence-pack-validate.test.mjs": "fails a Go evidence pack when a P0 defect remains open\nfails when passed UAT evidence references are not retained\n",
+  "scripts/v1-uat-evidence-pack-validate.mjs": "evaluateUatEvidencePack\np0-defects\nsignoff-complete\ngo-hard-gates\nbasic-owner-name-format\nuat-case-owner-name-format\nsignoff-owner-name-format\nevidence-references-retained\n",
+  "scripts/v1-uat-evidence-pack-validate.test.mjs": "fails a Go evidence pack when a P0 defect remains open\nfails when a basic evidence pack owner is only a role label\nfails when a passed UAT case owner is only a role label\nfails when an approved signoff owner is only a role label\nfails when passed UAT evidence references are not retained\n",
   "scripts/v1-uat-defect-register-validate.mjs": "evaluateUatDefectRegister\np0-p1-summary\ndefect-source-case-format\ndefect-owner-name-format\nregression-evidence\ndefect-evidence-retained\nno-secret-material\n",
   "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\nfails when a P0 or P1 defect source case is not traceable\nfails when a P0 or P1 defect owner is only a role label\nfails when closed P0 or P1 regression evidence is not retained\n",
   "scripts/v1-uat-signoff-register-validate.mjs": "evaluateUatSignoffRegister\nrequired-signoffs\nsignoff-owner-name-format\nsigned-date-format\nsignoff-evidence-retained\nproject-go-decision\nno-secret-material\n",
@@ -412,6 +412,45 @@ test("fails when the UAT evidence pack validator omits retained evidence guard",
     ...completeSnapshot,
     "scripts/v1-uat-evidence-pack-validate.mjs": completeSnapshot["scripts/v1-uat-evidence-pack-validate.mjs"].replace("evidence-references-retained\n", ""),
     "scripts/v1-uat-evidence-pack-validate.test.mjs": completeSnapshot["scripts/v1-uat-evidence-pack-validate.test.mjs"].replace("fails when passed UAT evidence references are not retained\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-evidence-validator"));
+});
+
+test("fails when the UAT evidence pack validator omits named basic owner guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-evidence-pack-validate.mjs": completeSnapshot["scripts/v1-uat-evidence-pack-validate.mjs"].replace("basic-owner-name-format\n", ""),
+    "scripts/v1-uat-evidence-pack-validate.test.mjs": completeSnapshot["scripts/v1-uat-evidence-pack-validate.test.mjs"].replace("fails when a basic evidence pack owner is only a role label\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-evidence-validator"));
+});
+
+test("fails when the UAT evidence pack validator omits named UAT case owner guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-evidence-pack-validate.mjs": completeSnapshot["scripts/v1-uat-evidence-pack-validate.mjs"].replace("uat-case-owner-name-format\n", ""),
+    "scripts/v1-uat-evidence-pack-validate.test.mjs": completeSnapshot["scripts/v1-uat-evidence-pack-validate.test.mjs"].replace("fails when a passed UAT case owner is only a role label\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-evidence-validator"));
+});
+
+test("fails when the UAT evidence pack validator omits named signoff owner guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-evidence-pack-validate.mjs": completeSnapshot["scripts/v1-uat-evidence-pack-validate.mjs"].replace("signoff-owner-name-format\n", ""),
+    "scripts/v1-uat-evidence-pack-validate.test.mjs": completeSnapshot["scripts/v1-uat-evidence-pack-validate.test.mjs"].replace("fails when an approved signoff owner is only a role label\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

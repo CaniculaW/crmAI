@@ -15,11 +15,11 @@ const completeGoPack = `# CRM V1 UAT 证据包与 Go/No-Go 记录
 | 后端 API 地址 | https://crm-test-api.example.com |
 | Git 提交号 | 0b3579ff9027417f4f363ae11ec206e37b33c113 |
 | 候选版本 | v1.0.0-rc.6 |
-| 测试负责人 | QA |
-| 产品负责人 | Product |
-| 研发负责人 | Dev |
-| 销售侧验收人 | Sales Owner |
-| 管理侧验收人 | Manager Owner |
+| 测试负责人 | Chen Min |
+| 产品负责人 | Wang Qiang |
+| 研发负责人 | Liu Yang |
+| 销售侧验收人 | Zhang Wei |
+| 管理侧验收人 | Li Na |
 
 ## 2. 自动化验证结果
 
@@ -50,7 +50,7 @@ const completeGoPack = `# CRM V1 UAT 证据包与 Go/No-Go 记录
 |---|---|---|---|---|---|
 ${Array.from({ length: 10 }, (_, index) => {
   const id = `UAT-${String(index + 1).padStart(3, "0")}`;
-  return `| ${id} | V1 验收链路 | Sales Owner | 通过 | docs/testing/evidence/uat/${id.toLowerCase()}.png | 无 |`;
+  return `| ${id} | V1 验收链路 | Zhang Wei | 通过 | docs/testing/evidence/uat/${id.toLowerCase()}.png | 无 |`;
 }).join("\n")}
 
 ## 5. 缺陷汇总
@@ -85,12 +85,12 @@ Go/No-Go 结论：
 
 | 角色 | 姓名 | 结论 | 日期 | 证据文件 |
 |---|---|---|---|---|
-| 销售侧验收人 | Sales Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md |
-| 管理侧验收人 | Manager Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/manager-approval.md |
-| 产品负责人 | Product | 同意 | 2026-06-19 | docs/testing/evidence/signoff/product-approval.md |
-| 测试负责人 | QA | 同意 | 2026-06-19 | docs/testing/evidence/signoff/test-approval.md |
-| 研发负责人 | Dev | 同意 | 2026-06-19 | docs/testing/evidence/signoff/dev-approval.md |
-| 项目负责人 | PM | Go | 2026-06-19 | docs/testing/evidence/signoff/project-go.md |
+| 销售侧验收人 | Zhang Wei | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md |
+| 管理侧验收人 | Li Na | 同意 | 2026-06-19 | docs/testing/evidence/signoff/manager-approval.md |
+| 产品负责人 | Wang Qiang | 同意 | 2026-06-19 | docs/testing/evidence/signoff/product-approval.md |
+| 测试负责人 | Chen Min | 同意 | 2026-06-19 | docs/testing/evidence/signoff/test-approval.md |
+| 研发负责人 | Liu Yang | 同意 | 2026-06-19 | docs/testing/evidence/signoff/dev-approval.md |
+| 项目负责人 | Zhao Lin | Go | 2026-06-19 | docs/testing/evidence/signoff/project-go.md |
 `;
 
 test("passes a complete signed Go evidence pack", () => {
@@ -110,7 +110,7 @@ test("fails a Go evidence pack when a P0 defect remains open", () => {
 
 test("fails a Go evidence pack when business signoff is missing", () => {
   const pack = completeGoPack.replace(
-    "| 销售侧验收人 | Sales Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md |",
+    "| 销售侧验收人 | Zhang Wei | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md |",
     "| 销售侧验收人 | 待填写 | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md |"
   );
   const result = evaluateUatEvidencePack(pack);
@@ -120,11 +120,50 @@ test("fails a Go evidence pack when business signoff is missing", () => {
 });
 
 test("explains that draft placeholders remain when the no-placeholder check fails", () => {
-  const pack = completeGoPack.replace("Sales Owner", "待填写");
+  const pack = completeGoPack.replace("Zhang Wei", "待填写");
   const result = evaluateUatEvidencePack(pack);
   const placeholderFailure = result.failed.find((check) => check.id === "no-placeholders");
 
   assert.equal(placeholderFailure?.message, "Evidence pack still contains draft placeholders.");
+});
+
+test("fails when a basic evidence pack owner is only a role label", () => {
+  const pack = completeGoPack.replace(
+    "| 测试负责人 | Chen Min |",
+    "| 测试负责人 | QA Owner |"
+  );
+
+  const result = evaluateUatEvidencePack(pack);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidBasicOwnerRows, ["测试负责人"]);
+  assert.ok(result.failed.some((check) => check.id === "basic-owner-name-format"));
+});
+
+test("fails when a passed UAT case owner is only a role label", () => {
+  const pack = completeGoPack.replace(
+    "| UAT-006 | V1 验收链路 | Zhang Wei | 通过 | docs/testing/evidence/uat/uat-006.png | 无 |",
+    "| UAT-006 | V1 验收链路 | 销售侧验收人 | 通过 | docs/testing/evidence/uat/uat-006.png | 无 |"
+  );
+
+  const result = evaluateUatEvidencePack(pack);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidUatCaseOwnerRows, ["UAT-006"]);
+  assert.ok(result.failed.some((check) => check.id === "uat-case-owner-name-format"));
+});
+
+test("fails when an approved signoff owner is only a role label", () => {
+  const pack = completeGoPack.replace(
+    "| 项目负责人 | Zhao Lin | Go | 2026-06-19 | docs/testing/evidence/signoff/project-go.md |",
+    "| 项目负责人 | PM Owner | Go | 2026-06-19 | docs/testing/evidence/signoff/project-go.md |"
+  );
+
+  const result = evaluateUatEvidencePack(pack);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidSignoffOwnerRows, ["项目负责人"]);
+  assert.ok(result.failed.some((check) => check.id === "signoff-owner-name-format"));
 });
 
 test("fails when passed UAT evidence references are not retained", () => {

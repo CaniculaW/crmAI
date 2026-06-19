@@ -36,6 +36,14 @@ const REQUIRED_SIGNOFF_ROLES = [
   "项目负责人"
 ];
 
+const BASIC_OWNER_FIELDS = [
+  "测试负责人",
+  "产品负责人",
+  "研发负责人",
+  "销售侧验收人",
+  "管理侧验收人"
+];
+
 function tableRows(markdown) {
   return markdown
     .split(/\r?\n/)
@@ -51,6 +59,11 @@ function hasPlaceholder(value) {
 
 function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value);
+}
+
+function isNamedOwner(value) {
+  return isConcrete(value)
+    && !/(Owner|负责人|验收人|测试|研发|产品|项目|销售|管理|运维|QA|Dev|PM|Manager|Product|Sales|Test|Frontend|Backend|DevOps)/i.test(value);
 }
 
 function evidenceReferenceTokens(value) {
@@ -124,6 +137,18 @@ export function evaluateUatEvidencePack(markdown) {
     "Basic environment, version, and commit fields are complete."
   ));
 
+  const invalidBasicOwnerRows = BASIC_OWNER_FIELDS
+    .map((field) => findRow(rows, field))
+    .filter((row) => isConcrete(row?.[1] ?? "") && !isNamedOwner(row[1]))
+    .map((row) => row[0]);
+  checks.push(makeCheck(
+    "basic-owner-name-format",
+    invalidBasicOwnerRows.length === 0,
+    invalidBasicOwnerRows.length === 0
+      ? "Basic evidence pack owners are named people rather than role labels."
+      : `Basic evidence pack owners use role labels instead of named people: ${invalidBasicOwnerRows.join(", ")}`
+  ));
+
   const missingAutomation = REQUIRED_AUTOMATION_COMMANDS.filter((command) => {
     const row = findRowContaining(rows, command);
     return !row || !rowPasses(row, 2) || !row[3] || hasPlaceholder(row[3]);
@@ -168,6 +193,18 @@ export function evaluateUatEvidencePack(markdown) {
     missingUatCases.length === 0
       ? "UAT-001 through UAT-010 are marked passed with owner and evidence."
       : `Missing passed UAT evidence: ${missingUatCases.join(", ")}`
+  ));
+
+  const invalidUatCaseOwnerRows = REQUIRED_UAT_CASES
+    .map((id) => findRow(rows, id))
+    .filter((row) => row?.[3] === "通过" && isConcrete(row?.[2] ?? "") && !isNamedOwner(row[2]))
+    .map((row) => row[0]);
+  checks.push(makeCheck(
+    "uat-case-owner-name-format",
+    invalidUatCaseOwnerRows.length === 0,
+    invalidUatCaseOwnerRows.length === 0
+      ? "Passed UAT case owners are named people rather than role labels."
+      : `Passed UAT case owners use role labels instead of named people: ${invalidUatCaseOwnerRows.join(", ")}`
   ));
 
   const unretainedUatEvidence = REQUIRED_UAT_CASES.filter((id) => {
@@ -221,6 +258,22 @@ export function evaluateUatEvidencePack(markdown) {
     incompleteSignoff.length === 0
       ? "Required business, product, test, development, and project signoffs are complete."
       : `Incomplete signoff rows: ${incompleteSignoff.join(", ")}`
+  ));
+
+  const invalidSignoffOwnerRows = REQUIRED_SIGNOFF_ROLES
+    .map((role) => findLastRow(rows, role))
+    .filter((row) => {
+      const role = row?.[0];
+      const accepted = role === "项目负责人" ? row?.[2] === decision : row?.[2] === "同意";
+      return accepted && isConcrete(row?.[1] ?? "") && !isNamedOwner(row[1]);
+    })
+    .map((row) => row[0]);
+  checks.push(makeCheck(
+    "signoff-owner-name-format",
+    invalidSignoffOwnerRows.length === 0,
+    invalidSignoffOwnerRows.length === 0
+      ? "Approved signoff owners are named people rather than role labels."
+      : `Approved signoff owners use role labels instead of named people: ${invalidSignoffOwnerRows.join(", ")}`
   ));
 
   const unretainedSignoffEvidence = REQUIRED_SIGNOFF_ROLES.filter((role) => {
@@ -279,6 +332,9 @@ export function evaluateUatEvidencePack(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    invalidBasicOwnerRows,
+    invalidUatCaseOwnerRows,
+    invalidSignoffOwnerRows,
     unretainedEvidenceReferences,
     passed,
     failed,

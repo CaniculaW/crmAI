@@ -107,6 +107,11 @@ function goEvidencePack(decision = "Go") {
 | 后端 API 地址 | https://crm-test-api.example.com |
 | Git 提交号 | 0f9ab8dbc49c8f30b26269a2e4807a7747852905 |
 | 候选版本 | v1.0.0-rc.8 |
+| 测试负责人 | Chen Min |
+| 产品负责人 | Wang Qiang |
+| 研发负责人 | Liu Yang |
+| 销售侧验收人 | Zhang Wei |
+| 管理侧验收人 | Li Na |
 
 ## 2. 自动化验证结果
 
@@ -137,7 +142,7 @@ function goEvidencePack(decision = "Go") {
 |---|---|---|---|---|---|
 ${Array.from({ length: 10 }, (_, index) => {
   const id = `UAT-${String(index + 1).padStart(3, "0")}`;
-  return `| ${id} | V1 验收链路 | Sales Owner | 通过 | docs/testing/evidence/uat/${id.toLowerCase()}.png | 无 |`;
+  return `| ${id} | V1 验收链路 | Zhang Wei | 通过 | docs/testing/evidence/uat/${id.toLowerCase()}.png | 无 |`;
 }).join("\n")}
 
 ## 5. 缺陷汇总
@@ -172,12 +177,12 @@ Go/No-Go 结论：
 
 | 角色 | 姓名 | 结论 | 日期 | 证据文件 |
 |---|---|---|---|---|
-| 销售侧验收人 | Sales Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md |
-| 管理侧验收人 | Manager Owner | 同意 | 2026-06-19 | docs/testing/evidence/signoff/manager-approval.md |
-| 产品负责人 | Product | 同意 | 2026-06-19 | docs/testing/evidence/signoff/product-approval.md |
-| 测试负责人 | QA | 同意 | 2026-06-19 | docs/testing/evidence/signoff/test-approval.md |
-| 研发负责人 | Dev | 同意 | 2026-06-19 | docs/testing/evidence/signoff/dev-approval.md |
-| 项目负责人 | PM | ${projectDecision} | 2026-06-19 | docs/testing/evidence/signoff/project-go.md |
+| 销售侧验收人 | Zhang Wei | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md |
+| 管理侧验收人 | Li Na | 同意 | 2026-06-19 | docs/testing/evidence/signoff/manager-approval.md |
+| 产品负责人 | Wang Qiang | 同意 | 2026-06-19 | docs/testing/evidence/signoff/product-approval.md |
+| 测试负责人 | Chen Min | 同意 | 2026-06-19 | docs/testing/evidence/signoff/test-approval.md |
+| 研发负责人 | Liu Yang | 同意 | 2026-06-19 | docs/testing/evidence/signoff/dev-approval.md |
+| 项目负责人 | Zhao Lin | ${projectDecision} | 2026-06-19 | docs/testing/evidence/signoff/project-go.md |
 `;
 }
 

@@ -1,7 +1,7 @@
 # CRM V1 Validation Status
 
-Generated at: 2026-06-19T16:18:23.967Z
-Git commit: 35f1b5460079b84ddb0076edb440b5b00eab4d7d
+Generated at: 2026-06-19T16:43:17.040Z
+Git commit: e7e9d7b3a622cdef6ce186048246f4531aaea414
 
 Overall: No-Go
 
@@ -13,7 +13,7 @@ Overall: No-Go
 | Kickoff Governance | FAIL | No-Go | 3 |
 | UAT Launch Intake | FAIL | No-Go | 4 |
 | UAT Environment Evidence | FAIL | No-Go | 3 |
-| UAT Evidence Pack | FAIL | No-Go | 7 |
+| UAT Evidence Pack | FAIL | No-Go | 8 |
 | UAT Evidence Manifest | FAIL | No-Go | 2 |
 | UAT Evidence References | PASS | No-Go | 0 |
 | UAT Execution Tracker | FAIL | No-Go | 8 |
@@ -48,6 +48,7 @@ Overall: No-Go
 - FAIL UAT Environment Evidence/environment-checks: Incomplete environment checks: ENV-001, ENV-002, ENV-003, ENV-004, ENV-005, ENV-006, ENV-007, ENV-008
 - FAIL UAT Environment Evidence/go-decision: Environment evidence decision is No-Go; V1 validation requires Go.
 - FAIL UAT Evidence Pack/no-placeholders: Evidence pack still contains draft placeholders.
+- FAIL UAT Evidence Pack/basic-owner-name-format: Basic evidence pack owners use role labels instead of named people: 研发负责人
 - FAIL UAT Evidence Pack/environment-results: Missing passed environment evidence: 销售个人账号, 销售负责人账号, 权限样本账号
 - FAIL UAT Evidence Pack/uat-business-cases: Missing passed UAT evidence: UAT-001, UAT-002, UAT-003, UAT-004, UAT-005, UAT-006, UAT-007, UAT-008, UAT-009, UAT-010
 - FAIL UAT Evidence Pack/p0-defects: P0/S1 defect row is missing or invalid.
@@ -72,7 +73,7 @@ Overall: No-Go
 - FAIL Release Gate/kickoff-governance: Kickoff governance failed: required-owners, scope-freeze, project-go-decision
 - FAIL Release Gate/uat-launch-intake: UAT launch intake failed: environment-intake, participant-roster, account-custody, project-go-decision
 - FAIL Release Gate/uat-environment: UAT environment evidence failed: environment-summary, environment-checks, go-decision
-- FAIL Release Gate/uat-evidence-pack: UAT evidence pack failed: no-placeholders, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete
+- FAIL Release Gate/uat-evidence-pack: UAT evidence pack failed: no-placeholders, basic-owner-name-format, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete
 - FAIL Release Gate/uat-evidence-manifest: UAT evidence manifest failed: evidence-complete, go-decision
 - FAIL Release Gate/uat-defect-register: UAT defect register failed: p0-p1-summary, defect-details, go-decision
 - FAIL Release Gate/uat-signoff-register: UAT signoff register failed: required-signoffs, project-go-decision
