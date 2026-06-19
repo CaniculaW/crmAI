@@ -140,6 +140,16 @@ test("fails when a basic evidence pack owner is only a role label", () => {
   assert.ok(result.failed.some((check) => check.id === "basic-owner-name-format"));
 });
 
+test("fails when a basic evidence pack owner row is missing", () => {
+  const pack = completeGoPack.replace("| 测试负责人 | Chen Min |\n", "");
+
+  const result = evaluateUatEvidencePack(pack);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.missingBasicOwnerRows, ["测试负责人"]);
+  assert.ok(result.failed.some((check) => check.id === "basic-owners-complete"));
+});
+
 test("fails when a passed UAT case owner is only a role label", () => {
   const pack = completeGoPack.replace(
     "| UAT-006 | V1 验收链路 | Zhang Wei | 通过 | docs/testing/evidence/uat/uat-006.png | 无 |",

@@ -1,6 +1,6 @@
 # CRM V1 UAT Action Plan
 
-Generated at: 2026-06-19T16:43:17.069Z
+Generated at: 2026-06-19T16:54:29.073Z
 
 Overall: No-Go
 
@@ -39,6 +39,7 @@ Overall: No-Go
 - UAT Environment Evidence/environment-checks: Incomplete environment checks: ENV-001, ENV-002, ENV-003, ENV-004, ENV-005, ENV-006, ENV-007, ENV-008
 - UAT Environment Evidence/go-decision: Environment evidence decision is No-Go; V1 validation requires Go.
 - UAT Evidence Pack/no-placeholders: Evidence pack still contains draft placeholders.
+- UAT Evidence Pack/basic-owners-complete: Missing basic evidence pack owners: 测试负责人, 产品负责人, 销售侧验收人, 管理侧验收人
 - UAT Evidence Pack/basic-owner-name-format: Basic evidence pack owners use role labels instead of named people: 研发负责人
 - UAT Evidence Pack/environment-results: Missing passed environment evidence: 销售个人账号, 销售负责人账号, 权限样本账号
 - UAT Evidence Pack/uat-business-cases: Missing passed UAT evidence: UAT-001, UAT-002, UAT-003, UAT-004, UAT-005, UAT-006, UAT-007, UAT-008, UAT-009, UAT-010
@@ -64,7 +65,7 @@ Overall: No-Go
 - Release Gate/kickoff-governance: Kickoff governance failed: required-owners, scope-freeze, project-go-decision
 - Release Gate/uat-launch-intake: UAT launch intake failed: environment-intake, participant-roster, account-custody, project-go-decision
 - Release Gate/uat-environment: UAT environment evidence failed: environment-summary, environment-checks, go-decision
-- Release Gate/uat-evidence-pack: UAT evidence pack failed: no-placeholders, basic-owner-name-format, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete
+- Release Gate/uat-evidence-pack: UAT evidence pack failed: no-placeholders, basic-owners-complete, basic-owner-name-format, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete
 - Release Gate/uat-evidence-manifest: UAT evidence manifest failed: evidence-complete, go-decision
 - Release Gate/uat-defect-register: UAT defect register failed: p0-p1-summary, defect-details, go-decision
 - Release Gate/uat-signoff-register: UAT signoff register failed: required-signoffs, project-go-decision

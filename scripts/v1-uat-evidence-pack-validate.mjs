@@ -53,6 +53,19 @@ function tableRows(markdown) {
     .filter((cells) => !cells.every((cell) => /^:?-{3,}:?$/.test(cell)));
 }
 
+function sectionMarkdown(markdown, heading) {
+  const start = markdown.indexOf(heading);
+  if (start === -1) {
+    return "";
+  }
+
+  const rest = markdown.slice(start + heading.length);
+  const nextHeading = rest.search(/\n##\s+\d+\./);
+  return nextHeading === -1
+    ? markdown.slice(start)
+    : markdown.slice(start, start + heading.length + nextHeading);
+}
+
 function hasPlaceholder(value) {
   return /待填写|待执行|通过 \/ 不通过|是 \/ 否|同意 \/ 不同意/.test(value);
 }
@@ -116,6 +129,7 @@ function extractDecision(markdown) {
 
 export function evaluateUatEvidencePack(markdown) {
   const rows = tableRows(markdown);
+  const basicRows = tableRows(sectionMarkdown(markdown, "## 1. 基本信息"));
   const checks = [];
   const decision = extractDecision(markdown);
 
@@ -131,14 +145,24 @@ export function evaluateUatEvidencePack(markdown) {
   checks.push(makeCheck(
     "basic-info-complete",
     ["验收日期", "测试环境名称", "前端访问地址", "后端 API 地址", "Git 提交号", "候选版本"].every((field) => {
-      const row = findRow(rows, field);
+      const row = findRow(basicRows, field);
       return row?.[1] && !hasPlaceholder(row[1]);
     }),
     "Basic environment, version, and commit fields are complete."
   ));
 
+  const missingBasicOwnerRows = BASIC_OWNER_FIELDS
+    .filter((field) => !isConcrete(findRow(basicRows, field)?.[1] ?? ""));
+  checks.push(makeCheck(
+    "basic-owners-complete",
+    missingBasicOwnerRows.length === 0,
+    missingBasicOwnerRows.length === 0
+      ? "Basic evidence pack owner rows are complete."
+      : `Missing basic evidence pack owners: ${missingBasicOwnerRows.join(", ")}`
+  ));
+
   const invalidBasicOwnerRows = BASIC_OWNER_FIELDS
-    .map((field) => findRow(rows, field))
+    .map((field) => findRow(basicRows, field))
     .filter((row) => isConcrete(row?.[1] ?? "") && !isNamedOwner(row[1]))
     .map((row) => row[0]);
   checks.push(makeCheck(
@@ -332,6 +356,7 @@ export function evaluateUatEvidencePack(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    missingBasicOwnerRows,
     invalidBasicOwnerRows,
     invalidUatCaseOwnerRows,
     invalidSignoffOwnerRows,

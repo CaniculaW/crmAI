@@ -26,7 +26,7 @@
     {
       "id": "uat-evidence-pack",
       "ok": false,
-      "message": "UAT evidence pack failed: no-placeholders, basic-owner-name-format, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete"
+      "message": "UAT evidence pack failed: no-placeholders, basic-owners-complete, basic-owner-name-format, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete"
     },
     {
       "id": "uat-evidence-manifest",
