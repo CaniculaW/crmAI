@@ -212,6 +212,14 @@ node scripts/v1-plan-status-check.mjs
 
 该检查用于防止启动计划中仍未完成的启动会、范围冻结和业务验收项被误配成 V1 Go 证据。
 
+验收清单或业务验收状态更新后，执行验收清单一致性检查：
+
+```bash
+node scripts/v1-acceptance-checklist-check.mjs
+```
+
+该检查用于防止 AC-001 至 AC-017 在 release gate 仍为 No-Go 时被误标成业务验收通过。
+
 正式准出前执行最终放行门禁：
 
 ```bash
