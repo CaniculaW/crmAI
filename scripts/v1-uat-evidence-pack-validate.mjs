@@ -79,6 +79,18 @@ function isNamedOwner(value) {
     && !/(Owner|负责人|验收人|测试|研发|产品|项目|销售|管理|运维|QA|Dev|PM|Manager|Product|Sales|Test|Frontend|Backend|DevOps)/i.test(value);
 }
 
+function isIsoDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function isHttpUrl(value) {
+  return /^https?:\/\/\S+$/i.test(value);
+}
+
+function isGitSha(value) {
+  return /^[0-9a-f]{40}$/i.test(value);
+}
+
 function evidenceReferenceTokens(value) {
   return String(value ?? "")
     .replace(/`/g, "")
@@ -149,6 +161,26 @@ export function evaluateUatEvidencePack(markdown) {
       return row?.[1] && !hasPlaceholder(row[1]);
     }),
     "Basic environment, version, and commit fields are complete."
+  ));
+
+  const basicInfoFormatRules = [
+    ["验收日期", isIsoDate],
+    ["前端访问地址", isHttpUrl],
+    ["后端 API 地址", isHttpUrl],
+    ["Git 提交号", isGitSha]
+  ];
+  const invalidBasicInfoFields = basicInfoFormatRules
+    .filter(([field, validator]) => {
+      const value = findRow(basicRows, field)?.[1] ?? "";
+      return isConcrete(value) && !validator(value);
+    })
+    .map(([field]) => field);
+  checks.push(makeCheck(
+    "basic-info-format",
+    invalidBasicInfoFields.length === 0,
+    invalidBasicInfoFields.length === 0
+      ? "Basic evidence pack date, URLs, and git commit are structured."
+      : `Basic evidence pack fields are not structured: ${invalidBasicInfoFields.join(", ")}`
   ));
 
   const missingBasicOwnerRows = BASIC_OWNER_FIELDS
@@ -356,6 +388,7 @@ export function evaluateUatEvidencePack(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    invalidBasicInfoFields,
     missingBasicOwnerRows,
     invalidBasicOwnerRows,
     invalidUatCaseOwnerRows,

@@ -150,6 +150,19 @@ test("fails when a basic evidence pack owner row is missing", () => {
   assert.ok(result.failed.some((check) => check.id === "basic-owners-complete"));
 });
 
+test("fails when basic evidence pack metadata is not structured", () => {
+  const pack = completeGoPack
+    .replace("| 验收日期 | 2026-06-19 |", "| 验收日期 | June 19 |")
+    .replace("| 前端访问地址 | https://crm-test.example.com |", "| 前端访问地址 | crm-test.example.com |")
+    .replace("| Git 提交号 | 0b3579ff9027417f4f363ae11ec206e37b33c113 |", "| Git 提交号 | abc123 |");
+
+  const result = evaluateUatEvidencePack(pack);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidBasicInfoFields, ["验收日期", "前端访问地址", "Git 提交号"]);
+  assert.ok(result.failed.some((check) => check.id === "basic-info-format"));
+});
+
 test("fails when a passed UAT case owner is only a role label", () => {
   const pack = completeGoPack.replace(
     "| UAT-006 | V1 验收链路 | Zhang Wei | 通过 | docs/testing/evidence/uat/uat-006.png | 无 |",
