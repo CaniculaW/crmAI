@@ -9,13 +9,15 @@ import { generateV1ExternalUatRequestFromFiles } from "./v1-external-uat-request
 import { generateV1UatActionPlanFromFiles } from "./v1-uat-action-plan.mjs";
 import { generateV1UatExecutionPackFromFiles } from "./v1-uat-execution-pack.mjs";
 import { generateV1ValidationStatusFromFiles } from "./v1-validation-status.mjs";
+import { evaluateV1ReleaseGateFromFiles, renderResult } from "./v1-release-gate.mjs";
 
 const GENERATED_DOC_PATHS = [
   "docs/testing/v1-validation-status.md",
   "docs/testing/v1-uat-action-plan.md",
   "docs/testing/v1-uat-execution-pack.md",
   "docs/testing/v1-go-no-go-meeting.md",
-  "docs/testing/v1-external-uat-request.md"
+  "docs/testing/v1-external-uat-request.md",
+  "docs/testing/v1-release-gate-status.json"
 ];
 
 function makeCheck(id, ok, message) {
@@ -61,7 +63,11 @@ function defaultGenerators(rootDir) {
     "docs/testing/v1-external-uat-request.md": () => generateV1ExternalUatRequestFromFiles({
       rootDir,
       generatedAt: generatedAtFrom(rootDir, "docs/testing/v1-external-uat-request.md")
-    })
+    }),
+    "docs/testing/v1-release-gate-status.json": () => renderResult(
+      evaluateV1ReleaseGateFromFiles(rootDir),
+      "json"
+    )
   };
 }
 
@@ -116,7 +122,7 @@ function printResult(result) {
   }
 
   lines.push("");
-  lines.push("Note: PASS means generated V1 status, action, execution, Go/No-Go, and external UAT request documents match their current generator outputs.");
+  lines.push("Note: PASS means generated V1 status, action, execution, Go/No-Go, external UAT request, and release gate JSON snapshot documents match their current generator outputs.");
 
   console.log(lines.join("\n"));
 }
