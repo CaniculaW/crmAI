@@ -685,9 +685,11 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node scripts/v1-uat-coverage-check.mjs",
       "evaluateV1UatCoverageSnapshot",
       "uat-covers-all-acceptance-items",
-      "fails when acceptance criteria are missing from UAT case mapping"
+      "uat-case-execution-detail",
+      "fails when acceptance criteria are missing from UAT case mapping",
+      "fails when UAT rows omit owner or evidence requirements"
     ]),
-    "V1 UAT coverage checker is tested and wired into CI to keep UAT-001 through UAT-010 mapped to every AC-001 through AC-017 acceptance item."
+    "V1 UAT coverage checker is tested and wired into CI to keep UAT-001 through UAT-010 mapped to every AC-001 through AC-017 acceptance item with owner roles and evidence requirements."
   ));
 
   const traceabilityChecker = snapshot["scripts/v1-traceability-check.mjs"] ?? "";

@@ -101,8 +101,8 @@ jobs:
   "scripts/v1-plan-status-check.test.mjs": "fails when open plan items are paired with a Go validation status\n",
   "scripts/v1-acceptance-checklist-check.mjs": "evaluateV1AcceptanceChecklistSnapshot\nacceptance-status-release-alignment\n",
   "scripts/v1-acceptance-checklist-check.test.mjs": "fails when all acceptance items are marked business passed while the release gate is No-Go\n",
-  "scripts/v1-uat-coverage-check.mjs": "evaluateV1UatCoverageSnapshot\nuat-covers-all-acceptance-items\n",
-  "scripts/v1-uat-coverage-check.test.mjs": "fails when acceptance criteria are missing from UAT case mapping\n",
+  "scripts/v1-uat-coverage-check.mjs": "evaluateV1UatCoverageSnapshot\nuat-covers-all-acceptance-items\nuat-case-execution-detail\n",
+  "scripts/v1-uat-coverage-check.test.mjs": "fails when acceptance criteria are missing from UAT case mapping\nfails when UAT rows omit owner or evidence requirements\n",
   "scripts/v1-traceability-check.mjs": "evaluateV1TraceabilitySnapshot\ntraceability-release-alignment\n",
   "scripts/v1-traceability-check.test.mjs": "fails when traceability claims project acceptance while release gate is No-Go\n",
   "scripts/v1-blocker-consistency-check.mjs": "evaluateV1BlockerConsistencySnapshot\ndecision-doc-release-blockers\n",
@@ -683,6 +683,19 @@ test("fails when the V1 UAT coverage checker is missing from readiness materials
     ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
       .replace("      - run: node --test scripts/v1-uat-coverage-check.test.mjs\n", "")
       .replace("      - run: node scripts/v1-uat-coverage-check.mjs\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-uat-coverage-checker"));
+});
+
+test("fails when the V1 UAT coverage checker omits execution detail guards", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-coverage-check.mjs": completeSnapshot["scripts/v1-uat-coverage-check.mjs"]
+      .replace("uat-case-execution-detail\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

@@ -27,9 +27,15 @@ function uatRows(runbookText) {
       return {
         id: cells[0],
         scenario: cells[1],
+        owner: cells[2],
+        evidenceRequirement: cells[4],
         acceptanceIds: Array.from(new Set((line.match(/AC-\d{3}/g) ?? [])))
       };
     });
+}
+
+function hasConcreteCell(value) {
+  return Boolean(value) && !/^(待补充|待填写|待确认|-|N\/A)$/i.test(value.trim());
 }
 
 export function evaluateV1UatCoverageSnapshot({ runbookText }) {
@@ -39,6 +45,9 @@ export function evaluateV1UatCoverageSnapshot({ runbookText }) {
   const duplicateUatIds = uatIds.filter((id, index) => uatIds.indexOf(id) !== index);
   const coveredAcceptanceIds = Array.from(new Set(rows.flatMap((row) => row.acceptanceIds))).sort();
   const missingAcceptanceIds = REQUIRED_ACCEPTANCE_IDS.filter((id) => !coveredAcceptanceIds.includes(id));
+  const incompleteExecutionDetailIds = rows
+    .filter((row) => !hasConcreteCell(row.owner) || !hasConcreteCell(row.evidenceRequirement))
+    .map((row) => row.id);
 
   const checks = [
     makeCheck(
@@ -54,6 +63,13 @@ export function evaluateV1UatCoverageSnapshot({ runbookText }) {
       missingAcceptanceIds.length === 0
         ? "UAT case mapping covers AC-001 through AC-017."
         : `UAT case mapping is missing acceptance items: ${missingAcceptanceIds.join(", ")}.`
+    ),
+    makeCheck(
+      "uat-case-execution-detail",
+      incompleteExecutionDetailIds.length === 0,
+      incompleteExecutionDetailIds.length === 0
+        ? "Every UAT case lists an owner role and concrete evidence requirement."
+        : `UAT cases are missing owner roles or concrete evidence requirements: ${incompleteExecutionDetailIds.join(", ")}.`
     )
   ];
 
@@ -67,7 +83,8 @@ export function evaluateV1UatCoverageSnapshot({ runbookText }) {
     checks,
     rows,
     coveredAcceptanceIds,
-    missingAcceptanceIds
+    missingAcceptanceIds,
+    incompleteExecutionDetailIds
   };
 }
 
@@ -95,8 +112,9 @@ function printResult(result) {
   lines.push("");
   lines.push(`Covered acceptance items: ${result.coveredAcceptanceIds.length}`);
   lines.push(`Missing acceptance items: ${result.missingAcceptanceIds.join(", ") || "none"}`);
+  lines.push(`Incomplete execution detail UAT cases: ${result.incompleteExecutionDetailIds.join(", ") || "none"}`);
   lines.push("");
-  lines.push("Note: PASS means every V1 acceptance item has at least one mapped UAT case in the execution runbook. It does not replace real business UAT evidence.");
+  lines.push("Note: PASS means every V1 acceptance item has at least one mapped UAT case in the execution runbook, and every UAT case has an owner role plus evidence requirement. It does not replace real business UAT evidence.");
 
   console.log(lines.join("\n"));
 }
