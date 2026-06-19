@@ -23,12 +23,12 @@ Rules:
 
 | Participant ID | Role | Owner | Contact | Responsibility | Status |
 |---|---|---|---|---|---|
-| UAT-SALES | 销售侧验收人 | Sales Owner | sales@example.test | 验收销售主流程 | 已确认 |
-| UAT-MANAGER | 管理侧验收人 | Manager Owner | manager@example.test | 验收管理视图和权限边界 | 已确认 |
-| UAT-PRODUCT | 产品负责人 | Product Owner | product@example.test | 确认范围和准出口径 | 已确认 |
-| UAT-TEST | 测试负责人 | QA Owner | qa@example.test | 组织执行和证据归档 | 已确认 |
-| UAT-DEV | 研发负责人 | Dev Owner | dev@example.test | 支持环境和缺陷修复 | 已确认 |
-| UAT-PM | 项目负责人 | PM Owner | pm@example.test | 组织 Go/No-Go 会议 | 已确认 |
+| UAT-SALES | 销售侧验收人 | Zhang Wei | sales@example.test | 验收销售主流程 | 已确认 |
+| UAT-MANAGER | 管理侧验收人 | Li Na | manager@example.test | 验收管理视图和权限边界 | 已确认 |
+| UAT-PRODUCT | 产品负责人 | Wang Qiang | product@example.test | 确认范围和准出口径 | 已确认 |
+| UAT-TEST | 测试负责人 | Chen Min | qa@example.test | 组织执行和证据归档 | 已确认 |
+| UAT-DEV | 研发负责人 | Liu Yang | dev@example.test | 支持环境和缺陷修复 | 已确认 |
+| UAT-PM | 项目负责人 | Zhao Lin | pm@example.test | 组织 Go/No-Go 会议 | 已确认 |
 
 | Account item | Owner | Status | Evidence |
 |---|---|---|---|
@@ -93,6 +93,19 @@ test("fails when a required participant role is missing", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "participant-roster"));
+});
+
+test("fails when a confirmed UAT participant owner is only a role label", () => {
+  const withRoleLabel = completeIntake.replace(
+    "| UAT-SALES | 销售侧验收人 | Zhang Wei | sales@example.test | 验收销售主流程 | 已确认 |",
+    "| UAT-SALES | 销售侧验收人 | 销售侧验收人 | sales@example.test | 验收销售主流程 | 已确认 |"
+  );
+
+  const result = evaluateUatLaunchIntake(withRoleLabel);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidParticipantOwnerIntakes, ["UAT-SALES"]);
+  assert.ok(result.failed.some((check) => check.id === "participant-owner-name-format"));
 });
 
 test("fails when a required environment field lacks evidence", () => {

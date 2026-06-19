@@ -20,7 +20,7 @@
 - `docs/testing/v1-uat-defect-register.md`：用于记录 P0/P1 缺陷闭环、回归证据和项目准出结论。
 - `docs/testing/v1-uat-signoff-register.md`：用于记录销售侧、管理侧、产品、测试、研发和项目负责人六方签署结论。
 - `scripts/v1-uat-evidence-pack.mjs`：用于按具名测试环境参数生成 UAT 证据包草稿，不写入明文密码或 API Token。
-- `scripts/v1-uat-launch-intake-validate.mjs`：用于在正式 UAT 启动前校验具名环境、前后端 `http(s)` URL、40位 Git 提交号、参与人、账号保管、结构化 UAT窗口、证据归档位置，以及启动输入证据引用是否指向 `docs/` 留存工件或外部 URL。
+- `scripts/v1-uat-launch-intake-validate.mjs`：用于在正式 UAT 启动前校验具名环境、前后端 `http(s)` URL、40位 Git 提交号、具体参与人姓名、不得以角色标签替代参与人、账号保管、结构化 UAT窗口、证据归档位置，以及启动输入证据引用是否指向 `docs/` 留存工件或外部 URL。
 - `scripts/v1-kickoff-governance-validate.mjs`：用于在正式 UAT 准出前校验启动会负责人、业务验收人、`YYYY-MM-DD 至 YYYY-MM-DD` 上线周期、V1范围冻结、确认/冻结证据引用是否指向 `docs/` 留存工件或外部 URL、项目 Go 结论和敏感材料。
 - `scripts/v1-uat-evidence-pack-validate.mjs`：用于在证据包填写完成后校验 Go/No-Go 条件、P0/P1 缺陷、签署是否一致，以及通过项证据是否指向 `docs/` 留存工件或外部 URL。
 - `scripts/v1-uat-environment-validate.mjs`：用于在具名环境证据填写完成后校验 ENV-001 至 ENV-008、环境元数据、前后端 `http(s)` URL、40位 Git 提交号、证据引用是否指向 `docs/` 留存工件或外部 URL，以及敏感材料。
@@ -120,7 +120,7 @@ UAT启动输入填写后执行状态校验：
 node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md
 ```
 
-要求：正式 UAT 执行前，启动输入 validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐测试环境、`YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm` UAT窗口、证据归档位置、参与人、联系方式、账号保管证据或可留存证据引用。
+要求：正式 UAT 执行前，启动输入 validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐测试环境、`YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm` UAT窗口、证据归档位置、具体参与人姓名、联系方式、账号保管证据或可留存证据引用；已确认参与人不得只填写角色标签。
 
 启动治理纪要填写后执行状态校验：
 
@@ -372,7 +372,7 @@ v1-uat-evidence/
 | 启动治理 validator | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` 返回 PASS | 补齐负责人、业务验收人、`YYYY-MM-DD 至 YYYY-MM-DD` 上线周期、V1范围冻结、可留存确认/冻结证据引用或项目 `Go` 结论 |
 | 部署态 Smoke | `npm run smoke:v1:browser` 和 `/api/bootstrap` 通过 | 先定位环境、账号、代理或权限配置 |
 | 环境证据 validator | `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md` 返回 PASS | 修正环境元数据、前后端 `http(s)` 地址、40位 Git 提交号、账号证据、权限样本或可留存 Smoke 证据 |
-| UAT启动输入 validator | `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md` 返回 PASS | 补齐具名环境、前后端 `http(s)` URL、40位 Git 提交号、`YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm` UAT窗口、证据归档位置、参与人、账号保管证据或可留存证据引用 |
+| UAT启动输入 validator | `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md` 返回 PASS | 补齐具名环境、前后端 `http(s)` URL、40位 Git 提交号、`YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm` UAT窗口、证据归档位置、具体参与人姓名、账号保管证据或可留存证据引用；不得以角色标签代替参与人姓名 |
 | P0 用例 | P0 全部通过，无阻断缺陷 | 不准出 |
 | P1 用例 | P1 完成执行，遗留问题有项目/业务确认 | 形成规避方案或延期单 |
 | 缺陷台账 validator | `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md` 返回 PASS | 修正缺陷汇总、`PRE-###`/`SMK-###`/`UAT-###` 来源用例、关闭状态、可留存回归证据或 Go/No-Go 结论 |

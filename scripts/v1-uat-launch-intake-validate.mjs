@@ -57,6 +57,11 @@ function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value);
 }
 
+function isNamedOwner(value) {
+  return isConcrete(value)
+    && !/(Owner|负责人|验收人|测试|研发|产品|项目|销售|管理|QA|Dev|PM|Manager|Product|Sales|Test|Frontend|Backend)/i.test(value);
+}
+
 function parseDateTime(value) {
   const match = String(value ?? "").match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/);
   if (!match) {
@@ -194,6 +199,26 @@ export function evaluateUatLaunchIntake(markdown) {
       : `Incomplete UAT participants: ${incompleteParticipants.join(", ")}`
   ));
 
+  const invalidParticipantOwnerIntakes = REQUIRED_PARTICIPANTS
+    .filter((required) => {
+      const row = findRow(rows, required.id);
+      if (!row) {
+        return false;
+      }
+      const owner = row[2] ?? "";
+      const status = row[5] ?? "";
+      return status === "已确认" && isConcrete(owner) && !isNamedOwner(owner);
+    })
+    .map((required) => required.id);
+
+  checks.push(makeCheck(
+    "participant-owner-name-format",
+    invalidParticipantOwnerIntakes.length === 0,
+    invalidParticipantOwnerIntakes.length === 0
+      ? "Confirmed UAT participant owners are named people rather than role labels."
+      : `Confirmed UAT participants use role labels instead of named people: ${invalidParticipantOwnerIntakes.join(", ")}`
+  ));
+
   const incompleteAccountCustody = REQUIRED_ACCOUNT_ITEMS
     .filter((item) => {
       const row = findRow(rows, item);
@@ -269,6 +294,7 @@ export function evaluateUatLaunchIntake(markdown) {
     decision,
     invalidEnvironmentFormats,
     invalidLaunchWindowFields,
+    invalidParticipantOwnerIntakes,
     unretainedLaunchEvidenceFields,
     unretainedAccountEvidenceItems,
     passed,

@@ -13,6 +13,7 @@ Rules:
 - UAT窗口 must use `YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm`, and the end must be later than the start.
 - Environment and account custody evidence references must point to a retained `docs/` artifact or an external `http(s)` system URL; free-text anchors are not sufficient.
 - Every required participant must be named and confirmed before UAT execution starts.
+- Confirmed participant owners must be named people; role labels such as sales owner, product owner, test owner, or project owner are not sufficient.
 - Account custody rows must confirm prepared masked accounts only; passwords stay outside this repository.
 - Validate with `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md`.
 
