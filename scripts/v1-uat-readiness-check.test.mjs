@@ -30,6 +30,8 @@ jobs:
       - run: node scripts/v1-plan-status-check.mjs
       - run: node --test scripts/v1-acceptance-checklist-check.test.mjs
       - run: node scripts/v1-acceptance-checklist-check.mjs
+      - run: node --test scripts/v1-uat-coverage-check.test.mjs
+      - run: node scripts/v1-uat-coverage-check.mjs
   backend:
     steps:
       - run: mvn -B test
@@ -78,6 +80,8 @@ jobs:
   "scripts/v1-plan-status-check.test.mjs": "fails when open plan items are paired with a Go validation status\n",
   "scripts/v1-acceptance-checklist-check.mjs": "evaluateV1AcceptanceChecklistSnapshot\nacceptance-status-release-alignment\n",
   "scripts/v1-acceptance-checklist-check.test.mjs": "fails when all acceptance items are marked business passed while the release gate is No-Go\n",
+  "scripts/v1-uat-coverage-check.mjs": "evaluateV1UatCoverageSnapshot\nuat-covers-all-acceptance-items\n",
+  "scripts/v1-uat-coverage-check.test.mjs": "fails when acceptance criteria are missing from UAT case mapping\n",
   "scripts/v1-deployment-config-check.mjs": "evaluateDeploymentConfigSnapshot\nCRM_BACKEND_BUILD_IMAGE\nCRM_FRONTEND_RUNTIME_IMAGE\n",
   "scripts/v1-deployment-config-check.test.mjs": "configurable for mirrored registries\n",
   "docs/releases/v1.0.0-rc.8.md": "v1.0.0-rc.8\nGitHub Actions `V1 Validation`\nsuccess\nUAT\nGo/No-Go\nV1-local-uat-20260618\nCRM_BACKEND_BUILD_IMAGE\nv1-uat-evidence-pack-validate\nV1演示业务数据\n仍需在具名测试环境完成验收签署\n",
@@ -106,7 +110,7 @@ V1范围冻结
 node scripts/v1-kickoff-governance-validate.mjs
 `,
   "docs/testing/crm-v1-validation-traceability.md": "研发验证通过\n若目标口径是“项目 V1 验收通过”，仍需完成具名测试环境验证和业务验收签署。\n",
-  "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\n",
+  "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\nUAT-001\nUAT-010\nAC-005\nAC-014\nnode scripts/v1-generated-docs-check.mjs\nnode scripts/v1-plan-status-check.mjs\nnode scripts/v1-uat-coverage-check.mjs\n",
   "docs/testing/crm-v1-uat-evidence-pack-template.md": "Go/No-Go\n签署\n缺陷\n",
   "docs/testing/crm-v1-uat-execution-tracker.md": `CRM V1 UAT执行派工与证据追踪表
 v1.0.0-rc.8
@@ -220,7 +224,7 @@ node scripts/v1-uat-evidence-manifest-validate.mjs
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-generated-docs-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-generated-docs-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\nv1-uat-coverage-check.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -584,6 +588,21 @@ test("fails when the V1 acceptance checklist checker is missing from readiness m
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "v1-acceptance-checklist-checker"));
+});
+
+test("fails when the V1 UAT coverage checker is missing from readiness materials", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-coverage-check.mjs": "",
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
+      .replace("      - run: node --test scripts/v1-uat-coverage-check.test.mjs\n", "")
+      .replace("      - run: node scripts/v1-uat-coverage-check.mjs\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-uat-coverage-checker"));
 });
 
 test("fails when the V1 UAT execution pack document is missing", () => {
