@@ -10,6 +10,7 @@ Decision: No-Go
 - Do not record plaintext passwords, production secrets, API tokens, or personal sensitive information.
 - 不记录明文密码、生产密钥、API Token 或个人敏感信息。
 - Use masked usernames, screenshots, command output, CI links, or ticket IDs as evidence references.
+- PASS evidence references must point to retained repository artifacts under `docs/` or external `http(s)` URLs; meeting-note anchors or free-text references are not sufficient.
 - Validate with `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md`.
 - The final V1 release gate requires this validator to return `PASS`.
 

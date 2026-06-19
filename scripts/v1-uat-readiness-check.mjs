@@ -413,10 +413,12 @@ export function evaluateReadinessSnapshot(snapshot) {
       "evaluateUatEnvironmentEvidence",
       "environment-summary",
       "environment-checks",
+      "environment-evidence-retained",
       "no-secret-material",
-      "fails a draft environment record when named environment evidence is pending"
+      "fails a draft environment record when named environment evidence is pending",
+      "fails when PASS environment evidence reference is not retained"
     ]),
-    "UAT environment evidence validator is tested and enforces named environment metadata, smoke evidence, account evidence, and secret redaction."
+    "UAT environment evidence validator is tested and enforces named environment metadata, retained smoke/account evidence, and secret redaction."
   ));
 
   const defectRegisterValidator = snapshot["scripts/v1-uat-defect-register-validate.mjs"] ?? "";

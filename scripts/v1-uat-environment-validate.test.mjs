@@ -92,6 +92,19 @@ test("fails when a PASS environment check lacks concrete evidence", () => {
   assert.ok(result.failed.some((check) => check.id === "environment-checks"));
 });
 
+test("fails when PASS environment evidence reference is not retained", () => {
+  const environment = completeEnvironment.replace(
+    "docs/testing/evidence/env/login-page.png",
+    "smoke-note#env-001"
+  );
+
+  const result = evaluateUatEnvironmentEvidence(environment);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.unretainedEnvironmentEvidenceChecks, ["ENV-001"]);
+  assert.ok(result.failed.some((check) => check.id === "environment-evidence-retained"));
+});
+
 test("fails when environment evidence contains secret-like material", () => {
   const environment = completeEnvironment.replace(
     "| ENV-004 | 管理员账号可登录 | PASS | docs/testing/evidence/env/admin-login.png | QA Owner |",

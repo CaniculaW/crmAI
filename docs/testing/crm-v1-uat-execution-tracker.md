@@ -92,7 +92,7 @@
 | 门禁 | 命令或证据 | 通过条件 | 当前状态 |
 |---|---|---|---|
 | UAT证据清单一致性 | `node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md` | 返回 `PASS` | 当前清单为 `FAIL / No-Go` |
-| UAT具名环境一致性 | `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md` | 返回 `PASS`，且 ENV-001 至 ENV-008 均有具名环境证据 | 当前环境证据为 `FAIL / No-Go` |
+| UAT具名环境一致性 | `node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md` | 返回 `PASS`，且 ENV-001 至 ENV-008 均有可留存具名环境证据 | 当前环境证据为 `FAIL / No-Go` |
 | UAT证据包一致性 | `node scripts/v1-uat-evidence-pack-validate.mjs <crm-v1-uat-evidence-pack.md>` | 返回 `PASS` | 当前rc.8草稿为 `FAIL / No-Go` |
 | UAT缺陷台账一致性 | `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md` | 返回 `PASS`，且 P0/P1 未关闭数量为 0 或有项目认可结论 | 当前台账为 `FAIL / No-Go` |
 | UAT签署台账一致性 | `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md` | 返回 `PASS`，且六方签署完整、项目负责人选择 `Go` | 当前签署台账为 `FAIL / No-Go` |

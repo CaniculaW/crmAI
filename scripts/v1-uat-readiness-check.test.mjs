@@ -63,8 +63,8 @@ jobs:
   "frontend/nginx.conf": "location /api/ { proxy_pass http://backend:8080/api/; }\n",
   "scripts/v1-uat-evidence-pack.mjs": "generateEvidencePackMarkdown\nUAT-001\nUAT-010\nGo / Conditional Go / No-Go\n不记录明文密码\n",
   "scripts/v1-uat-evidence-pack.test.mjs": "generates a V1 UAT evidence pack\n",
-  "scripts/v1-uat-environment-validate.mjs": "evaluateUatEnvironmentEvidence\nenvironment-summary\nenvironment-checks\nno-secret-material\n",
-  "scripts/v1-uat-environment-validate.test.mjs": "fails a draft environment record when named environment evidence is pending\n",
+  "scripts/v1-uat-environment-validate.mjs": "evaluateUatEnvironmentEvidence\nenvironment-summary\nenvironment-checks\nenvironment-evidence-retained\nno-secret-material\n",
+  "scripts/v1-uat-environment-validate.test.mjs": "fails a draft environment record when named environment evidence is pending\nfails when PASS environment evidence reference is not retained\n",
   "scripts/v1-uat-evidence-pack-validate.mjs": "evaluateUatEvidencePack\np0-defects\nsignoff-complete\ngo-hard-gates\n",
   "scripts/v1-uat-evidence-pack-validate.test.mjs": "fails a Go evidence pack when a P0 defect remains open\n",
   "scripts/v1-uat-defect-register-validate.mjs": "evaluateUatDefectRegister\np0-p1-summary\nregression-evidence\ndefect-evidence-retained\nno-secret-material\n",
@@ -415,6 +415,19 @@ test("fails when the UAT environment validator is missing from readiness materia
       "      - run: node --test scripts/v1-uat-environment-validate.test.mjs\n",
       ""
     )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-environment-validator"));
+});
+
+test("fails when the UAT environment validator omits retained evidence guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-environment-validate.mjs": completeSnapshot["scripts/v1-uat-environment-validate.mjs"].replace("environment-evidence-retained\n", ""),
+    "scripts/v1-uat-environment-validate.test.mjs": completeSnapshot["scripts/v1-uat-environment-validate.test.mjs"].replace("fails when PASS environment evidence reference is not retained\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

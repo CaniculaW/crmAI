@@ -51,6 +51,20 @@ function isConcrete(value) {
   return Boolean(value) && !hasPlaceholder(value) && !/^[-—无]+$/.test(value);
 }
 
+function evidenceReferenceTokens(value) {
+  return String(value ?? "")
+    .replace(/`/g, "")
+    .split(/[,\s;]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function isRetainedEvidenceReference(value) {
+  return isConcrete(value) && evidenceReferenceTokens(value).some((token) =>
+    token.startsWith("docs/") || /^https?:\/\//i.test(token)
+  );
+}
+
 function extractDecision(markdown) {
   const match = markdown.match(/Decision:\s*(Conditional Go|No-Go|Go)/i);
   return match?.[1] ?? "";
@@ -102,6 +116,17 @@ export function evaluateUatEnvironmentEvidence(markdown) {
       : `Incomplete environment checks: ${[...new Set([...incompleteChecks, ...placeholderRows])].join(", ")}`
   ));
 
+  const unretainedEnvironmentEvidenceChecks = envRows
+    .filter((row) => row[2] === "PASS" && isConcrete(row[3]) && !isRetainedEvidenceReference(row[3]))
+    .map((row) => row[0]);
+  checks.push(makeCheck(
+    "environment-evidence-retained",
+    unretainedEnvironmentEvidenceChecks.length === 0,
+    unretainedEnvironmentEvidenceChecks.length === 0
+      ? "PASS environment evidence references point to retained artifacts or external URLs."
+      : `PASS environment checks have unretained evidence references: ${unretainedEnvironmentEvidenceChecks.join(", ")}`
+  ));
+
   checks.push(makeCheck(
     "no-secret-material",
     !hasSecretMaterial(markdown),
@@ -124,6 +149,7 @@ export function evaluateUatEnvironmentEvidence(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    unretainedEnvironmentEvidenceChecks,
     passed,
     failed,
     checks
