@@ -73,8 +73,8 @@ jobs:
   "scripts/v1-uat-signoff-register-validate.test.mjs": "fails the draft signoff register because signoffs are pending\nfails when an approved signoff owner is only a role label\nfails when an approved signoff uses a non-ISO signed date\nfails when an approved signoff evidence reference is not retained\n",
   "scripts/v1-kickoff-governance-validate.mjs": "evaluateKickoffGovernance\nrequired-owners\nscope-freeze\nscope-boundary\nschedule-format\nkickoff-evidence-retained\nno-secret-material\n",
   "scripts/v1-kickoff-governance-validate.test.mjs": "fails the current kickoff draft because owners and scope freeze remain pending\nfails when kickoff schedule is not a structured date range\nfails when confirmed kickoff governance evidence is not retained\n",
-  "scripts/v1-uat-launch-intake-validate.mjs": "evaluateUatLaunchIntake\nenvironment-intake\nenvironment-format\nlaunch-window-format\nparticipant-roster\nparticipant-owner-name-format\naccount-custody\nlaunch-evidence-retained\nno-secret-material\n",
-  "scripts/v1-uat-launch-intake-validate.test.mjs": "fails a draft launch intake because external UAT inputs are pending\nfails when a confirmed UAT participant owner is only a role label\nfails when launch environment URLs or git commit are not structured\nfails when the UAT launch window is not a structured date time range\nfails when UAT launch evidence references are not retained\n",
+  "scripts/v1-uat-launch-intake-validate.mjs": "evaluateUatLaunchIntake\nenvironment-intake\nenvironment-format\nlaunch-window-format\nparticipant-roster\nparticipant-owner-name-format\naccount-custody\naccount-owner-name-format\nlaunch-evidence-retained\nno-secret-material\n",
+  "scripts/v1-uat-launch-intake-validate.test.mjs": "fails a draft launch intake because external UAT inputs are pending\nfails when a confirmed UAT participant owner is only a role label\nfails when a prepared account custody owner is only a role label\nfails when launch environment URLs or git commit are not structured\nfails when the UAT launch window is not a structured date time range\nfails when UAT launch evidence references are not retained\n",
   "scripts/v1-uat-evidence-manifest-validate.mjs": "evaluateUatEvidenceManifest\nrequired-items\nevidence-complete\nevidence-references-retained\nno-secret-material\n",
   "scripts/v1-uat-evidence-manifest-validate.test.mjs": "fails the current draft manifest because external UAT evidence is pending\nfails when PASS evidence references are not retained\n",
   "scripts/v1-evidence-reference-check.mjs": "evaluateEvidenceReferences\nevaluateEvidenceReferencesFromFiles\npass-reference-artifacts\ngo-pass-references\n",
@@ -606,6 +606,19 @@ test("fails when the UAT launch intake validator omits named participant owner g
     ...completeSnapshot,
     "scripts/v1-uat-launch-intake-validate.mjs": completeSnapshot["scripts/v1-uat-launch-intake-validate.mjs"].replace("participant-owner-name-format\n", ""),
     "scripts/v1-uat-launch-intake-validate.test.mjs": completeSnapshot["scripts/v1-uat-launch-intake-validate.test.mjs"].replace("fails when a confirmed UAT participant owner is only a role label\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-launch-intake-validator"));
+});
+
+test("fails when the UAT launch intake validator omits named account custody owner guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-launch-intake-validate.mjs": completeSnapshot["scripts/v1-uat-launch-intake-validate.mjs"].replace("account-owner-name-format\n", ""),
+    "scripts/v1-uat-launch-intake-validate.test.mjs": completeSnapshot["scripts/v1-uat-launch-intake-validate.test.mjs"].replace("fails when a prepared account custody owner is only a role label\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

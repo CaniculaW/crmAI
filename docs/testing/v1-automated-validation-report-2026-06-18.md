@@ -27,7 +27,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | UAT具名环境证据准出校验 | 已提供 `scripts/v1-uat-environment-validate.mjs` 和 `docs/testing/v1-uat-environment-evidence.md`，校验测试环境元数据、前后端 `http(s)` URL、40位 Git 提交号、Smoke、账号、权限样本、证据引用必须指向 `docs/` 留存工件或外部 URL、责任人和敏感材料 | 通过 |
 | UAT缺陷台账准出校验 | 已提供 `scripts/v1-uat-defect-register-validate.mjs` 和 `docs/testing/v1-uat-defect-register.md`，校验 P0/P1 汇总、`PRE-###`/`SMK-###`/`UAT-###` 来源用例、关闭状态、回归证据必须指向 `docs/` 留存工件或外部 URL、敏感材料和 Go/No-Go 结论一致性 | 通过 |
 | UAT签署台账准出校验 | 已提供 `scripts/v1-uat-signoff-register-validate.mjs` 和 `docs/testing/v1-uat-signoff-register.md`，校验六方具体签署人姓名、不得以角色标签替代签署人、`YYYY-MM-DD` 签署日期、证据引用必须指向 `docs/` 留存工件或外部 URL、敏感材料和项目 `Go` 结论一致性 | 通过 |
-| UAT启动输入准出校验 | 已提供 `scripts/v1-uat-launch-intake-validate.mjs` 和 `docs/testing/v1-uat-launch-intake.md`，校验具名环境、前后端 `http(s)` URL、40位 Git 提交号、`YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm` UAT窗口、证据归档位置、具体参与人姓名、不得以角色标签替代参与人、账号保管、证据引用必须指向 `docs/` 留存工件或外部 URL，以及敏感材料 | 通过 |
+| UAT启动输入准出校验 | 已提供 `scripts/v1-uat-launch-intake-validate.mjs` 和 `docs/testing/v1-uat-launch-intake.md`，校验具名环境、前后端 `http(s)` URL、40位 Git 提交号、`YYYY-MM-DD HH:mm 至 YYYY-MM-DD HH:mm` UAT窗口、证据归档位置、具体参与人姓名、不得以角色标签替代参与人或账号保管 Owner、账号保管、证据引用必须指向 `docs/` 留存工件或外部 URL，以及敏感材料 | 通过 |
 | UAT证据引用保全检查 | 已提供 `scripts/v1-evidence-reference-check.mjs`，校验证据清单中每个 `PASS` 行必须引用 `docs/` 下已归档工件或外部 URL，并拦截普通仓库文件和敏感材料 | 通过 |
 | 本地部署态冒烟 | PostgreSQL 16 + Spring Boot + Vite dev proxy，演示管理员登录、`/api/bootstrap`、系统管理页组织/用户/角色展示 | 通过 |
 
@@ -47,7 +47,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `CRM_POSTGRES_IMAGE=docker.1ms.run/library/postgres:16 ... docker compose -f compose.v1-test.yml up -d --build` | Compose build and startup passed；db/backend/frontend 均 Up，db healthy |
 | `node scripts/v1-deployment-config-check.mjs` | V1 deployment config check passed；Dockerfile/Compose 支持可配置基础镜像 |
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
-| `node --test scripts/*.test.mjs` | 206 tests passed |
+| `node --test scripts/*.test.mjs` | 208 tests passed |
 | `node --test scripts/v1-kickoff-governance-validate.test.mjs` | 7 tests passed；覆盖完整启动治理记录、当前草稿 No-Go、缺失负责人、V2/AI 范围误入 V1、上线周期非结构化、确认/冻结证据引用未指向可留存工件/URL和敏感材料拦截 |
 | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | FAIL as expected；当前启动会负责人、V1范围冻结和项目 Go 结论仍为 No-Go |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 5 tests passed；新增已通过自动化、环境、UAT用例和签署证据必须指向可留存仓库工件或外部 URL 的拦截 |
@@ -61,11 +61,11 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md` | FAIL as expected；当前缺陷台账仍为 No-Go |
 | `node --test scripts/v1-uat-signoff-register-validate.test.mjs` | 9 tests passed；覆盖完整签署台账、当前草稿 No-Go、缺失签署角色、PASS项缺证据、签署人仅为角色标签、签署日期非 `YYYY-MM-DD`、签署证据引用未指向可留存工件/URL、项目负责人未 Go 和敏感材料拦截 |
 | `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md` | FAIL as expected；当前签署台账仍为 No-Go |
-| `node --test scripts/v1-uat-launch-intake-validate.test.mjs` | 10 tests passed；覆盖完整启动输入、当前草稿 No-Go、缺失参与角色、参与人仅为角色标签、环境缺证据、启动环境 URL/提交号格式错误、UAT窗口非结构化、账号未准备、启动输入/账号证据引用未指向可留存工件/URL和敏感材料拦截 |
+| `node --test scripts/v1-uat-launch-intake-validate.test.mjs` | 11 tests passed；覆盖完整启动输入、当前草稿 No-Go、缺失参与角色、参与人仅为角色标签、账号保管 Owner 仅为角色标签、环境缺证据、启动环境 URL/提交号格式错误、UAT窗口非结构化、账号未准备、启动输入/账号证据引用未指向可留存工件/URL和敏感材料拦截 |
 | `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md` | FAIL as expected；当前 UAT 启动输入仍为 No-Go |
 | `node scripts/v1-uat-readiness-check.mjs` | RC/UAT readiness check passed |
-| `node --test scripts/v1-uat-readiness-check.test.mjs` | 69 tests passed；包含启动治理纪要可留存证据引用、启动治理上线周期格式、UAT执行派工追踪表可留存证据引用、UAT启动输入具名参与人、UAT启动输入可留存证据引用、UAT启动输入 URL/提交号格式、结构化UAT窗口、UAT具名环境 URL/提交号格式、UAT证据包通过项可留存证据引用、UAT证据清单通过项可留存证据引用、UAT具名环境可留存证据、UAT缺陷台账来源用例格式、UAT逐项执行包、UAT证据清单、证据引用保全检查、UAT缺陷台账可留存回归证据、UAT签署台账具名签署人、UAT签署台账可留存证据引用、release gate JSON 快照、release gate JSON schema gate、tracker validator gate、聚合状态报告gate、UAT行动计划gate、Go/No-Go会议包gate、外部UAT请求包gate、生成文档一致性gate、计划状态一致性gate、验收清单一致性gate、UAT覆盖gate、UAT执行明细gate、验证追踪矩阵gate、阻塞项一致性gate、外部UAT请求覆盖gate、外部UAT请求责任侧路由gate、最终交接证据一致性gate和证据秘密扫描gate |
-| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 69 tests passed；覆盖CI前端job相对路径 |
+| `node --test scripts/v1-uat-readiness-check.test.mjs` | 70 tests passed；包含启动治理纪要可留存证据引用、启动治理上线周期格式、UAT执行派工追踪表可留存证据引用、UAT启动输入具名参与人、UAT启动输入具名账号保管 Owner、UAT启动输入可留存证据引用、UAT启动输入 URL/提交号格式、结构化UAT窗口、UAT具名环境 URL/提交号格式、UAT证据包通过项可留存证据引用、UAT证据清单通过项可留存证据引用、UAT具名环境可留存证据、UAT缺陷台账来源用例格式、UAT逐项执行包、UAT证据清单、证据引用保全检查、UAT缺陷台账可留存回归证据、UAT签署台账具名签署人、UAT签署台账可留存证据引用、release gate JSON 快照、release gate JSON schema gate、tracker validator gate、聚合状态报告gate、UAT行动计划gate、Go/No-Go会议包gate、外部UAT请求包gate、生成文档一致性gate、计划状态一致性gate、验收清单一致性gate、UAT覆盖gate、UAT执行明细gate、验证追踪矩阵gate、阻塞项一致性gate、外部UAT请求覆盖gate、外部UAT请求责任侧路由gate、最终交接证据一致性gate和证据秘密扫描gate |
+| `node --test ../scripts/v1-uat-readiness-check.test.mjs` | 70 tests passed；覆盖CI前端job相对路径 |
 | `node --test scripts/v1-uat-execution-tracker-validate.test.mjs` | 6 tests passed；覆盖完整 Go 追踪表、当前 No-Go 追踪表、缺失证据、追踪表证据未指向可留存工件/URL、缺陷台账门禁未通过和签署台账门禁缺失 |
 | `node --test scripts/v1-validation-status.test.mjs` | 4 tests passed；覆盖 No-Go 聚合状态、绝对路径 UAT 源文档、全量 Go 状态和显式 git commit 参数 |
 | `node scripts/v1-validation-status.mjs --git-commit <git-sha> --output docs/testing/v1-validation-status.md` | 生成当前 `No-Go` 聚合状态报告，并显式绑定被验证提交 |

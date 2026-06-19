@@ -236,6 +236,25 @@ export function evaluateUatLaunchIntake(markdown) {
       : `Incomplete account custody items: ${incompleteAccountCustody.join(", ")}`
   ));
 
+  const invalidAccountOwnerItems = REQUIRED_ACCOUNT_ITEMS
+    .filter((item) => {
+      const row = findRow(rows, item);
+      if (!row) {
+        return false;
+      }
+      const owner = row[1] ?? "";
+      const status = row[2] ?? "";
+      return status === "已准备" && isConcrete(owner) && !isNamedOwner(owner);
+    });
+
+  checks.push(makeCheck(
+    "account-owner-name-format",
+    invalidAccountOwnerItems.length === 0,
+    invalidAccountOwnerItems.length === 0
+      ? "Prepared UAT account custody owners are named people rather than role labels."
+      : `Prepared UAT account custody items use role labels instead of named people: ${invalidAccountOwnerItems.join(", ")}`
+  ));
+
   const unretainedLaunchEvidenceFields = REQUIRED_ENVIRONMENT_FIELDS
     .filter((field) => {
       const row = findRow(rows, field);
@@ -295,6 +314,7 @@ export function evaluateUatLaunchIntake(markdown) {
     invalidEnvironmentFormats,
     invalidLaunchWindowFields,
     invalidParticipantOwnerIntakes,
+    invalidAccountOwnerItems,
     unretainedLaunchEvidenceFields,
     unretainedAccountEvidenceItems,
     passed,

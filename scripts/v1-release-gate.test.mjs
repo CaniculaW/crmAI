@@ -251,10 +251,10 @@ Decision: Go
 
 | Account item | Owner | Status | Evidence |
 |---|---|---|---|
-| 管理员账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-admin.md |
-| 销售个人账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-sales.md |
-| 销售负责人账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-manager.md |
-| 权限样本账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-permission-sample.md |
+| 管理员账号 | Chen Min | 已准备 | docs/testing/evidence/launch/account-admin.md |
+| 销售个人账号 | Chen Min | 已准备 | docs/testing/evidence/launch/account-sales.md |
+| 销售负责人账号 | Chen Min | 已准备 | docs/testing/evidence/launch/account-manager.md |
+| 权限样本账号 | Chen Min | 已准备 | docs/testing/evidence/launch/account-permission-sample.md |
 `;
 
 const completeEnvironment = `# CRM V1 UAT Environment Evidence

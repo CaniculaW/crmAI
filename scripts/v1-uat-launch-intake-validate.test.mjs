@@ -32,10 +32,10 @@ Rules:
 
 | Account item | Owner | Status | Evidence |
 |---|---|---|---|
-| 管理员账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-admin.md |
-| 销售个人账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-sales.md |
-| 销售负责人账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-manager.md |
-| 权限样本账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-permission-sample.md |
+| 管理员账号 | Chen Min | 已准备 | docs/testing/evidence/launch/account-admin.md |
+| 销售个人账号 | Chen Min | 已准备 | docs/testing/evidence/launch/account-sales.md |
+| 销售负责人账号 | Chen Min | 已准备 | docs/testing/evidence/launch/account-manager.md |
+| 权限样本账号 | Chen Min | 已准备 | docs/testing/evidence/launch/account-permission-sample.md |
 `;
 
 test("passes a complete UAT launch intake", () => {
@@ -148,14 +148,27 @@ test("fails when the UAT launch window is not a structured date time range", () 
 
 test("fails when an account custody item is not prepared", () => {
   const notPrepared = completeIntake.replace(
-    "| 销售个人账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-sales.md |",
-    "| 销售个人账号 | 测试负责人 | 待准备 | docs/testing/evidence/launch/account-sales.md |"
+    "| 销售个人账号 | Chen Min | 已准备 | docs/testing/evidence/launch/account-sales.md |",
+    "| 销售个人账号 | Chen Min | 待准备 | docs/testing/evidence/launch/account-sales.md |"
   );
 
   const result = evaluateUatLaunchIntake(notPrepared);
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "account-custody"));
+});
+
+test("fails when a prepared account custody owner is only a role label", () => {
+  const withRoleLabel = completeIntake.replace(
+    "| 销售个人账号 | Chen Min | 已准备 | docs/testing/evidence/launch/account-sales.md |",
+    "| 销售个人账号 | 测试负责人 | 已准备 | docs/testing/evidence/launch/account-sales.md |"
+  );
+
+  const result = evaluateUatLaunchIntake(withRoleLabel);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidAccountOwnerItems, ["销售个人账号"]);
+  assert.ok(result.failed.some((check) => check.id === "account-owner-name-format"));
 });
 
 test("fails when UAT launch evidence references are not retained", () => {
