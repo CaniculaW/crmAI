@@ -471,12 +471,14 @@ export function evaluateReadinessSnapshot(snapshot) {
       "required-owners",
       "scope-freeze",
       "scope-boundary",
+      "schedule-format",
       "kickoff-evidence-retained",
       "no-secret-material",
       "fails the current kickoff draft because owners and scope freeze remain pending",
+      "fails when kickoff schedule is not a structured date range",
       "fails when confirmed kickoff governance evidence is not retained"
     ]),
-    "Kickoff governance validator is tested and enforces named owners, V1 scope freeze, retained evidence references, scope boundary, project Go, and secret redaction."
+    "Kickoff governance validator is tested and enforces named owners, V1 scope freeze, structured schedule, retained evidence references, scope boundary, project Go, and secret redaction."
   ));
 
   const launchIntakeValidator = snapshot["scripts/v1-uat-launch-intake-validate.mjs"] ?? "";

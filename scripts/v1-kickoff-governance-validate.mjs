@@ -91,6 +91,36 @@ function isConfirmedStatus(value) {
   return value === "已确认" || value === "已冻结";
 }
 
+function parseDate(value) {
+  const match = String(value ?? "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  const [, year, month, day] = match;
+  const parsed = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed.toISOString().slice(0, 10) === value ? parsed : null;
+}
+
+function parseScheduleRange(value) {
+  const parts = String(value ?? "").split(/\s+至\s+/);
+  if (parts.length !== 2) {
+    return null;
+  }
+
+  const start = parseDate(parts[0]);
+  const end = parseDate(parts[1]);
+  if (!start || !end || end <= start) {
+    return null;
+  }
+
+  return { start, end };
+}
+
 function scopeInclusionText(rows) {
   return ["V1 模块范围", "V1 业务闭环", "V1范围冻结"]
     .map((item) => findRow(rows, item)?.slice(1).join(" ") ?? "")
@@ -126,6 +156,22 @@ export function evaluateKickoffGovernance(markdown) {
     incompleteScopeItems.length === 0
       ? "V1 scope, out-of-scope items, schedule, stack, acceptance mode, and freeze decision are confirmed."
       : `Incomplete kickoff scope freeze items: ${incompleteScopeItems.join(", ")}`
+  ));
+
+  const scheduleRow = findRow(rows, "上线周期");
+  const invalidScheduleFields = scheduleRow
+    && isConcrete(scheduleRow[1] ?? "")
+    && isConfirmedStatus(scheduleRow[2] ?? "")
+    && !parseScheduleRange(scheduleRow[1])
+    ? ["上线周期"]
+    : [];
+
+  checks.push(makeCheck(
+    "schedule-format",
+    invalidScheduleFields.length === 0,
+    invalidScheduleFields.length === 0
+      ? "Kickoff schedule uses YYYY-MM-DD 至 YYYY-MM-DD with an end after the start."
+      : "Kickoff schedule must use YYYY-MM-DD 至 YYYY-MM-DD with an end after the start."
   ));
 
   const includedScope = scopeInclusionText(rows);
@@ -196,6 +242,7 @@ export function evaluateKickoffGovernance(markdown) {
   return {
     ok: failed.length === 0,
     decision,
+    invalidScheduleFields,
     unretainedOwnerEvidenceRoles,
     unretainedScopeEvidenceItems,
     passed,

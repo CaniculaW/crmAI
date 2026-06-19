@@ -111,6 +111,19 @@ test("fails when V2 or AI scope is allowed into V1", () => {
   assert.ok(result.failed.some((check) => check.id === "scope-boundary"));
 });
 
+test("fails when kickoff schedule is not a structured date range", () => {
+  const looseSchedule = completeKickoff.replace(
+    "| 上线周期 | 2026-07-29 至 2026-08-12 | 已确认 | docs/meeting-notes/evidence/kickoff/schedule.md |",
+    "| 上线周期 | 6-8周 | 已确认 | docs/meeting-notes/evidence/kickoff/schedule.md |"
+  );
+
+  const result = evaluateKickoffGovernance(looseSchedule);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidScheduleFields, ["上线周期"]);
+  assert.ok(result.failed.some((check) => check.id === "schedule-format"));
+});
+
 test("fails when confirmed kickoff governance evidence is not retained", () => {
   const unretained = completeKickoff
     .replace("docs/meeting-notes/evidence/kickoff/product-owner.md", "meeting-minutes#product-owner")

@@ -71,8 +71,8 @@ jobs:
   "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\nfails when closed P0 or P1 regression evidence is not retained\n",
   "scripts/v1-uat-signoff-register-validate.mjs": "evaluateUatSignoffRegister\nrequired-signoffs\nsigned-date-format\nsignoff-evidence-retained\nproject-go-decision\nno-secret-material\n",
   "scripts/v1-uat-signoff-register-validate.test.mjs": "fails the draft signoff register because signoffs are pending\nfails when an approved signoff uses a non-ISO signed date\nfails when an approved signoff evidence reference is not retained\n",
-  "scripts/v1-kickoff-governance-validate.mjs": "evaluateKickoffGovernance\nrequired-owners\nscope-freeze\nscope-boundary\nkickoff-evidence-retained\nno-secret-material\n",
-  "scripts/v1-kickoff-governance-validate.test.mjs": "fails the current kickoff draft because owners and scope freeze remain pending\nfails when confirmed kickoff governance evidence is not retained\n",
+  "scripts/v1-kickoff-governance-validate.mjs": "evaluateKickoffGovernance\nrequired-owners\nscope-freeze\nscope-boundary\nschedule-format\nkickoff-evidence-retained\nno-secret-material\n",
+  "scripts/v1-kickoff-governance-validate.test.mjs": "fails the current kickoff draft because owners and scope freeze remain pending\nfails when kickoff schedule is not a structured date range\nfails when confirmed kickoff governance evidence is not retained\n",
   "scripts/v1-uat-launch-intake-validate.mjs": "evaluateUatLaunchIntake\nenvironment-intake\nenvironment-format\nlaunch-window-format\nparticipant-roster\naccount-custody\nlaunch-evidence-retained\nno-secret-material\n",
   "scripts/v1-uat-launch-intake-validate.test.mjs": "fails a draft launch intake because external UAT inputs are pending\nfails when launch environment URLs or git commit are not structured\nfails when the UAT launch window is not a structured date time range\nfails when UAT launch evidence references are not retained\n",
   "scripts/v1-uat-evidence-manifest-validate.mjs": "evaluateUatEvidenceManifest\nrequired-items\nevidence-complete\nevidence-references-retained\nno-secret-material\n",
@@ -596,6 +596,19 @@ test("fails when the kickoff governance validator omits retained evidence guard"
     ...completeSnapshot,
     "scripts/v1-kickoff-governance-validate.mjs": completeSnapshot["scripts/v1-kickoff-governance-validate.mjs"].replace("kickoff-evidence-retained\n", ""),
     "scripts/v1-kickoff-governance-validate.test.mjs": completeSnapshot["scripts/v1-kickoff-governance-validate.test.mjs"].replace("fails when confirmed kickoff governance evidence is not retained\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "kickoff-governance-validator"));
+});
+
+test("fails when the kickoff governance validator omits schedule format guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-kickoff-governance-validate.mjs": completeSnapshot["scripts/v1-kickoff-governance-validate.mjs"].replace("schedule-format\n", ""),
+    "scripts/v1-kickoff-governance-validate.test.mjs": completeSnapshot["scripts/v1-kickoff-governance-validate.test.mjs"].replace("fails when kickoff schedule is not a structured date range\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);
