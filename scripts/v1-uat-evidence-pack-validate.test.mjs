@@ -189,6 +189,19 @@ test("fails when an approved signoff owner is only a role label", () => {
   assert.ok(result.failed.some((check) => check.id === "signoff-owner-name-format"));
 });
 
+test("fails when an approved signoff date is not structured", () => {
+  const pack = completeGoPack.replace(
+    "| 产品负责人 | Wang Qiang | 同意 | 2026-06-19 | docs/testing/evidence/signoff/product-approval.md |",
+    "| 产品负责人 | Wang Qiang | 同意 | June 19 | docs/testing/evidence/signoff/product-approval.md |"
+  );
+
+  const result = evaluateUatEvidencePack(pack);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.invalidSignoffDateRows, ["产品负责人"]);
+  assert.ok(result.failed.some((check) => check.id === "signoff-date-format"));
+});
+
 test("fails when passed UAT evidence references are not retained", () => {
   const pack = completeGoPack
     .replace("docs/testing/evidence/env/login-page.png", "login.png")

@@ -404,6 +404,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "basic-owner-name-format",
       "uat-case-owner-name-format",
       "signoff-owner-name-format",
+      "signoff-date-format",
       "evidence-references-retained",
       "fails a Go evidence pack when a P0 defect remains open",
       "fails when basic evidence pack metadata is not structured",
@@ -411,9 +412,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "fails when a basic evidence pack owner is only a role label",
       "fails when a passed UAT case owner is only a role label",
       "fails when an approved signoff owner is only a role label",
+      "fails when an approved signoff date is not structured",
       "fails when passed UAT evidence references are not retained"
     ]),
-    "UAT evidence pack validator is covered by tests and enforces Go/No-Go hard gates with named owners and retained automation, environment, UAT, and signoff evidence references."
+    "UAT evidence pack validator is covered by tests and enforces Go/No-Go hard gates with structured metadata, named owners, dated signoffs, and retained automation, environment, UAT, and signoff evidence references."
   ));
 
   const environmentValidator = snapshot["scripts/v1-uat-environment-validate.mjs"] ?? "";

@@ -332,6 +332,22 @@ export function evaluateUatEvidencePack(markdown) {
       : `Approved signoff owners use role labels instead of named people: ${invalidSignoffOwnerRows.join(", ")}`
   ));
 
+  const invalidSignoffDateRows = REQUIRED_SIGNOFF_ROLES
+    .map((role) => findLastRow(rows, role))
+    .filter((row) => {
+      const role = row?.[0];
+      const accepted = role === "项目负责人" ? row?.[2] === decision : row?.[2] === "同意";
+      return accepted && isConcrete(row?.[3] ?? "") && !isIsoDate(row[3]);
+    })
+    .map((row) => row[0]);
+  checks.push(makeCheck(
+    "signoff-date-format",
+    invalidSignoffDateRows.length === 0,
+    invalidSignoffDateRows.length === 0
+      ? "Approved signoff dates use YYYY-MM-DD."
+      : `Approved signoff dates are not YYYY-MM-DD: ${invalidSignoffDateRows.join(", ")}`
+  ));
+
   const unretainedSignoffEvidence = REQUIRED_SIGNOFF_ROLES.filter((role) => {
     const row = findLastRow(rows, role);
     const accepted = role === "项目负责人" ? row?.[2] === decision : row?.[2] === "同意";
@@ -393,6 +409,7 @@ export function evaluateUatEvidencePack(markdown) {
     invalidBasicOwnerRows,
     invalidUatCaseOwnerRows,
     invalidSignoffOwnerRows,
+    invalidSignoffDateRows,
     unretainedEvidenceReferences,
     passed,
     failed,
