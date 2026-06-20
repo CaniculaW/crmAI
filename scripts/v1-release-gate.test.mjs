@@ -7,6 +7,7 @@ import test from "node:test";
 import { evaluateV1ReleaseGate, evaluateV1ReleaseGateFromFiles, parseArgs, renderResult } from "./v1-release-gate.mjs";
 import { evaluateUatDefectRegister } from "./v1-uat-defect-register-validate.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
+import { evaluateUatEnvironmentEvidence } from "./v1-uat-environment-validate.mjs";
 import { evaluateUatSignoffRegister } from "./v1-uat-signoff-register-validate.mjs";
 
 const passingReadinessResult = {
@@ -292,6 +293,11 @@ ${Array.from({ length: 8 }, (_, index) => {
 }).join("\n")}
 `;
 
+const completeEnvironmentWithExternalEvidence = completeEnvironment.replace(
+  /docs\/testing\/evidence\/env-\d{3}\.png/g,
+  "https://github.com/CaniculaW/crmAI/actions/runs/27779354840"
+);
+
 const completeTracker = `# CRM V1 UAT执行派工与证据追踪表
 
 版本：v1.0.0-rc.8
@@ -439,7 +445,7 @@ test("passes from filled UAT source files when every validator and project Go ev
   const trackerPath = writeFixtureFile(fixtureDir, "execution-tracker.md", completeTracker);
   const manifestPath = writeFixtureFile(fixtureDir, "evidence-manifest.md", completeManifest);
   const defectRegisterPath = writeFixtureFile(fixtureDir, "defect-register.md", completeDefectRegister);
-  const environmentPath = writeFixtureFile(fixtureDir, "environment.md", completeEnvironment);
+  const environmentPath = writeFixtureFile(fixtureDir, "environment.md", completeEnvironmentWithExternalEvidence);
   const signoffRegisterPath = writeFixtureFile(fixtureDir, "signoffs.md", completeSignoffRegister);
   const launchIntakePath = writeFixtureFile(fixtureDir, "launch-intake.md", completeLaunchIntake);
   const kickoffPath = writeFixtureFile(fixtureDir, "kickoff.md", completeKickoff);
@@ -671,6 +677,27 @@ test("fails when the UAT defect register references a missing retained docs arti
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => (
     check.id === "uat-defect-register" && check.message.includes("defect-evidence-artifacts")
+  )));
+});
+
+test("fails when the named UAT environment evidence references a missing retained docs artifact", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-release-gate-missing-environment-artifact-"));
+  const environmentResult = evaluateUatEnvironmentEvidence(completeEnvironment, { rootDir });
+  const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
+
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    environmentResult,
+    uatEvidenceResult,
+    trackerResult: passingTrackerResult,
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => (
+    check.id === "uat-environment" && check.message.includes("environment-evidence-artifacts")
   )));
 });
 

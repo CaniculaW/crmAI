@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import { evaluateUatEnvironmentEvidence } from "./v1-uat-environment-validate.mjs";
@@ -129,6 +132,24 @@ test("fails when PASS environment evidence reference is not retained", () => {
   assert.equal(result.ok, false);
   assert.deepEqual(result.unretainedEnvironmentEvidenceChecks, ["ENV-001"]);
   assert.ok(result.failed.some((check) => check.id === "environment-evidence-retained"));
+});
+
+test("fails when PASS environment evidence reference points to a missing docs artifact", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-environment-missing-artifact-"));
+  const result = evaluateUatEnvironmentEvidence(completeEnvironment, { rootDir });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.missingEnvironmentEvidenceArtifacts, [
+    "docs/testing/evidence/env/login-page.png",
+    "docs/testing/evidence/env/health-check.txt",
+    "docs/testing/evidence/env/flyway-history.png",
+    "docs/testing/evidence/env/admin-login.png",
+    "docs/testing/evidence/env/sales-user.png",
+    "docs/testing/evidence/env/sales-manager.png",
+    "docs/testing/evidence/env/permission-samples.md",
+    "docs/testing/evidence/env/browser-smoke.json"
+  ]);
+  assert.ok(result.failed.some((check) => check.id === "environment-evidence-artifacts"));
 });
 
 test("fails when environment evidence contains secret-like material", () => {

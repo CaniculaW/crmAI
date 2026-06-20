@@ -436,13 +436,15 @@ export function evaluateReadinessSnapshot(snapshot) {
       "environment-checks",
       "environment-owner-name-format",
       "environment-evidence-retained",
+      "environment-evidence-artifacts",
       "no-secret-material",
       "fails a draft environment record when named environment evidence is pending",
       "fails when environment URLs or git commit are not structured",
       "fails when a PASS environment check owner is only a role label",
-      "fails when PASS environment evidence reference is not retained"
+      "fails when PASS environment evidence reference is not retained",
+      "fails when PASS environment evidence reference points to a missing docs artifact"
     ]),
-    "UAT environment evidence validator is tested and enforces named environment metadata, http(s) URLs, 40-character git commit SHA, named PASS check owners, retained smoke/account evidence, and secret redaction."
+    "UAT environment evidence validator is tested and enforces named environment metadata, http(s) URLs, 40-character git commit SHA, named PASS check owners, retained smoke/account evidence, existing docs artifacts, and secret redaction."
   ));
 
   const defectRegisterValidator = snapshot["scripts/v1-uat-defect-register-validate.mjs"] ?? "";

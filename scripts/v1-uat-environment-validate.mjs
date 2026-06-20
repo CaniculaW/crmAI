@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REQUIRED_SUMMARY_ITEMS = [
@@ -83,6 +84,38 @@ function isRetainedEvidenceReference(value) {
   );
 }
 
+function repositoryArtifactPath(reference) {
+  return reference.split("#")[0].split("?")[0];
+}
+
+function existingRepositoryArtifact(rootDir, reference) {
+  const artifactPath = repositoryArtifactPath(reference);
+  if (!artifactPath.startsWith("docs/")) {
+    return true;
+  }
+
+  const root = path.resolve(rootDir);
+  const absolutePath = path.resolve(root, artifactPath);
+  if (absolutePath !== root && !absolutePath.startsWith(`${root}${path.sep}`)) {
+    return false;
+  }
+
+  return existsSync(absolutePath) && statSync(absolutePath).size > 0;
+}
+
+function missingRepositoryArtifacts(rootDir, references) {
+  if (!rootDir) {
+    return [];
+  }
+
+  const artifactReferences = references
+    .flatMap((reference) => evidenceReferenceTokens(reference))
+    .filter((reference) => reference.startsWith("docs/"));
+
+  return [...new Set(artifactReferences)]
+    .filter((reference) => !existingRepositoryArtifact(rootDir, reference));
+}
+
 function extractDecision(markdown) {
   const match = markdown.match(/Decision:\s*(Conditional Go|No-Go|Go)/i);
   return match?.[1] ?? "";
@@ -92,7 +125,7 @@ function environmentCheckRows(rows) {
   return rows.filter((row) => /^ENV-\d{3}$/.test(row[0]));
 }
 
-export function evaluateUatEnvironmentEvidence(markdown) {
+export function evaluateUatEnvironmentEvidence(markdown, options = {}) {
   const rows = tableRows(markdown);
   const decision = extractDecision(markdown);
   const checks = [];
@@ -176,6 +209,21 @@ export function evaluateUatEnvironmentEvidence(markdown) {
       : `PASS environment checks have unretained evidence references: ${unretainedEnvironmentEvidenceChecks.join(", ")}`
   ));
 
+  const retainedEnvironmentEvidenceReferences = envRows
+    .filter((row) => row[2] === "PASS" && isConcrete(row[3]) && isRetainedEvidenceReference(row[3]))
+    .map((row) => row[3]);
+  const missingEnvironmentEvidenceArtifacts = missingRepositoryArtifacts(
+    options.rootDir,
+    retainedEnvironmentEvidenceReferences
+  );
+  checks.push(makeCheck(
+    "environment-evidence-artifacts",
+    missingEnvironmentEvidenceArtifacts.length === 0,
+    missingEnvironmentEvidenceArtifacts.length === 0
+      ? "PASS environment docs evidence artifacts exist and are non-empty when checked."
+      : `PASS environment evidence docs artifacts are missing or empty: ${missingEnvironmentEvidenceArtifacts.join(", ")}`
+  ));
+
   checks.push(makeCheck(
     "no-secret-material",
     !hasSecretMaterial(markdown),
@@ -199,6 +247,7 @@ export function evaluateUatEnvironmentEvidence(markdown) {
     ok: failed.length === 0,
     decision,
     unretainedEnvironmentEvidenceChecks,
+    missingEnvironmentEvidenceArtifacts,
     invalidEnvironmentOwnerChecks,
     invalidSummaryFormats,
     passed,
@@ -236,7 +285,10 @@ if (isCli) {
     printUsage();
     process.exitCode = 1;
   } else {
-    const result = evaluateUatEnvironmentEvidence(readFileSync(evidencePath, "utf8"));
+    const result = evaluateUatEnvironmentEvidence(
+      readFileSync(evidencePath, "utf8"),
+      { rootDir: process.cwd() }
+    );
     printResult(result);
     process.exitCode = result.ok ? 0 : 1;
   }
