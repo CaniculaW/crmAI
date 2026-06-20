@@ -19,10 +19,16 @@ function completeDocuments(overrides = {}) {
     "业务验收签署仍需完成。",
     "当前不是正式 Go 证据包，不能作为 V1 准出完成。",
     "node scripts/v1-uat-readiness-check.mjs",
+    "node scripts/v1-evidence-reference-check.mjs docs/testing/v1-uat-evidence-manifest.md",
     "node scripts/v1-generated-docs-check.mjs",
     "node scripts/v1-release-gate-status-check.mjs",
+    "node scripts/v1-plan-status-check.mjs",
+    "node scripts/v1-acceptance-checklist-check.mjs",
+    "node scripts/v1-uat-coverage-check.mjs",
+    "node scripts/v1-traceability-check.mjs",
     "node scripts/v1-blocker-consistency-check.mjs",
     "node scripts/v1-external-uat-request-coverage-check.mjs",
+    "node scripts/v1-final-evidence-handoff-check.mjs",
     "node scripts/v1-secret-scan-check.mjs",
     "node scripts/v1-release-gate.mjs"
   ].join("\n");
@@ -69,6 +75,28 @@ test("fails when final handoff materials omit the final release gate command", (
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "handoff-command-coverage"));
+});
+
+test("fails when final handoff materials omit acceptance and traceability commands", () => {
+  const docs = completeDocuments();
+  for (const path of Object.keys(docs)) {
+    docs[path] = docs[path]
+      .replaceAll("node scripts/v1-acceptance-checklist-check.mjs", "")
+      .replaceAll("node scripts/v1-uat-coverage-check.mjs", "")
+      .replaceAll("node scripts/v1-traceability-check.mjs", "")
+      .replaceAll("node scripts/v1-final-evidence-handoff-check.mjs", "");
+  }
+
+  const result = evaluateV1FinalEvidenceHandoffSnapshot(docs);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "handoff-command-coverage"));
+  assert.deepEqual(result.missingCommands, [
+    "node scripts/v1-acceptance-checklist-check.mjs",
+    "node scripts/v1-uat-coverage-check.mjs",
+    "node scripts/v1-traceability-check.mjs",
+    "node scripts/v1-final-evidence-handoff-check.mjs"
+  ]);
 });
 
 test("fails when generated UAT handoff packets are missing", () => {

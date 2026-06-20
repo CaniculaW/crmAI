@@ -20,10 +20,16 @@ const STATUS_PATH = "docs/testing/v1-release-gate-status.json";
 
 const REQUIRED_HANDOFF_COMMANDS = [
   "node scripts/v1-uat-readiness-check.mjs",
+  "node scripts/v1-evidence-reference-check.mjs docs/testing/v1-uat-evidence-manifest.md",
   "node scripts/v1-generated-docs-check.mjs",
   "node scripts/v1-release-gate-status-check.mjs",
+  "node scripts/v1-plan-status-check.mjs",
+  "node scripts/v1-acceptance-checklist-check.mjs",
+  "node scripts/v1-uat-coverage-check.mjs",
+  "node scripts/v1-traceability-check.mjs",
   "node scripts/v1-blocker-consistency-check.mjs",
   "node scripts/v1-external-uat-request-coverage-check.mjs",
+  "node scripts/v1-final-evidence-handoff-check.mjs",
   "node scripts/v1-secret-scan-check.mjs",
   "node scripts/v1-release-gate.mjs"
 ];

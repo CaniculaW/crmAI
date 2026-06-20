@@ -47,7 +47,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `CRM_POSTGRES_IMAGE=docker.1ms.run/library/postgres:16 ... docker compose -f compose.v1-test.yml up -d --build` | Compose build and startup passed；db/backend/frontend 均 Up，db healthy |
 | `node scripts/v1-deployment-config-check.mjs` | V1 deployment config check passed；Dockerfile/Compose 支持可配置基础镜像 |
 | `node --test scripts/v1-deployment-config-check.test.mjs` | 3 tests passed |
-| `node --test scripts/*.test.mjs` | 259 tests passed |
+| `node --test scripts/*.test.mjs` | 260 tests passed |
 | `node --test scripts/v1-kickoff-governance-validate.test.mjs` | 9 tests passed；覆盖完整启动治理记录、当前草稿 No-Go、缺失负责人、负责人仅为角色标签、V2/AI 范围误入 V1、上线周期非结构化、确认/冻结证据引用未指向可留存工件/URL、确认/冻结证据本地 `docs/` 工件缺失和敏感材料拦截 |
 | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | FAIL as expected；当前启动会负责人、V1范围冻结和项目 Go 结论仍为 No-Go |
 | `node --test scripts/v1-uat-evidence-pack-validate.test.mjs` | 14 tests passed；覆盖证据包验收日期、前后端地址、Git 提交号和已同意签署日期必须结构化，候选版本、前端构建、后端构建和数据库版本必须补齐，已通过自动化、环境、UAT用例和签署证据必须指向可留存仓库工件或外部 URL，且本地 `docs/` 工件必须存在且非空，基本信息责任人必须必填并不得以角色标签替代姓名，已通过 UAT 用例验收人和已同意签署人不得以角色标签替代姓名，并拦截敏感材料 |
@@ -93,7 +93,7 @@ GitHub Actions 质量门见 `.github/workflows/v1-validation.yml`，覆盖Compos
 | `node scripts/v1-blocker-consistency-check.mjs` | V1 blocker consistency check passed；当前 release gate 阻塞项已出现在决策材料并映射到 UAT 执行包行动项 |
 | `node --test scripts/v1-external-uat-request-coverage-check.test.mjs` | 5 tests passed；覆盖外部 UAT 请求包阻塞项完整、责任侧路由、漏写 validator 失败项、漏写命令和 No-Go 时误标请求关闭 |
 | `node scripts/v1-external-uat-request-coverage-check.mjs` | V1 external UAT request coverage check passed；外部 UAT 请求包覆盖当前失败 validator 明细、补证命令和责任侧路由 |
-| `node --test scripts/v1-final-evidence-handoff-check.test.mjs` | 5 tests passed；覆盖 No-Go 阻塞和门禁命令可见、No-Go 时误称验收通过、缺失最终门禁命令、缺失生成的UAT交接包和隐藏外部阻塞项 |
+| `node --test scripts/v1-final-evidence-handoff-check.test.mjs` | 6 tests passed；覆盖 No-Go 阻塞和门禁命令可见、No-Go 时误称验收通过、缺失最终门禁命令、缺失验收/覆盖/追踪/交接命令、缺失生成的UAT交接包和隐藏外部阻塞项 |
 | `node scripts/v1-final-evidence-handoff-check.mjs` | V1 final evidence handoff check passed；最终交接材料与当前 `FAIL / No-Go` release gate 保持一致 |
 | `node --test scripts/v1-secret-scan-check.test.mjs` | 5 tests passed；覆盖当前证据清单包含外部 UAT 请求包、release gate JSON 快照、脱敏占位允许、明文密码拦截和 Bearer token 拦截 |
 | `node scripts/v1-secret-scan-check.mjs` | V1 secret scan check passed；当前 V1 证据文档未发现明显明文敏感材料 |
