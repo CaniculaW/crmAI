@@ -9,6 +9,7 @@ import { evaluateKickoffGovernance } from "./v1-kickoff-governance-validate.mjs"
 import { evaluateUatDefectRegister } from "./v1-uat-defect-register-validate.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
 import { evaluateUatEnvironmentEvidence } from "./v1-uat-environment-validate.mjs";
+import { evaluateUatExecutionTracker } from "./v1-uat-execution-tracker-validate.mjs";
 import { evaluateUatLaunchIntake } from "./v1-uat-launch-intake-validate.mjs";
 import { evaluateUatSignoffRegister } from "./v1-uat-signoff-register-validate.mjs";
 
@@ -366,6 +367,11 @@ ${Array.from({ length: 10 }, (_, index) => {
 当前结论：Go。
 `;
 
+const completeTrackerWithExternalEvidence = completeTracker.replace(
+  /docs\/testing\/evidence\/tracker\/[a-z0-9-]+\.(png|md)/g,
+  "https://github.com/CaniculaW/crmAI/actions/runs/27822689146"
+);
+
 const completeDefectRegister = `# CRM V1 UAT Defect Register
 
 Version: v1.0.0-rc.8
@@ -454,7 +460,7 @@ test("passes only when readiness, UAT environment, UAT evidence, defect register
 test("passes from filled UAT source files when every validator and project Go evidence is complete", () => {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), "crm-v1-release-gate-go-"));
   const evidencePath = writeFixtureFile(fixtureDir, "evidence-pack.md", goEvidencePack("Go"));
-  const trackerPath = writeFixtureFile(fixtureDir, "execution-tracker.md", completeTracker);
+  const trackerPath = writeFixtureFile(fixtureDir, "execution-tracker.md", completeTrackerWithExternalEvidence);
   const manifestPath = writeFixtureFile(fixtureDir, "evidence-manifest.md", completeManifest);
   const defectRegisterPath = writeFixtureFile(fixtureDir, "defect-register.md", completeDefectRegister);
   const environmentPath = writeFixtureFile(fixtureDir, "environment.md", completeEnvironmentWithExternalEvidence);
@@ -755,6 +761,28 @@ test("fails when the UAT launch intake references a missing retained docs artifa
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => (
     check.id === "uat-launch-intake" && check.message.includes("launch-evidence-artifacts")
+  )));
+});
+
+test("fails when the UAT execution tracker references a missing retained docs artifact", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-release-gate-missing-tracker-artifact-"));
+  const trackerResult = evaluateUatExecutionTracker(completeTracker, { rootDir });
+  const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
+
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    launchIntakeResult: passingLaunchIntakeResult,
+    environmentResult: passingEnvironmentResult,
+    uatEvidenceResult,
+    trackerResult,
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => (
+    check.id === "uat-execution-tracker" && check.message.includes("tracker-evidence-artifacts")
   )));
 });
 

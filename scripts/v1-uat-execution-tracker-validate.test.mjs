@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import { evaluateUatExecutionTracker } from "./v1-uat-execution-tracker-validate.mjs";
@@ -166,6 +169,38 @@ test("fails when passed tracker evidence references are not retained", () => {
   assert.deepEqual(result.unretainedEvidenceReferences.uatCases, ["UAT-006"]);
   assert.deepEqual(result.unretainedEvidenceReferences.defects, ["P0 / S1 阻断", "P1 / S2 严重"]);
   assert.ok(result.failed.some((check) => check.id === "tracker-evidence-retained"));
+});
+
+test("fails when passed tracker evidence references point to missing docs artifacts", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-tracker-missing-artifact-"));
+  const result = evaluateUatExecutionTracker(completeTracker, { rootDir });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.missingTrackerEvidenceArtifacts, [
+    "docs/testing/evidence/tracker/pre-001.png",
+    "docs/testing/evidence/tracker/pre-002.png",
+    "docs/testing/evidence/tracker/pre-003.png",
+    "docs/testing/evidence/tracker/pre-004.png",
+    "docs/testing/evidence/tracker/pre-005.png",
+    "docs/testing/evidence/tracker/pre-006.png",
+    "docs/testing/evidence/tracker/smk-001.png",
+    "docs/testing/evidence/tracker/smk-002.png",
+    "docs/testing/evidence/tracker/smk-003.png",
+    "docs/testing/evidence/tracker/smk-004.png",
+    "docs/testing/evidence/tracker/smk-005.png",
+    "docs/testing/evidence/tracker/uat-001.png",
+    "docs/testing/evidence/tracker/uat-002.png",
+    "docs/testing/evidence/tracker/uat-003.png",
+    "docs/testing/evidence/tracker/uat-004.png",
+    "docs/testing/evidence/tracker/uat-005.png",
+    "docs/testing/evidence/tracker/uat-006.png",
+    "docs/testing/evidence/tracker/uat-007.png",
+    "docs/testing/evidence/tracker/uat-008.png",
+    "docs/testing/evidence/tracker/uat-009.png",
+    "docs/testing/evidence/tracker/uat-010.png",
+    "docs/testing/evidence/tracker/defect-summary.md"
+  ]);
+  assert.ok(result.failed.some((check) => check.id === "tracker-evidence-artifacts"));
 });
 
 test("fails when the UAT defect register gate is not PASS", () => {

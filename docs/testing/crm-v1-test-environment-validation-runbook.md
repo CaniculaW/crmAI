@@ -152,7 +152,7 @@ UAT执行追踪表填写后执行状态校验：
 node scripts/v1-uat-execution-tracker-validate.mjs docs/testing/crm-v1-uat-execution-tracker.md
 ```
 
-要求：正式准出前，tracker validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐角色、PRE、SMK、UAT、P0/P1、签署或 release gate 状态。已签署角色负责人和已通过 UAT 用例验收人必须填写具体姓名，不能用角色标签替代；已通过的 PRE、SMK、UAT 和 P0/P1 缺陷证据必须指向 `docs/` 留存工件或外部 `http(s)` 系统链接。
+要求：正式准出前，tracker validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐角色、PRE、SMK、UAT、P0/P1、签署或 release gate 状态。已签署角色负责人和已通过 UAT 用例验收人必须填写具体姓名，不能用角色标签替代；已通过的 PRE、SMK、UAT 和 P0/P1 缺陷证据必须指向已存在且非空的 `docs/` 留存工件或外部 `http(s)` 系统链接。
 
 UAT缺陷台账填写后执行状态校验：
 

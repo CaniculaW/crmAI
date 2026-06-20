@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REQUIRED_ROLES = [
@@ -83,6 +84,38 @@ function isRetainedEvidenceReference(value) {
   ));
 }
 
+function repositoryArtifactPath(reference) {
+  return reference.split("#")[0].split("?")[0];
+}
+
+function existingRepositoryArtifact(rootDir, reference) {
+  const artifactPath = repositoryArtifactPath(reference);
+  if (!artifactPath.startsWith("docs/")) {
+    return true;
+  }
+
+  const root = path.resolve(rootDir);
+  const absolutePath = path.resolve(root, artifactPath);
+  if (absolutePath !== root && !absolutePath.startsWith(`${root}${path.sep}`)) {
+    return false;
+  }
+
+  return existsSync(absolutePath) && statSync(absolutePath).size > 0;
+}
+
+function missingRepositoryArtifacts(rootDir, references) {
+  if (!rootDir) {
+    return [];
+  }
+
+  const artifactReferences = references
+    .flatMap((reference) => evidenceReferenceTokens(reference))
+    .filter((reference) => reference.startsWith("docs/"));
+
+  return [...new Set(artifactReferences)]
+    .filter((reference) => !existingRepositoryArtifact(rootDir, reference));
+}
+
 function extractDecision(markdown) {
   const match = markdown.match(/当前结论：\s*(Conditional Go|No-Go|Go)/);
   return match?.[1] ?? "";
@@ -98,7 +131,7 @@ function defectClosed(row) {
   return (/0\s*未关闭|已关闭|无未关闭/.test(status)) && isConcreteEvidence(evidence);
 }
 
-export function evaluateUatExecutionTracker(markdown) {
+export function evaluateUatExecutionTracker(markdown, options = {}) {
   const rows = tableRows(markdown);
   const decision = extractDecision(markdown);
   const checks = [];
@@ -245,6 +278,35 @@ export function evaluateUatExecutionTracker(markdown) {
       : `Unretained tracker evidence references: ${unretainedEvidenceMessages.join("; ")}`
   ));
 
+  const retainedTrackerEvidenceReferences = [
+    ...REQUIRED_PRE_CHECKS
+      .map((id) => findRow(rows, id))
+      .filter((row) => row?.[4] === "通过" && isConcreteEvidence(row[3] ?? "") && isRetainedEvidenceReference(row[3]))
+      .map((row) => row[3]),
+    ...REQUIRED_SMOKE_CHECKS
+      .map((id) => findRow(rows, id))
+      .filter((row) => row?.[4] === "通过" && isConcreteEvidence(row[3] ?? "") && isRetainedEvidenceReference(row[3]))
+      .map((row) => row[3]),
+    ...REQUIRED_UAT_CASES
+      .map((id) => findRow(rows, id))
+      .filter((row) => row?.[5] === "通过" && isConcreteEvidence(row[4] ?? "") && isRetainedEvidenceReference(row[4]))
+      .map((row) => row[4]),
+    ...[p0, p1]
+      .filter((row) => defectClosed(row) && isRetainedEvidenceReference(row?.[3] ?? ""))
+      .map((row) => row[3])
+  ];
+  const missingTrackerEvidenceArtifacts = missingRepositoryArtifacts(
+    options.rootDir,
+    retainedTrackerEvidenceReferences
+  );
+  checks.push(makeCheck(
+    "tracker-evidence-artifacts",
+    missingTrackerEvidenceArtifacts.length === 0,
+    missingTrackerEvidenceArtifacts.length === 0
+      ? "Tracker docs evidence artifacts exist and are non-empty when checked."
+      : `Tracker evidence docs artifacts are missing or empty: ${missingTrackerEvidenceArtifacts.join(", ")}`
+  ));
+
   const incompleteGates = REQUIRED_GATES.filter((gate) => {
     const row = findRow(rows, gate);
     const status = row?.[3] ?? "";
@@ -278,6 +340,7 @@ export function evaluateUatExecutionTracker(markdown) {
     invalidTrackerRoleOwnerRows,
     invalidUatCaseOwnerRows,
     unretainedEvidenceReferences,
+    missingTrackerEvidenceArtifacts,
     passed,
     failed,
     checks
@@ -313,7 +376,10 @@ if (isCli) {
     printUsage();
     process.exitCode = 1;
   } else {
-    const result = evaluateUatExecutionTracker(readFileSync(trackerPath, "utf8"));
+    const result = evaluateUatExecutionTracker(
+      readFileSync(trackerPath, "utf8"),
+      { rootDir: process.cwd() }
+    );
     printResult(result);
     process.exitCode = result.ok ? 0 : 1;
   }

@@ -593,12 +593,14 @@ export function evaluateReadinessSnapshot(snapshot) {
       "uat-case-owner-name-format",
       "release-gates",
       "tracker-evidence-retained",
+      "tracker-evidence-artifacts",
       "fails the current rc8 tracker because external UAT remains pending",
       "fails when a signed tracker role owner is only a role label",
       "fails when a passed UAT case owner is only a role label",
-      "fails when passed tracker evidence references are not retained"
+      "fails when passed tracker evidence references are not retained",
+      "fails when passed tracker evidence references point to missing docs artifacts"
     ]),
-    "UAT execution tracker validator is tested and reports pending external UAT, named tracker role owners, named passed UAT case owners, retained evidence references, defects, signoff, and release-gate blockers."
+    "UAT execution tracker validator is tested and reports pending external UAT, named tracker role owners, named passed UAT case owners, retained evidence references, existing docs artifacts, defects, signoff, and release-gate blockers."
   ));
 
   const releaseGate = snapshot["scripts/v1-release-gate.mjs"] ?? "";
