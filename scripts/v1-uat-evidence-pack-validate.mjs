@@ -112,6 +112,11 @@ function isRetainedEvidenceReference(value) {
   ));
 }
 
+function containsSecretLikeMaterial(markdown) {
+  return /((password|passwd|secret|api[_ -]?token|access[_ -]?token|refresh[_ -]?token)\s*[:=]|Bearer\s+[A-Za-z0-9._-]+)/i
+    .test(markdown);
+}
+
 function makeCheck(id, ok, message) {
   return { id, ok, message };
 }
@@ -159,6 +164,15 @@ export function evaluateUatEvidencePack(markdown) {
     hasDraftPlaceholders
       ? "Evidence pack still contains draft placeholders."
       : "Evidence pack has no draft placeholders."
+  ));
+
+  const hasSecretLikeMaterial = containsSecretLikeMaterial(markdown);
+  checks.push(makeCheck(
+    "no-secret-material",
+    !hasSecretLikeMaterial,
+    hasSecretLikeMaterial
+      ? "Evidence pack contains secret-like material and must be sanitized."
+      : "Evidence pack does not contain secret-like material."
   ));
 
   checks.push(makeCheck(
@@ -429,6 +443,7 @@ export function evaluateUatEvidencePack(markdown) {
     invalidSignoffOwnerRows,
     invalidSignoffDateRows,
     unretainedEvidenceReferences,
+    hasSecretLikeMaterial,
     passed,
     failed,
     checks

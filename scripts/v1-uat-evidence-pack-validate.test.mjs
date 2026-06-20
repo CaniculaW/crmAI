@@ -178,6 +178,16 @@ test("fails when evidence pack version rows are missing", () => {
   assert.ok(result.failed.some((check) => check.id === "basic-version-fields-complete"));
 });
 
+test("fails when evidence pack contains secret-like material", () => {
+  const pack = `${completeGoPack}\n\nAuthorization: Bearer abcdef1234567890\n`;
+
+  const result = evaluateUatEvidencePack(pack);
+
+  assert.equal(result.ok, false);
+  assert.equal(result.hasSecretLikeMaterial, true);
+  assert.ok(result.failed.some((check) => check.id === "no-secret-material"));
+});
+
 test("fails when a passed UAT case owner is only a role label", () => {
   const pack = completeGoPack.replace(
     "| UAT-006 | V1 验收链路 | Zhang Wei | 通过 | docs/testing/evidence/uat/uat-006.png | 无 |",
