@@ -236,7 +236,10 @@ export function evaluateV1ReleaseGateFromFiles(
   const evidenceManifestResult = evaluateUatEvidenceManifest(readFileSync(absoluteManifestPath, "utf8"));
   const evidenceReferenceResult = evaluateEvidenceReferencesFromFiles(rootDir, manifestPath);
   const absoluteDefectRegisterPath = path.resolve(rootDir, defectRegisterPath);
-  const defectRegisterResult = evaluateUatDefectRegister(readFileSync(absoluteDefectRegisterPath, "utf8"));
+  const defectRegisterResult = evaluateUatDefectRegister(
+    readFileSync(absoluteDefectRegisterPath, "utf8"),
+    { rootDir }
+  );
   const absoluteSignoffRegisterPath = path.resolve(rootDir, signoffRegisterPath);
   const signoffRegisterResult = evaluateUatSignoffRegister(
     readFileSync(absoluteSignoffRegisterPath, "utf8"),

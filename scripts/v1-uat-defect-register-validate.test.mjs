@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import { evaluateUatDefectRegister } from "./v1-uat-defect-register-validate.mjs";
@@ -123,6 +126,17 @@ test("fails when closed P0 or P1 regression evidence is not retained", () => {
   assert.equal(result.ok, false);
   assert.deepEqual(result.unretainedRegressionEvidenceDefects, ["DEF-001"]);
   assert.ok(result.failed.some((check) => check.id === "defect-evidence-retained"));
+});
+
+test("fails when closed P0 or P1 regression evidence points to a missing docs artifact", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-defect-artifacts-"));
+
+  const result = evaluateUatDefectRegister(completeRegister, { rootDir });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.missingRegressionEvidenceArtifacts.includes("docs/testing/evidence/defects/def-001-regression.png"));
+  assert.ok(result.missingRegressionEvidenceArtifacts.includes("docs/testing/evidence/defects/def-002-regression.png"));
+  assert.ok(result.failed.some((check) => check.id === "defect-evidence-artifacts"));
 });
 
 test("fails when defect register contains secret-like material", () => {

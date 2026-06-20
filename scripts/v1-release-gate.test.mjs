@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 
 import { evaluateV1ReleaseGate, evaluateV1ReleaseGateFromFiles, parseArgs, renderResult } from "./v1-release-gate.mjs";
+import { evaluateUatDefectRegister } from "./v1-uat-defect-register-validate.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
 import { evaluateUatSignoffRegister } from "./v1-uat-signoff-register-validate.mjs";
 
@@ -354,16 +355,16 @@ Decision: Go
 
 | Severity | Total | Open | Closure evidence |
 |---|---:|---:|---|
-| P0 / S1 阻断 | 1 | 0 | docs/testing/evidence/defects/p0-regression.md |
-| P1 / S2 严重 | 1 | 0 | docs/testing/evidence/defects/p1-regression.md |
-| P2 / S3 一般 | 1 | 0 | docs/testing/evidence/defects/p2-triage.md |
-| P3 / S4 轻微 | 0 | 0 | docs/testing/evidence/defects/p3-triage.md |
+| P0 / S1 阻断 | 1 | 0 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| P1 / S2 严重 | 1 | 0 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| P2 / S3 一般 | 1 | 0 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| P3 / S4 轻微 | 0 | 0 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
 
 | Defect ID | Severity | Source case | Status | Owner | Resolution | Regression evidence | Business decision |
 |---|---|---|---|---|---|---|---|
-| DEF-001 | P0 / S1 阻断 | UAT-004 | VERIFIED | Liu Yang | 修复客户保存失败 | docs/testing/evidence/defects/def-001-regression.png | 已关闭 |
-| DEF-002 | P1 / S2 严重 | UAT-009 | VERIFIED | Liu Yang | 修复部门数据范围 | docs/testing/evidence/defects/def-002-regression.png | 已关闭 |
-| DEF-003 | P2 / S3 一般 | UAT-007 | CLOSED | Wang Qiang | 纳入优化池 | docs/testing/evidence/defects/def-003-triage.md | 不影响试点 |
+| DEF-001 | P0 / S1 阻断 | UAT-004 | VERIFIED | Liu Yang | 修复客户保存失败 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 | 已关闭 |
+| DEF-002 | P1 / S2 严重 | UAT-009 | VERIFIED | Liu Yang | 修复部门数据范围 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 | 已关闭 |
+| DEF-003 | P2 / S3 一般 | UAT-007 | CLOSED | Wang Qiang | 纳入优化池 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 | 不影响试点 |
 `;
 
 const completeSignoffRegister = `# CRM V1 UAT Signoff Register
@@ -645,6 +646,31 @@ test("fails when the UAT signoff register references a missing retained docs art
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => (
     check.id === "uat-signoff-register" && check.message.includes("signoff-evidence-artifacts")
+  )));
+});
+
+test("fails when the UAT defect register references a missing retained docs artifact", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-release-gate-missing-defect-artifact-"));
+  const defectRegisterWithMissingArtifact = completeDefectRegister.replace(
+    "https://github.com/CaniculaW/crmAI/actions/runs/27779354840",
+    "docs/testing/evidence/defects/missing-def-001-regression.png"
+  );
+  const defectRegisterResult = evaluateUatDefectRegister(defectRegisterWithMissingArtifact, { rootDir });
+  const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
+
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    environmentResult: passingEnvironmentResult,
+    uatEvidenceResult,
+    trackerResult: passingTrackerResult,
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => (
+    check.id === "uat-defect-register" && check.message.includes("defect-evidence-artifacts")
   )));
 });
 

@@ -67,8 +67,8 @@ jobs:
   "scripts/v1-uat-environment-validate.test.mjs": "fails a draft environment record when named environment evidence is pending\nfails when environment URLs or git commit are not structured\nfails when a PASS environment check owner is only a role label\nfails when PASS environment evidence reference is not retained\n",
   "scripts/v1-uat-evidence-pack-validate.mjs": "evaluateUatEvidencePack\np0-defects\nsignoff-complete\ngo-hard-gates\nbasic-info-format\nbasic-version-fields-complete\nbasic-owners-complete\nbasic-owner-name-format\nuat-case-owner-name-format\nsignoff-owner-name-format\nsignoff-date-format\nno-secret-material\nevidence-references-retained\nevidence-reference-artifacts\n",
   "scripts/v1-uat-evidence-pack-validate.test.mjs": "fails a Go evidence pack when a P0 defect remains open\nfails when basic evidence pack metadata is not structured\nfails when evidence pack version rows are missing\nfails when evidence pack contains secret-like material\nfails when passed evidence references point to missing docs artifacts\nfails when a basic evidence pack owner row is missing\nfails when a basic evidence pack owner is only a role label\nfails when a passed UAT case owner is only a role label\nfails when an approved signoff owner is only a role label\nfails when an approved signoff date is not structured\nfails when passed UAT evidence references are not retained\n",
-  "scripts/v1-uat-defect-register-validate.mjs": "evaluateUatDefectRegister\np0-p1-summary\ndefect-source-case-format\ndefect-owner-name-format\nregression-evidence\ndefect-evidence-retained\nno-secret-material\n",
-  "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\nfails when a P0 or P1 defect source case is not traceable\nfails when a P0 or P1 defect owner is only a role label\nfails when closed P0 or P1 regression evidence is not retained\n",
+  "scripts/v1-uat-defect-register-validate.mjs": "evaluateUatDefectRegister\np0-p1-summary\ndefect-source-case-format\ndefect-owner-name-format\nregression-evidence\ndefect-evidence-retained\ndefect-evidence-artifacts\nno-secret-material\n",
+  "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\nfails when a P0 or P1 defect source case is not traceable\nfails when a P0 or P1 defect owner is only a role label\nfails when closed P0 or P1 regression evidence is not retained\nfails when closed P0 or P1 regression evidence points to a missing docs artifact\n",
   "scripts/v1-uat-signoff-register-validate.mjs": "evaluateUatSignoffRegister\nrequired-signoffs\nsignoff-owner-name-format\nsigned-date-format\nsignoff-evidence-retained\nsignoff-evidence-artifacts\nproject-go-decision\nno-secret-material\n",
   "scripts/v1-uat-signoff-register-validate.test.mjs": "fails the draft signoff register because signoffs are pending\nfails when an approved signoff owner is only a role label\nfails when an approved signoff uses a non-ISO signed date\nfails when an approved signoff evidence reference is not retained\nfails when approved signoff evidence points to a missing docs artifact\n",
   "scripts/v1-kickoff-governance-validate.mjs": "evaluateKickoffGovernance\nrequired-owners\nowner-name-format\nscope-freeze\nscope-boundary\nschedule-format\nkickoff-evidence-retained\nno-secret-material\n",
@@ -613,6 +613,19 @@ test("fails when the UAT defect register validator omits retained regression evi
     ...completeSnapshot,
     "scripts/v1-uat-defect-register-validate.mjs": completeSnapshot["scripts/v1-uat-defect-register-validate.mjs"].replace("defect-evidence-retained\n", ""),
     "scripts/v1-uat-defect-register-validate.test.mjs": completeSnapshot["scripts/v1-uat-defect-register-validate.test.mjs"].replace("fails when closed P0 or P1 regression evidence is not retained\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-defect-register-validator"));
+});
+
+test("fails when the UAT defect register validator omits evidence artifact existence guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-defect-register-validate.mjs": completeSnapshot["scripts/v1-uat-defect-register-validate.mjs"].replace("defect-evidence-artifacts\n", ""),
+    "scripts/v1-uat-defect-register-validate.test.mjs": completeSnapshot["scripts/v1-uat-defect-register-validate.test.mjs"].replace("fails when closed P0 or P1 regression evidence points to a missing docs artifact\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

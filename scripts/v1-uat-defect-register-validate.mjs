@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REQUIRED_SUMMARY_SEVERITIES = [
@@ -61,6 +62,38 @@ function isRetainedEvidenceReference(value) {
   );
 }
 
+function repositoryArtifactPath(reference) {
+  return reference.split("#")[0].split("?")[0];
+}
+
+function existingRepositoryArtifact(rootDir, reference) {
+  const artifactPath = repositoryArtifactPath(reference);
+  if (!artifactPath.startsWith("docs/")) {
+    return true;
+  }
+
+  const root = path.resolve(rootDir);
+  const absolutePath = path.resolve(root, artifactPath);
+  if (absolutePath !== root && !absolutePath.startsWith(`${root}${path.sep}`)) {
+    return false;
+  }
+
+  return existsSync(absolutePath) && statSync(absolutePath).size > 0;
+}
+
+function missingRepositoryArtifacts(rootDir, references) {
+  if (!rootDir) {
+    return [];
+  }
+
+  const artifactReferences = references
+    .flatMap((reference) => evidenceReferenceTokens(reference))
+    .filter((reference) => reference.startsWith("docs/"));
+
+  return [...new Set(artifactReferences)]
+    .filter((reference) => !existingRepositoryArtifact(rootDir, reference));
+}
+
 function extractDecision(markdown) {
   const match = markdown.match(/Decision:\s*(Conditional Go|No-Go|Go)/i);
   return match?.[1] ?? "";
@@ -86,7 +119,7 @@ function isTraceableSourceCase(value) {
   return /^(PRE|SMK|UAT)-\d{3}$/.test(value ?? "");
 }
 
-export function evaluateUatDefectRegister(markdown) {
+export function evaluateUatDefectRegister(markdown, options = {}) {
   const rows = tableRows(markdown);
   const decision = extractDecision(markdown);
   const summaries = summaryRows(rows);
@@ -187,6 +220,26 @@ export function evaluateUatDefectRegister(markdown) {
       : `Closed P0/P1 defects have unretained regression evidence references: ${unretainedRegressionEvidenceDefects.join(", ")}`
   ));
 
+  const retainedP0P1EvidenceReferences = [
+    ...summaries
+      .filter((row) => isP0P1Severity(row[0]) && isConcrete(row[3]) && isRetainedEvidenceReference(row[3]))
+      .map((row) => row[3]),
+    ...p0p1Defects
+      .filter((row) => rowClosed(row) && isConcrete(row[6]) && isRetainedEvidenceReference(row[6]))
+      .map((row) => row[6])
+  ];
+  const missingRegressionEvidenceArtifacts = missingRepositoryArtifacts(
+    options.rootDir,
+    retainedP0P1EvidenceReferences
+  );
+  checks.push(makeCheck(
+    "defect-evidence-artifacts",
+    missingRegressionEvidenceArtifacts.length === 0,
+    missingRegressionEvidenceArtifacts.length === 0
+      ? "P0/S1 and P1/S2 docs evidence artifacts exist and are non-empty when checked."
+      : `P0/P1 defect evidence docs artifacts are missing or empty: ${missingRegressionEvidenceArtifacts.join(", ")}`
+  ));
+
   checks.push(makeCheck(
     "no-secret-material",
     !hasSecretMaterial(markdown),
@@ -212,6 +265,7 @@ export function evaluateUatDefectRegister(markdown) {
     invalidSourceCaseDefects,
     invalidDefectOwnerRows,
     unretainedRegressionEvidenceDefects,
+    missingRegressionEvidenceArtifacts,
     passed,
     failed,
     checks
@@ -247,7 +301,7 @@ if (isCli) {
     printUsage();
     process.exitCode = 1;
   } else {
-    const result = evaluateUatDefectRegister(readFileSync(registerPath, "utf8"));
+    const result = evaluateUatDefectRegister(readFileSync(registerPath, "utf8"), { rootDir: process.cwd() });
     printResult(result);
     process.exitCode = result.ok ? 0 : 1;
   }
