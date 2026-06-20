@@ -8,6 +8,7 @@ import { evaluateV1ReleaseGate, evaluateV1ReleaseGateFromFiles, parseArgs, rende
 import { evaluateUatDefectRegister } from "./v1-uat-defect-register-validate.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
 import { evaluateUatEnvironmentEvidence } from "./v1-uat-environment-validate.mjs";
+import { evaluateUatLaunchIntake } from "./v1-uat-launch-intake-validate.mjs";
 import { evaluateUatSignoffRegister } from "./v1-uat-signoff-register-validate.mjs";
 
 const passingReadinessResult = {
@@ -268,6 +269,11 @@ Decision: Go
 | 权限样本账号 | Chen Min | 已准备 | docs/testing/evidence/launch/account-permission-sample.md |
 `;
 
+const completeLaunchIntakeWithExternalEvidence = completeLaunchIntake.replace(
+  /docs\/testing\/evidence\/launch\/[a-z-]+\.md/g,
+  "https://github.com/CaniculaW/crmAI/actions/runs/27822689146"
+);
+
 const completeEnvironment = `# CRM V1 UAT Environment Evidence
 
 Version: v1.0.0-rc.8
@@ -447,7 +453,7 @@ test("passes from filled UAT source files when every validator and project Go ev
   const defectRegisterPath = writeFixtureFile(fixtureDir, "defect-register.md", completeDefectRegister);
   const environmentPath = writeFixtureFile(fixtureDir, "environment.md", completeEnvironmentWithExternalEvidence);
   const signoffRegisterPath = writeFixtureFile(fixtureDir, "signoffs.md", completeSignoffRegister);
-  const launchIntakePath = writeFixtureFile(fixtureDir, "launch-intake.md", completeLaunchIntake);
+  const launchIntakePath = writeFixtureFile(fixtureDir, "launch-intake.md", completeLaunchIntakeWithExternalEvidence);
   const kickoffPath = writeFixtureFile(fixtureDir, "kickoff.md", completeKickoff);
 
   const result = evaluateV1ReleaseGateFromFiles(
@@ -698,6 +704,28 @@ test("fails when the named UAT environment evidence references a missing retaine
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => (
     check.id === "uat-environment" && check.message.includes("environment-evidence-artifacts")
+  )));
+});
+
+test("fails when the UAT launch intake references a missing retained docs artifact", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-release-gate-missing-launch-artifact-"));
+  const launchIntakeResult = evaluateUatLaunchIntake(completeLaunchIntake, { rootDir });
+  const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
+
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    launchIntakeResult,
+    environmentResult: passingEnvironmentResult,
+    uatEvidenceResult,
+    trackerResult: passingTrackerResult,
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => (
+    check.id === "uat-launch-intake" && check.message.includes("launch-evidence-artifacts")
   )));
 });
 

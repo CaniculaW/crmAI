@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REQUIRED_ENVIRONMENT_FIELDS = [
@@ -119,12 +120,44 @@ function isRetainedEvidenceReference(value) {
   ));
 }
 
+function repositoryArtifactPath(reference) {
+  return reference.split("#")[0].split("?")[0];
+}
+
+function existingRepositoryArtifact(rootDir, reference) {
+  const artifactPath = repositoryArtifactPath(reference);
+  if (!artifactPath.startsWith("docs/")) {
+    return true;
+  }
+
+  const root = path.resolve(rootDir);
+  const absolutePath = path.resolve(root, artifactPath);
+  if (absolutePath !== root && !absolutePath.startsWith(`${root}${path.sep}`)) {
+    return false;
+  }
+
+  return existsSync(absolutePath) && statSync(absolutePath).size > 0;
+}
+
+function missingRepositoryArtifacts(rootDir, references) {
+  if (!rootDir) {
+    return [];
+  }
+
+  const artifactReferences = references
+    .flatMap((reference) => evidenceReferenceTokens(reference))
+    .filter((reference) => reference.startsWith("docs/"));
+
+  return [...new Set(artifactReferences)]
+    .filter((reference) => !existingRepositoryArtifact(rootDir, reference));
+}
+
 function extractDecision(markdown) {
   const match = markdown.match(/^Decision:\s*(Go|Conditional Go|No-Go)\s*$/m);
   return match?.[1] ?? "";
 }
 
-export function evaluateUatLaunchIntake(markdown) {
+export function evaluateUatLaunchIntake(markdown, options = {}) {
   const rows = tableRows(markdown);
   const decision = extractDecision(markdown);
   const checks = [];
@@ -289,6 +322,28 @@ export function evaluateUatLaunchIntake(markdown) {
       ].filter(Boolean).join("; ")
   ));
 
+  const retainedLaunchEvidenceReferences = [
+    ...REQUIRED_ENVIRONMENT_FIELDS
+      .map((field) => findRow(rows, field))
+      .filter((row) => row && isConcrete(row[1] ?? "") && isConcrete(row[2] ?? "") && isRetainedEvidenceReference(row[2]))
+      .map((row) => row[2]),
+    ...REQUIRED_ACCOUNT_ITEMS
+      .map((item) => findRow(rows, item))
+      .filter((row) => row && isConcrete(row[1] ?? "") && row[2] === "已准备" && isConcrete(row[3] ?? "") && isRetainedEvidenceReference(row[3]))
+      .map((row) => row[3])
+  ];
+  const missingLaunchEvidenceArtifacts = missingRepositoryArtifacts(
+    options.rootDir,
+    retainedLaunchEvidenceReferences
+  );
+  checks.push(makeCheck(
+    "launch-evidence-artifacts",
+    missingLaunchEvidenceArtifacts.length === 0,
+    missingLaunchEvidenceArtifacts.length === 0
+      ? "Launch intake docs evidence artifacts exist and are non-empty when checked."
+      : `Launch intake evidence docs artifacts are missing or empty: ${missingLaunchEvidenceArtifacts.join(", ")}`
+  ));
+
   checks.push(makeCheck(
     "project-go-decision",
     decision === "Go",
@@ -317,6 +372,7 @@ export function evaluateUatLaunchIntake(markdown) {
     invalidAccountOwnerItems,
     unretainedLaunchEvidenceFields,
     unretainedAccountEvidenceItems,
+    missingLaunchEvidenceArtifacts,
     passed,
     failed,
     checks
@@ -348,7 +404,10 @@ if (isCli) {
     console.error("Usage: node scripts/v1-uat-launch-intake-validate.mjs <v1-uat-launch-intake.md>");
     process.exitCode = 1;
   } else {
-    const result = evaluateUatLaunchIntake(readFileSync(targetPath, "utf8"));
+    const result = evaluateUatLaunchIntake(
+      readFileSync(targetPath, "utf8"),
+      { rootDir: process.cwd() }
+    );
     printResult(result);
     process.exitCode = result.ok ? 0 : 1;
   }

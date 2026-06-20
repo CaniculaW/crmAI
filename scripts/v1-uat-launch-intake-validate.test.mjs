@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import { evaluateUatLaunchIntake } from "./v1-uat-launch-intake-validate.mjs";
@@ -182,6 +185,25 @@ test("fails when UAT launch evidence references are not retained", () => {
   assert.deepEqual(result.unretainedLaunchEvidenceFields, ["前端访问地址"]);
   assert.deepEqual(result.unretainedAccountEvidenceItems, ["销售个人账号"]);
   assert.ok(result.failed.some((check) => check.id === "launch-evidence-retained"));
+});
+
+test("fails when UAT launch evidence references point to missing docs artifacts", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-launch-intake-missing-artifact-"));
+  const result = evaluateUatLaunchIntake(completeIntake, { rootDir });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.missingLaunchEvidenceArtifacts, [
+    "docs/testing/evidence/launch/environment-record.md",
+    "docs/testing/evidence/launch/frontend-url.md",
+    "docs/testing/evidence/launch/backend-api.md",
+    "docs/testing/evidence/launch/uat-calendar.md",
+    "docs/testing/evidence/launch/evidence-index.md",
+    "docs/testing/evidence/launch/account-admin.md",
+    "docs/testing/evidence/launch/account-sales.md",
+    "docs/testing/evidence/launch/account-manager.md",
+    "docs/testing/evidence/launch/account-permission-sample.md"
+  ]);
+  assert.ok(result.failed.some((check) => check.id === "launch-evidence-artifacts"));
 });
 
 test("fails when launch intake contains secret-like material", () => {

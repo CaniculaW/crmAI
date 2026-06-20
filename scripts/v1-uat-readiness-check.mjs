@@ -530,15 +530,17 @@ export function evaluateReadinessSnapshot(snapshot) {
       "account-custody",
       "account-owner-name-format",
       "launch-evidence-retained",
+      "launch-evidence-artifacts",
       "no-secret-material",
       "fails a draft launch intake because external UAT inputs are pending",
       "fails when a confirmed UAT participant owner is only a role label",
       "fails when a prepared account custody owner is only a role label",
       "fails when launch environment URLs or git commit are not structured",
       "fails when the UAT launch window is not a structured date time range",
-      "fails when UAT launch evidence references are not retained"
+      "fails when UAT launch evidence references are not retained",
+      "fails when UAT launch evidence references point to missing docs artifacts"
     ]),
-    "UAT launch intake validator is tested and enforces named environment, http(s) URLs, 40-character git commit SHA, structured UAT window, named participant owners, participant roster, named account custody owners, account custody, retained evidence references, and secret redaction."
+    "UAT launch intake validator is tested and enforces named environment, http(s) URLs, 40-character git commit SHA, structured UAT window, named participant owners, participant roster, named account custody owners, account custody, retained evidence references, existing docs artifacts, and secret redaction."
   ));
 
   const evidenceManifestValidator = snapshot["scripts/v1-uat-evidence-manifest-validate.mjs"] ?? "";

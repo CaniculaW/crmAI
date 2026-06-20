@@ -222,7 +222,10 @@ export function evaluateV1ReleaseGateFromFiles(
   const absoluteKickoffPath = path.resolve(rootDir, kickoffPath);
   const kickoffResult = evaluateKickoffGovernance(readFileSync(absoluteKickoffPath, "utf8"));
   const absoluteLaunchIntakePath = path.resolve(rootDir, launchIntakePath);
-  const launchIntakeResult = evaluateUatLaunchIntake(readFileSync(absoluteLaunchIntakePath, "utf8"));
+  const launchIntakeResult = evaluateUatLaunchIntake(
+    readFileSync(absoluteLaunchIntakePath, "utf8"),
+    { rootDir }
+  );
   const absoluteEnvironmentPath = path.resolve(rootDir, environmentPath);
   const environmentResult = evaluateUatEnvironmentEvidence(
     readFileSync(absoluteEnvironmentPath, "utf8"),
