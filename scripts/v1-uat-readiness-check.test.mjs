@@ -69,8 +69,8 @@ jobs:
   "scripts/v1-uat-evidence-pack-validate.test.mjs": "fails a Go evidence pack when a P0 defect remains open\nfails when basic evidence pack metadata is not structured\nfails when evidence pack version rows are missing\nfails when evidence pack contains secret-like material\nfails when passed evidence references point to missing docs artifacts\nfails when a basic evidence pack owner row is missing\nfails when a basic evidence pack owner is only a role label\nfails when a passed UAT case owner is only a role label\nfails when an approved signoff owner is only a role label\nfails when an approved signoff date is not structured\nfails when passed UAT evidence references are not retained\n",
   "scripts/v1-uat-defect-register-validate.mjs": "evaluateUatDefectRegister\np0-p1-summary\ndefect-source-case-format\ndefect-owner-name-format\nregression-evidence\ndefect-evidence-retained\nno-secret-material\n",
   "scripts/v1-uat-defect-register-validate.test.mjs": "fails the current draft defect register because P0 and P1 closure evidence is pending\nfails when a P0 or P1 defect source case is not traceable\nfails when a P0 or P1 defect owner is only a role label\nfails when closed P0 or P1 regression evidence is not retained\n",
-  "scripts/v1-uat-signoff-register-validate.mjs": "evaluateUatSignoffRegister\nrequired-signoffs\nsignoff-owner-name-format\nsigned-date-format\nsignoff-evidence-retained\nproject-go-decision\nno-secret-material\n",
-  "scripts/v1-uat-signoff-register-validate.test.mjs": "fails the draft signoff register because signoffs are pending\nfails when an approved signoff owner is only a role label\nfails when an approved signoff uses a non-ISO signed date\nfails when an approved signoff evidence reference is not retained\n",
+  "scripts/v1-uat-signoff-register-validate.mjs": "evaluateUatSignoffRegister\nrequired-signoffs\nsignoff-owner-name-format\nsigned-date-format\nsignoff-evidence-retained\nsignoff-evidence-artifacts\nproject-go-decision\nno-secret-material\n",
+  "scripts/v1-uat-signoff-register-validate.test.mjs": "fails the draft signoff register because signoffs are pending\nfails when an approved signoff owner is only a role label\nfails when an approved signoff uses a non-ISO signed date\nfails when an approved signoff evidence reference is not retained\nfails when approved signoff evidence points to a missing docs artifact\n",
   "scripts/v1-kickoff-governance-validate.mjs": "evaluateKickoffGovernance\nrequired-owners\nowner-name-format\nscope-freeze\nscope-boundary\nschedule-format\nkickoff-evidence-retained\nno-secret-material\n",
   "scripts/v1-kickoff-governance-validate.test.mjs": "fails the current kickoff draft because owners and scope freeze remain pending\nfails when a confirmed kickoff owner is only a role label\nfails when kickoff schedule is not a structured date range\nfails when confirmed kickoff governance evidence is not retained\n",
   "scripts/v1-uat-launch-intake-validate.mjs": "evaluateUatLaunchIntake\nenvironment-intake\nenvironment-format\nlaunch-window-format\nparticipant-roster\nparticipant-owner-name-format\naccount-custody\naccount-owner-name-format\nlaunch-evidence-retained\nno-secret-material\n",
@@ -668,6 +668,19 @@ test("fails when the UAT signoff register validator omits retained evidence guar
     ...completeSnapshot,
     "scripts/v1-uat-signoff-register-validate.mjs": completeSnapshot["scripts/v1-uat-signoff-register-validate.mjs"].replace("signoff-evidence-retained\n", ""),
     "scripts/v1-uat-signoff-register-validate.test.mjs": completeSnapshot["scripts/v1-uat-signoff-register-validate.test.mjs"].replace("fails when an approved signoff evidence reference is not retained\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "uat-signoff-register-validator"));
+});
+
+test("fails when the UAT signoff register validator omits evidence artifact existence guard", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-signoff-register-validate.mjs": completeSnapshot["scripts/v1-uat-signoff-register-validate.mjs"].replace("signoff-evidence-artifacts\n", ""),
+    "scripts/v1-uat-signoff-register-validate.test.mjs": completeSnapshot["scripts/v1-uat-signoff-register-validate.test.mjs"].replace("fails when approved signoff evidence points to a missing docs artifact\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

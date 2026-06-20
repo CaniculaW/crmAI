@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import { evaluateUatSignoffRegister } from "./v1-uat-signoff-register-validate.mjs";
@@ -106,6 +109,17 @@ test("fails when an approved signoff evidence reference is not retained", () => 
   assert.equal(result.ok, false);
   assert.deepEqual(result.unretainedEvidenceSignoffs, ["SIGNOFF-SALES"]);
   assert.ok(result.failed.some((check) => check.id === "signoff-evidence-retained"));
+});
+
+test("fails when approved signoff evidence points to a missing docs artifact", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-signoff-artifacts-"));
+
+  const result = evaluateUatSignoffRegister(completeRegister, { rootDir });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.missingEvidenceArtifacts.includes("docs/testing/evidence/signoff/sales-approval.md"));
+  assert.ok(result.missingEvidenceArtifacts.includes("docs/testing/v1-go-no-go-meeting.md#final-signoff"));
+  assert.ok(result.failed.some((check) => check.id === "signoff-evidence-artifacts"));
 });
 
 test("fails when the project owner does not explicitly sign Go", () => {

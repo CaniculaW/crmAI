@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REQUIRED_SIGNOFFS = [
@@ -69,12 +70,44 @@ function isRetainedEvidenceReference(value) {
   );
 }
 
+function repositoryArtifactPath(reference) {
+  return reference.split("#")[0].split("?")[0];
+}
+
+function existingRepositoryArtifact(rootDir, reference) {
+  const artifactPath = repositoryArtifactPath(reference);
+  if (!artifactPath.startsWith("docs/")) {
+    return true;
+  }
+
+  const root = path.resolve(rootDir);
+  const absolutePath = path.resolve(root, artifactPath);
+  if (absolutePath !== root && !absolutePath.startsWith(`${root}${path.sep}`)) {
+    return false;
+  }
+
+  return existsSync(absolutePath) && statSync(absolutePath).size > 0;
+}
+
+function missingRepositoryArtifacts(rootDir, references) {
+  if (!rootDir) {
+    return [];
+  }
+
+  const artifactReferences = references
+    .flatMap((reference) => evidenceReferenceTokens(reference))
+    .filter((reference) => reference.startsWith("docs/"));
+
+  return [...new Set(artifactReferences)]
+    .filter((reference) => !existingRepositoryArtifact(rootDir, reference));
+}
+
 function extractDecision(markdown) {
   const match = markdown.match(/^Decision:\s*(Go|Conditional Go|No-Go)\s*$/m);
   return match?.[1] ?? "";
 }
 
-export function evaluateUatSignoffRegister(markdown) {
+export function evaluateUatSignoffRegister(markdown, options = {}) {
   const rows = tableRows(markdown);
   const decision = extractDecision(markdown);
   const checks = [];
@@ -185,6 +218,39 @@ export function evaluateUatSignoffRegister(markdown) {
       : `Approved signoffs have unretained evidence references: ${unretainedEvidenceSignoffs.join(", ")}`
   ));
 
+  const completedSignoffEvidenceReferences = REQUIRED_SIGNOFFS
+    .map((required) => findRow(rows, required.id))
+    .filter((row, index) => {
+      const required = REQUIRED_SIGNOFFS[index];
+      if (!row) {
+        return false;
+      }
+      const owner = row[2] ?? "";
+      const rowDecision = row[3] ?? "";
+      const signedDate = row[4] ?? "";
+      const evidence = row[5] ?? "";
+
+      return rowDecision === required.decision
+        && isConcrete(owner)
+        && isIsoDate(signedDate)
+        && isConcrete(evidence)
+        && isRetainedEvidenceReference(evidence);
+    })
+    .map((row) => row[5] ?? "");
+
+  const missingEvidenceArtifacts = missingRepositoryArtifacts(
+    options.rootDir,
+    completedSignoffEvidenceReferences
+  );
+
+  checks.push(makeCheck(
+    "signoff-evidence-artifacts",
+    missingEvidenceArtifacts.length === 0,
+    missingEvidenceArtifacts.length === 0
+      ? "Approved signoff docs evidence artifacts exist and are non-empty when checked."
+      : `Approved signoff docs evidence artifacts are missing or empty: ${missingEvidenceArtifacts.join(", ")}`
+  ));
+
   const projectRow = findRow(rows, "SIGNOFF-PM");
   checks.push(makeCheck(
     "project-go-decision",
@@ -209,6 +275,7 @@ export function evaluateUatSignoffRegister(markdown) {
     ok: failed.length === 0,
     decision,
     unretainedEvidenceSignoffs,
+    missingEvidenceArtifacts,
     invalidOwnerNameSignoffs,
     invalidSignedDateSignoffs,
     passed,
@@ -242,7 +309,7 @@ if (isCli) {
     console.error("Usage: node scripts/v1-uat-signoff-register-validate.mjs <v1-uat-signoff-register.md>");
     process.exitCode = 1;
   } else {
-    const result = evaluateUatSignoffRegister(readFileSync(targetPath, "utf8"));
+    const result = evaluateUatSignoffRegister(readFileSync(targetPath, "utf8"), { rootDir: process.cwd() });
     printResult(result);
     process.exitCode = result.ok ? 0 : 1;
   }

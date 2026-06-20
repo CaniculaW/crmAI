@@ -6,6 +6,7 @@ import test from "node:test";
 
 import { evaluateV1ReleaseGate, evaluateV1ReleaseGateFromFiles, parseArgs, renderResult } from "./v1-release-gate.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
+import { evaluateUatSignoffRegister } from "./v1-uat-signoff-register-validate.mjs";
 
 const passingReadinessResult = {
   ok: true,
@@ -372,12 +373,12 @@ Decision: Go
 
 | Signoff ID | Role | Owner | Decision | Signed date | Evidence reference | Notes |
 |---|---|---|---|---|---|---|
-| SIGNOFF-SALES | 销售侧验收人 | Zhang Wei | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md | 销售侧验收通过 |
-| SIGNOFF-MANAGER | 管理侧验收人 | Li Na | 同意 | 2026-06-19 | docs/testing/evidence/signoff/manager-approval.md | 管理侧验收通过 |
-| SIGNOFF-PRODUCT | 产品负责人 | Wang Qiang | 同意 | 2026-06-19 | docs/testing/evidence/signoff/product-scope-approval.md | 范围确认 |
-| SIGNOFF-TEST | 测试负责人 | Chen Min | 同意 | 2026-06-19 | docs/testing/evidence/signoff/test-summary.md | 测试准出 |
-| SIGNOFF-DEV | 研发负责人 | Liu Yang | 同意 | 2026-06-19 | docs/testing/evidence/signoff/dev-release-note.md | 研发准出 |
-| SIGNOFF-PM | 项目负责人 | Zhao Lin | Go | 2026-06-19 | docs/testing/v1-go-no-go-meeting.md#final-signoff | 项目同意 V1 试点 |
+| SIGNOFF-SALES | 销售侧验收人 | Zhang Wei | 同意 | 2026-06-19 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 | 销售侧验收通过 |
+| SIGNOFF-MANAGER | 管理侧验收人 | Li Na | 同意 | 2026-06-19 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 | 管理侧验收通过 |
+| SIGNOFF-PRODUCT | 产品负责人 | Wang Qiang | 同意 | 2026-06-19 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 | 范围确认 |
+| SIGNOFF-TEST | 测试负责人 | Chen Min | 同意 | 2026-06-19 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 | 测试准出 |
+| SIGNOFF-DEV | 研发负责人 | Liu Yang | 同意 | 2026-06-19 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 | 研发准出 |
+| SIGNOFF-PM | 项目负责人 | Zhao Lin | Go | 2026-06-19 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 | 项目同意 V1 试点 |
 `;
 
 const requiredManifestIds = [
@@ -619,6 +620,31 @@ test("fails when the UAT evidence pack references a missing retained docs artifa
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => (
     check.id === "uat-evidence-pack" && check.message.includes("evidence-reference-artifacts")
+  )));
+});
+
+test("fails when the UAT signoff register references a missing retained docs artifact", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-release-gate-missing-signoff-artifact-"));
+  const signoffWithMissingArtifact = completeSignoffRegister.replace(
+    "https://github.com/CaniculaW/crmAI/actions/runs/27779354840",
+    "docs/testing/evidence/signoff/missing-sales-approval.md"
+  );
+  const signoffRegisterResult = evaluateUatSignoffRegister(signoffWithMissingArtifact, { rootDir });
+  const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
+
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    environmentResult: passingEnvironmentResult,
+    uatEvidenceResult,
+    trackerResult: passingTrackerResult,
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => (
+    check.id === "uat-signoff-register" && check.message.includes("signoff-evidence-artifacts")
   )));
 });
 

@@ -477,14 +477,16 @@ export function evaluateReadinessSnapshot(snapshot) {
       "signoff-owner-name-format",
       "signed-date-format",
       "signoff-evidence-retained",
+      "signoff-evidence-artifacts",
       "project-go-decision",
       "no-secret-material",
       "fails the draft signoff register because signoffs are pending",
       "fails when an approved signoff owner is only a role label",
       "fails when an approved signoff uses a non-ISO signed date",
-      "fails when an approved signoff evidence reference is not retained"
+      "fails when an approved signoff evidence reference is not retained",
+      "fails when approved signoff evidence points to a missing docs artifact"
     ]),
-    "UAT signoff register validator is tested and enforces role signoff, named owners, ISO signed dates, retained evidence references, project Go decision, and secret redaction."
+    "UAT signoff register validator is tested and enforces role signoff, named owners, ISO signed dates, retained evidence references, existing docs artifacts, project Go decision, and secret redaction."
   ));
 
   const kickoffValidator = snapshot["scripts/v1-kickoff-governance-validate.mjs"] ?? "";
