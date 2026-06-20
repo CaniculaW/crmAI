@@ -15,6 +15,9 @@ const completeGoPack = `# CRM V1 UAT 证据包与 Go/No-Go 记录
 | 后端 API 地址 | https://crm-test-api.example.com |
 | Git 提交号 | 0b3579ff9027417f4f363ae11ec206e37b33c113 |
 | 候选版本 | v1.0.0-rc.6 |
+| 前端版本/构建号 | Vite build 20260619.1 |
+| 后端版本/构建号 | Maven package 20260619.1 |
+| 数据库版本 | PostgreSQL 16.14 |
 | 测试负责人 | Chen Min |
 | 产品负责人 | Wang Qiang |
 | 研发负责人 | Liu Yang |
@@ -161,6 +164,18 @@ test("fails when basic evidence pack metadata is not structured", () => {
   assert.equal(result.ok, false);
   assert.deepEqual(result.invalidBasicInfoFields, ["验收日期", "前端访问地址", "Git 提交号"]);
   assert.ok(result.failed.some((check) => check.id === "basic-info-format"));
+});
+
+test("fails when evidence pack version rows are missing", () => {
+  const pack = completeGoPack
+    .replace("| 前端版本/构建号 | Vite build 20260619.1 |\n", "")
+    .replace("| 数据库版本 | PostgreSQL 16.14 |", "| 数据库版本 | PostgreSQL 16 或实际版本： |");
+
+  const result = evaluateUatEvidencePack(pack);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.missingBasicVersionRows, ["前端版本/构建号", "数据库版本"]);
+  assert.ok(result.failed.some((check) => check.id === "basic-version-fields-complete"));
 });
 
 test("fails when a passed UAT case owner is only a role label", () => {

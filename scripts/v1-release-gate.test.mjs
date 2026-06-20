@@ -107,6 +107,9 @@ function goEvidencePack(decision = "Go") {
 | 后端 API 地址 | https://crm-test-api.example.com |
 | Git 提交号 | 0f9ab8dbc49c8f30b26269a2e4807a7747852905 |
 | 候选版本 | v1.0.0-rc.8 |
+| 前端版本/构建号 | Vite build 20260619.1 |
+| 后端版本/构建号 | Maven package 20260619.1 |
+| 数据库版本 | PostgreSQL 16.14 |
 | 测试负责人 | Chen Min |
 | 产品负责人 | Wang Qiang |
 | 研发负责人 | Liu Yang |

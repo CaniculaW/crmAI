@@ -22,7 +22,7 @@
 - `scripts/v1-uat-evidence-pack.mjs`：用于按具名测试环境参数生成 UAT 证据包草稿，不写入明文密码或 API Token。
 - `scripts/v1-uat-launch-intake-validate.mjs`：用于在正式 UAT 启动前校验具名环境、前后端 `http(s)` URL、40位 Git 提交号、具体参与人姓名、不得以角色标签替代参与人或账号保管 Owner、账号保管、结构化 UAT窗口、证据归档位置，以及启动输入证据引用是否指向 `docs/` 留存工件或外部 URL。
 - `scripts/v1-kickoff-governance-validate.mjs`：用于在正式 UAT 准出前校验启动会负责人、业务验收人、负责人不得以角色标签替代具体姓名、`YYYY-MM-DD 至 YYYY-MM-DD` 上线周期、V1范围冻结、确认/冻结证据引用是否指向 `docs/` 留存工件或外部 URL、项目 Go 结论和敏感材料。
-- `scripts/v1-uat-evidence-pack-validate.mjs`：用于在证据包填写完成后校验 Go/No-Go 条件、P0/P1 缺陷、签署是否一致、验收日期/前后端地址/Git 提交号是否结构化、基本信息责任人是否必填且具名、已通过 UAT 用例验收人/已同意签署人是否具名、已同意签署日期是否为 `YYYY-MM-DD`，以及通过项证据是否指向 `docs/` 留存工件或外部 URL。
+- `scripts/v1-uat-evidence-pack-validate.mjs`：用于在证据包填写完成后校验 Go/No-Go 条件、P0/P1 缺陷、签署是否一致、验收日期/前后端地址/Git 提交号是否结构化、候选版本/前端构建/后端构建/数据库版本是否补齐、基本信息责任人是否必填且具名、已通过 UAT 用例验收人/已同意签署人是否具名、已同意签署日期是否为 `YYYY-MM-DD`，以及通过项证据是否指向 `docs/` 留存工件或外部 URL。
 - `scripts/v1-uat-environment-validate.mjs`：用于在具名环境证据填写完成后校验 ENV-001 至 ENV-008、环境元数据、前后端 `http(s)` URL、40位 Git 提交号、PASS 环境检查 Owner 不得以角色标签替代具体姓名、证据引用是否指向 `docs/` 留存工件或外部 URL，以及敏感材料。
 - `scripts/v1-uat-defect-register-validate.mjs`：用于在缺陷台账填写完成后校验 P0/P1 未关闭数量、P0/P1 缺陷 Owner 不得以角色标签替代具体姓名、回归证据是否指向 `docs/` 留存工件或外部 URL、敏感材料和 Go/No-Go 条件。
 - `scripts/v1-uat-signoff-register-validate.mjs`：用于在签署台账填写完成后校验六方具体签署人姓名、不得以角色标签替代签署人、签署日期为 `YYYY-MM-DD`、项目 `Go` 结论、证据引用是否指向 `docs/` 留存工件或外部 URL，以及敏感材料。
@@ -136,7 +136,7 @@ node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-m
 node scripts/v1-uat-evidence-pack-validate.mjs crm-v1-uat-evidence-pack.md
 ```
 
-要求：若选择 `Go`，validator 必须返回 `PASS`；若返回 `FAIL`，需先补齐证据、关闭阻断缺陷，修正验收日期和已同意签署日期为 `YYYY-MM-DD`、前后端地址为 `http(s)` URL、Git 提交号为40位 SHA，补齐基本信息责任人/已通过 UAT 用例验收人/已同意签署人的具体姓名，确保基本信息责任人不得缺失或留空，或把结论调整为符合实际的 `Conditional Go` / `No-Go`。
+要求：若选择 `Go`，validator 必须返回 `PASS`；若返回 `FAIL`，需先补齐证据、关闭阻断缺陷，修正验收日期和已同意签署日期为 `YYYY-MM-DD`、前后端地址为 `http(s)` URL、Git 提交号为40位 SHA，补齐候选版本、前端版本/构建号、后端版本/构建号、数据库版本和基本信息责任人/已通过 UAT 用例验收人/已同意签署人的具体姓名，确保基本信息责任人不得缺失或留空，或把结论调整为符合实际的 `Conditional Go` / `No-Go`。
 
 具名测试环境证据填写后执行状态校验：
 
@@ -379,7 +379,7 @@ v1-uat-evidence/
 | 业务验收 | 销售侧、管理侧验收人完成演示或试用确认 | 安排补验 |
 | 签署台账 validator | `node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md` 返回 PASS | 补齐六方具体签署人姓名、`YYYY-MM-DD` 签署日期、可留存证据路径/URL或项目 `Go` 结论；不得以角色标签代替签署人姓名 |
 | 上线风险 | 遗留缺陷、观察项、回滚条件已记录 | 补充上线风险清单 |
-| 证据包 validator | `node scripts/v1-uat-evidence-pack-validate.mjs <证据包>` 返回 PASS | 修正证据包、验收日期、签署日期、前后端地址、Git 提交号、缺陷状态、基本信息责任人、UAT 用例验收人、签署人或准出结论；不得以角色标签代替姓名 |
+| 证据包 validator | `node scripts/v1-uat-evidence-pack-validate.mjs <证据包>` 返回 PASS | 修正证据包、验收日期、签署日期、前后端地址、Git 提交号、候选版本、前端/后端构建号、数据库版本、缺陷状态、基本信息责任人、UAT 用例验收人、签署人或准出结论；不得以角色标签代替姓名 |
 
 ## 7. 验收会议纪要模板
 

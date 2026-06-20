@@ -44,6 +44,13 @@ const BASIC_OWNER_FIELDS = [
   "管理侧验收人"
 ];
 
+const BASIC_VERSION_FIELDS = [
+  "候选版本",
+  "前端版本/构建号",
+  "后端版本/构建号",
+  "数据库版本"
+];
+
 function tableRows(markdown) {
   return markdown
     .split(/\r?\n/)
@@ -67,7 +74,7 @@ function sectionMarkdown(markdown, heading) {
 }
 
 function hasPlaceholder(value) {
-  return /待填写|待执行|通过 \/ 不通过|是 \/ 否|同意 \/ 不同意/.test(value);
+  return /待填写|待执行|通过 \/ 不通过|是 \/ 否|同意 \/ 不同意|或实际版本：\s*$/.test(value);
 }
 
 function isConcrete(value) {
@@ -156,11 +163,21 @@ export function evaluateUatEvidencePack(markdown) {
 
   checks.push(makeCheck(
     "basic-info-complete",
-    ["验收日期", "测试环境名称", "前端访问地址", "后端 API 地址", "Git 提交号", "候选版本"].every((field) => {
+    ["验收日期", "测试环境名称", "前端访问地址", "后端 API 地址", "Git 提交号"].every((field) => {
       const row = findRow(basicRows, field);
       return row?.[1] && !hasPlaceholder(row[1]);
     }),
-    "Basic environment, version, and commit fields are complete."
+    "Basic environment and commit fields are complete."
+  ));
+
+  const missingBasicVersionRows = BASIC_VERSION_FIELDS
+    .filter((field) => !isConcrete(findRow(basicRows, field)?.[1] ?? ""));
+  checks.push(makeCheck(
+    "basic-version-fields-complete",
+    missingBasicVersionRows.length === 0,
+    missingBasicVersionRows.length === 0
+      ? "Basic evidence pack candidate, build, and database version rows are complete."
+      : `Missing basic evidence pack version rows: ${missingBasicVersionRows.join(", ")}`
   ));
 
   const basicInfoFormatRules = [
@@ -405,6 +422,7 @@ export function evaluateUatEvidencePack(markdown) {
     ok: failed.length === 0,
     decision,
     invalidBasicInfoFields,
+    missingBasicVersionRows,
     missingBasicOwnerRows,
     invalidBasicOwnerRows,
     invalidUatCaseOwnerRows,
