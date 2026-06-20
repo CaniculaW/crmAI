@@ -1096,6 +1096,18 @@ test("fails when the V1 external UAT request packet is missing from readiness ma
   assert.ok(result.failed.some((check) => check.id === "v1-external-uat-request-pack"));
 });
 
+test("fails when README omits the V1 secret scan entrypoint", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "README.md": completeSnapshot["README.md"].replace("v1-secret-scan-check.mjs\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "readme-entrypoints"));
+});
+
 test("fails when the V1 generated docs consistency checker is missing from readiness materials", () => {
   const snapshot = {
     ...completeSnapshot,
