@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 
 import { evaluateV1ReleaseGate, evaluateV1ReleaseGateFromFiles, parseArgs, renderResult } from "./v1-release-gate.mjs";
+import { evaluateKickoffGovernance } from "./v1-kickoff-governance-validate.mjs";
 import { evaluateUatDefectRegister } from "./v1-uat-defect-register-validate.mjs";
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
 import { evaluateUatEnvironmentEvidence } from "./v1-uat-environment-validate.mjs";
@@ -238,6 +239,11 @@ Decision: Go
 - AI 销售助手完整能力。
 `;
 
+const completeKickoffWithExternalEvidence = completeKickoff.replace(
+  /docs\/meeting-notes\/evidence\/kickoff\/[a-z0-9-]+\.md|docs\/architecture\/tech-stack-decision\.md/g,
+  "https://github.com/CaniculaW/crmAI/actions/runs/27822689146"
+);
+
 const completeLaunchIntake = `# CRM V1 UAT Launch Intake
 
 Version: v1.0.0-rc.8
@@ -454,7 +460,7 @@ test("passes from filled UAT source files when every validator and project Go ev
   const environmentPath = writeFixtureFile(fixtureDir, "environment.md", completeEnvironmentWithExternalEvidence);
   const signoffRegisterPath = writeFixtureFile(fixtureDir, "signoffs.md", completeSignoffRegister);
   const launchIntakePath = writeFixtureFile(fixtureDir, "launch-intake.md", completeLaunchIntakeWithExternalEvidence);
-  const kickoffPath = writeFixtureFile(fixtureDir, "kickoff.md", completeKickoff);
+  const kickoffPath = writeFixtureFile(fixtureDir, "kickoff.md", completeKickoffWithExternalEvidence);
 
   const result = evaluateV1ReleaseGateFromFiles(
     process.cwd(),
@@ -559,6 +565,29 @@ test("fails when kickoff governance remains incomplete", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "kickoff-governance"));
+});
+
+test("fails when the kickoff governance references a missing retained docs artifact", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-release-gate-missing-kickoff-artifact-"));
+  const kickoffResult = evaluateKickoffGovernance(completeKickoff, { rootDir });
+  const uatEvidenceResult = evaluateUatEvidencePack(goEvidencePack("Go"));
+
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    kickoffResult,
+    launchIntakeResult: passingLaunchIntakeResult,
+    environmentResult: passingEnvironmentResult,
+    uatEvidenceResult,
+    trackerResult: passingTrackerResult,
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => (
+    check.id === "kickoff-governance" && check.message.includes("kickoff-evidence-artifacts")
+  )));
 });
 
 test("fails when the UAT launch intake remains incomplete", () => {

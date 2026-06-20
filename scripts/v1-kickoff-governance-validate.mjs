@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REQUIRED_OWNER_ROLES = [
@@ -87,6 +88,38 @@ function isRetainedEvidenceReference(value) {
   ));
 }
 
+function repositoryArtifactPath(reference) {
+  return reference.split("#")[0].split("?")[0];
+}
+
+function existingRepositoryArtifact(rootDir, reference) {
+  const artifactPath = repositoryArtifactPath(reference);
+  if (!artifactPath.startsWith("docs/")) {
+    return true;
+  }
+
+  const root = path.resolve(rootDir);
+  const absolutePath = path.resolve(root, artifactPath);
+  if (absolutePath !== root && !absolutePath.startsWith(`${root}${path.sep}`)) {
+    return false;
+  }
+
+  return existsSync(absolutePath) && statSync(absolutePath).size > 0;
+}
+
+function missingRepositoryArtifacts(rootDir, references) {
+  if (!rootDir) {
+    return [];
+  }
+
+  const artifactReferences = references
+    .flatMap((reference) => evidenceReferenceTokens(reference))
+    .filter((reference) => reference.startsWith("docs/"));
+
+  return [...new Set(artifactReferences)]
+    .filter((reference) => !existingRepositoryArtifact(rootDir, reference));
+}
+
 function extractDecision(markdown) {
   const match = markdown.match(/^Decision:\s*(Go|Conditional Go|No-Go)\s*$/m);
   return match?.[1] ?? "";
@@ -132,7 +165,7 @@ function scopeInclusionText(rows) {
     .join(" ");
 }
 
-export function evaluateKickoffGovernance(markdown) {
+export function evaluateKickoffGovernance(markdown, options = {}) {
   const rows = tableRows(markdown);
   const decision = extractDecision(markdown);
   const checks = [];
@@ -243,6 +276,28 @@ export function evaluateKickoffGovernance(markdown) {
       ].filter(Boolean).join("; ")
   ));
 
+  const retainedKickoffEvidenceReferences = [
+    ...REQUIRED_OWNER_ROLES
+      .map((role) => findRow(rows, role))
+      .filter((row) => row && isConcrete(row[1] ?? "") && row[2] === "已确认" && isRetainedEvidenceReference(row[3] ?? ""))
+      .map((row) => row[3]),
+    ...REQUIRED_SCOPE_ITEMS
+      .map((item) => findRow(rows, item))
+      .filter((row) => row && isConcrete(row[1] ?? "") && isConfirmedStatus(row[2] ?? "") && isRetainedEvidenceReference(row[3] ?? ""))
+      .map((row) => row[3])
+  ];
+  const missingKickoffEvidenceArtifacts = missingRepositoryArtifacts(
+    options.rootDir,
+    retainedKickoffEvidenceReferences
+  );
+  checks.push(makeCheck(
+    "kickoff-evidence-artifacts",
+    missingKickoffEvidenceArtifacts.length === 0,
+    missingKickoffEvidenceArtifacts.length === 0
+      ? "Kickoff governance docs evidence artifacts exist and are non-empty when checked."
+      : `Kickoff governance evidence docs artifacts are missing or empty: ${missingKickoffEvidenceArtifacts.join(", ")}`
+  ));
+
   checks.push(makeCheck(
     "project-go-decision",
     decision === "Go",
@@ -269,6 +324,7 @@ export function evaluateKickoffGovernance(markdown) {
     invalidOwnerNameRoles,
     unretainedOwnerEvidenceRoles,
     unretainedScopeEvidenceItems,
+    missingKickoffEvidenceArtifacts,
     passed,
     failed,
     checks
@@ -300,7 +356,10 @@ if (isCli) {
     console.error("Usage: node scripts/v1-kickoff-governance-validate.mjs <crm-kickoff-minutes.md>");
     process.exitCode = 1;
   } else {
-    const result = evaluateKickoffGovernance(readFileSync(targetPath, "utf8"));
+    const result = evaluateKickoffGovernance(
+      readFileSync(targetPath, "utf8"),
+      { rootDir: process.cwd() }
+    );
     printResult(result);
     process.exitCode = result.ok ? 0 : 1;
   }

@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import { evaluateKickoffGovernance } from "./v1-kickoff-governance-validate.mjs";
@@ -148,6 +151,30 @@ test("fails when confirmed kickoff governance evidence is not retained", () => {
   assert.deepEqual(result.unretainedOwnerEvidenceRoles, ["产品负责人"]);
   assert.deepEqual(result.unretainedScopeEvidenceItems, ["V1范围冻结"]);
   assert.ok(result.failed.some((check) => check.id === "kickoff-evidence-retained"));
+});
+
+test("fails when confirmed kickoff governance evidence points to missing docs artifacts", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-kickoff-missing-artifact-"));
+  const result = evaluateKickoffGovernance(completeKickoff, { rootDir });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.missingKickoffEvidenceArtifacts, [
+    "docs/meeting-notes/evidence/kickoff/product-owner.md",
+    "docs/meeting-notes/evidence/kickoff/sales-owner.md",
+    "docs/meeting-notes/evidence/kickoff/manager-owner.md",
+    "docs/meeting-notes/evidence/kickoff/dev-owner.md",
+    "docs/meeting-notes/evidence/kickoff/frontend-owner.md",
+    "docs/meeting-notes/evidence/kickoff/backend-owner.md",
+    "docs/meeting-notes/evidence/kickoff/qa-owner.md",
+    "docs/meeting-notes/evidence/kickoff/v1-scope.md",
+    "docs/meeting-notes/evidence/kickoff/v1-loop.md",
+    "docs/meeting-notes/evidence/kickoff/out-of-scope.md",
+    "docs/meeting-notes/evidence/kickoff/schedule.md",
+    "docs/architecture/tech-stack-decision.md",
+    "docs/meeting-notes/evidence/kickoff/acceptance-mode.md",
+    "docs/meeting-notes/evidence/kickoff/scope-freeze.md"
+  ]);
+  assert.ok(result.failed.some((check) => check.id === "kickoff-evidence-artifacts"));
 });
 
 test("fails when kickoff governance contains secret-like material", () => {
