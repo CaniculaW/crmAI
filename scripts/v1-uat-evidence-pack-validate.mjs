@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REQUIRED_UAT_CASES = Array.from(
@@ -112,6 +113,38 @@ function isRetainedEvidenceReference(value) {
   ));
 }
 
+function repositoryArtifactPath(reference) {
+  return reference.split("#")[0].split("?")[0];
+}
+
+function existingRepositoryArtifact(rootDir, reference) {
+  const artifactPath = repositoryArtifactPath(reference);
+  if (!artifactPath.startsWith("docs/")) {
+    return true;
+  }
+
+  const root = path.resolve(rootDir);
+  const absolutePath = path.resolve(root, artifactPath);
+  if (!absolutePath.startsWith(root)) {
+    return false;
+  }
+
+  return existsSync(absolutePath) && statSync(absolutePath).size > 0;
+}
+
+function missingRepositoryArtifacts(rootDir, references) {
+  if (!rootDir) {
+    return [];
+  }
+
+  const artifactReferences = references
+    .flatMap((reference) => evidenceReferenceTokens(reference))
+    .filter((reference) => reference.startsWith("docs/"));
+
+  return [...new Set(artifactReferences)]
+    .filter((reference) => !existingRepositoryArtifact(rootDir, reference));
+}
+
 function containsSecretLikeMaterial(markdown) {
   return /((password|passwd|secret|api[_ -]?token|access[_ -]?token|refresh[_ -]?token)\s*[:=]|Bearer\s+[A-Za-z0-9._-]+)/i
     .test(markdown);
@@ -151,7 +184,7 @@ function extractDecision(markdown) {
   return match?.[1] ?? "";
 }
 
-export function evaluateUatEvidencePack(markdown) {
+export function evaluateUatEvidencePack(markdown, options = {}) {
   const rows = tableRows(markdown);
   const basicRows = tableRows(sectionMarkdown(markdown, "## 1. 基本信息"));
   const checks = [];
@@ -412,6 +445,34 @@ export function evaluateUatEvidencePack(markdown) {
       : `Unretained evidence references: ${unretainedEvidenceMessages.join("; ")}`
   ));
 
+  const passedEvidenceReferences = [
+    ...REQUIRED_AUTOMATION_COMMANDS.map((command) => {
+      const row = findRowContaining(rows, command);
+      return rowPasses(row, 2) ? row?.[3] ?? "" : "";
+    }),
+    ...REQUIRED_ENVIRONMENT_CHECKS.map((item) => {
+      const row = findRow(rows, item);
+      return rowPasses(row, 2) ? row?.[3] ?? "" : "";
+    }),
+    ...REQUIRED_UAT_CASES.map((id) => {
+      const row = findRow(rows, id);
+      return row?.[3] === "通过" ? row?.[4] ?? "" : "";
+    }),
+    ...REQUIRED_SIGNOFF_ROLES.map((role) => {
+      const row = findLastRow(rows, role);
+      const accepted = role === "项目负责人" ? row?.[2] === decision : row?.[2] === "同意";
+      return accepted ? row?.[4] ?? "" : "";
+    })
+  ].filter(Boolean);
+  const missingEvidenceArtifacts = missingRepositoryArtifacts(options.rootDir, passedEvidenceReferences);
+  checks.push(makeCheck(
+    "evidence-reference-artifacts",
+    missingEvidenceArtifacts.length === 0,
+    missingEvidenceArtifacts.length === 0
+      ? "Passed evidence references either use external URLs or existing retained docs artifacts."
+      : `Passed evidence references point to missing docs artifacts: ${missingEvidenceArtifacts.join(", ")}`
+  ));
+
   checks.push(makeCheck(
     "go-decision-valid",
     decision === "Go" || decision === "Conditional Go" || decision === "No-Go",
@@ -444,6 +505,7 @@ export function evaluateUatEvidencePack(markdown) {
     invalidSignoffDateRows,
     unretainedEvidenceReferences,
     hasSecretLikeMaterial,
+    missingEvidenceArtifacts,
     passed,
     failed,
     checks
@@ -479,7 +541,7 @@ if (isCli) {
     printUsage();
     process.exitCode = 1;
   } else {
-    const result = evaluateUatEvidencePack(readFileSync(evidencePath, "utf8"));
+    const result = evaluateUatEvidencePack(readFileSync(evidencePath, "utf8"), { rootDir: process.cwd() });
     printResult(result);
     process.exitCode = result.ok ? 0 : 1;
   }

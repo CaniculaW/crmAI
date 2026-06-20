@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import { evaluateUatEvidencePack } from "./v1-uat-evidence-pack-validate.mjs";
@@ -186,6 +189,16 @@ test("fails when evidence pack contains secret-like material", () => {
   assert.equal(result.ok, false);
   assert.equal(result.hasSecretLikeMaterial, true);
   assert.ok(result.failed.some((check) => check.id === "no-secret-material"));
+});
+
+test("fails when passed evidence references point to missing docs artifacts", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-evidence-pack-artifacts-"));
+
+  const result = evaluateUatEvidencePack(completeGoPack, { rootDir });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.missingEvidenceArtifacts.includes("docs/testing/evidence/smoke-output.json"));
+  assert.ok(result.failed.some((check) => check.id === "evidence-reference-artifacts"));
 });
 
 test("fails when a passed UAT case owner is only a role label", () => {

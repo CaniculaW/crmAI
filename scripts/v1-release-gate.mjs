@@ -226,7 +226,10 @@ export function evaluateV1ReleaseGateFromFiles(
   const absoluteEnvironmentPath = path.resolve(rootDir, environmentPath);
   const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(absoluteEnvironmentPath, "utf8"));
   const absoluteEvidencePath = path.resolve(rootDir, evidencePath);
-  const uatEvidenceResult = evaluateUatEvidencePack(readFileSync(absoluteEvidencePath, "utf8"));
+  const uatEvidenceResult = evaluateUatEvidencePack(
+    readFileSync(absoluteEvidencePath, "utf8"),
+    { rootDir }
+  );
   const absoluteTrackerPath = path.resolve(rootDir, trackerPath);
   const trackerResult = evaluateUatExecutionTracker(readFileSync(absoluteTrackerPath, "utf8"));
   const absoluteManifestPath = path.resolve(rootDir, manifestPath);

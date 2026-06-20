@@ -124,20 +124,20 @@ function goEvidencePack(decision = "Go") {
 | \`mvn verify -Ppostgres-it\` | crm-v1-test | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
 | \`npm test\` | crm-v1-test | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
 | \`npm run build\` | crm-v1-test | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
-| \`npm run smoke:v1:browser\` | crm-v1-test | 通过 | docs/testing/evidence/smoke.png |
-| \`/api/bootstrap Smoke\` | crm-v1-test | 通过 | docs/testing/evidence/bootstrap.json |
+| \`npm run smoke:v1:browser\` | crm-v1-test | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| \`/api/bootstrap Smoke\` | crm-v1-test | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
 
 ## 3. 环境与账号证据
 
 | 证据项 | 通过标准 | 结果 | 证据文件 |
 |---|---|---|---|
-| 前端登录页可访问 | 显示 CRM 登录表单 | 通过 | docs/testing/evidence/env/login.png |
-| 后端健康检查 | /api/health 返回 200 | 通过 | docs/testing/evidence/env/health.txt |
-| 数据库迁移 | Flyway 14 个迁移脚本完成 | 通过 | docs/testing/evidence/env/migration.txt |
-| 管理员账号 | 可登录，可进入系统管理页 | 通过 | docs/testing/evidence/env/admin.png |
-| 销售个人账号 | 可登录，可创建客户/商机/行动 | 通过 | docs/testing/evidence/env/sales.png |
-| 销售负责人账号 | 可查看本部门数据 | 通过 | docs/testing/evidence/env/manager.png |
-| 权限样本账号 | 可验证数据范围 | 通过 | docs/testing/evidence/env/permissions.png |
+| 前端登录页可访问 | 显示 CRM 登录表单 | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| 后端健康检查 | /api/health 返回 200 | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| 数据库迁移 | Flyway 14 个迁移脚本完成 | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| 管理员账号 | 可登录，可进入系统管理页 | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| 销售个人账号 | 可登录，可创建客户/商机/行动 | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| 销售负责人账号 | 可查看本部门数据 | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| 权限样本账号 | 可验证数据范围 | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
 
 ## 4. 业务演示验收记录
 
@@ -145,7 +145,7 @@ function goEvidencePack(decision = "Go") {
 |---|---|---|---|---|---|
 ${Array.from({ length: 10 }, (_, index) => {
   const id = `UAT-${String(index + 1).padStart(3, "0")}`;
-  return `| ${id} | V1 验收链路 | Zhang Wei | 通过 | docs/testing/evidence/uat/${id.toLowerCase()}.png | 无 |`;
+  return `| ${id} | V1 验收链路 | Zhang Wei | 通过 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 | 无 |`;
 }).join("\n")}
 
 ## 5. 缺陷汇总
@@ -180,12 +180,12 @@ Go/No-Go 结论：
 
 | 角色 | 姓名 | 结论 | 日期 | 证据文件 |
 |---|---|---|---|---|
-| 销售侧验收人 | Zhang Wei | 同意 | 2026-06-19 | docs/testing/evidence/signoff/sales-approval.md |
-| 管理侧验收人 | Li Na | 同意 | 2026-06-19 | docs/testing/evidence/signoff/manager-approval.md |
-| 产品负责人 | Wang Qiang | 同意 | 2026-06-19 | docs/testing/evidence/signoff/product-approval.md |
-| 测试负责人 | Chen Min | 同意 | 2026-06-19 | docs/testing/evidence/signoff/test-approval.md |
-| 研发负责人 | Liu Yang | 同意 | 2026-06-19 | docs/testing/evidence/signoff/dev-approval.md |
-| 项目负责人 | Zhao Lin | ${projectDecision} | 2026-06-19 | docs/testing/evidence/signoff/project-go.md |
+| 销售侧验收人 | Zhang Wei | 同意 | 2026-06-19 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| 管理侧验收人 | Li Na | 同意 | 2026-06-19 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| 产品负责人 | Wang Qiang | 同意 | 2026-06-19 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| 测试负责人 | Chen Min | 同意 | 2026-06-19 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| 研发负责人 | Liu Yang | 同意 | 2026-06-19 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
+| 项目负责人 | Zhao Lin | ${projectDecision} | 2026-06-19 | https://github.com/CaniculaW/crmAI/actions/runs/27779354840 |
 `;
 }
 
@@ -596,6 +596,30 @@ test("fails when UAT evidence is still a No-Go draft", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "go-decision"));
+});
+
+test("fails when the UAT evidence pack references a missing retained docs artifact", () => {
+  const rootDir = mkdtempSync(path.join(tmpdir(), "crm-v1-release-gate-missing-pack-artifact-"));
+  const evidenceWithMissingArtifact = goEvidencePack("Go").replace(
+    "https://github.com/CaniculaW/crmAI/actions/runs/27779354840",
+    "docs/testing/evidence/missing-pack-smoke.png"
+  );
+  const uatEvidenceResult = evaluateUatEvidencePack(evidenceWithMissingArtifact, { rootDir });
+
+  const result = evaluateV1ReleaseGate({
+    readinessResult: passingReadinessResult,
+    environmentResult: passingEnvironmentResult,
+    uatEvidenceResult,
+    trackerResult: passingTrackerResult,
+    evidenceManifestResult: passingManifestResult,
+    defectRegisterResult: passingDefectRegisterResult,
+    signoffRegisterResult: passingSignoffRegisterResult
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => (
+    check.id === "uat-evidence-pack" && check.message.includes("evidence-reference-artifacts")
+  )));
 });
 
 test("fails when the project decision is Conditional Go", () => {
