@@ -157,6 +157,14 @@ node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write
 
 该命令会在 `docs/meeting-notes/evidence/kickoff/` 下生成 14 个负责人/范围冻结补证模板；模板默认 `Pending`，不代表项目已批准或 V1 已 Go。
 
+V1 启动治理补证应用器：
+
+```bash
+node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write
+```
+
+该命令仅在 14 个补证模板全部标记为 `Ready` 且具名人员、闭环值、留存证据引用都完整时，才会回填 `crm-kickoff-minutes.md`；模板仍为 `Pending` 时会拒绝写入。
+
 UAT 证据包草稿生成：
 
 ```bash

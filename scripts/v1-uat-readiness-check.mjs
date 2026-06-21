@@ -66,6 +66,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-kickoff-governance-evidence-pack.test.mjs",
   "scripts/v1-kickoff-governance-evidence-scaffold.mjs",
   "scripts/v1-kickoff-governance-evidence-scaffold.test.mjs",
+  "scripts/v1-kickoff-governance-evidence-apply.mjs",
+  "scripts/v1-kickoff-governance-evidence-apply.test.mjs",
   "scripts/v1-progress-todo.mjs",
   "scripts/v1-progress-todo.test.mjs",
   "scripts/v1-external-uat-request.mjs",
@@ -687,6 +689,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
       "node --test scripts/v1-kickoff-governance-evidence-scaffold.test.mjs",
       "node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write",
+      "node --test scripts/v1-kickoff-governance-evidence-apply.test.mjs",
       "node --test scripts/v1-progress-todo.test.mjs",
       "node scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md",
       "mvn -B test",
@@ -1092,6 +1095,22 @@ export function evaluateReadinessSnapshot(snapshot) {
     "Kickoff governance evidence scaffold generator is tested and wired into CI to create Pending retained-evidence templates without claiming approval."
   ));
 
+  const kickoffGovernanceEvidenceApplyHelper = snapshot["scripts/v1-kickoff-governance-evidence-apply.mjs"] ?? "";
+  const kickoffGovernanceEvidenceApplyHelperTest = snapshot["scripts/v1-kickoff-governance-evidence-apply.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "kickoff-governance-evidence-apply-helper",
+    includesAll(workflow + kickoffGovernanceEvidenceApplyHelper + kickoffGovernanceEvidenceApplyHelperTest, [
+      "node --test scripts/v1-kickoff-governance-evidence-apply.test.mjs",
+      "applyKickoffGovernanceEvidenceToMarkdown",
+      "evaluateKickoffGovernanceEvidenceTemplates",
+      "Evidence status must be `Ready` before applying",
+      "Kickoff governance evidence templates are not ready",
+      "applies complete Ready kickoff governance templates and produces validator-ready kickoff markdown",
+      "keeps kickoff markdown unchanged when any required evidence template is still Pending"
+    ]),
+    "Kickoff governance evidence apply helper is tested and wired into CI to update kickoff minutes only after every retained evidence template is Ready."
+  ));
+
   const progressTodoGenerator = snapshot["scripts/v1-progress-todo.mjs"] ?? "";
   const progressTodoGeneratorTest = snapshot["scripts/v1-progress-todo.test.mjs"] ?? "";
   checks.push(makeCheck(
@@ -1435,6 +1454,8 @@ export function evaluateReadinessSnapshot(snapshot) {
       "证据",
       "node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
       "node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
+      "node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write",
+      "node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write",
       "node scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md",
       "node scripts/v1-uat-coverage-check.mjs",
       "node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md",
@@ -1603,6 +1624,8 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
       "v1-kickoff-governance-evidence-pack.mjs",
       "node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
+      "node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write",
+      "node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write",
       "v1-progress-todo.mjs",
       "node scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md",
       "v1-uat-environment-validate.mjs",

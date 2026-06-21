@@ -23,6 +23,7 @@ test("generates pending kickoff owner evidence templates without approving gover
   assert.match(markdown, /Evidence status: `Pending`/);
   assert.match(markdown, /Required closure value: Named person, not a role label/);
   assert.match(markdown, /Target status in kickoff minutes: `已确认`/);
+  assert.match(markdown, /\| Closure value \| 待填写 \|/);
   assert.match(markdown, /Update target row: `docs\/meeting-notes\/crm-kickoff-minutes\.md` 参会人\/产品负责人/);
   assert.match(markdown, /This scaffold is not approval evidence until a named owner fills it/);
   assert.doesNotMatch(markdown, /^Decision:\s*Go$/m);

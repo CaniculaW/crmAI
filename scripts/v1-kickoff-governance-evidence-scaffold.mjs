@@ -58,6 +58,7 @@ export function generateKickoffGovernanceEvidenceScaffoldMarkdown({
     "| Field | Value |",
     "|---|---|",
     "| Named owner or approver | 待填写 |",
+    "| Closure value | 待填写 |",
     "| Confirmation date | 待填写，格式 YYYY-MM-DD |",
     "| Confirmation source | 待填写，会议纪要、审批系统、邮件归档或外部系统 URL |",
     "| Retained evidence reference | 待填写，必须是 `docs/` 留存工件或 `http(s)` URL |",

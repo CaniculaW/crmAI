@@ -1,6 +1,6 @@
 # CRM V1 Kickoff Governance Evidence - 研发负责人
 
-Generated at: 2026-06-21T15:55:08.662Z
+Generated at: 2026-06-21T16:14:19.872Z
 
 Evidence type: `owner`
 Evidence status: `Pending`
@@ -15,6 +15,7 @@ Do not record plaintext passwords, bearer tokens, API keys, or unmasked personal
 | Field | Value |
 |---|---|
 | Named owner or approver | 待填写 |
+| Closure value | 待填写 |
 | Confirmation date | 待填写，格式 YYYY-MM-DD |
 | Confirmation source | 待填写，会议纪要、审批系统、邮件归档或外部系统 URL |
 | Retained evidence reference | 待填写，必须是 `docs/` 留存工件或 `http(s)` URL |
