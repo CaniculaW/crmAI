@@ -268,7 +268,7 @@ node scripts/v1-evidence-reference-check.mjs
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-evidence-reference-check.mjs\nv1-release-gate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-external-uat-request.mjs\nv1-generated-docs-check.mjs\nv1-release-gate-status-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\nv1-uat-coverage-check.mjs\nv1-traceability-check.mjs\nv1-blocker-consistency-check.mjs\nv1-external-uat-request-coverage-check.mjs\nv1-final-evidence-handoff-check.mjs\nv1-secret-scan-check.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-evidence-reference-check.mjs\nv1-release-gate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-external-uat-request.mjs\nnode scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md\nnode scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md\nnode scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json\nv1-generated-docs-check.mjs\nv1-release-gate-status-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\nv1-uat-coverage-check.mjs\nv1-traceability-check.mjs\nv1-blocker-consistency-check.mjs\nv1-external-uat-request-coverage-check.mjs\nv1-final-evidence-handoff-check.mjs\nv1-secret-scan-check.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -1290,6 +1290,24 @@ test("fails when README omits critical V1 release verification entrypoints", () 
     const result = evaluateReadinessSnapshot(snapshot);
 
     assert.equal(result.ok, false, `${entrypoint} should be required in README`);
+    assert.ok(result.failed.some((check) => check.id === "readme-entrypoints"));
+  }
+});
+
+test("fails when README omits external UAT generated handoff commands", () => {
+  for (const command of [
+    "node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md",
+    "node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md",
+    "node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json"
+  ]) {
+    const snapshot = {
+      ...completeSnapshot,
+      "README.md": completeSnapshot["README.md"].replace(command, "")
+    };
+
+    const result = evaluateReadinessSnapshot(snapshot);
+
+    assert.equal(result.ok, false, `${command} should be required in README`);
     assert.ok(result.failed.some((check) => check.id === "readme-entrypoints"));
   }
 });
