@@ -103,6 +103,16 @@ function copyFixture(rootDir, filename, sourcePath) {
   return targetPath;
 }
 
+function manifestIdsFromIntakeMarkdown(markdown) {
+  return markdown
+    .split("\n")
+    .filter((line) => line.startsWith("| ") && !line.startsWith("|---") && !line.includes("Manifest evidence IDs"))
+    .flatMap((line) => {
+      const cells = line.split("|").map((cell) => cell.trim());
+      return (cells[3] ?? "").split(",").map((id) => id.trim()).filter(Boolean);
+    });
+}
+
 test("generates a No-Go external UAT request packet with source documents and validation commands", () => {
   const markdown = generateV1ExternalUatRequestMarkdown({
     generatedAt: "2026-06-19T12:30:00+08:00",
@@ -276,6 +286,18 @@ test("generates an external UAT evidence intake checklist tied to manifest ids",
   assert.match(markdown, /node scripts\/v1-uat-evidence-manifest-validate\.mjs docs\/testing\/v1-uat-evidence-manifest\.md/);
   assert.match(markdown, /node scripts\/v1-release-gate\.mjs --json/);
   assert.match(markdown, /Do not paste passwords, bearer tokens, API keys, or unmasked account secrets/);
+});
+
+test("keeps evidence intake manifest ids assigned to a single intake row", () => {
+  const markdown = generateV1ExternalUatEvidenceIntakeMarkdown({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    releaseGateResult: failingReleaseGate
+  });
+
+  const manifestIds = manifestIdsFromIntakeMarkdown(markdown);
+  const duplicates = manifestIds.filter((id, index) => manifestIds.indexOf(id) !== index);
+
+  assert.deepEqual(duplicates, []);
 });
 
 test("generates request packet from absolute UAT source document paths", () => {

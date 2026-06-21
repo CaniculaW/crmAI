@@ -298,7 +298,7 @@ function evidenceIntakeRows({
     {
       intakeId: "KICKOFF-LAUNCH",
       ownerSide: "项目/产品",
-      manifestIds: ["PRE-006", "SIGNOFF-PM", "GO-NOGO"],
+      manifestIds: ["PRE-006"],
       sourceDocuments: [kickoffPath, launchIntakePath, manifestPath],
       validationCommands: [
         validationCommandFor("Kickoff Governance", { kickoffPath }),

@@ -804,6 +804,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "deduplicates machine-readable blockers by gate and check id",
       "generates an external UAT closure checklist grouped by owner side",
       "generates an external UAT evidence intake checklist tied to manifest ids",
+      "keeps evidence intake manifest ids assigned to a single intake row",
       "generates a No-Go external UAT request packet with source documents and validation commands"
     ]),
     "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board, closure checklist, evidence intake checklist, and machine-readable blocker JSON for dashboards and validation bots."
