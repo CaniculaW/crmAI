@@ -1,6 +1,6 @@
 # CRM V1 Progress TODO
 
-Generated at: 2026-06-21T15:20:59.879Z
+Generated at: 2026-06-21T15:31:18.976Z
 
 Overall status: `External UAT Evidence Required`
 Overall decision: `No-Go`
@@ -39,6 +39,16 @@ Validation commands:
 | Open | Kickoff Governance/scope-freeze | Kickoff Governance | scope-freeze | 项目/产品 | docs/meeting-notes/crm-kickoff-minutes.md | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | Incomplete kickoff scope freeze items: V1 模块范围, V1 业务闭环, V1 暂不做, 上线周期, 技术栈, 验收方式, V1范围冻结 |
 | Open | Kickoff Governance/project-go-decision | Kickoff Governance | project-go-decision | 项目/产品 | docs/meeting-notes/crm-kickoff-minutes.md | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | Kickoff governance decision is No-Go; V1 validation requires Go. |
 | Open | Release Gate/kickoff-governance | Release Gate | kickoff-governance | 项目/产品 | docs/meeting-notes/crm-kickoff-minutes.md | `node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md` | Kickoff governance failed: required-owners, scope-freeze, project-go-decision |
+
+## Task Switch Snapshot
+
+Previous task: `none`
+Current task: `1-governance`
+Switch readiness: `Blocked`
+Remaining blockers before switch: 4
+Completion standard: Current source validators PASS and final release gate returns Go
+Next required validation:
+- `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md`
 
 ## Task Switch Display Rule
 

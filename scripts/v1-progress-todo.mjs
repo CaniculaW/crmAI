@@ -6,6 +6,15 @@ import { fileURLToPath } from "node:url";
 
 const DEFAULT_BLOCKERS_JSON_PATH = "docs/testing/v1-external-uat-blockers.json";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-progress-todo.md";
+const CLOSURE_PHASE_ORDER = [
+  "1-governance",
+  "2-uat-launch",
+  "2-uat-environment",
+  "3-uat-evidence",
+  "4-defect-closure",
+  "5-signoff",
+  "6-final-go-decision"
+];
 
 function ownerSideText(byOwnerSide = {}) {
   const ownerSides = Object.keys(byOwnerSide).sort();
@@ -28,6 +37,18 @@ function blockerRows(blockers = [], phase) {
       blocker.message
     ].join(" | "))
     .map((row) => `| ${row} |`);
+}
+
+function previousTaskFor(currentTask) {
+  if (currentTask === "complete") {
+    return CLOSURE_PHASE_ORDER.at(-1);
+  }
+
+  const index = CLOSURE_PHASE_ORDER.indexOf(currentTask);
+  if (index <= 0) {
+    return "none";
+  }
+  return CLOSURE_PHASE_ORDER[index - 1];
 }
 
 export function generateV1ProgressTodoMarkdown({
@@ -89,6 +110,21 @@ export function generateV1ProgressTodoMarkdown({
     lines.push("| Status | Blocker ID | Gate | Check ID | Owner side | Source document | Validation command | Closure evidence needed |");
     lines.push("|---|---|---|---|---|---|---|---|");
     lines.push(...blockerRows(blockers, nextPhase.phase));
+  }
+
+  lines.push("");
+  lines.push("## Task Switch Snapshot");
+  lines.push("");
+  lines.push(`Previous task: \`${previousTaskFor(currentTask)}\``);
+  lines.push(`Current task: \`${currentTask}\``);
+  lines.push(`Switch readiness: \`${nextPhase ? "Blocked" : "Ready"}\``);
+  lines.push(`Remaining blockers before switch: ${nextPhase?.totalBlockers ?? 0}`);
+  lines.push(`Completion standard: ${nextPhase ? "Current source validators PASS and final release gate returns Go" : "No open V1 blockers remain and final release gate returns Go"}`);
+  lines.push("Next required validation:");
+  if (nextPhase?.validationCommands?.length > 0) {
+    lines.push(`- \`${nextPhase.validationCommands[0]}\``);
+  } else {
+    lines.push("- `node scripts/v1-release-gate.mjs --json`");
   }
 
   lines.push("");

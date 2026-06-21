@@ -78,6 +78,12 @@ test("generates a V1 progress TODO board from blockers", () => {
   assert.match(markdown, /## Current Task Progress/);
   assert.match(markdown, /Kickoff Governance\/required-owners/);
   assert.match(markdown, /Incomplete kickoff owners: 产品负责人/);
+  assert.match(markdown, /## Task Switch Snapshot/);
+  assert.match(markdown, /Previous task: `none`/);
+  assert.match(markdown, /Current task: `1-governance`/);
+  assert.match(markdown, /Switch readiness: `Blocked`/);
+  assert.match(markdown, /Remaining blockers before switch: 4/);
+  assert.match(markdown, /Next required validation:/);
   assert.match(markdown, /## Task Switch Display Rule/);
   assert.match(markdown, /当前任务/);
   assert.match(markdown, /完成标准/);
@@ -108,4 +114,6 @@ test("generates a closed progress board when no blockers remain", () => {
   assert.match(markdown, /Open blockers: 0/);
   assert.match(markdown, /Current task: `complete`/);
   assert.match(markdown, /No open V1 blockers remain/);
+  assert.match(markdown, /Switch readiness: `Ready`/);
+  assert.match(markdown, /Previous task: `6-final-go-decision`/);
 });

@@ -363,6 +363,9 @@ function hasV1ProgressTodo(content) {
     "Do not record plaintext passwords",
     "TODOList",
     "Current Task Progress",
+    "Task Switch Snapshot",
+    "Switch readiness",
+    "Remaining blockers before switch",
     "Task Switch Display Rule",
     "上一任务",
     "当前任务",
@@ -1036,11 +1039,13 @@ export function evaluateReadinessSnapshot(snapshot) {
       "CRM V1 Progress TODO",
       "TODOList",
       "Current Task Progress",
+      "Task Switch Snapshot",
+      "Switch readiness",
       "Task Switch Display Rule",
       "generates a V1 progress TODO board from blockers",
       "generates a closed progress board when no blockers remain"
     ]),
-    "V1 progress TODO generator is tested and wired into CI to keep blocker counts, phase TODOList, current task, task-switch display rules, completion standards, and validation commands visible."
+    "V1 progress TODO generator is tested and wired into CI to keep blocker counts, phase TODOList, current task, task-switch snapshots, task-switch display rules, completion standards, and validation commands visible."
   ));
 
   const externalUatRequest = snapshot["scripts/v1-external-uat-request.mjs"] ?? "";
