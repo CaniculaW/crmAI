@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -41,12 +42,67 @@ function gitCommitFrom(rootDir, docPath) {
   return metadataValue(readFile(rootDir, docPath), "Git commit");
 }
 
+function readGitCommit(rootDir) {
+  try {
+    return execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd: rootDir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"]
+    }).trim();
+  } catch {
+    // Fall back to reading .git directly for lightweight fixture repositories.
+  }
+  const headPath = path.join(rootDir, ".git", "HEAD");
+  if (!existsSync(headPath)) {
+    return "unknown";
+  }
+  const head = readFileSync(headPath, "utf8").trim();
+  if (!head.startsWith("ref: ")) {
+    return head;
+  }
+  const refPath = path.join(rootDir, ".git", head.slice(5));
+  return existsSync(refPath) ? readFileSync(refPath, "utf8").trim() : "unknown";
+}
+
+function readPreviousGitCommit(rootDir) {
+  try {
+    return execFileSync("git", ["rev-parse", "HEAD^"], {
+      cwd: rootDir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"]
+    }).trim();
+  } catch {
+    return "unknown";
+  }
+}
+
+function allowedValidationStatusCommits(rootDir) {
+  return [readGitCommit(rootDir), readPreviousGitCommit(rootDir)].filter((commit) => commit !== "unknown");
+}
+
+export function selectValidationStatusGitCommit({
+  existingGitCommit,
+  allowedGitCommits,
+  currentGitCommit
+}) {
+  return allowedGitCommits.includes(existingGitCommit) ? existingGitCommit : currentGitCommit;
+}
+
 function defaultGenerators(rootDir) {
+  const currentGitCommit = readGitCommit(rootDir);
+  const allowedGitCommits = allowedValidationStatusCommits(rootDir);
+  const statusGitCommit = gitCommitFrom(rootDir, "docs/testing/v1-validation-status.md");
   return {
     "docs/testing/v1-validation-status.md": () => generateV1ValidationStatusFromFiles({
       rootDir,
       generatedAt: generatedAtFrom(rootDir, "docs/testing/v1-validation-status.md"),
-      gitCommit: gitCommitFrom(rootDir, "docs/testing/v1-validation-status.md")
+      gitCommit: currentGitCommit === "unknown"
+        ? gitCommitFrom(rootDir, "docs/testing/v1-validation-status.md")
+        : selectValidationStatusGitCommit({
+          existingGitCommit: statusGitCommit,
+          allowedGitCommits,
+          currentGitCommit
+        })
     }),
     "docs/testing/v1-uat-action-plan.md": () => generateV1UatActionPlanFromFiles({
       rootDir,
@@ -96,6 +152,18 @@ export function evaluateGeneratedDocsSnapshot({
         : `Generated document is stale: ${docPath}. Re-run its generator.`
     );
   });
+  const allowedGitCommits = allowedValidationStatusCommits(rootDir);
+  if (allowedGitCommits.length > 0) {
+    const statusGitCommit = gitCommitFrom(rootDir, "docs/testing/v1-validation-status.md");
+    const commitIsAllowed = allowedGitCommits.includes(statusGitCommit);
+    checks.push(makeCheck(
+      "validation-status-current-commit",
+      commitIsAllowed,
+      commitIsAllowed
+        ? "Validation status document is bound to the current or immediately previous git commit."
+        : `Validation status document git commit is stale: ${statusGitCommit ?? "missing"}; expected one of ${allowedGitCommits.join(", ")}.`
+    ));
+  }
 
   const failed = checks.filter((check) => !check.ok);
   const passed = checks.filter((check) => check.ok);

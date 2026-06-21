@@ -342,6 +342,8 @@ export function evaluateReadinessSnapshot(snapshot) {
       "deployment-config",
       "backend:",
       "frontend:",
+      "actions/checkout@v4",
+      "fetch-depth: 2",
       "docker compose -f compose.v1-test.yml config",
       "node scripts/v1-deployment-config-check.mjs",
       "node --test scripts/v1-deployment-config-check.test.mjs",
@@ -350,7 +352,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "npm test",
       "npm run build"
     ]),
-    "GitHub Actions V1 Validation covers deployment config, backend, PostgreSQL integration, frontend tests, and build."
+    "GitHub Actions V1 Validation covers deployment config, backend, PostgreSQL integration, frontend tests, build, and checkout history depth for validation status commit freshness."
   ));
 
   const compose = snapshot["compose.v1-test.yml"] ?? "";
@@ -705,9 +707,11 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node scripts/v1-generated-docs-check.mjs",
       "evaluateGeneratedDocsSnapshot",
       "Generated document is stale",
-      "fails when a generated document drifts from its generator"
+      "validation-status-current-commit",
+      "fails when a generated document drifts from its generator",
+      "fails when the validation status document is not bound to the current git commit"
     ]),
-    "Generated V1 docs checker is tested and wired into CI to prevent stale generated evidence packs."
+    "Generated V1 docs checker is tested and wired into CI to prevent stale generated evidence packs and stale validation status commit bindings."
   ));
 
   const releaseGateStatusChecker = snapshot["scripts/v1-release-gate-status-check.mjs"] ?? "";

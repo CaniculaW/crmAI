@@ -9,6 +9,9 @@ jobs:
   deployment-config:
     steps:
       - run: docker compose -f compose.v1-test.yml config
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - run: node scripts/v1-deployment-config-check.mjs
       - run: node --test scripts/v1-deployment-config-check.test.mjs
       - run: node --test scripts/v1-uat-environment-validate.test.mjs
@@ -93,8 +96,8 @@ jobs:
   "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\n",
   "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\nRequest Status: External UAT Evidence Required\nRequest Board\nDo not record plaintext passwords\n",
   "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\n",
-  "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\n",
-  "scripts/v1-generated-docs-check.test.mjs": "fails when a generated document drifts from its generator\n",
+  "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\nvalidation-status-current-commit\n",
+  "scripts/v1-generated-docs-check.test.mjs": "fails when a generated document drifts from its generator\nfails when the validation status document is not bound to the current git commit\n",
   "scripts/v1-release-gate-status-check.mjs": "evaluateV1ReleaseGateStatusSnapshot\nrequired-checks\nresult-shape\nnode scripts/v1-release-gate-status-check.mjs\n",
   "scripts/v1-release-gate-status-check.test.mjs": "fails when the release gate JSON snapshot omits a required check\n",
   "scripts/v1-plan-status-check.mjs": "evaluateV1PlanStatusSnapshot\nopen-plan-items-no-go\n",
@@ -288,6 +291,19 @@ test("fails when the release gate JSON snapshot is missing", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when V1 validation checkout cannot verify status commit freshness", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
+      .replace("      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 2\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "workflow-v1-validation"));
 });
 
 test("fails when the UAT evidence pack generator is missing", () => {
@@ -1134,6 +1150,21 @@ test("fails when the V1 generated docs consistency checker is missing from readi
     ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
       .replace("      - run: node --test scripts/v1-generated-docs-check.test.mjs\n", "")
       .replace("      - run: node scripts/v1-generated-docs-check.mjs\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-generated-docs-checker"));
+});
+
+test("fails when the V1 generated docs checker omits validation status commit freshness", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-generated-docs-check.mjs": completeSnapshot["scripts/v1-generated-docs-check.mjs"]
+      .replace("validation-status-current-commit\n", ""),
+    "scripts/v1-generated-docs-check.test.mjs": completeSnapshot["scripts/v1-generated-docs-check.test.mjs"]
+      .replace("fails when the validation status document is not bound to the current git commit\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

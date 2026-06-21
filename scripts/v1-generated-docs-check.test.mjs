@@ -4,7 +4,10 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { evaluateGeneratedDocsSnapshot } from "./v1-generated-docs-check.mjs";
+import {
+  evaluateGeneratedDocsSnapshot,
+  selectValidationStatusGitCommit
+} from "./v1-generated-docs-check.mjs";
 
 const MARKDOWN_DOCS = [
   "docs/testing/v1-validation-status.md",
@@ -80,4 +83,58 @@ test("fails when the generated release gate JSON snapshot is missing", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "docs/testing/v1-release-gate-status.json"));
+});
+
+test("fails when the validation status document is not bound to the current git commit", () => {
+  const currentCommit = "b3f6b280935698e8bf4625412989fd7ddacfa35b";
+  const staleCommit = "5bdd8ab7772b3c57b799c5c65db417b7da21db6d";
+  const validationStatus = [
+    "# CRM V1 Validation Status",
+    "",
+    "Generated at: 2026-06-20T06:44:19.125Z",
+    `Git commit: ${staleCommit}`,
+    "",
+    "Overall: No-Go",
+    ""
+  ].join("\n");
+  const content = "# Generated\n\nCurrent content\n";
+  const rootDir = writeSnapshot({
+    "docs/testing/v1-validation-status.md": validationStatus,
+    "docs/testing/v1-uat-action-plan.md": content,
+    "docs/testing/v1-uat-execution-pack.md": content,
+    "docs/testing/v1-go-no-go-meeting.md": content,
+    "docs/testing/v1-external-uat-request.md": content,
+    "docs/testing/v1-release-gate-status.json": "{\"result\":\"FAIL\"}\n",
+    ".git/HEAD": "ref: refs/heads/main\n",
+    ".git/refs/heads/main": `${currentCommit}\n`
+  });
+
+  const result = evaluateGeneratedDocsSnapshot({
+    rootDir,
+    generators: {
+      "docs/testing/v1-validation-status.md": () => validationStatus,
+      "docs/testing/v1-uat-action-plan.md": () => content,
+      "docs/testing/v1-uat-execution-pack.md": () => content,
+      "docs/testing/v1-go-no-go-meeting.md": () => content,
+      "docs/testing/v1-external-uat-request.md": () => content,
+      "docs/testing/v1-release-gate-status.json": () => "{\"result\":\"FAIL\"}\n"
+    }
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "validation-status-current-commit"));
+});
+
+test("reuses an immediately previous validation status commit during regeneration", () => {
+  const currentCommit = "8c4f596a9a9c4b02d95b4b6f82d2e6c4c2f0c111";
+  const previousCommit = "b3f6b280935698e8bf4625412989fd7ddacfa35b";
+
+  assert.equal(
+    selectValidationStatusGitCommit({
+      existingGitCommit: previousCommit,
+      allowedGitCommits: [currentCommit, previousCommit],
+      currentGitCommit: currentCommit
+    }),
+    previousCommit
+  );
 });
