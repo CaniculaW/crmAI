@@ -45,6 +45,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-go-no-go-meeting.test.mjs",
   "scripts/v1-kickoff-governance-closure-intake.mjs",
   "scripts/v1-kickoff-governance-closure-intake.test.mjs",
+  "scripts/v1-kickoff-governance-evidence-pack.mjs",
+  "scripts/v1-kickoff-governance-evidence-pack.test.mjs",
   "scripts/v1-progress-todo.mjs",
   "scripts/v1-progress-todo.test.mjs",
   "scripts/v1-external-uat-request.mjs",
@@ -84,6 +86,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/v1-release-gate-status.json",
   "docs/meeting-notes/crm-kickoff-minutes.md",
   "docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
+  "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
@@ -324,6 +327,29 @@ function hasKickoffGovernanceClosureIntake(content) {
     "V1范围冻结",
     "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
     "node scripts/v1-release-gate.mjs --json"
+  ]);
+}
+
+function hasKickoffGovernanceEvidencePack(content) {
+  return includesAll(content, [
+    "CRM V1 Kickoff Governance Evidence Pack",
+    "Current task: `1-governance`",
+    "Open kickoff blockers:",
+    "Target source document: `docs/meeting-notes/crm-kickoff-minutes.md`",
+    "Decision target: `Go`",
+    "Do not record plaintext passwords",
+    "Owner Confirmation TODOList",
+    "Scope Freeze TODOList",
+    "Current Governance Blockers",
+    "Kickoff Governance/required-owners",
+    "Kickoff Governance/scope-freeze",
+    "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
+    "node scripts/v1-release-gate.mjs --json",
+    "Task Switch Display Rule",
+    "上一任务",
+    "当前任务",
+    "完成标准",
+    "验证命令"
   ]);
 }
 
@@ -613,6 +639,8 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node scripts/v1-deployment-config-check.mjs",
       "node --test scripts/v1-deployment-config-check.test.mjs",
       "node --test scripts/*.test.mjs",
+      "node --test scripts/v1-kickoff-governance-evidence-pack.test.mjs",
+      "node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
       "node --test scripts/v1-progress-todo.test.mjs",
       "node scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md",
       "mvn -B test",
@@ -976,6 +1004,26 @@ export function evaluateReadinessSnapshot(snapshot) {
     "Kickoff governance closure intake generator is tested and wired into CI to turn the earliest governance blockers into owner, scope-freeze, evidence, and Go decision collection work."
   ));
 
+  const kickoffGovernanceEvidencePackGenerator = snapshot["scripts/v1-kickoff-governance-evidence-pack.mjs"] ?? "";
+  const kickoffGovernanceEvidencePackGeneratorTest = snapshot["scripts/v1-kickoff-governance-evidence-pack.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "kickoff-governance-evidence-pack-generator",
+    includesAll(workflow + kickoffGovernanceEvidencePackGenerator + kickoffGovernanceEvidencePackGeneratorTest, [
+      "node --test scripts/v1-kickoff-governance-evidence-pack.test.mjs",
+      "node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
+      "generateKickoffGovernanceEvidencePackMarkdown",
+      "generateKickoffGovernanceEvidencePackFromFiles",
+      "CRM V1 Kickoff Governance Evidence Pack",
+      "Owner Confirmation TODOList",
+      "Scope Freeze TODOList",
+      "Current Governance Blockers",
+      "Task Switch Display Rule",
+      "generates a kickoff governance evidence pack for the current 1-governance task",
+      "uses custom target kickoff and evidence paths"
+    ]),
+    "Kickoff governance evidence pack generator is tested and wired into CI to turn current 1-governance blockers into owner confirmation, scope freeze, task-switch, and validation evidence collection work."
+  ));
+
   const progressTodoGenerator = snapshot["scripts/v1-progress-todo.mjs"] ?? "";
   const progressTodoGeneratorTest = snapshot["scripts/v1-progress-todo.test.mjs"] ?? "";
   checks.push(makeCheck(
@@ -1058,8 +1106,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "Generated document is stale",
       "validation-status-current-commit",
       "docs/testing/v1-progress-todo.md",
+      "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
       "fails when a generated document drifts from its generator",
       "fails when the validation status document is not bound to the current git commit",
+      "fails when the generated kickoff governance evidence pack is missing",
       "fails when the generated V1 progress TODO board is missing"
     ]),
     "Generated V1 docs checker is tested and wired into CI to prevent stale generated evidence packs, stale validation status commit bindings, and stale progress TODO boards."
@@ -1200,10 +1250,12 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node scripts/v1-traceability-check.mjs",
       "node scripts/v1-final-evidence-handoff-check.mjs",
       "node scripts/v1-release-gate.mjs --json",
+      "node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
       "node scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md",
       "fails when final handoff materials claim V1 acceptance while release gate is No-Go",
       "fails when final handoff materials omit acceptance and traceability commands",
       "fails when final handoff materials omit the machine-readable final release gate command",
+      "fails when final handoff materials omit the kickoff governance evidence pack generation command",
       "fails when final handoff materials omit the V1 progress TODO generation command",
       "fails when No-Go final handoff materials hide external UAT blockers",
       "fails when No-Go external UAT handoff packets claim all rows are closed",
@@ -1223,8 +1275,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "current-v1-evidence-no-secrets",
       "README.md",
       "docs/testing/v1-progress-todo.md",
+      "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
       "tracks the README final handoff entrypoint as current V1 evidence",
       "tracks the V1 progress TODO board as current V1 evidence",
+      "tracks the kickoff governance evidence pack as current V1 evidence",
       "fails when a current V1 evidence document contains a bearer token"
     ]),
     "V1 secret scan checker is tested and wired into CI to keep current V1 evidence documents and final handoff entrypoints free of obvious plaintext secrets."
@@ -1288,10 +1342,11 @@ export function evaluateReadinessSnapshot(snapshot) {
   const goNoGoMeetingDoc = snapshot["docs/testing/v1-go-no-go-meeting.md"] ?? "";
   const externalUatRequestDoc = snapshot["docs/testing/v1-external-uat-request.md"] ?? "";
   const kickoffGovernanceClosureIntakeDoc = snapshot["docs/meeting-notes/crm-kickoff-governance-closure-intake.md"] ?? "";
+  const kickoffGovernanceEvidencePackDoc = snapshot["docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md"] ?? "";
   const progressTodoDoc = snapshot["docs/testing/v1-progress-todo.md"] ?? "";
   checks.push(makeCheck(
     "external-uat-blockers-documented",
-    includesAll(traceability + validationReport + validationStatusDoc + uatActionPlanDoc + goNoGoMeetingDoc + externalUatRequestDoc + kickoffGovernanceClosureIntakeDoc + progressTodoDoc + release + acceptance, [
+    includesAll(traceability + validationReport + validationStatusDoc + uatActionPlanDoc + goNoGoMeetingDoc + externalUatRequestDoc + kickoffGovernanceClosureIntakeDoc + kickoffGovernanceEvidencePackDoc + progressTodoDoc + release + acceptance, [
       "具名测试环境",
       "业务验收签署",
       "仍需"
@@ -1309,6 +1364,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "签署",
       "证据",
       "node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
+      "node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
       "node scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md",
       "node scripts/v1-uat-coverage-check.mjs",
       "node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md",
@@ -1356,6 +1412,12 @@ export function evaluateReadinessSnapshot(snapshot) {
     "kickoff-governance-closure-intake-doc",
     hasKickoffGovernanceClosureIntake(kickoffGovernanceClosureIntakeDoc),
     "Kickoff governance closure intake inventories owner, scope-freeze, evidence, and Go decision collection work for the earliest open closure phase."
+  ));
+
+  checks.push(makeCheck(
+    "kickoff-governance-evidence-pack-doc",
+    hasKickoffGovernanceEvidencePack(kickoffGovernanceEvidencePackDoc),
+    "Kickoff governance evidence pack inventories current 1-governance blockers, owner confirmation TODOList, scope freeze TODOList, task-switch guidance, and validation commands."
   ));
 
   checks.push(makeCheck(
@@ -1463,6 +1525,8 @@ export function evaluateReadinessSnapshot(snapshot) {
       "v1-kickoff-governance-validate.mjs",
       "\nv1-kickoff-governance-closure-intake.mjs\n",
       "node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
+      "v1-kickoff-governance-evidence-pack.mjs",
+      "node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
       "v1-progress-todo.mjs",
       "node scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md",
       "v1-uat-environment-validate.mjs",

@@ -18,6 +18,7 @@ import { generateV1UatExecutionPackFromFiles } from "./v1-uat-execution-pack.mjs
 import { generateV1ValidationStatusFromFiles } from "./v1-validation-status.mjs";
 import { evaluateV1ReleaseGateFromFiles, renderResult } from "./v1-release-gate.mjs";
 import { generateKickoffGovernanceClosureIntakeMarkdown } from "./v1-kickoff-governance-closure-intake.mjs";
+import { generateKickoffGovernanceEvidencePackFromFiles } from "./v1-kickoff-governance-evidence-pack.mjs";
 import { generateV1ProgressTodoFromFiles } from "./v1-progress-todo.mjs";
 
 const GENERATED_DOC_PATHS = [
@@ -26,6 +27,7 @@ const GENERATED_DOC_PATHS = [
   "docs/testing/v1-uat-execution-pack.md",
   "docs/testing/v1-go-no-go-meeting.md",
   "docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
+  "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
   "docs/testing/v1-progress-todo.md",
   "docs/testing/v1-external-uat-request.md",
   "docs/testing/v1-external-uat-closure-checklist.md",
@@ -133,6 +135,10 @@ function defaultGenerators(rootDir) {
     "docs/meeting-notes/crm-kickoff-governance-closure-intake.md": () => generateKickoffGovernanceClosureIntakeMarkdown({
       generatedAt: generatedAtFrom(rootDir, "docs/meeting-notes/crm-kickoff-governance-closure-intake.md")
     }),
+    "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md": () => generateKickoffGovernanceEvidencePackFromFiles({
+      rootDir,
+      generatedAt: generatedAtFrom(rootDir, "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md")
+    }),
     "docs/testing/v1-progress-todo.md": () => generateV1ProgressTodoFromFiles({
       rootDir,
       generatedAt: generatedAtFrom(rootDir, "docs/testing/v1-progress-todo.md")
@@ -227,7 +233,7 @@ function printResult(result) {
   }
 
   lines.push("");
-  lines.push("Note: PASS means generated V1 status, action, execution, Go/No-Go, kickoff governance closure intake, progress TODO, external UAT request, external UAT closure checklist, external UAT evidence intake, next closure phase handoff, external UAT blockers JSON, and release gate JSON snapshot documents match their current generator outputs.");
+  lines.push("Note: PASS means generated V1 status, action, execution, Go/No-Go, kickoff governance closure intake, kickoff governance evidence pack, progress TODO, external UAT request, external UAT closure checklist, external UAT evidence intake, next closure phase handoff, external UAT blockers JSON, and release gate JSON snapshot documents match their current generator outputs.");
 
   console.log(lines.join("\n"));
 }

@@ -17,6 +17,7 @@ export const CURRENT_V1_EVIDENCE_DOCS = [
   "docs/testing/v1-external-uat-evidence-intake.md",
   "docs/testing/v1-next-closure-phase.md",
   "docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
+  "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
   "docs/testing/v1-progress-todo.md",
   "docs/testing/v1-external-uat-blockers.json",
   "docs/testing/v1-release-gate-status.json",

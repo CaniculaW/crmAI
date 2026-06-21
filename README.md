@@ -135,6 +135,20 @@ node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-note
 
 该模板用于把当前 `1-governance` 阶段的负责人、范围冻结、证据引用和项目 `Go` 结论拆成可认领补证项；模板本身不替代 `crm-kickoff-minutes.md` 的正式 PASS 证据。
 
+启动治理证据包生成器入口：
+
+```text
+v1-kickoff-governance-evidence-pack.mjs
+```
+
+V1 启动治理证据包：
+
+```bash
+node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md
+```
+
+该证据包用于把当前 `1-governance` 阻塞转成负责人确认、范围冻结、当前阻塞、任务切换展示和验证命令的留痕清单；证据包本身不替代 `crm-kickoff-minutes.md` 的正式 PASS 证据。
+
 UAT 证据包草稿生成：
 
 ```bash
