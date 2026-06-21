@@ -221,3 +221,14 @@ test("fails when No-Go final handoff materials hide external UAT blockers", () =
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "external-blockers-visible"));
 });
+
+test("fails when No-Go external UAT handoff packets claim all rows are closed", () => {
+  const result = evaluateV1FinalEvidenceHandoffSnapshot(completeDocuments({
+    "docs/testing/v1-external-uat-request.md": "Request Status: No External UAT Requests Open\nAll external UAT request items are closed by validator evidence.\n",
+    "docs/testing/v1-external-uat-closure-checklist.md": "Overall: Go\nOpen blocker count: 0\nAll closure rows are closed by validator evidence.\n",
+    "docs/testing/v1-external-uat-evidence-intake.md": "Overall: Go\nAll intake rows are closed by validator evidence.\n"
+  }));
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "no-go-external-uat-open-guardrail"));
+});

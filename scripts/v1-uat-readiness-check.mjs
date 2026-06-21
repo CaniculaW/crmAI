@@ -970,6 +970,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "release-gate-status-readable",
       "external-blockers-visible",
       "no-go-handoff-guardrail",
+      "no-go-external-uat-open-guardrail",
       "handoff-command-coverage",
       "node scripts/v1-evidence-reference-check.mjs docs/testing/v1-uat-evidence-manifest.md",
       "node scripts/v1-acceptance-checklist-check.mjs",
@@ -981,6 +982,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "fails when final handoff materials omit acceptance and traceability commands",
       "fails when final handoff materials omit the machine-readable final release gate command",
       "fails when No-Go final handoff materials hide external UAT blockers",
+      "fails when No-Go external UAT handoff packets claim all rows are closed",
       "fails when generated UAT handoff packets are missing"
     ]),
     "V1 final evidence handoff checker is tested and wired into CI to keep final handoff materials, generated UAT packets, release gate status, and external blockers aligned."

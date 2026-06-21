@@ -59,6 +59,21 @@ const FINAL_GO_CLAIM_PATTERNS = [
 
 const CAVEAT_PATTERN = /仍需|待|不能|不可|才(?:能|应)|必须|前|后|若|不替代|不代表|准备|模板|示例|用于|防止|覆盖|要求|通过标准|不是正式|expected|as expected|完整 Go|只有|No-Go|FAIL/;
 
+const NO_GO_EXTERNAL_UAT_DOC_GUARDS = {
+  "docs/testing/v1-external-uat-request.md": [
+    /Request Status:\s*No External UAT Requests Open/,
+    /All external UAT request items are closed by validator evidence/
+  ],
+  "docs/testing/v1-external-uat-closure-checklist.md": [
+    /Overall:\s*Go/,
+    /All closure rows are closed by validator evidence/
+  ],
+  "docs/testing/v1-external-uat-evidence-intake.md": [
+    /Overall:\s*Go/,
+    /All intake rows are closed by validator evidence/
+  ]
+};
+
 function makeCheck(id, ok, message) {
   return { id, ok, message };
 }
@@ -90,6 +105,15 @@ function misleadingFinalGoClaims(documents) {
   });
 }
 
+function misleadingExternalUatClosedClaims(documents) {
+  return Object.entries(NO_GO_EXTERNAL_UAT_DOC_GUARDS).flatMap(([docPath, patterns]) => {
+    const lines = (documents[docPath] ?? "").split("\n");
+    return lines
+      .map((line, index) => ({ docPath, line: index + 1, text: line.trim() }))
+      .filter((item) => patterns.some((pattern) => pattern.test(item.text)));
+  });
+}
+
 export function evaluateV1FinalEvidenceHandoffSnapshot(documents) {
   const missingDocs = [...HANDOFF_DOC_PATHS, STATUS_PATH].filter((docPath) => {
     const text = documents[docPath];
@@ -104,6 +128,7 @@ export function evaluateV1FinalEvidenceHandoffSnapshot(documents) {
     ? REQUIRED_NO_GO_BLOCKER_TERMS.filter((term) => !handoffText.includes(term))
     : [];
   const misleadingClaims = noGoStatus ? misleadingFinalGoClaims(documents) : [];
+  const misleadingExternalUatClosed = noGoStatus ? misleadingExternalUatClosedClaims(documents) : [];
 
   const checks = [
     makeCheck(
@@ -143,6 +168,13 @@ export function evaluateV1FinalEvidenceHandoffSnapshot(documents) {
       misleadingClaims.length === 0
         ? "No-Go handoff materials do not claim final V1 acceptance or formal release."
         : `No-Go handoff materials contain misleading final Go claims: ${misleadingClaims.map((item) => `${item.docPath}:${item.line}`).join(", ")}`
+    ),
+    makeCheck(
+      "no-go-external-uat-open-guardrail",
+      misleadingExternalUatClosed.length === 0,
+      misleadingExternalUatClosed.length === 0
+        ? "No-Go external UAT handoff packets remain open while blockers exist."
+        : `No-Go external UAT handoff packets contain closed-state claims: ${misleadingExternalUatClosed.map((item) => `${item.docPath}:${item.line}`).join(", ")}`
     )
   ];
 
@@ -157,7 +189,8 @@ export function evaluateV1FinalEvidenceHandoffSnapshot(documents) {
     missingDocs,
     missingCommands,
     missingBlockerTerms,
-    misleadingClaims
+    misleadingClaims,
+    misleadingExternalUatClosed
   };
 }
 
