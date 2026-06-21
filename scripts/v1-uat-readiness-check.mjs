@@ -74,6 +74,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/v1-external-uat-request.md",
   "docs/testing/v1-external-uat-closure-checklist.md",
   "docs/testing/v1-external-uat-evidence-intake.md",
+  "docs/testing/v1-next-closure-phase.md",
   "docs/testing/v1-external-uat-blockers.json",
   "docs/testing/v1-release-gate-status.json",
   "docs/meeting-notes/crm-kickoff-minutes.md",
@@ -506,6 +507,34 @@ function hasExternalUatEvidenceIntake(content) {
   ]);
 }
 
+function hasNextClosurePhaseHandoff(content) {
+  const openCountMatch = content.match(/Open blockers:\s*(\d+)/);
+  const declaredOpenCount = openCountMatch ? Number.parseInt(openCountMatch[1], 10) : Number.NaN;
+  const openRows = content
+    .split("\n")
+    .filter((line) => line.trim().startsWith("| Open |"));
+  const openCountMatches = Number.isInteger(declaredOpenCount)
+    && declaredOpenCount === openRows.length;
+
+  return openCountMatches && includesAll(content, [
+    "CRM V1 Next Closure Phase Handoff",
+    "Overall: No-Go",
+    "Phase:",
+    "Order:",
+    "Open blockers:",
+    "Owner side:",
+    "Blocker IDs:",
+    "Source documents:",
+    "Validation commands:",
+    "Status",
+    "Blocker ID",
+    "Gate",
+    "Check ID",
+    "Closure evidence needed",
+    "Do not mark this phase Closed until every listed source document validates PASS and the final release gate returns Go"
+  ]);
+}
+
 function makeCheck(id, ok, message, severity = "fail") {
   return { id, ok, message, severity };
 }
@@ -884,6 +913,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node --test scripts/v1-external-uat-request.test.mjs",
       "node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md",
       "node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md",
+      "node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md",
       "node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json",
       "generateV1ExternalUatRequestMarkdown",
       "generateV1ExternalUatBlockersJson",
@@ -892,14 +922,19 @@ export function evaluateReadinessSnapshot(snapshot) {
       "generateV1ExternalUatClosureChecklistFromFiles",
       "generateV1ExternalUatEvidenceIntakeMarkdown",
       "generateV1ExternalUatEvidenceIntakeFromFiles",
+      "generateV1NextClosurePhaseMarkdown",
+      "generateV1NextClosurePhaseFromFiles",
       "Request Status: External UAT Evidence Required",
       "Request Board",
       "CRM V1 External UAT Closure Checklist",
       "CRM V1 External UAT Evidence Intake",
+      "CRM V1 Next Closure Phase Handoff",
       "--closure-checklist",
       "--evidence-intake",
+      "--next-closure-phase",
       "v1-external-uat-closure-checklist.md",
       "v1-external-uat-evidence-intake.md",
+      "v1-next-closure-phase.md",
       "v1-external-uat-blockers.json",
       "node scripts/v1-release-gate.mjs --json",
       "exports machine-readable external UAT blockers with owner routing and validation commands",
@@ -908,6 +943,8 @@ export function evaluateReadinessSnapshot(snapshot) {
       "exports machine-readable blocker closure sequencing",
       "exports ordered blocker closure phase summaries",
       "exports next closure phase handoff metadata",
+      "generates a next closure phase handoff packet",
+      "generates a closed next closure phase handoff when no blockers remain",
       "keeps external UAT request open when validator blockers remain despite release gate Go",
       "keeps blockers JSON No-Go when validator blockers remain despite release gate Go",
       "generates an external UAT closure checklist grouped by owner side",
@@ -1174,6 +1211,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "签署",
       "证据",
       "node scripts/v1-uat-coverage-check.mjs",
+      "node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md",
       "node scripts/v1-release-gate.mjs --json"
     ]),
     "UAT runbook and evidence template include evidence, signature, Go/No-Go sections, and the machine-readable final release gate command."
@@ -1297,6 +1335,13 @@ export function evaluateReadinessSnapshot(snapshot) {
     "External UAT evidence intake checklist routes incoming evidence to manifest IDs, source documents, and validation commands."
   ));
 
+  const nextClosurePhase = snapshot["docs/testing/v1-next-closure-phase.md"] ?? "";
+  checks.push(makeCheck(
+    "next-closure-phase-handoff",
+    hasNextClosurePhaseHandoff(nextClosurePhase),
+    "Next closure phase handoff isolates the earliest open closure phase with blocker IDs, source documents, and validation commands."
+  ));
+
   const readme = snapshot["README.md"] ?? "";
   checks.push(makeCheck(
     "readme-entrypoints",
@@ -1319,6 +1364,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "v1-external-uat-request.mjs",
       "node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md",
       "node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md",
+      "node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md",
       "node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json",
       "v1-generated-docs-check.mjs",
       "v1-release-gate-status-check.mjs",

@@ -212,6 +212,14 @@ node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing
 
 该收件清单把外部补证工作映射到 `docs/testing/v1-uat-evidence-manifest.md` 的 Evidence ID、正式源文档和验证命令，帮助项目/测试/业务侧把证据补到正确位置。
 
+生成或更新下一闭环阶段交接包时，执行：
+
+```bash
+node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md
+```
+
+该交接包只列出当前最早仍开放的闭环阶段、对应 `blockerId`、责任侧、源文档、验证命令和关闭证据要求，便于优先闭环项目/产品、测试或业务UAT侧的下一批阻塞项。
+
 生成或更新外部 UAT 阻塞项 JSON 时，执行：
 
 ```bash

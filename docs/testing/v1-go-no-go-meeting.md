@@ -1,6 +1,6 @@
 # CRM V1 Go/No-Go Meeting Pack
 
-Generated at: 2026-06-21T12:13:10.888Z
+Generated at: 2026-06-21T12:34:46.423Z
 
 Decision Recommendation: No-Go
 

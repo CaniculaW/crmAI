@@ -290,6 +290,12 @@ V1 外部UAT证据收件清单：
 node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md
 ```
 
+V1 下一闭环阶段交接包：
+
+```bash
+node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md
+```
+
 V1 外部UAT阻塞项JSON：
 
 ```bash

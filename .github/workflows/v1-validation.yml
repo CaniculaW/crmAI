@@ -99,6 +99,9 @@ jobs:
       - name: Generate V1 external UAT evidence intake
         run: node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md
 
+      - name: Generate V1 next closure phase handoff
+        run: node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md
+
       - name: Generate V1 external UAT blockers JSON
         run: node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json
 

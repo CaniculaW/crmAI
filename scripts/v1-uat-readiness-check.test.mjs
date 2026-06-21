@@ -33,6 +33,7 @@ jobs:
       - run: node --test scripts/v1-external-uat-request.test.mjs
       - run: node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md
       - run: node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md
+      - run: node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md
       - run: node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json
       - run: node --test scripts/v1-generated-docs-check.test.mjs
       - run: node scripts/v1-generated-docs-check.mjs
@@ -98,8 +99,8 @@ jobs:
   "scripts/v1-uat-execution-pack.test.mjs": "generates an executable UAT evidence collection pack from failed gates\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nKickoff Governance\nUAT Environment Evidence\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\nnode scripts/v1-release-gate.mjs --json\n",
-  "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\ngenerateV1ExternalUatBlockersJson\ngenerateV1ExternalUatBlockersFromFiles\ngenerateV1ExternalUatClosureChecklistMarkdown\ngenerateV1ExternalUatClosureChecklistFromFiles\ngenerateV1ExternalUatEvidenceIntakeMarkdown\ngenerateV1ExternalUatEvidenceIntakeFromFiles\nRequest Status: External UAT Evidence Required\nRequest Board\nCRM V1 External UAT Closure Checklist\nCRM V1 External UAT Evidence Intake\nDo not record plaintext passwords\nnode scripts/v1-release-gate.mjs --json\n--json\n--closure-checklist\n--evidence-intake\nv1-external-uat-blockers.json\nv1-external-uat-closure-checklist.md\nv1-external-uat-evidence-intake.md\n",
-  "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\nkeeps external UAT request open when validator blockers remain despite release gate Go\nexports machine-readable external UAT blockers with owner routing and validation commands\nkeeps blockers JSON No-Go when validator blockers remain despite release gate Go\ndeduplicates machine-readable blockers by gate and check id\nexports stable machine-readable blocker ids\nexports machine-readable blocker closure sequencing\nexports ordered blocker closure phase summaries\nexports next closure phase handoff metadata\ngenerates an external UAT closure checklist grouped by owner side\nkeeps closure checklist No-Go when validator blockers remain despite release gate Go\ngenerates an external UAT evidence intake checklist tied to manifest ids\nkeeps evidence intake No-Go when validator blockers remain despite release gate Go\nkeeps evidence intake manifest ids assigned to a single intake row\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\ngenerateV1ExternalUatBlockersJson\ngenerateV1ExternalUatBlockersFromFiles\ngenerateV1ExternalUatClosureChecklistMarkdown\ngenerateV1ExternalUatClosureChecklistFromFiles\ngenerateV1ExternalUatEvidenceIntakeMarkdown\ngenerateV1ExternalUatEvidenceIntakeFromFiles\ngenerateV1NextClosurePhaseMarkdown\ngenerateV1NextClosurePhaseFromFiles\nRequest Status: External UAT Evidence Required\nRequest Board\nCRM V1 External UAT Closure Checklist\nCRM V1 External UAT Evidence Intake\nCRM V1 Next Closure Phase Handoff\nDo not record plaintext passwords\nnode scripts/v1-release-gate.mjs --json\n--json\n--closure-checklist\n--evidence-intake\n--next-closure-phase\nv1-external-uat-blockers.json\nv1-external-uat-closure-checklist.md\nv1-external-uat-evidence-intake.md\nv1-next-closure-phase.md\n",
+  "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\nkeeps external UAT request open when validator blockers remain despite release gate Go\nexports machine-readable external UAT blockers with owner routing and validation commands\nkeeps blockers JSON No-Go when validator blockers remain despite release gate Go\ndeduplicates machine-readable blockers by gate and check id\nexports stable machine-readable blocker ids\nexports machine-readable blocker closure sequencing\nexports ordered blocker closure phase summaries\nexports next closure phase handoff metadata\ngenerates a next closure phase handoff packet\ngenerates a closed next closure phase handoff when no blockers remain\ngenerates an external UAT closure checklist grouped by owner side\nkeeps closure checklist No-Go when validator blockers remain despite release gate Go\ngenerates an external UAT evidence intake checklist tied to manifest ids\nkeeps evidence intake No-Go when validator blockers remain despite release gate Go\nkeeps evidence intake manifest ids assigned to a single intake row\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\nvalidation-status-current-commit\n",
   "scripts/v1-generated-docs-check.test.mjs": "fails when a generated document drifts from its generator\nfails when the validation status document is not bound to the current git commit\n",
   "scripts/v1-release-gate-status-check.mjs": "evaluateV1ReleaseGateStatusSnapshot\nrequired-checks\nunique-check-ids\nknown-check-ids\nresult-shape\ndecision-consistency\nlive-release-gate-match\nevaluateV1ReleaseGateFromFiles\nnode scripts/v1-release-gate-status-check.mjs\n",
@@ -162,6 +163,24 @@ Do not paste passwords
 node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md
 node scripts/v1-release-gate.mjs --json
 `,
+  "docs/testing/v1-next-closure-phase.md": `CRM V1 Next Closure Phase Handoff
+Overall: No-Go
+Phase: \`1-governance\`
+Order: 10
+Open blockers: 3
+Owner side: 项目/产品
+Blocker IDs: \`Kickoff Governance/required-owners\`, \`Kickoff Governance/scope-freeze\`, \`Release Gate/kickoff-governance\`
+Source documents: \`docs/meeting-notes/crm-kickoff-minutes.md\`
+Validation commands:
+- \`node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md\`
+- \`node scripts/v1-release-gate.mjs --json\`
+| Status | Blocker ID | Gate | Check ID | Owner side | Source document | Validation command | Closure evidence needed |
+|---|---|---|---|---|---|---|---|
+| Open | Kickoff Governance/required-owners | Kickoff Governance | required-owners | 项目/产品 | docs/meeting-notes/crm-kickoff-minutes.md | node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md | Incomplete kickoff owners |
+| Open | Kickoff Governance/scope-freeze | Kickoff Governance | scope-freeze | 项目/产品 | docs/meeting-notes/crm-kickoff-minutes.md | node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md | Incomplete kickoff scope freeze items |
+| Open | Release Gate/kickoff-governance | Release Gate | kickoff-governance | 项目/产品 | docs/meeting-notes/crm-kickoff-minutes.md | node scripts/v1-release-gate.mjs --json | Kickoff governance failed |
+Do not mark this phase Closed until every listed source document validates PASS and the final release gate returns Go
+`,
   "docs/testing/v1-external-uat-blockers.json": "{\"status\":\"External UAT Evidence Required\",\"decision\":\"No-Go\",\"ok\":false,\"summary\":{\"totalBlockers\":1,\"byOwnerSide\":{\"项目/产品\":1},\"byClosurePhase\":{\"6-final-go-decision\":1},\"closurePhases\":[{\"phase\":\"6-final-go-decision\",\"order\":60,\"totalBlockers\":1,\"byOwnerSide\":{\"项目/产品\":1}}],\"nextClosurePhase\":{\"phase\":\"6-final-go-decision\",\"order\":60,\"totalBlockers\":1,\"byOwnerSide\":{\"项目/产品\":1},\"blockerIds\":[\"Release Gate/go-decision\"],\"sourceDocuments\":[\"docs/testing/v1-go-no-go-meeting.md\"],\"validationCommands\":[\"node scripts/v1-release-gate.mjs --json\"]}},\"blockers\":[{\"blockerId\":\"Release Gate/go-decision\",\"gate\":\"Release Gate\",\"checkId\":\"go-decision\",\"ownerSide\":\"项目/产品\",\"closurePhase\":\"6-final-go-decision\",\"closureOrder\":60,\"sourceDocument\":\"docs/testing/v1-go-no-go-meeting.md\",\"validationCommand\":\"node scripts/v1-release-gate.mjs --json\",\"message\":\"Project decision is No-Go; V1 release gate requires Go.\"}]}\n",
   "docs/testing/v1-release-gate-status.json": "{\"result\":\"FAIL\",\"decision\":\"No-Go\",\"ok\":false,\"checks\":[{\"id\":\"go-decision\",\"ok\":false}]}\n",
   "docs/meeting-notes/crm-kickoff-minutes.md": `CRM研发启动会纪要
@@ -184,7 +203,7 @@ V1范围冻结
 node scripts/v1-kickoff-governance-validate.mjs
 `,
   "docs/testing/crm-v1-validation-traceability.md": "研发验证通过\n若目标口径是“项目 V1 验收通过”，仍需完成具名测试环境验证和业务验收签署。\nnode scripts/v1-traceability-check.mjs\n",
-  "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\nUAT-001\nUAT-010\nAC-005\nAC-014\nnode scripts/v1-generated-docs-check.mjs\nnode scripts/v1-plan-status-check.mjs\nnode scripts/v1-uat-coverage-check.mjs\nnode scripts/v1-blocker-consistency-check.mjs\nnode scripts/v1-external-uat-request-coverage-check.mjs\nnode scripts/v1-final-evidence-handoff-check.mjs\nnode scripts/v1-secret-scan-check.mjs\nnode scripts/v1-release-gate.mjs --json\n",
+  "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\nUAT-001\nUAT-010\nAC-005\nAC-014\nnode scripts/v1-generated-docs-check.mjs\nnode scripts/v1-plan-status-check.mjs\nnode scripts/v1-uat-coverage-check.mjs\nnode scripts/v1-blocker-consistency-check.mjs\nnode scripts/v1-external-uat-request-coverage-check.mjs\nnode scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md\nnode scripts/v1-final-evidence-handoff-check.mjs\nnode scripts/v1-secret-scan-check.mjs\nnode scripts/v1-release-gate.mjs --json\n",
   "docs/testing/crm-v1-uat-evidence-pack-template.md": "Go/No-Go\n签署\n缺陷\n",
   "docs/testing/crm-v1-uat-execution-tracker.md": `CRM V1 UAT执行派工与证据追踪表
 v1.0.0-rc.8
@@ -299,7 +318,7 @@ node scripts/v1-evidence-reference-check.mjs
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-evidence-reference-check.mjs\nv1-release-gate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-external-uat-request.mjs\nnode scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md\nnode scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md\nnode scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json\nv1-generated-docs-check.mjs\nv1-release-gate-status-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\nv1-uat-coverage-check.mjs\nv1-traceability-check.mjs\nv1-blocker-consistency-check.mjs\nv1-external-uat-request-coverage-check.mjs\nv1-final-evidence-handoff-check.mjs\nv1-secret-scan-check.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-evidence-reference-check.mjs\nv1-release-gate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-external-uat-request.mjs\nnode scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md\nnode scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md\nnode scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md\nnode scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json\nv1-generated-docs-check.mjs\nv1-release-gate-status-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\nv1-uat-coverage-check.mjs\nv1-traceability-check.mjs\nv1-blocker-consistency-check.mjs\nv1-external-uat-request-coverage-check.mjs\nv1-final-evidence-handoff-check.mjs\nv1-secret-scan-check.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -462,6 +481,29 @@ test("fails when the external UAT evidence intake checklist snapshot is missing"
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the next closure phase handoff snapshot is missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["docs/testing/v1-next-closure-phase.md"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the next closure phase handoff omits phase routing", () => {
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    "docs/testing/v1-next-closure-phase.md": completeSnapshot["docs/testing/v1-next-closure-phase.md"]
+      .replace("Phase: `1-governance`\n", "")
+      .replace("Owner side: 项目/产品\n", "")
+      .replace("Do not mark this phase Closed until every listed source document validates PASS and the final release gate returns Go\n", "")
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "next-closure-phase-handoff"));
 });
 
 test("fails when the external UAT evidence intake assigns a manifest id to multiple rows", () => {
@@ -646,6 +688,24 @@ test("fails when the external UAT request generator omits the evidence intake ex
       .replace("v1-external-uat-evidence-intake.md\n", ""),
     "scripts/v1-external-uat-request.test.mjs": completeSnapshot["scripts/v1-external-uat-request.test.mjs"]
       .replace("generates an external UAT evidence intake checklist tied to manifest ids\n", "")
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-external-uat-request-pack"));
+});
+
+test("fails when the external UAT request generator omits the next closure phase export", () => {
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
+      .replace("      - run: node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md\n", ""),
+    "scripts/v1-external-uat-request.mjs": completeSnapshot["scripts/v1-external-uat-request.mjs"]
+      .replace("generateV1NextClosurePhaseMarkdown\n", "")
+      .replace("generateV1NextClosurePhaseFromFiles\n", "")
+      .replace("--next-closure-phase\n", "")
+      .replace("v1-next-closure-phase.md\n", ""),
+    "scripts/v1-external-uat-request.test.mjs": completeSnapshot["scripts/v1-external-uat-request.test.mjs"]
+      .replace("generates a next closure phase handoff packet\n", "")
   });
 
   assert.equal(result.ok, false);
@@ -1549,6 +1609,7 @@ test("fails when README omits external UAT generated handoff commands", () => {
   for (const command of [
     "node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md",
     "node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md",
+    "node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md",
     "node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json"
   ]) {
     const snapshot = {

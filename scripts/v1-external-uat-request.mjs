@@ -889,6 +889,103 @@ export function generateV1ExternalUatEvidenceIntakeMarkdown({
   return `${lines.join("\n")}\n`;
 }
 
+export function generateV1NextClosurePhaseMarkdown({
+  generatedAt,
+  readinessResult,
+  kickoffResult,
+  launchIntakeResult,
+  environmentResult,
+  evidenceResult,
+  manifestResult,
+  evidenceReferenceResult = { ok: true, failed: [] },
+  trackerResult,
+  defectRegisterResult,
+  signoffRegisterResult,
+  releaseGateResult,
+  evidencePath = DEFAULT_EVIDENCE_PATH,
+  trackerPath = DEFAULT_TRACKER_PATH,
+  manifestPath = DEFAULT_MANIFEST_PATH,
+  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH,
+  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH,
+  runbookPath = DEFAULT_RUNBOOK_PATH,
+  automatedReportPath = DEFAULT_AUTOMATED_REPORT_PATH
+}) {
+  const blockers = collectBlockers({
+    readinessResult,
+    kickoffResult,
+    launchIntakeResult,
+    environmentResult,
+    evidenceResult,
+    manifestResult,
+    evidenceReferenceResult,
+    trackerResult,
+    defectRegisterResult,
+    signoffRegisterResult,
+    releaseGateResult,
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath,
+    runbookPath,
+    automatedReportPath
+  });
+  const isGo = isExternalUatClosed(releaseGateResult, blockers);
+  const nextPhase = nextClosurePhaseSummary(blockers, closurePhaseSummaries(blockers));
+  const lines = [
+    "# CRM V1 Next Closure Phase Handoff",
+    "",
+    `Generated at: ${generatedAt}`,
+    "",
+    `Overall: ${isGo ? "Go" : "No-Go"}`,
+    "",
+    "Do not record plaintext passwords, bearer tokens, API keys, or unmasked account custody secrets in closure evidence.",
+    ""
+  ];
+
+  if (!nextPhase) {
+    lines.push("No next closure phase remains; all external UAT blockers are closed by validator evidence.");
+  } else {
+    const phaseBlockers = blockers.filter((blocker) => blocker.closurePhase === nextPhase.phase);
+    lines.push(`Phase: \`${nextPhase.phase}\``);
+    lines.push(`Order: ${nextPhase.order}`);
+    lines.push(`Open blockers: ${nextPhase.totalBlockers}`);
+    lines.push(`Owner side: ${Object.keys(nextPhase.byOwnerSide).sort().join(", ")}`);
+    lines.push(`Blocker IDs: ${inlineCodeList(nextPhase.blockerIds)}`);
+    lines.push(`Source documents: ${inlineCodeList(nextPhase.sourceDocuments)}`);
+    lines.push("Validation commands:");
+    lines.push(...nextPhase.validationCommands.map((command) => `- \`${command}\``));
+    lines.push("");
+    lines.push("| Status | Blocker ID | Gate | Check ID | Owner side | Source document | Validation command | Closure evidence needed |");
+    lines.push("|---|---|---|---|---|---|---|---|");
+    for (const blocker of phaseBlockers) {
+      lines.push([
+        "Open",
+        blocker.blockerId,
+        blocker.gate,
+        blocker.checkId,
+        blocker.ownerSide,
+        blocker.sourceDocument,
+        `\`${blocker.validationCommand}\``,
+        blocker.message
+      ].map(escapeMarkdownTableCell).join(" | ").replace(/^/, "| ").replace(/$/, " |"));
+    }
+    lines.push("");
+    lines.push("Do not mark this phase Closed until every listed source document validates PASS and the final release gate returns Go.");
+  }
+
+  lines.push("");
+  lines.push("Note: This handoff is generated from validator output and only lists the earliest open closure phase. Update source evidence documents, then regenerate this file.");
+
+  return `${lines.join("\n")}\n`;
+}
+
 export function generateV1ExternalUatRequestFromFiles({
   rootDir = process.cwd(),
   evidencePath = DEFAULT_EVIDENCE_PATH,
@@ -1137,6 +1234,69 @@ export function generateV1ExternalUatEvidenceIntakeFromFiles({
   });
 }
 
+export function generateV1NextClosurePhaseFromFiles({
+  rootDir = process.cwd(),
+  evidencePath = DEFAULT_EVIDENCE_PATH,
+  trackerPath = DEFAULT_TRACKER_PATH,
+  manifestPath = DEFAULT_MANIFEST_PATH,
+  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH,
+  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH,
+  runbookPath = DEFAULT_RUNBOOK_PATH,
+  automatedReportPath = DEFAULT_AUTOMATED_REPORT_PATH,
+  generatedAt = new Date().toISOString()
+} = {}) {
+  const readinessResult = evaluateReadinessSnapshot(readSnapshot(rootDir));
+  const kickoffResult = evaluateKickoffGovernance(readFileSync(resolveFromRoot(rootDir, kickoffPath), "utf8"));
+  const launchIntakeResult = evaluateUatLaunchIntake(readFileSync(resolveFromRoot(rootDir, launchIntakePath), "utf8"));
+  const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(resolveFromRoot(rootDir, environmentPath), "utf8"));
+  const evidenceResult = evaluateUatEvidencePack(readFileSync(resolveFromRoot(rootDir, evidencePath), "utf8"));
+  const trackerResult = evaluateUatExecutionTracker(readFileSync(resolveFromRoot(rootDir, trackerPath), "utf8"));
+  const manifestResult = evaluateUatEvidenceManifest(readFileSync(resolveFromRoot(rootDir, manifestPath), "utf8"));
+  const evidenceReferenceResult = evaluateEvidenceReferencesFromFiles(rootDir, manifestPath);
+  const defectRegisterResult = evaluateUatDefectRegister(readFileSync(resolveFromRoot(rootDir, defectRegisterPath), "utf8"));
+  const signoffRegisterResult = evaluateUatSignoffRegister(readFileSync(resolveFromRoot(rootDir, signoffRegisterPath), "utf8"));
+  const releaseGateResult = evaluateV1ReleaseGate({
+    readinessResult,
+    kickoffResult,
+    launchIntakeResult,
+    environmentResult,
+    uatEvidenceResult: evidenceResult,
+    trackerResult,
+    evidenceManifestResult: manifestResult,
+    evidenceReferenceResult,
+    defectRegisterResult,
+    signoffRegisterResult
+  });
+
+  return generateV1NextClosurePhaseMarkdown({
+    generatedAt,
+    readinessResult,
+    kickoffResult,
+    launchIntakeResult,
+    environmentResult,
+    evidenceResult,
+    manifestResult,
+    evidenceReferenceResult,
+    trackerResult,
+    defectRegisterResult,
+    signoffRegisterResult,
+    releaseGateResult,
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath,
+    runbookPath,
+    automatedReportPath
+  });
+}
+
 function parseArgs(argv) {
   const parsed = {
     rootDir: process.cwd(),
@@ -1151,7 +1311,8 @@ function parseArgs(argv) {
     outputPath: null,
     json: false,
     closureChecklist: false,
-    evidenceIntake: false
+    evidenceIntake: false,
+    nextClosurePhase: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -1192,6 +1353,8 @@ function parseArgs(argv) {
       parsed.closureChecklist = true;
     } else if (arg === "--evidence-intake") {
       parsed.evidenceIntake = true;
+    } else if (arg === "--next-closure-phase") {
+      parsed.nextClosurePhase = true;
     }
   }
 
@@ -1199,7 +1362,7 @@ function parseArgs(argv) {
 }
 
 function printUsage() {
-  console.error("Usage: node scripts/v1-external-uat-request.mjs [--json | --closure-checklist | --evidence-intake] [--root path] [--output docs/testing/v1-external-uat-request.md] [--evidence file] [--tracker file] [--manifest file] [--defects file] [--environment file] [--signoffs file] [--launch-intake file] [--kickoff file]");
+  console.error(`Usage: node scripts/v1-external-uat-request.mjs [--json | --closure-checklist | --evidence-intake | --next-closure-phase] [--root path] [--output ${DEFAULT_OUTPUT_PATH}] [--evidence file] [--tracker file] [--manifest file] [--defects file] [--environment file] [--signoffs file] [--launch-intake file] [--kickoff file]`);
 }
 
 const isCli = process.argv[1] === fileURLToPath(import.meta.url);
@@ -1213,7 +1376,9 @@ if (isCli) {
         ? generateV1ExternalUatClosureChecklistFromFiles(options)
         : options.evidenceIntake
           ? generateV1ExternalUatEvidenceIntakeFromFiles(options)
-          : generateV1ExternalUatRequestFromFiles(options);
+          : options.nextClosurePhase
+            ? generateV1NextClosurePhaseFromFiles(options)
+            : generateV1ExternalUatRequestFromFiles(options);
     if (options.outputPath) {
       writeFileSync(resolveFromRoot(options.rootDir, options.outputPath), output);
     } else {

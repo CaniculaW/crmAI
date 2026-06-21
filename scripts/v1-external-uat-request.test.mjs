@@ -9,6 +9,7 @@ import * as externalUatRequest from "./v1-external-uat-request.mjs";
 const {
   generateV1ExternalUatClosureChecklistMarkdown,
   generateV1ExternalUatEvidenceIntakeMarkdown,
+  generateV1NextClosurePhaseMarkdown,
   generateV1ExternalUatRequestFromFiles,
   generateV1ExternalUatRequestMarkdown
 } = externalUatRequest;
@@ -378,6 +379,61 @@ test("exports next closure phase handoff metadata", () => {
     "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
     "node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md"
   ]);
+});
+
+test("generates a next closure phase handoff packet", () => {
+  assert.equal(typeof generateV1NextClosurePhaseMarkdown, "function");
+
+  const markdown = generateV1NextClosurePhaseMarkdown({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
+    launchIntakeResult: failingLaunchIntake,
+    environmentResult: failingEnvironment,
+    evidenceResult: failingEvidence,
+    manifestResult: failingManifest,
+    trackerResult: failingTracker,
+    defectRegisterResult: failingDefects,
+    signoffRegisterResult: failingSignoffs,
+    releaseGateResult: failingReleaseGate
+  });
+
+  assert.match(markdown, /# CRM V1 Next Closure Phase Handoff/);
+  assert.match(markdown, /Generated at: 2026-06-19T12:30:00\+08:00/);
+  assert.match(markdown, /Overall: No-Go/);
+  assert.match(markdown, /Phase: `1-governance`/);
+  assert.match(markdown, /Order: 10/);
+  assert.match(markdown, /Open blockers: 3/);
+  assert.match(markdown, /Owner side: 项目\/产品/);
+  assert.match(markdown, /Source documents: `docs\/meeting-notes\/crm-kickoff-minutes\.md`/);
+  assert.match(markdown, /node scripts\/v1-kickoff-governance-validate\.mjs docs\/meeting-notes\/crm-kickoff-minutes\.md/);
+  assert.match(markdown, /\| Status \| Blocker ID \| Gate \| Check ID \| Owner side \| Source document \| Validation command \| Closure evidence needed \|/);
+  assert.match(markdown, /\| Open \| Kickoff Governance\/required-owners \| Kickoff Governance \| required-owners \| 项目\/产品 \| docs\/meeting-notes\/crm-kickoff-minutes\.md \| `node scripts\/v1-kickoff-governance-validate\.mjs docs\/meeting-notes\/crm-kickoff-minutes\.md` \| Incomplete kickoff owners/);
+  assert.match(markdown, /\| Open \| Release Gate\/kickoff-governance \| Release Gate \| kickoff-governance \| 项目\/产品 \| docs\/meeting-notes\/crm-kickoff-minutes\.md \| `node scripts\/v1-release-gate\.mjs --json/);
+  assert.doesNotMatch(markdown, /UAT Launch Intake\/environment-intake/);
+  assert.match(markdown, /Do not mark this phase Closed until every listed source document validates PASS and the final release gate returns Go/);
+});
+
+test("generates a closed next closure phase handoff when no blockers remain", () => {
+  const passing = { ok: true, decision: "Go", failed: [] };
+  const markdown = generateV1NextClosurePhaseMarkdown({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: passing,
+    launchIntakeResult: passing,
+    environmentResult: passing,
+    evidenceResult: passing,
+    manifestResult: passing,
+    trackerResult: passing,
+    defectRegisterResult: passing,
+    signoffRegisterResult: passing,
+    releaseGateResult: passing
+  });
+
+  assert.match(markdown, /# CRM V1 Next Closure Phase Handoff/);
+  assert.match(markdown, /Overall: Go/);
+  assert.match(markdown, /No next closure phase remains; all external UAT blockers are closed by validator evidence/);
+  assert.doesNotMatch(markdown, /\| Open \|/);
 });
 
 test("deduplicates machine-readable blockers by gate and check id", () => {
