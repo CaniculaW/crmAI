@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-21T03:04:32.079Z",
+  "generatedAt": "2026-06-21T10:49:40.640Z",
   "status": "External UAT Evidence Required",
   "decision": "No-Go",
   "ok": false,
@@ -13,6 +13,7 @@
   },
   "blockers": [
     {
+      "blockerId": "Kickoff Governance/required-owners",
       "gate": "Kickoff Governance",
       "checkId": "required-owners",
       "ownerSide": "项目/产品",
@@ -21,6 +22,7 @@
       "message": "Incomplete kickoff owners: 产品负责人, 业务验收人-销售侧, 业务验收人-管理侧, 研发负责人, 前端负责人, 后端负责人, 测试负责人"
     },
     {
+      "blockerId": "Kickoff Governance/scope-freeze",
       "gate": "Kickoff Governance",
       "checkId": "scope-freeze",
       "ownerSide": "项目/产品",
@@ -29,6 +31,7 @@
       "message": "Incomplete kickoff scope freeze items: V1 模块范围, V1 业务闭环, V1 暂不做, 上线周期, 技术栈, 验收方式, V1范围冻结"
     },
     {
+      "blockerId": "Kickoff Governance/project-go-decision",
       "gate": "Kickoff Governance",
       "checkId": "project-go-decision",
       "ownerSide": "项目/产品",
@@ -37,6 +40,7 @@
       "message": "Kickoff governance decision is No-Go; V1 validation requires Go."
     },
     {
+      "blockerId": "UAT Launch Intake/environment-intake",
       "gate": "UAT Launch Intake",
       "checkId": "environment-intake",
       "ownerSide": "项目/产品",
@@ -45,6 +49,7 @@
       "message": "Incomplete launch environment fields: 测试环境名称, 前端访问地址, 后端 API 地址, Git 提交号, UAT窗口, 证据归档位置"
     },
     {
+      "blockerId": "UAT Launch Intake/participant-roster",
       "gate": "UAT Launch Intake",
       "checkId": "participant-roster",
       "ownerSide": "项目/产品",
@@ -53,6 +58,7 @@
       "message": "Incomplete UAT participants: UAT-SALES, UAT-MANAGER, UAT-PRODUCT, UAT-TEST, UAT-DEV, UAT-PM"
     },
     {
+      "blockerId": "UAT Launch Intake/account-custody",
       "gate": "UAT Launch Intake",
       "checkId": "account-custody",
       "ownerSide": "项目/产品",
@@ -61,6 +67,7 @@
       "message": "Incomplete account custody items: 管理员账号, 销售个人账号, 销售负责人账号, 权限样本账号"
     },
     {
+      "blockerId": "UAT Launch Intake/project-go-decision",
       "gate": "UAT Launch Intake",
       "checkId": "project-go-decision",
       "ownerSide": "项目/产品",
@@ -69,6 +76,7 @@
       "message": "Launch intake decision is No-Go; UAT launch requires Go."
     },
     {
+      "blockerId": "UAT Environment Evidence/environment-summary",
       "gate": "UAT Environment Evidence",
       "checkId": "environment-summary",
       "ownerSide": "测试",
@@ -77,6 +85,7 @@
       "message": "Invalid environment summary items: 测试环境名称, 前端访问地址, 后端 API 地址, Git 提交号"
     },
     {
+      "blockerId": "UAT Environment Evidence/environment-checks",
       "gate": "UAT Environment Evidence",
       "checkId": "environment-checks",
       "ownerSide": "测试",
@@ -85,6 +94,7 @@
       "message": "Incomplete environment checks: ENV-001, ENV-002, ENV-003, ENV-004, ENV-005, ENV-006, ENV-007, ENV-008"
     },
     {
+      "blockerId": "UAT Environment Evidence/go-decision",
       "gate": "UAT Environment Evidence",
       "checkId": "go-decision",
       "ownerSide": "测试",
@@ -93,6 +103,7 @@
       "message": "Environment evidence decision is No-Go; V1 validation requires Go."
     },
     {
+      "blockerId": "UAT Evidence Pack/no-placeholders",
       "gate": "UAT Evidence Pack",
       "checkId": "no-placeholders",
       "ownerSide": "项目/产品",
@@ -101,6 +112,7 @@
       "message": "Evidence pack still contains draft placeholders."
     },
     {
+      "blockerId": "UAT Evidence Pack/basic-owners-complete",
       "gate": "UAT Evidence Pack",
       "checkId": "basic-owners-complete",
       "ownerSide": "项目/产品",
@@ -109,6 +121,7 @@
       "message": "Missing basic evidence pack owners: 测试负责人, 产品负责人, 销售侧验收人, 管理侧验收人"
     },
     {
+      "blockerId": "UAT Evidence Pack/basic-owner-name-format",
       "gate": "UAT Evidence Pack",
       "checkId": "basic-owner-name-format",
       "ownerSide": "项目/产品",
@@ -117,6 +130,7 @@
       "message": "Basic evidence pack owners use role labels instead of named people: 研发负责人"
     },
     {
+      "blockerId": "UAT Evidence Pack/environment-results",
       "gate": "UAT Evidence Pack",
       "checkId": "environment-results",
       "ownerSide": "测试",
@@ -125,6 +139,7 @@
       "message": "Missing passed environment evidence: 销售个人账号, 销售负责人账号, 权限样本账号"
     },
     {
+      "blockerId": "UAT Evidence Pack/uat-business-cases",
       "gate": "UAT Evidence Pack",
       "checkId": "uat-business-cases",
       "ownerSide": "业务UAT",
@@ -133,6 +148,7 @@
       "message": "Missing passed UAT evidence: UAT-001, UAT-002, UAT-003, UAT-004, UAT-005, UAT-006, UAT-007, UAT-008, UAT-009, UAT-010"
     },
     {
+      "blockerId": "UAT Evidence Pack/p0-defects",
       "gate": "UAT Evidence Pack",
       "checkId": "p0-defects",
       "ownerSide": "测试",
@@ -141,6 +157,7 @@
       "message": "P0/S1 defect row is missing or invalid."
     },
     {
+      "blockerId": "UAT Evidence Pack/p1-defects",
       "gate": "UAT Evidence Pack",
       "checkId": "p1-defects",
       "ownerSide": "测试",
@@ -149,6 +166,7 @@
       "message": "P1/S2 defect row is missing or invalid."
     },
     {
+      "blockerId": "UAT Evidence Pack/go-criteria",
       "gate": "UAT Evidence Pack",
       "checkId": "go-criteria",
       "ownerSide": "项目/产品",
@@ -157,6 +175,7 @@
       "message": "Unsatisfied Go/No-Go criteria: 测试环境 Smoke, P0 缺陷, P1 缺陷, 业务验收, 上线风险"
     },
     {
+      "blockerId": "UAT Evidence Pack/signoff-complete",
       "gate": "UAT Evidence Pack",
       "checkId": "signoff-complete",
       "ownerSide": "项目/产品",
@@ -165,6 +184,7 @@
       "message": "Incomplete signoff rows: 销售侧验收人, 管理侧验收人, 产品负责人, 测试负责人, 研发负责人, 项目负责人"
     },
     {
+      "blockerId": "UAT Evidence Manifest/evidence-complete",
       "gate": "UAT Evidence Manifest",
       "checkId": "evidence-complete",
       "ownerSide": "测试",
@@ -173,6 +193,7 @@
       "message": "Evidence rows not marked PASS: ENV-EVIDENCE, PRE-001, PRE-002, PRE-003, PRE-004, PRE-005, PRE-006, SMK-001, SMK-002, SMK-003, SMK-004, SMK-005, UAT-001, UAT-002, UAT-003, UAT-004, UAT-005, UAT-006, UAT-007, UAT-008, UAT-009, UAT-010, DEF-REGISTER, DEF-P0, DEF-P1, SIGNOFF-REGISTER, SIGNOFF-SALES, SIGNOFF-MANAGER, SIGNOFF-PRODUCT, SIGNOFF-TEST, SIGNOFF-DEV, SIGNOFF-PM, GO-NOGO"
     },
     {
+      "blockerId": "UAT Evidence Manifest/go-decision",
       "gate": "UAT Evidence Manifest",
       "checkId": "go-decision",
       "ownerSide": "测试",
@@ -181,6 +202,7 @@
       "message": "Manifest decision is No-Go; V1 validation requires Go."
     },
     {
+      "blockerId": "UAT Execution Tracker/roles-assigned",
       "gate": "UAT Execution Tracker",
       "checkId": "roles-assigned",
       "ownerSide": "项目/产品",
@@ -189,6 +211,7 @@
       "message": "Roles pending assignment or status: 销售侧验收人, 管理侧验收人, 产品负责人, 测试负责人, 项目负责人"
     },
     {
+      "blockerId": "UAT Execution Tracker/tracker-role-owner-name-format",
       "gate": "UAT Execution Tracker",
       "checkId": "tracker-role-owner-name-format",
       "ownerSide": "项目/产品",
@@ -197,6 +220,7 @@
       "message": "Tracker role owners use role labels instead of named people: 研发负责人"
     },
     {
+      "blockerId": "UAT Execution Tracker/pre-checks",
       "gate": "UAT Execution Tracker",
       "checkId": "pre-checks",
       "ownerSide": "测试",
@@ -205,6 +229,7 @@
       "message": "Incomplete PRE checks: PRE-001, PRE-002, PRE-003, PRE-004, PRE-005, PRE-006"
     },
     {
+      "blockerId": "UAT Execution Tracker/smoke-checks",
       "gate": "UAT Execution Tracker",
       "checkId": "smoke-checks",
       "ownerSide": "测试",
@@ -213,6 +238,7 @@
       "message": "Incomplete SMK checks: SMK-001, SMK-002, SMK-003, SMK-004, SMK-005"
     },
     {
+      "blockerId": "UAT Execution Tracker/uat-cases",
       "gate": "UAT Execution Tracker",
       "checkId": "uat-cases",
       "ownerSide": "业务UAT",
@@ -221,6 +247,7 @@
       "message": "Incomplete UAT cases: UAT-001, UAT-002, UAT-003, UAT-004, UAT-005, UAT-006, UAT-007, UAT-008, UAT-009, UAT-010"
     },
     {
+      "blockerId": "UAT Execution Tracker/p0-p1-defects",
       "gate": "UAT Execution Tracker",
       "checkId": "p0-p1-defects",
       "ownerSide": "测试",
@@ -229,6 +256,7 @@
       "message": "P0/S1 and P1/S2 defect rows must show no open defects and concrete evidence."
     },
     {
+      "blockerId": "UAT Execution Tracker/release-gates",
       "gate": "UAT Execution Tracker",
       "checkId": "release-gates",
       "ownerSide": "项目/产品",
@@ -237,6 +265,7 @@
       "message": "Incomplete release gates: UAT证据包一致性, UAT缺陷台账一致性, UAT签署台账一致性, V1最终放行门禁, 项目签署"
     },
     {
+      "blockerId": "UAT Execution Tracker/go-decision",
       "gate": "UAT Execution Tracker",
       "checkId": "go-decision",
       "ownerSide": "项目/产品",
@@ -245,6 +274,7 @@
       "message": "Tracker conclusion is No-Go; V1 validation requires Go."
     },
     {
+      "blockerId": "UAT Defect Register/p0-p1-summary",
       "gate": "UAT Defect Register",
       "checkId": "p0-p1-summary",
       "ownerSide": "测试",
@@ -253,6 +283,7 @@
       "message": "Invalid P0/P1 summary rows: P0 / S1 阻断, P1 / S2 严重"
     },
     {
+      "blockerId": "UAT Defect Register/defect-details",
       "gate": "UAT Defect Register",
       "checkId": "defect-details",
       "ownerSide": "测试",
@@ -261,6 +292,7 @@
       "message": "Incomplete defect details: DEF-DRAFT"
     },
     {
+      "blockerId": "UAT Defect Register/go-decision",
       "gate": "UAT Defect Register",
       "checkId": "go-decision",
       "ownerSide": "测试",
@@ -269,6 +301,7 @@
       "message": "Defect register decision is No-Go; V1 validation requires Go."
     },
     {
+      "blockerId": "UAT Signoff Register/required-signoffs",
       "gate": "UAT Signoff Register",
       "checkId": "required-signoffs",
       "ownerSide": "项目/产品",
@@ -277,6 +310,7 @@
       "message": "Incomplete signoffs: SIGNOFF-SALES, SIGNOFF-MANAGER, SIGNOFF-PRODUCT, SIGNOFF-TEST, SIGNOFF-DEV, SIGNOFF-PM"
     },
     {
+      "blockerId": "UAT Signoff Register/project-go-decision",
       "gate": "UAT Signoff Register",
       "checkId": "project-go-decision",
       "ownerSide": "项目/产品",
@@ -285,6 +319,7 @@
       "message": "Project signoff is No-Go and register decision is No-Go; V1 validation requires Go."
     },
     {
+      "blockerId": "Release Gate/kickoff-governance",
       "gate": "Release Gate",
       "checkId": "kickoff-governance",
       "ownerSide": "项目/产品",
@@ -293,6 +328,7 @@
       "message": "Kickoff governance failed: required-owners, scope-freeze, project-go-decision"
     },
     {
+      "blockerId": "Release Gate/uat-launch-intake",
       "gate": "Release Gate",
       "checkId": "uat-launch-intake",
       "ownerSide": "项目/产品",
@@ -301,6 +337,7 @@
       "message": "UAT launch intake failed: environment-intake, participant-roster, account-custody, project-go-decision"
     },
     {
+      "blockerId": "Release Gate/uat-environment",
       "gate": "Release Gate",
       "checkId": "uat-environment",
       "ownerSide": "测试",
@@ -309,6 +346,7 @@
       "message": "UAT environment evidence failed: environment-summary, environment-checks, go-decision"
     },
     {
+      "blockerId": "Release Gate/uat-evidence-pack",
       "gate": "Release Gate",
       "checkId": "uat-evidence-pack",
       "ownerSide": "业务UAT",
@@ -317,6 +355,7 @@
       "message": "UAT evidence pack failed: no-placeholders, basic-owners-complete, basic-owner-name-format, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete"
     },
     {
+      "blockerId": "Release Gate/uat-evidence-manifest",
       "gate": "Release Gate",
       "checkId": "uat-evidence-manifest",
       "ownerSide": "测试",
@@ -325,6 +364,7 @@
       "message": "UAT evidence manifest failed: evidence-complete, go-decision"
     },
     {
+      "blockerId": "Release Gate/uat-defect-register",
       "gate": "Release Gate",
       "checkId": "uat-defect-register",
       "ownerSide": "测试",
@@ -333,6 +373,7 @@
       "message": "UAT defect register failed: p0-p1-summary, defect-details, go-decision"
     },
     {
+      "blockerId": "Release Gate/uat-signoff-register",
       "gate": "Release Gate",
       "checkId": "uat-signoff-register",
       "ownerSide": "项目/产品",
@@ -341,6 +382,7 @@
       "message": "UAT signoff register failed: required-signoffs, project-go-decision"
     },
     {
+      "blockerId": "Release Gate/uat-execution-tracker",
       "gate": "Release Gate",
       "checkId": "uat-execution-tracker",
       "ownerSide": "项目/产品",
@@ -349,6 +391,7 @@
       "message": "UAT execution tracker failed: roles-assigned, tracker-role-owner-name-format, pre-checks, smoke-checks, uat-cases, p0-p1-defects, release-gates, go-decision"
     },
     {
+      "blockerId": "Release Gate/go-decision",
       "gate": "Release Gate",
       "checkId": "go-decision",
       "ownerSide": "项目/产品",

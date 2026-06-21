@@ -192,11 +192,16 @@ test("exports machine-readable external UAT blockers with owner routing and vali
   assert.ok(payload.summary.byOwnerSide["项目/产品"] > 0);
   assert.ok(payload.summary.byOwnerSide["业务UAT"] > 0);
   assert.ok(payload.summary.byOwnerSide["测试"] > 0);
+  assert.equal(
+    new Set(payload.blockers.map((blocker) => blocker.blockerId)).size,
+    payload.summary.totalBlockers
+  );
 
   const businessCaseBlocker = payload.blockers.find((blocker) => (
     blocker.gate === "UAT Evidence Pack" && blocker.checkId === "uat-business-cases"
   ));
 
+  assert.equal(businessCaseBlocker.blockerId, "UAT Evidence Pack/uat-business-cases");
   assert.equal(businessCaseBlocker.ownerSide, "业务UAT");
   assert.equal(businessCaseBlocker.sourceDocument, "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md");
   assert.equal(
@@ -208,6 +213,7 @@ test("exports machine-readable external UAT blockers with owner routing and vali
   const releaseGateBlocker = payload.blockers.find((blocker) => (
     blocker.gate === "Release Gate" && blocker.checkId === "go-decision"
   ));
+  assert.equal(releaseGateBlocker.blockerId, "Release Gate/go-decision");
   assert.equal(releaseGateBlocker.ownerSide, "项目/产品");
   assert.match(releaseGateBlocker.validationCommand, /node scripts\/v1-release-gate\.mjs --json/);
 });
@@ -236,6 +242,32 @@ test("keeps blockers JSON No-Go when validator blockers remain despite release g
   assert.ok(payload.blockers.some((blocker) => (
     blocker.gate === "Kickoff Governance" && blocker.checkId === "required-owners"
   )));
+});
+
+test("exports stable machine-readable blocker ids", () => {
+  const json = externalUatRequest.generateV1ExternalUatBlockersJson({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
+    launchIntakeResult: failingLaunchIntake,
+    environmentResult: failingEnvironment,
+    evidenceResult: failingEvidence,
+    manifestResult: failingManifest,
+    trackerResult: failingTracker,
+    defectRegisterResult: failingDefects,
+    signoffRegisterResult: failingSignoffs,
+    releaseGateResult: failingReleaseGate
+  });
+
+  const payload = JSON.parse(json);
+  const blockerIds = payload.blockers.map((blocker) => blocker.blockerId);
+
+  assert.equal(new Set(blockerIds).size, payload.summary.totalBlockers);
+  assert.ok(payload.blockers.every((blocker) => (
+    blocker.blockerId === `${blocker.gate}/${blocker.checkId}`
+  )));
+  assert.ok(blockerIds.includes("UAT Evidence Pack/uat-business-cases"));
+  assert.ok(blockerIds.includes("Release Gate/go-decision"));
 });
 
 test("deduplicates machine-readable blockers by gate and check id", () => {

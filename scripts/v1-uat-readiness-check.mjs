@@ -325,6 +325,7 @@ function hasUatLaunchIntake(content) {
 function hasExternalUatBlockersJson(content) {
   try {
     const payload = JSON.parse(content);
+    const blockerIds = (payload.blockers ?? []).map((blocker) => blocker.blockerId);
     const ownerCounts = (payload.blockers ?? []).reduce((counts, blocker) => {
       if (typeof blocker.ownerSide === "string" && blocker.ownerSide.length > 0) {
         counts[blocker.ownerSide] = (counts[blocker.ownerSide] ?? 0) + 1;
@@ -334,6 +335,13 @@ function hasExternalUatBlockersJson(content) {
     const summaryByOwnerSide = payload.summary?.byOwnerSide ?? {};
     const ownerSummaryMatches = Object.keys(ownerCounts).length === Object.keys(summaryByOwnerSide).length
       && Object.entries(ownerCounts).every(([ownerSide, count]) => summaryByOwnerSide[ownerSide] === count);
+    const blockerIdsAreStable = Array.isArray(payload.blockers)
+      && blockerIds.length === payload.blockers.length
+      && new Set(blockerIds).size === blockerIds.length
+      && payload.blockers.every((blocker) => (
+        typeof blocker.blockerId === "string"
+        && blocker.blockerId === `${blocker.gate}/${blocker.checkId}`
+      ));
 
     return payload.status === "External UAT Evidence Required"
       && payload.decision === "No-Go"
@@ -344,6 +352,7 @@ function hasExternalUatBlockersJson(content) {
       && typeof payload.summary?.byOwnerSide === "object"
       && Array.isArray(payload.blockers)
       && ownerSummaryMatches
+      && blockerIdsAreStable
       && payload.blockers.some((blocker) => (
         blocker.gate === "Release Gate"
         && blocker.checkId === "go-decision"
@@ -353,7 +362,8 @@ function hasExternalUatBlockersJson(content) {
         && blocker.validationCommand.includes("node scripts/v1-release-gate.mjs --json")
       ))
       && payload.blockers.every((blocker) => (
-        typeof blocker.gate === "string"
+        typeof blocker.blockerId === "string"
+        && typeof blocker.gate === "string"
         && typeof blocker.checkId === "string"
         && typeof blocker.ownerSide === "string"
         && typeof blocker.sourceDocument === "string"
@@ -819,6 +829,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node scripts/v1-release-gate.mjs --json",
       "exports machine-readable external UAT blockers with owner routing and validation commands",
       "deduplicates machine-readable blockers by gate and check id",
+      "exports stable machine-readable blocker ids",
       "keeps external UAT request open when validator blockers remain despite release gate Go",
       "keeps blockers JSON No-Go when validator blockers remain despite release gate Go",
       "generates an external UAT closure checklist grouped by owner side",
@@ -828,7 +839,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "keeps evidence intake manifest ids assigned to a single intake row",
       "generates a No-Go external UAT request packet with source documents and validation commands"
     ]),
-    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board, closure checklist, evidence intake checklist, and machine-readable blocker JSON for dashboards and validation bots."
+    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board, closure checklist, evidence intake checklist, and machine-readable blocker JSON with stable blocker IDs for dashboards and validation bots."
   ));
 
   const generatedDocsChecker = snapshot["scripts/v1-generated-docs-check.mjs"] ?? "";

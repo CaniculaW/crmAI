@@ -196,6 +196,7 @@ function ownerSideFor(gate, checkId) {
 
 function blockerRows(gate, result, paths) {
   return (result.failed ?? []).map((check) => ({
+    blockerId: `${gate}/${check.id}`,
     gate,
     checkId: check.id,
     ownerSide: ownerSideFor(gate, check.id),

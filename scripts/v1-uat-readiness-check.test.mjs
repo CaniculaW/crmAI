@@ -99,7 +99,7 @@ jobs:
   "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nKickoff Governance\nUAT Environment Evidence\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\ngenerateV1ExternalUatBlockersJson\ngenerateV1ExternalUatBlockersFromFiles\ngenerateV1ExternalUatClosureChecklistMarkdown\ngenerateV1ExternalUatClosureChecklistFromFiles\ngenerateV1ExternalUatEvidenceIntakeMarkdown\ngenerateV1ExternalUatEvidenceIntakeFromFiles\nRequest Status: External UAT Evidence Required\nRequest Board\nCRM V1 External UAT Closure Checklist\nCRM V1 External UAT Evidence Intake\nDo not record plaintext passwords\nnode scripts/v1-release-gate.mjs --json\n--json\n--closure-checklist\n--evidence-intake\nv1-external-uat-blockers.json\nv1-external-uat-closure-checklist.md\nv1-external-uat-evidence-intake.md\n",
-  "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\nkeeps external UAT request open when validator blockers remain despite release gate Go\nexports machine-readable external UAT blockers with owner routing and validation commands\nkeeps blockers JSON No-Go when validator blockers remain despite release gate Go\ndeduplicates machine-readable blockers by gate and check id\ngenerates an external UAT closure checklist grouped by owner side\nkeeps closure checklist No-Go when validator blockers remain despite release gate Go\ngenerates an external UAT evidence intake checklist tied to manifest ids\nkeeps evidence intake No-Go when validator blockers remain despite release gate Go\nkeeps evidence intake manifest ids assigned to a single intake row\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\nkeeps external UAT request open when validator blockers remain despite release gate Go\nexports machine-readable external UAT blockers with owner routing and validation commands\nkeeps blockers JSON No-Go when validator blockers remain despite release gate Go\ndeduplicates machine-readable blockers by gate and check id\nexports stable machine-readable blocker ids\ngenerates an external UAT closure checklist grouped by owner side\nkeeps closure checklist No-Go when validator blockers remain despite release gate Go\ngenerates an external UAT evidence intake checklist tied to manifest ids\nkeeps evidence intake No-Go when validator blockers remain despite release gate Go\nkeeps evidence intake manifest ids assigned to a single intake row\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\nvalidation-status-current-commit\n",
   "scripts/v1-generated-docs-check.test.mjs": "fails when a generated document drifts from its generator\nfails when the validation status document is not bound to the current git commit\n",
   "scripts/v1-release-gate-status-check.mjs": "evaluateV1ReleaseGateStatusSnapshot\nrequired-checks\nunique-check-ids\nknown-check-ids\nresult-shape\ndecision-consistency\nlive-release-gate-match\nevaluateV1ReleaseGateFromFiles\nnode scripts/v1-release-gate-status-check.mjs\n",
@@ -155,7 +155,7 @@ Do not paste passwords
 node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md
 node scripts/v1-release-gate.mjs --json
 `,
-  "docs/testing/v1-external-uat-blockers.json": "{\"status\":\"External UAT Evidence Required\",\"decision\":\"No-Go\",\"ok\":false,\"summary\":{\"totalBlockers\":1,\"byOwnerSide\":{\"项目/产品\":1}},\"blockers\":[{\"gate\":\"Release Gate\",\"checkId\":\"go-decision\",\"ownerSide\":\"项目/产品\",\"sourceDocument\":\"docs/testing/v1-go-no-go-meeting.md\",\"validationCommand\":\"node scripts/v1-release-gate.mjs --json\",\"message\":\"Project decision is No-Go; V1 release gate requires Go.\"}]}\n",
+  "docs/testing/v1-external-uat-blockers.json": "{\"status\":\"External UAT Evidence Required\",\"decision\":\"No-Go\",\"ok\":false,\"summary\":{\"totalBlockers\":1,\"byOwnerSide\":{\"项目/产品\":1}},\"blockers\":[{\"blockerId\":\"Release Gate/go-decision\",\"gate\":\"Release Gate\",\"checkId\":\"go-decision\",\"ownerSide\":\"项目/产品\",\"sourceDocument\":\"docs/testing/v1-go-no-go-meeting.md\",\"validationCommand\":\"node scripts/v1-release-gate.mjs --json\",\"message\":\"Project decision is No-Go; V1 release gate requires Go.\"}]}\n",
   "docs/testing/v1-release-gate-status.json": "{\"result\":\"FAIL\",\"decision\":\"No-Go\",\"ok\":false,\"checks\":[{\"id\":\"go-decision\",\"ok\":false}]}\n",
   "docs/meeting-notes/crm-kickoff-minutes.md": `CRM研发启动会纪要
 Decision: No-Go
@@ -348,6 +348,19 @@ test("fails when the external UAT blockers JSON summary drifts from blocker rows
   assert.ok(result.failed.some((check) => check.id === "external-uat-blockers-json"));
 });
 
+test("fails when the external UAT blockers JSON omits stable blocker ids", () => {
+  const payload = JSON.parse(completeSnapshot["docs/testing/v1-external-uat-blockers.json"]);
+  delete payload.blockers[0].blockerId;
+
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    "docs/testing/v1-external-uat-blockers.json": `${JSON.stringify(payload)}\n`
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "external-uat-blockers-json"));
+});
+
 test("fails when the external UAT closure checklist snapshot is missing", () => {
   const snapshot = { ...completeSnapshot };
   delete snapshot["docs/testing/v1-external-uat-closure-checklist.md"];
@@ -445,6 +458,19 @@ test("fails when the external UAT request tests omit blocker deduplication cover
     ...completeSnapshot,
     "scripts/v1-external-uat-request.test.mjs": completeSnapshot["scripts/v1-external-uat-request.test.mjs"]
       .replace("deduplicates machine-readable blockers by gate and check id\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-external-uat-request-pack"));
+});
+
+test("fails when the external UAT request tests omit stable blocker id coverage", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-external-uat-request.test.mjs": completeSnapshot["scripts/v1-external-uat-request.test.mjs"]
+      .replace("exports stable machine-readable blocker ids\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);
