@@ -66,10 +66,14 @@ jobs:
       - run: node scripts/v1-secret-scan-check.mjs
   backend:
     steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
       - run: mvn -B test
       - run: mvn -B verify -Ppostgres-it
   frontend:
     steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
       - run: npm test
       - run: npm run build
 `,

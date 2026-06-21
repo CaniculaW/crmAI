@@ -107,6 +107,10 @@ function includesAll(content, needles) {
   return needles.every((needle) => content.includes(needle));
 }
 
+function includesAny(content, needles) {
+  return needles.some((needle) => content.includes(needle));
+}
+
 function businessCountAtLeastOne(content, key) {
   const match = content.match(new RegExp(`"${key}"\\s*:\\s*(\\d+)`));
   return match !== null && Number(match[1]) >= 1;
@@ -638,6 +642,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "frontend:",
       "actions/checkout@v7",
       "actions/setup-node@v6",
+      "actions/setup-java@v5",
       'node-version: "22"',
       "fetch-depth: 2",
       "docker compose -f compose.v1-test.yml config",
@@ -652,6 +657,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "mvn -B verify -Ppostgres-it",
       "npm test",
       "npm run build"
+    ]) && !includesAny(workflow, [
+      "actions/checkout@v4",
+      "actions/setup-node@v4",
+      "actions/setup-java@v4"
     ]),
     "GitHub Actions V1 Validation covers current GitHub action runtime versions, deployment config, the complete scripts test suite, backend, PostgreSQL integration, frontend tests, build, and checkout history depth for validation status commit freshness."
   ));
