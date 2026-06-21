@@ -130,7 +130,21 @@ jobs:
   "docs/testing/v1-go-no-go-meeting.md": "CRM V1 Go/No-Go Meeting Pack\nDecision Recommendation: No-Go\nFinal Signoff Table\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
   "docs/testing/v1-external-uat-request.md": "CRM V1 External UAT Request Packet\nRequest Status: External UAT Evidence Required\nRequest Board\nProject / Product\nTest\nBusiness UAT\nEngineering\nDo not record plaintext passwords\nKickoff Governance\nUAT Launch Intake\nUAT Environment Evidence\nUAT Evidence Pack\nUAT Evidence Manifest\nUAT Execution Tracker\nUAT Defect Register\nUAT Signoff Register\nRelease Gate\n",
   "docs/testing/v1-external-uat-closure-checklist.md": "CRM V1 External UAT Closure Checklist\nOverall: No-Go\nOpen blocker count: 1\n## 项目/产品\n## 测试\n## 业务UAT\nStatus\nGate\nCheck ID\nSource document\nValidation command\nClosure evidence needed\nDo not mark a row Closed until its source document validates PASS and the final release gate returns Go\n",
-  "docs/testing/v1-external-uat-evidence-intake.md": "CRM V1 External UAT Evidence Intake\nOverall: No-Go\nClosure checklist: docs/testing/v1-external-uat-closure-checklist.md\nEvidence manifest: docs/testing/v1-uat-evidence-manifest.md\nTEST-ENV\nBUSINESS-UAT\nDEFECT-CLOSURE\nSIGNOFF-GO\nENV-EVIDENCE\nUAT-001\nUAT-010\nDEF-P0\nSIGNOFF-PM\nnode scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md\nnode scripts/v1-release-gate.mjs --json\nDo not paste passwords\n",
+  "docs/testing/v1-external-uat-evidence-intake.md": `CRM V1 External UAT Evidence Intake
+Overall: No-Go
+Closure checklist: docs/testing/v1-external-uat-closure-checklist.md
+Evidence manifest: docs/testing/v1-uat-evidence-manifest.md
+Do not paste passwords
+| Intake ID | Owner side | Manifest evidence IDs | Source documents | Validation commands | Intake notes |
+|---|---|---|---|---|---|
+| KICKOFF-LAUNCH | 项目/产品 | PRE-006 | docs/meeting-notes/crm-kickoff-minutes.md; docs/testing/v1-uat-launch-intake.md; docs/testing/v1-uat-evidence-manifest.md | node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md | 补齐启动治理负责人 |
+| TEST-ENV | 测试 | ENV-EVIDENCE, PRE-001, PRE-002, PRE-003, PRE-004, PRE-005, SMK-001, SMK-002, SMK-003, SMK-004, SMK-005 | docs/testing/v1-uat-environment-evidence.md; docs/testing/crm-v1-uat-execution-tracker.md; docs/testing/v1-uat-evidence-manifest.md | node scripts/v1-uat-environment-validate.mjs docs/testing/v1-uat-environment-evidence.md | 补齐具名环境 |
+| BUSINESS-UAT | 业务UAT | UAT-001, UAT-002, UAT-003, UAT-004, UAT-005, UAT-006, UAT-007, UAT-008, UAT-009, UAT-010 | docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md; docs/testing/crm-v1-uat-execution-tracker.md; docs/testing/v1-uat-evidence-manifest.md | node scripts/v1-uat-evidence-pack-validate.mjs docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md | 执行业务验收 |
+| DEFECT-CLOSURE | 测试 | DEF-REGISTER, DEF-P0, DEF-P1 | docs/testing/v1-uat-defect-register.md; docs/testing/v1-uat-evidence-manifest.md | node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md | 补齐缺陷闭环 |
+| SIGNOFF-GO | 项目/产品 | SIGNOFF-REGISTER, SIGNOFF-SALES, SIGNOFF-MANAGER, SIGNOFF-PRODUCT, SIGNOFF-TEST, SIGNOFF-DEV, SIGNOFF-PM, GO-NOGO | docs/testing/v1-uat-signoff-register.md; docs/testing/v1-go-no-go-meeting.md; docs/testing/v1-uat-evidence-manifest.md | node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md | 补齐签署和项目Go |
+node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md
+node scripts/v1-release-gate.mjs --json
+`,
   "docs/testing/v1-external-uat-blockers.json": "{\"status\":\"External UAT Evidence Required\",\"decision\":\"No-Go\",\"ok\":false,\"summary\":{\"totalBlockers\":1,\"byOwnerSide\":{\"项目/产品\":1}},\"blockers\":[{\"gate\":\"Release Gate\",\"checkId\":\"go-decision\",\"ownerSide\":\"项目/产品\",\"sourceDocument\":\"docs/testing/v1-go-no-go-meeting.md\",\"validationCommand\":\"node scripts/v1-release-gate.mjs --json\",\"message\":\"Project decision is No-Go; V1 release gate requires Go.\"}]}\n",
   "docs/testing/v1-release-gate-status.json": "{\"result\":\"FAIL\",\"decision\":\"No-Go\",\"ok\":false,\"checks\":[{\"id\":\"go-decision\",\"ok\":false}]}\n",
   "docs/meeting-notes/crm-kickoff-minutes.md": `CRM研发启动会纪要
@@ -342,6 +356,19 @@ test("fails when the external UAT evidence intake checklist snapshot is missing"
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the external UAT evidence intake assigns a manifest id to multiple rows", () => {
+  const duplicatedIntake = completeSnapshot["docs/testing/v1-external-uat-evidence-intake.md"]
+    .replace("KICKOFF-LAUNCH | 项目/产品 | PRE-006", "KICKOFF-LAUNCH | 项目/产品 | PRE-006, SIGNOFF-PM");
+
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    "docs/testing/v1-external-uat-evidence-intake.md": duplicatedIntake
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "external-uat-evidence-intake"));
 });
 
 test("fails when V1 validation checkout cannot verify status commit freshness", () => {

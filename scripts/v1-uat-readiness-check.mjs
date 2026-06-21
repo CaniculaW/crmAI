@@ -384,7 +384,16 @@ function hasExternalUatClosureChecklist(content) {
 }
 
 function hasExternalUatEvidenceIntake(content) {
-  return includesAll(content, [
+  const manifestIds = content
+    .split("\n")
+    .filter((line) => line.startsWith("| ") && !line.startsWith("|---") && !line.includes("Manifest evidence IDs"))
+    .flatMap((line) => {
+      const cells = line.split("|").map((cell) => cell.trim());
+      return (cells[3] ?? "").split(",").map((id) => id.trim()).filter(Boolean);
+    });
+  const uniqueManifestIds = new Set(manifestIds);
+
+  return manifestIds.length === uniqueManifestIds.size && includesAll(content, [
     "CRM V1 External UAT Evidence Intake",
     "Overall: No-Go",
     "Closure checklist: docs/testing/v1-external-uat-closure-checklist.md",
