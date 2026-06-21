@@ -9,6 +9,7 @@ import { generateV1GoNoGoMeetingFromFiles } from "./v1-go-no-go-meeting.mjs";
 import {
   generateV1ExternalUatBlockersFromFiles,
   generateV1ExternalUatClosureChecklistFromFiles,
+  generateV1ExternalUatEvidenceIntakeFromFiles,
   generateV1ExternalUatRequestFromFiles
 } from "./v1-external-uat-request.mjs";
 import { generateV1UatActionPlanFromFiles } from "./v1-uat-action-plan.mjs";
@@ -23,6 +24,7 @@ const GENERATED_DOC_PATHS = [
   "docs/testing/v1-go-no-go-meeting.md",
   "docs/testing/v1-external-uat-request.md",
   "docs/testing/v1-external-uat-closure-checklist.md",
+  "docs/testing/v1-external-uat-evidence-intake.md",
   "docs/testing/v1-external-uat-blockers.json",
   "docs/testing/v1-release-gate-status.json"
 ];
@@ -130,6 +132,10 @@ function defaultGenerators(rootDir) {
       rootDir,
       generatedAt: generatedAtFrom(rootDir, "docs/testing/v1-external-uat-closure-checklist.md")
     }),
+    "docs/testing/v1-external-uat-evidence-intake.md": () => generateV1ExternalUatEvidenceIntakeFromFiles({
+      rootDir,
+      generatedAt: generatedAtFrom(rootDir, "docs/testing/v1-external-uat-evidence-intake.md")
+    }),
     "docs/testing/v1-external-uat-blockers.json": () => generateV1ExternalUatBlockersFromFiles({
       rootDir,
       generatedAt: JSON.parse(readFile(rootDir, "docs/testing/v1-external-uat-blockers.json")).generatedAt
@@ -204,7 +210,7 @@ function printResult(result) {
   }
 
   lines.push("");
-  lines.push("Note: PASS means generated V1 status, action, execution, Go/No-Go, external UAT request, external UAT closure checklist, external UAT blockers JSON, and release gate JSON snapshot documents match their current generator outputs.");
+  lines.push("Note: PASS means generated V1 status, action, execution, Go/No-Go, external UAT request, external UAT closure checklist, external UAT evidence intake, external UAT blockers JSON, and release gate JSON snapshot documents match their current generator outputs.");
 
   console.log(lines.join("\n"));
 }

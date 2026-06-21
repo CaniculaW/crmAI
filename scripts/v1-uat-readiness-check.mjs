@@ -73,6 +73,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/v1-go-no-go-meeting.md",
   "docs/testing/v1-external-uat-request.md",
   "docs/testing/v1-external-uat-closure-checklist.md",
+  "docs/testing/v1-external-uat-evidence-intake.md",
   "docs/testing/v1-external-uat-blockers.json",
   "docs/testing/v1-release-gate-status.json",
   "docs/meeting-notes/crm-kickoff-minutes.md",
@@ -367,6 +368,27 @@ function hasExternalUatClosureChecklist(content) {
     "Validation command",
     "Closure evidence needed",
     "Do not mark a row Closed until its source document validates PASS and the final release gate returns Go"
+  ]);
+}
+
+function hasExternalUatEvidenceIntake(content) {
+  return includesAll(content, [
+    "CRM V1 External UAT Evidence Intake",
+    "Overall: No-Go",
+    "Closure checklist: docs/testing/v1-external-uat-closure-checklist.md",
+    "Evidence manifest: docs/testing/v1-uat-evidence-manifest.md",
+    "TEST-ENV",
+    "BUSINESS-UAT",
+    "DEFECT-CLOSURE",
+    "SIGNOFF-GO",
+    "ENV-EVIDENCE",
+    "UAT-001",
+    "UAT-010",
+    "DEF-P0",
+    "SIGNOFF-PM",
+    "node scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md",
+    "node scripts/v1-release-gate.mjs --json",
+    "Do not paste passwords"
   ]);
 }
 
@@ -747,24 +769,31 @@ export function evaluateReadinessSnapshot(snapshot) {
     includesAll(workflow + externalUatRequest + externalUatRequestTest, [
       "node --test scripts/v1-external-uat-request.test.mjs",
       "node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md",
+      "node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md",
       "node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json",
       "generateV1ExternalUatRequestMarkdown",
       "generateV1ExternalUatBlockersJson",
       "generateV1ExternalUatBlockersFromFiles",
       "generateV1ExternalUatClosureChecklistMarkdown",
       "generateV1ExternalUatClosureChecklistFromFiles",
+      "generateV1ExternalUatEvidenceIntakeMarkdown",
+      "generateV1ExternalUatEvidenceIntakeFromFiles",
       "Request Status: External UAT Evidence Required",
       "Request Board",
       "CRM V1 External UAT Closure Checklist",
+      "CRM V1 External UAT Evidence Intake",
       "--closure-checklist",
+      "--evidence-intake",
       "v1-external-uat-closure-checklist.md",
+      "v1-external-uat-evidence-intake.md",
       "v1-external-uat-blockers.json",
       "node scripts/v1-release-gate.mjs --json",
       "exports machine-readable external UAT blockers with owner routing and validation commands",
       "generates an external UAT closure checklist grouped by owner side",
+      "generates an external UAT evidence intake checklist tied to manifest ids",
       "generates a No-Go external UAT request packet with source documents and validation commands"
     ]),
-    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board, closure checklist, and machine-readable blocker JSON for dashboards and validation bots."
+    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board, closure checklist, evidence intake checklist, and machine-readable blocker JSON for dashboards and validation bots."
   ));
 
   const generatedDocsChecker = snapshot["scripts/v1-generated-docs-check.mjs"] ?? "";
@@ -1123,6 +1152,13 @@ export function evaluateReadinessSnapshot(snapshot) {
     "external-uat-closure-checklist",
     hasExternalUatClosureChecklist(externalUatClosureChecklist),
     "External UAT closure checklist groups current No-Go blocker closure rows by owner side with source documents and validation commands."
+  ));
+
+  const externalUatEvidenceIntake = snapshot["docs/testing/v1-external-uat-evidence-intake.md"] ?? "";
+  checks.push(makeCheck(
+    "external-uat-evidence-intake",
+    hasExternalUatEvidenceIntake(externalUatEvidenceIntake),
+    "External UAT evidence intake checklist routes incoming evidence to manifest IDs, source documents, and validation commands."
   ));
 
   const readme = snapshot["README.md"] ?? "";

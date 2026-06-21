@@ -15,6 +15,7 @@ const HANDOFF_DOC_PATHS = [
   "docs/testing/v1-go-no-go-meeting.md",
   "docs/testing/v1-external-uat-request.md",
   "docs/testing/v1-external-uat-closure-checklist.md",
+  "docs/testing/v1-external-uat-evidence-intake.md",
   "docs/testing/v1-external-uat-blockers.json"
 ];
 
@@ -34,6 +35,7 @@ const REQUIRED_HANDOFF_COMMANDS = [
   "node scripts/v1-final-evidence-handoff-check.mjs",
   "node scripts/v1-secret-scan-check.mjs",
   "node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md",
+  "node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md",
   "node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json",
   "node scripts/v1-release-gate.mjs",
   "node scripts/v1-release-gate.mjs --json"

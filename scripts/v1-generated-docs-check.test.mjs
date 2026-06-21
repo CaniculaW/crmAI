@@ -15,7 +15,8 @@ const MARKDOWN_DOCS = [
   "docs/testing/v1-uat-execution-pack.md",
   "docs/testing/v1-go-no-go-meeting.md",
   "docs/testing/v1-external-uat-request.md",
-  "docs/testing/v1-external-uat-closure-checklist.md"
+  "docs/testing/v1-external-uat-closure-checklist.md",
+  "docs/testing/v1-external-uat-evidence-intake.md"
 ];
 
 const DOCS = [
@@ -55,6 +56,7 @@ test("fails when a generated document drifts from its generator", () => {
     "docs/testing/v1-go-no-go-meeting.md": "# Generated\n\nCurrent content\n",
     "docs/testing/v1-external-uat-request.md": "# Generated\n\nStale external request\n",
     "docs/testing/v1-external-uat-closure-checklist.md": "# Generated\n\nCurrent content\n",
+    "docs/testing/v1-external-uat-evidence-intake.md": "# Generated\n\nCurrent content\n",
     "docs/testing/v1-external-uat-blockers.json": "{\"status\":\"External UAT Evidence Required\"}\n",
     "docs/testing/v1-release-gate-status.json": "{\"result\":\"FAIL\"}\n"
   });
@@ -68,6 +70,7 @@ test("fails when a generated document drifts from its generator", () => {
       "docs/testing/v1-go-no-go-meeting.md": () => "# Generated\n\nCurrent content\n",
       "docs/testing/v1-external-uat-request.md": () => "# Generated\n\nCurrent content\n",
       "docs/testing/v1-external-uat-closure-checklist.md": () => "# Generated\n\nCurrent content\n",
+      "docs/testing/v1-external-uat-evidence-intake.md": () => "# Generated\n\nCurrent content\n",
       "docs/testing/v1-external-uat-blockers.json": () => "{\"status\":\"External UAT Evidence Required\"}\n",
       "docs/testing/v1-release-gate-status.json": () => "{\"result\":\"FAIL\"}\n"
     }
@@ -128,6 +131,28 @@ test("fails when the generated external UAT closure checklist is missing", () =>
   assert.ok(result.failed.some((check) => check.id === "docs/testing/v1-external-uat-closure-checklist.md"));
 });
 
+test("fails when the generated external UAT evidence intake checklist is missing", () => {
+  const content = "# Generated\n\nCurrent content\n";
+  const rootDir = writeSnapshot({
+    "docs/testing/v1-validation-status.md": content,
+    "docs/testing/v1-uat-action-plan.md": content,
+    "docs/testing/v1-uat-execution-pack.md": content,
+    "docs/testing/v1-go-no-go-meeting.md": content,
+    "docs/testing/v1-external-uat-request.md": content,
+    "docs/testing/v1-external-uat-closure-checklist.md": content,
+    "docs/testing/v1-external-uat-blockers.json": "{\"status\":\"External UAT Evidence Required\"}\n",
+    "docs/testing/v1-release-gate-status.json": "{\"result\":\"FAIL\"}\n"
+  });
+
+  const result = evaluateGeneratedDocsSnapshot({
+    rootDir,
+    generators: Object.fromEntries(DOCS.map((docPath) => [docPath, () => content]))
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "docs/testing/v1-external-uat-evidence-intake.md"));
+});
+
 test("fails when the validation status document is not bound to the current git commit", () => {
   const currentCommit = "b3f6b280935698e8bf4625412989fd7ddacfa35b";
   const staleCommit = "5bdd8ab7772b3c57b799c5c65db417b7da21db6d";
@@ -163,6 +188,7 @@ test("fails when the validation status document is not bound to the current git 
       "docs/testing/v1-go-no-go-meeting.md": () => content,
       "docs/testing/v1-external-uat-request.md": () => content,
       "docs/testing/v1-external-uat-closure-checklist.md": () => content,
+      "docs/testing/v1-external-uat-evidence-intake.md": () => content,
       "docs/testing/v1-external-uat-blockers.json": () => "{\"status\":\"External UAT Evidence Required\"}\n",
       "docs/testing/v1-release-gate-status.json": () => "{\"result\":\"FAIL\"}\n"
     }

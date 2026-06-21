@@ -284,6 +284,12 @@ V1 外部UAT关闭台账：
 node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md
 ```
 
+V1 外部UAT证据收件清单：
+
+```bash
+node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md
+```
+
 V1 外部UAT阻塞项JSON：
 
 ```bash

@@ -31,6 +31,7 @@ function completeDocuments(overrides = {}) {
     "node scripts/v1-final-evidence-handoff-check.mjs",
     "node scripts/v1-secret-scan-check.mjs",
     "node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md",
+    "node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md",
     "node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json",
     "node scripts/v1-release-gate.mjs",
     "node scripts/v1-release-gate.mjs --json"
@@ -47,6 +48,7 @@ function completeDocuments(overrides = {}) {
     "docs/testing/v1-go-no-go-meeting.md": shared,
     "docs/testing/v1-external-uat-request.md": shared,
     "docs/testing/v1-external-uat-closure-checklist.md": shared,
+    "docs/testing/v1-external-uat-evidence-intake.md": shared,
     "docs/testing/v1-external-uat-blockers.json": JSON.stringify({
       status: "External UAT Evidence Required",
       decision: "No-Go",
@@ -142,6 +144,22 @@ test("fails when final handoff materials omit the external UAT closure checklist
   assert.ok(result.missingCommands.includes("node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md"));
 });
 
+test("fails when final handoff materials omit the external UAT evidence intake generation command", () => {
+  const docs = completeDocuments();
+  for (const path of Object.keys(docs)) {
+    docs[path] = docs[path].replaceAll(
+      "node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md",
+      ""
+    );
+  }
+
+  const result = evaluateV1FinalEvidenceHandoffSnapshot(docs);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "handoff-command-coverage"));
+  assert.ok(result.missingCommands.includes("node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md"));
+});
+
 test("fails when final handoff materials omit acceptance and traceability commands", () => {
   const docs = completeDocuments();
   for (const path of Object.keys(docs)) {
@@ -171,6 +189,7 @@ test("fails when generated UAT handoff packets are missing", () => {
   delete docs["docs/testing/v1-go-no-go-meeting.md"];
   delete docs["docs/testing/v1-external-uat-request.md"];
   delete docs["docs/testing/v1-external-uat-closure-checklist.md"];
+  delete docs["docs/testing/v1-external-uat-evidence-intake.md"];
   delete docs["docs/testing/v1-external-uat-blockers.json"];
 
   const result = evaluateV1FinalEvidenceHandoffSnapshot(docs);
@@ -183,6 +202,7 @@ test("fails when generated UAT handoff packets are missing", () => {
     "docs/testing/v1-go-no-go-meeting.md",
     "docs/testing/v1-external-uat-request.md",
     "docs/testing/v1-external-uat-closure-checklist.md",
+    "docs/testing/v1-external-uat-evidence-intake.md",
     "docs/testing/v1-external-uat-blockers.json"
   ]);
 });

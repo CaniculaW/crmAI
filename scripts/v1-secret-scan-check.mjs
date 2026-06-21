@@ -14,6 +14,7 @@ export const CURRENT_V1_EVIDENCE_DOCS = [
   "docs/testing/v1-go-no-go-meeting.md",
   "docs/testing/v1-external-uat-request.md",
   "docs/testing/v1-external-uat-closure-checklist.md",
+  "docs/testing/v1-external-uat-evidence-intake.md",
   "docs/testing/v1-external-uat-blockers.json",
   "docs/testing/v1-release-gate-status.json",
   "docs/testing/v1-uat-environment-evidence.md",

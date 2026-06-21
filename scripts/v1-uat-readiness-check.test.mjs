@@ -32,6 +32,7 @@ jobs:
       - run: node --test scripts/v1-go-no-go-meeting.test.mjs
       - run: node --test scripts/v1-external-uat-request.test.mjs
       - run: node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md
+      - run: node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md
       - run: node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json
       - run: node --test scripts/v1-generated-docs-check.test.mjs
       - run: node scripts/v1-generated-docs-check.mjs
@@ -97,8 +98,8 @@ jobs:
   "scripts/v1-uat-execution-pack.test.mjs": "generates an executable UAT evidence collection pack from failed gates\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nKickoff Governance\nUAT Environment Evidence\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\nnode scripts/v1-release-gate.mjs --json\n",
-  "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\ngenerateV1ExternalUatBlockersJson\ngenerateV1ExternalUatBlockersFromFiles\ngenerateV1ExternalUatClosureChecklistMarkdown\ngenerateV1ExternalUatClosureChecklistFromFiles\nRequest Status: External UAT Evidence Required\nRequest Board\nCRM V1 External UAT Closure Checklist\nDo not record plaintext passwords\nnode scripts/v1-release-gate.mjs --json\n--json\n--closure-checklist\nv1-external-uat-blockers.json\nv1-external-uat-closure-checklist.md\n",
-  "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\nexports machine-readable external UAT blockers with owner routing and validation commands\ngenerates an external UAT closure checklist grouped by owner side\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\ngenerateV1ExternalUatBlockersJson\ngenerateV1ExternalUatBlockersFromFiles\ngenerateV1ExternalUatClosureChecklistMarkdown\ngenerateV1ExternalUatClosureChecklistFromFiles\ngenerateV1ExternalUatEvidenceIntakeMarkdown\ngenerateV1ExternalUatEvidenceIntakeFromFiles\nRequest Status: External UAT Evidence Required\nRequest Board\nCRM V1 External UAT Closure Checklist\nCRM V1 External UAT Evidence Intake\nDo not record plaintext passwords\nnode scripts/v1-release-gate.mjs --json\n--json\n--closure-checklist\n--evidence-intake\nv1-external-uat-blockers.json\nv1-external-uat-closure-checklist.md\nv1-external-uat-evidence-intake.md\n",
+  "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\nexports machine-readable external UAT blockers with owner routing and validation commands\ngenerates an external UAT closure checklist grouped by owner side\ngenerates an external UAT evidence intake checklist tied to manifest ids\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\nvalidation-status-current-commit\n",
   "scripts/v1-generated-docs-check.test.mjs": "fails when a generated document drifts from its generator\nfails when the validation status document is not bound to the current git commit\n",
   "scripts/v1-release-gate-status-check.mjs": "evaluateV1ReleaseGateStatusSnapshot\nrequired-checks\nresult-shape\ndecision-consistency\nlive-release-gate-match\nevaluateV1ReleaseGateFromFiles\nnode scripts/v1-release-gate-status-check.mjs\n",
@@ -129,6 +130,7 @@ jobs:
   "docs/testing/v1-go-no-go-meeting.md": "CRM V1 Go/No-Go Meeting Pack\nDecision Recommendation: No-Go\nFinal Signoff Table\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
   "docs/testing/v1-external-uat-request.md": "CRM V1 External UAT Request Packet\nRequest Status: External UAT Evidence Required\nRequest Board\nProject / Product\nTest\nBusiness UAT\nEngineering\nDo not record plaintext passwords\nKickoff Governance\nUAT Launch Intake\nUAT Environment Evidence\nUAT Evidence Pack\nUAT Evidence Manifest\nUAT Execution Tracker\nUAT Defect Register\nUAT Signoff Register\nRelease Gate\n",
   "docs/testing/v1-external-uat-closure-checklist.md": "CRM V1 External UAT Closure Checklist\nOverall: No-Go\nOpen blocker count: 1\n## 项目/产品\n## 测试\n## 业务UAT\nStatus\nGate\nCheck ID\nSource document\nValidation command\nClosure evidence needed\nDo not mark a row Closed until its source document validates PASS and the final release gate returns Go\n",
+  "docs/testing/v1-external-uat-evidence-intake.md": "CRM V1 External UAT Evidence Intake\nOverall: No-Go\nClosure checklist: docs/testing/v1-external-uat-closure-checklist.md\nEvidence manifest: docs/testing/v1-uat-evidence-manifest.md\nTEST-ENV\nBUSINESS-UAT\nDEFECT-CLOSURE\nSIGNOFF-GO\nENV-EVIDENCE\nUAT-001\nUAT-010\nDEF-P0\nSIGNOFF-PM\nnode scripts/v1-uat-evidence-manifest-validate.mjs docs/testing/v1-uat-evidence-manifest.md\nnode scripts/v1-release-gate.mjs --json\nDo not paste passwords\n",
   "docs/testing/v1-external-uat-blockers.json": "{\"status\":\"External UAT Evidence Required\",\"decision\":\"No-Go\",\"ok\":false,\"summary\":{\"totalBlockers\":1,\"byOwnerSide\":{\"项目/产品\":1}},\"blockers\":[{\"gate\":\"Release Gate\",\"checkId\":\"go-decision\",\"ownerSide\":\"项目/产品\",\"sourceDocument\":\"docs/testing/v1-go-no-go-meeting.md\",\"validationCommand\":\"node scripts/v1-release-gate.mjs --json\",\"message\":\"Project decision is No-Go; V1 release gate requires Go.\"}]}\n",
   "docs/testing/v1-release-gate-status.json": "{\"result\":\"FAIL\",\"decision\":\"No-Go\",\"ok\":false,\"checks\":[{\"id\":\"go-decision\",\"ok\":false}]}\n",
   "docs/meeting-notes/crm-kickoff-minutes.md": `CRM研发启动会纪要
@@ -318,6 +320,16 @@ test("fails when the external UAT closure checklist snapshot is missing", () => 
   assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
 });
 
+test("fails when the external UAT evidence intake checklist snapshot is missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["docs/testing/v1-external-uat-evidence-intake.md"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
 test("fails when V1 validation checkout cannot verify status commit freshness", () => {
   const snapshot = {
     ...completeSnapshot,
@@ -376,6 +388,24 @@ test("fails when the external UAT request generator omits the closure checklist 
       .replace("v1-external-uat-closure-checklist.md\n", ""),
     "scripts/v1-external-uat-request.test.mjs": completeSnapshot["scripts/v1-external-uat-request.test.mjs"]
       .replace("generates an external UAT closure checklist grouped by owner side\n", "")
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-external-uat-request-pack"));
+});
+
+test("fails when the external UAT request generator omits the evidence intake export", () => {
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
+      .replace("      - run: node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md\n", ""),
+    "scripts/v1-external-uat-request.mjs": completeSnapshot["scripts/v1-external-uat-request.mjs"]
+      .replace("generateV1ExternalUatEvidenceIntakeMarkdown\n", "")
+      .replace("generateV1ExternalUatEvidenceIntakeFromFiles\n", "")
+      .replace("--evidence-intake\n", "")
+      .replace("v1-external-uat-evidence-intake.md\n", ""),
+    "scripts/v1-external-uat-request.test.mjs": completeSnapshot["scripts/v1-external-uat-request.test.mjs"]
+      .replace("generates an external UAT evidence intake checklist tied to manifest ids\n", "")
   });
 
   assert.equal(result.ok, false);

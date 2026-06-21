@@ -204,6 +204,14 @@ node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testi
 
 该关闭台账按项目/产品、测试、业务UAT和研发分组列出每个 open blocker 的源文档、验证命令和关闭证据要求，用于逐项认领补证；台账行不得手工改为 Closed，必须由源文档 validator 和最终 release gate 证明。
 
+生成或更新外部 UAT 证据收件清单时，执行：
+
+```bash
+node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md
+```
+
+该收件清单把外部补证工作映射到 `docs/testing/v1-uat-evidence-manifest.md` 的 Evidence ID、正式源文档和验证命令，帮助项目/测试/业务侧把证据补到正确位置。
+
 生成或更新外部 UAT 阻塞项 JSON 时，执行：
 
 ```bash

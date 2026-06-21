@@ -8,6 +8,7 @@ import * as externalUatRequest from "./v1-external-uat-request.mjs";
 
 const {
   generateV1ExternalUatClosureChecklistMarkdown,
+  generateV1ExternalUatEvidenceIntakeMarkdown,
   generateV1ExternalUatRequestFromFiles,
   generateV1ExternalUatRequestMarkdown
 } = externalUatRequest;
@@ -210,6 +211,37 @@ test("generates an external UAT closure checklist grouped by owner side", () => 
   assert.match(markdown, /\| Open \| UAT Environment Evidence \| environment-summary \| docs\/testing\/v1-uat-environment-evidence\.md \| `node scripts\/v1-uat-environment-validate\.mjs docs\/testing\/v1-uat-environment-evidence\.md` \| Invalid environment summary items/);
   assert.match(markdown, /\| Open \| UAT Evidence Pack \| uat-business-cases \| docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md \| `node scripts\/v1-uat-evidence-pack-validate\.mjs docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md` \| Missing passed UAT evidence/);
   assert.match(markdown, /Do not mark a row Closed until its source document validates PASS and the final release gate returns Go/);
+});
+
+test("generates an external UAT evidence intake checklist tied to manifest ids", () => {
+  assert.equal(typeof generateV1ExternalUatEvidenceIntakeMarkdown, "function");
+
+  const markdown = generateV1ExternalUatEvidenceIntakeMarkdown({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
+    launchIntakeResult: failingLaunchIntake,
+    environmentResult: failingEnvironment,
+    evidenceResult: failingEvidence,
+    manifestResult: failingManifest,
+    trackerResult: failingTracker,
+    defectRegisterResult: failingDefects,
+    signoffRegisterResult: failingSignoffs,
+    releaseGateResult: failingReleaseGate
+  });
+
+  assert.match(markdown, /# CRM V1 External UAT Evidence Intake/);
+  assert.match(markdown, /Generated at: 2026-06-19T12:30:00\+08:00/);
+  assert.match(markdown, /Overall: No-Go/);
+  assert.match(markdown, /docs\/testing\/v1-external-uat-closure-checklist\.md/);
+  assert.match(markdown, /docs\/testing\/v1-uat-evidence-manifest\.md/);
+  assert.match(markdown, /\| TEST-ENV \| 测试 \| ENV-EVIDENCE, PRE-001, PRE-002, PRE-003, PRE-004, PRE-005, SMK-001, SMK-002, SMK-003, SMK-004, SMK-005 \| docs\/testing\/v1-uat-environment-evidence\.md; docs\/testing\/crm-v1-uat-execution-tracker\.md; docs\/testing\/v1-uat-evidence-manifest\.md \|/);
+  assert.match(markdown, /\| BUSINESS-UAT \| 业务UAT \| UAT-001, UAT-002, UAT-003, UAT-004, UAT-005, UAT-006, UAT-007, UAT-008, UAT-009, UAT-010 \| docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md; docs\/testing\/crm-v1-uat-execution-tracker\.md; docs\/testing\/v1-uat-evidence-manifest\.md \|/);
+  assert.match(markdown, /\| DEFECT-CLOSURE \| 测试 \| DEF-REGISTER, DEF-P0, DEF-P1 \| docs\/testing\/v1-uat-defect-register\.md; docs\/testing\/v1-uat-evidence-manifest\.md \|/);
+  assert.match(markdown, /\| SIGNOFF-GO \| 项目\/产品 \| SIGNOFF-REGISTER, SIGNOFF-SALES, SIGNOFF-MANAGER, SIGNOFF-PRODUCT, SIGNOFF-TEST, SIGNOFF-DEV, SIGNOFF-PM, GO-NOGO \| docs\/testing\/v1-uat-signoff-register\.md; docs\/testing\/v1-go-no-go-meeting\.md; docs\/testing\/v1-uat-evidence-manifest\.md \|/);
+  assert.match(markdown, /node scripts\/v1-uat-evidence-manifest-validate\.mjs docs\/testing\/v1-uat-evidence-manifest\.md/);
+  assert.match(markdown, /node scripts\/v1-release-gate\.mjs --json/);
+  assert.match(markdown, /Do not paste passwords, bearer tokens, API keys, or unmasked account secrets/);
 });
 
 test("generates request packet from absolute UAT source document paths", () => {

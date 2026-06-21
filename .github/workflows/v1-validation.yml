@@ -96,6 +96,9 @@ jobs:
       - name: Generate V1 external UAT closure checklist
         run: node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md
 
+      - name: Generate V1 external UAT evidence intake
+        run: node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md
+
       - name: Generate V1 external UAT blockers JSON
         run: node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json
 

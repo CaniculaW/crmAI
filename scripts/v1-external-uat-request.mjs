@@ -27,6 +27,7 @@ const DEFAULT_KICKOFF_PATH = "docs/meeting-notes/crm-kickoff-minutes.md";
 const DEFAULT_RUNBOOK_PATH = "docs/testing/crm-v1-test-environment-validation-runbook.md";
 const DEFAULT_AUTOMATED_REPORT_PATH = "docs/testing/v1-automated-validation-report-2026-06-18.md";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-external-uat-request.md";
+const DEFAULT_CLOSURE_CHECKLIST_PATH = "docs/testing/v1-external-uat-closure-checklist.md";
 
 function gateCommands(
   evidencePath = DEFAULT_EVIDENCE_PATH,
@@ -253,6 +254,105 @@ function collectBlockers({
 
 function escapeMarkdownTableCell(value) {
   return String(value).replaceAll("|", "\\|").replace(/\s+/g, " ").trim();
+}
+
+function manifestIds(prefix, start, end) {
+  return Array.from(
+    { length: end - start + 1 },
+    (_, index) => `${prefix}-${String(start + index).padStart(3, "0")}`
+  );
+}
+
+function evidenceIntakeRows({
+  evidencePath,
+  trackerPath,
+  manifestPath,
+  defectRegisterPath,
+  environmentPath,
+  signoffRegisterPath,
+  launchIntakePath,
+  kickoffPath
+}) {
+  const releaseGateCommand = validationCommandFor("Release Gate", {
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath
+  });
+
+  return [
+    {
+      intakeId: "KICKOFF-LAUNCH",
+      ownerSide: "项目/产品",
+      manifestIds: ["PRE-006", "SIGNOFF-PM", "GO-NOGO"],
+      sourceDocuments: [kickoffPath, launchIntakePath, manifestPath],
+      validationCommands: [
+        validationCommandFor("Kickoff Governance", { kickoffPath }),
+        validationCommandFor("UAT Launch Intake", { launchIntakePath }),
+        validationCommandFor("UAT Evidence Manifest", { manifestPath })
+      ],
+      intakeNotes: "补齐启动治理负责人、V1范围冻结、UAT窗口、参与人、账号保管和项目Go证据。"
+    },
+    {
+      intakeId: "TEST-ENV",
+      ownerSide: "测试",
+      manifestIds: ["ENV-EVIDENCE", ...manifestIds("PRE", 1, 5), ...manifestIds("SMK", 1, 5)],
+      sourceDocuments: [environmentPath, trackerPath, manifestPath],
+      validationCommands: [
+        validationCommandFor("UAT Environment Evidence", { environmentPath }),
+        validationCommandFor("UAT Execution Tracker", { trackerPath }),
+        validationCommandFor("UAT Evidence Manifest", { manifestPath })
+      ],
+      intakeNotes: "补齐具名环境、Smoke、账号权限样本和可留存截图/日志证据。"
+    },
+    {
+      intakeId: "BUSINESS-UAT",
+      ownerSide: "业务UAT",
+      manifestIds: manifestIds("UAT", 1, 10),
+      sourceDocuments: [evidencePath, trackerPath, manifestPath],
+      validationCommands: [
+        validationCommandFor("UAT Evidence Pack", { evidencePath }),
+        validationCommandFor("UAT Execution Tracker", { trackerPath }),
+        validationCommandFor("UAT Evidence Manifest", { manifestPath })
+      ],
+      intakeNotes: "逐项执行 UAT-001 至 UAT-010，留存截图、操作记录、缺陷单或外部URL。"
+    },
+    {
+      intakeId: "DEFECT-CLOSURE",
+      ownerSide: "测试",
+      manifestIds: ["DEF-REGISTER", "DEF-P0", "DEF-P1"],
+      sourceDocuments: [defectRegisterPath, manifestPath],
+      validationCommands: [
+        validationCommandFor("UAT Defect Register", { defectRegisterPath }),
+        validationCommandFor("UAT Evidence Manifest", { manifestPath })
+      ],
+      intakeNotes: "补齐P0/P1汇总、缺陷Owner、关闭状态、回归证据和保全引用。"
+    },
+    {
+      intakeId: "SIGNOFF-GO",
+      ownerSide: "项目/产品",
+      manifestIds: [
+        "SIGNOFF-REGISTER",
+        "SIGNOFF-SALES",
+        "SIGNOFF-MANAGER",
+        "SIGNOFF-PRODUCT",
+        "SIGNOFF-TEST",
+        "SIGNOFF-DEV",
+        "SIGNOFF-PM",
+        "GO-NOGO"
+      ],
+      sourceDocuments: [signoffRegisterPath, "docs/testing/v1-go-no-go-meeting.md", manifestPath],
+      validationCommands: [
+        validationCommandFor("UAT Signoff Register", { signoffRegisterPath }),
+        releaseGateCommand
+      ],
+      intakeNotes: "补齐六方具名签署、签署日期、签署证据引用和项目Go结论。"
+    }
+  ];
 }
 
 function requestRows({
@@ -528,6 +628,83 @@ export function generateV1ExternalUatClosureChecklistMarkdown({
   return `${lines.join("\n")}\n`;
 }
 
+export function generateV1ExternalUatEvidenceIntakeMarkdown({
+  generatedAt,
+  releaseGateResult,
+  evidencePath = DEFAULT_EVIDENCE_PATH,
+  trackerPath = DEFAULT_TRACKER_PATH,
+  manifestPath = DEFAULT_MANIFEST_PATH,
+  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH,
+  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH,
+  closureChecklistPath = DEFAULT_CLOSURE_CHECKLIST_PATH
+}) {
+  const isGo = releaseGateResult.ok && releaseGateResult.decision === "Go";
+  const lines = [
+    "# CRM V1 External UAT Evidence Intake",
+    "",
+    `Generated at: ${generatedAt}`,
+    "",
+    `Overall: ${isGo ? "Go" : "No-Go"}`,
+    "",
+    `Closure checklist: ${closureChecklistPath}`,
+    "",
+    `Evidence manifest: ${manifestPath}`,
+    "",
+    "Do not paste passwords, bearer tokens, API keys, or unmasked account secrets into intake evidence.",
+    "",
+    "## Intake Rows",
+    ""
+  ];
+
+  if (isGo) {
+    lines.push("All intake rows are closed by validator evidence.");
+  } else {
+    lines.push("| Intake ID | Owner side | Manifest evidence IDs | Source documents | Validation commands | Intake notes |");
+    lines.push("|---|---|---|---|---|---|");
+    for (const row of evidenceIntakeRows({
+      evidencePath,
+      trackerPath,
+      manifestPath,
+      defectRegisterPath,
+      environmentPath,
+      signoffRegisterPath,
+      launchIntakePath,
+      kickoffPath
+    })) {
+      lines.push([
+        row.intakeId,
+        row.ownerSide,
+        row.manifestIds.join(", "),
+        row.sourceDocuments.join("; "),
+        row.validationCommands.map((command) => `\`${command}\``).join("<br>"),
+        row.intakeNotes
+      ].map(escapeMarkdownTableCell).join(" | ").replace(/^/, "| ").replace(/$/, " |"));
+    }
+  }
+
+  lines.push("");
+  lines.push("## Final Verification");
+  lines.push("");
+  lines.push(`- \`${validationCommandFor("UAT Evidence Manifest", { manifestPath })}\``);
+  lines.push(`- \`${validationCommandFor("Release Gate", {
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath
+  })}\``);
+  lines.push("");
+  lines.push("Note: This intake checklist routes incoming evidence into the formal UAT source documents. It does not replace the validators, manifest, closure checklist, or final release gate.");
+
+  return `${lines.join("\n")}\n`;
+}
+
 export function generateV1ExternalUatRequestFromFiles({
   rootDir = process.cwd(),
   evidencePath = DEFAULT_EVIDENCE_PATH,
@@ -717,6 +894,55 @@ export function generateV1ExternalUatClosureChecklistFromFiles({
   });
 }
 
+export function generateV1ExternalUatEvidenceIntakeFromFiles({
+  rootDir = process.cwd(),
+  evidencePath = DEFAULT_EVIDENCE_PATH,
+  trackerPath = DEFAULT_TRACKER_PATH,
+  manifestPath = DEFAULT_MANIFEST_PATH,
+  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH,
+  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH,
+  generatedAt = new Date().toISOString()
+} = {}) {
+  const readinessResult = evaluateReadinessSnapshot(readSnapshot(rootDir));
+  const kickoffResult = evaluateKickoffGovernance(readFileSync(resolveFromRoot(rootDir, kickoffPath), "utf8"));
+  const launchIntakeResult = evaluateUatLaunchIntake(readFileSync(resolveFromRoot(rootDir, launchIntakePath), "utf8"));
+  const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(resolveFromRoot(rootDir, environmentPath), "utf8"));
+  const evidenceResult = evaluateUatEvidencePack(readFileSync(resolveFromRoot(rootDir, evidencePath), "utf8"));
+  const trackerResult = evaluateUatExecutionTracker(readFileSync(resolveFromRoot(rootDir, trackerPath), "utf8"));
+  const manifestResult = evaluateUatEvidenceManifest(readFileSync(resolveFromRoot(rootDir, manifestPath), "utf8"));
+  const evidenceReferenceResult = evaluateEvidenceReferencesFromFiles(rootDir, manifestPath);
+  const defectRegisterResult = evaluateUatDefectRegister(readFileSync(resolveFromRoot(rootDir, defectRegisterPath), "utf8"));
+  const signoffRegisterResult = evaluateUatSignoffRegister(readFileSync(resolveFromRoot(rootDir, signoffRegisterPath), "utf8"));
+  const releaseGateResult = evaluateV1ReleaseGate({
+    readinessResult,
+    kickoffResult,
+    launchIntakeResult,
+    environmentResult,
+    uatEvidenceResult: evidenceResult,
+    trackerResult,
+    evidenceManifestResult: manifestResult,
+    evidenceReferenceResult,
+    defectRegisterResult,
+    signoffRegisterResult
+  });
+
+  return generateV1ExternalUatEvidenceIntakeMarkdown({
+    generatedAt,
+    releaseGateResult,
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath
+  });
+}
+
 function parseArgs(argv) {
   const parsed = {
     rootDir: process.cwd(),
@@ -730,7 +956,8 @@ function parseArgs(argv) {
     kickoffPath: DEFAULT_KICKOFF_PATH,
     outputPath: null,
     json: false,
-    closureChecklist: false
+    closureChecklist: false,
+    evidenceIntake: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -769,6 +996,8 @@ function parseArgs(argv) {
       parsed.json = true;
     } else if (arg === "--closure-checklist") {
       parsed.closureChecklist = true;
+    } else if (arg === "--evidence-intake") {
+      parsed.evidenceIntake = true;
     }
   }
 
@@ -776,7 +1005,7 @@ function parseArgs(argv) {
 }
 
 function printUsage() {
-  console.error("Usage: node scripts/v1-external-uat-request.mjs [--json | --closure-checklist] [--root path] [--output docs/testing/v1-external-uat-request.md] [--evidence file] [--tracker file] [--manifest file] [--defects file] [--environment file] [--signoffs file] [--launch-intake file] [--kickoff file]");
+  console.error("Usage: node scripts/v1-external-uat-request.mjs [--json | --closure-checklist | --evidence-intake] [--root path] [--output docs/testing/v1-external-uat-request.md] [--evidence file] [--tracker file] [--manifest file] [--defects file] [--environment file] [--signoffs file] [--launch-intake file] [--kickoff file]");
 }
 
 const isCli = process.argv[1] === fileURLToPath(import.meta.url);
@@ -788,7 +1017,9 @@ if (isCli) {
       ? generateV1ExternalUatBlockersFromFiles(options)
       : options.closureChecklist
         ? generateV1ExternalUatClosureChecklistFromFiles(options)
-        : generateV1ExternalUatRequestFromFiles(options);
+        : options.evidenceIntake
+          ? generateV1ExternalUatEvidenceIntakeFromFiles(options)
+          : generateV1ExternalUatRequestFromFiles(options);
     if (options.outputPath) {
       writeFileSync(resolveFromRoot(options.rootDir, options.outputPath), output);
     } else {
