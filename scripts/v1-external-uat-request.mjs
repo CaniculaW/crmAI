@@ -103,6 +103,31 @@ function nextClosurePhaseSummary(blockers, closurePhases) {
   };
 }
 
+function inlineCodeList(values) {
+  return values.map((value) => `\`${value}\``).join(", ");
+}
+
+function nextClosurePhaseMarkdownLines(blockers) {
+  const nextPhase = nextClosurePhaseSummary(blockers, closurePhaseSummaries(blockers));
+  if (!nextPhase) {
+    return [];
+  }
+
+  return [
+    "## Next Closure Phase",
+    "",
+    `Phase: \`${nextPhase.phase}\``,
+    `Order: ${nextPhase.order}`,
+    `Open blockers: ${nextPhase.totalBlockers}`,
+    `Owner side: ${Object.keys(nextPhase.byOwnerSide).sort().join(", ")}`,
+    `Blocker IDs: ${inlineCodeList(nextPhase.blockerIds)}`,
+    `Source documents: ${inlineCodeList(nextPhase.sourceDocuments)}`,
+    "Validation commands:",
+    ...nextPhase.validationCommands.map((command) => `- \`${command}\``),
+    ""
+  ];
+}
+
 function isExternalUatClosed(releaseGateResult, blockers) {
   return blockers.length === 0 && releaseGateResult.ok && releaseGateResult.decision === "Go";
 }
@@ -494,7 +519,7 @@ export function generateV1ExternalUatRequestMarkdown({
   runbookPath = DEFAULT_RUNBOOK_PATH,
   automatedReportPath = DEFAULT_AUTOMATED_REPORT_PATH
 }) {
-  const blockers = [
+  const blockerLines = [
     ...failedLines("Readiness", readinessResult),
     ...failedLines("Kickoff Governance", kickoffResult),
     ...failedLines("UAT Launch Intake", launchIntakeResult),
@@ -507,6 +532,29 @@ export function generateV1ExternalUatRequestMarkdown({
     ...failedLines("UAT Signoff Register", signoffRegisterResult),
     ...failedLines("Release Gate", releaseGateResult)
   ];
+  const blockers = collectBlockers({
+    readinessResult,
+    kickoffResult,
+    launchIntakeResult,
+    environmentResult,
+    evidenceResult,
+    manifestResult,
+    evidenceReferenceResult,
+    trackerResult,
+    defectRegisterResult,
+    signoffRegisterResult,
+    releaseGateResult,
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath,
+    runbookPath,
+    automatedReportPath
+  });
   const isGo = isExternalUatClosed(releaseGateResult, blockers);
 
   const lines = [
@@ -541,6 +589,11 @@ export function generateV1ExternalUatRequestMarkdown({
     }));
   }
 
+  if (!isGo) {
+    lines.push("");
+    lines.push(...nextClosurePhaseMarkdownLines(blockers));
+  }
+
   lines.push("");
   lines.push("## Validation Commands");
   lines.push("");
@@ -551,10 +604,10 @@ export function generateV1ExternalUatRequestMarkdown({
   lines.push("");
   lines.push("## Current Blocking Evidence Requests");
   lines.push("");
-  if (blockers.length === 0) {
+  if (blockerLines.length === 0) {
     lines.push("- None.");
   } else {
-    lines.push(...blockers);
+    lines.push(...blockerLines);
     lines.push("");
     lines.push("Keep this request packet open until every source document validates PASS and the final release gate returns Go.");
   }
@@ -697,6 +750,7 @@ export function generateV1ExternalUatClosureChecklistMarkdown({
   if (blockers.length === 0) {
     lines.push("All closure rows are closed by validator evidence.");
   } else {
+    lines.push(...nextClosurePhaseMarkdownLines(blockers));
     for (const ownerSide of ownerSides) {
       const ownerBlockers = blockers.filter((blocker) => blocker.ownerSide === ownerSide);
       if (ownerBlockers.length === 0) {

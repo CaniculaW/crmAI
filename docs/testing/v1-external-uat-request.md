@@ -1,6 +1,6 @@
 # CRM V1 External UAT Request Packet
 
-Generated at: 2026-06-21T11:22:45.283Z
+Generated at: 2026-06-21T12:13:10.964Z
 
 Request Status: External UAT Evidence Required
 
@@ -14,6 +14,19 @@ Do not record plaintext passwords, bearer tokens, API keys, or unmasked account 
 | Test | 测试 | docs/testing/v1-uat-environment-evidence.md; docs/testing/v1-uat-defect-register.md; docs/testing/v1-uat-evidence-manifest.md | 执行具名环境检查、维护缺陷闭环、汇总证据清单并重跑校验命令 |
 | Business UAT | 业务 | docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md; docs/testing/crm-v1-uat-execution-tracker.md | 执行UAT-001至UAT-010，提供截图、操作记录、缺陷单和验收结论 |
 | Engineering | 研发 | docs/testing/crm-v1-test-environment-validation-runbook.md; docs/testing/v1-automated-validation-report-2026-06-18.md | 支撑环境、账号、Smoke定位和最终release gate复验 |
+
+## Next Closure Phase
+
+Phase: `1-governance`
+Order: 10
+Open blockers: 4
+Owner side: 项目/产品
+Blocker IDs: `Kickoff Governance/project-go-decision`, `Kickoff Governance/required-owners`, `Kickoff Governance/scope-freeze`, `Release Gate/kickoff-governance`
+Source documents: `docs/meeting-notes/crm-kickoff-minutes.md`
+Validation commands:
+- `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md`
+- `node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md`
+
 
 ## Validation Commands
 

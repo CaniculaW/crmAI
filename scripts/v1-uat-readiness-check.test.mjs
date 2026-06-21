@@ -128,10 +128,17 @@ jobs:
   "docs/testing/v1-uat-action-plan.md": "CRM V1 UAT Action Plan\nOverall: No-Go\nRole Workstreams\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
   "docs/testing/v1-uat-execution-pack.md": "CRM V1 UAT Execution Pack\nOverall: No-Go\nExecution Items\nENV-001\nPRE-001\nSMK-001\nUAT-001\nDEF-REGISTER\nSIGNOFF-SALES\nGO-NOGO\n",
   "docs/testing/v1-go-no-go-meeting.md": "CRM V1 Go/No-Go Meeting Pack\nDecision Recommendation: No-Go\nFinal Signoff Table\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
-  "docs/testing/v1-external-uat-request.md": "CRM V1 External UAT Request Packet\nRequest Status: External UAT Evidence Required\nRequest Board\nProject / Product\nTest\nBusiness UAT\nEngineering\nDo not record plaintext passwords\nKickoff Governance\nUAT Launch Intake\nUAT Environment Evidence\nUAT Evidence Pack\nUAT Evidence Manifest\nUAT Execution Tracker\nUAT Defect Register\nUAT Signoff Register\nRelease Gate\n",
+  "docs/testing/v1-external-uat-request.md": "CRM V1 External UAT Request Packet\nRequest Status: External UAT Evidence Required\nRequest Board\nProject / Product\nTest\nBusiness UAT\nEngineering\nNext Closure Phase\nPhase:\nOwner side:\nBlocker IDs:\nSource documents:\nValidation commands:\nDo not record plaintext passwords\nKickoff Governance\nUAT Launch Intake\nUAT Environment Evidence\nUAT Evidence Pack\nUAT Evidence Manifest\nUAT Execution Tracker\nUAT Defect Register\nUAT Signoff Register\nRelease Gate\n",
   "docs/testing/v1-external-uat-closure-checklist.md": `CRM V1 External UAT Closure Checklist
 Overall: No-Go
 Open blocker count: 1
+## Next Closure Phase
+Phase: \`6-final-go-decision\`
+Owner side: 项目/产品
+Blocker IDs: \`Release Gate/go-decision\`
+Source documents: \`docs/testing/v1-go-no-go-meeting.md\`
+Validation commands:
+- \`node scripts/v1-release-gate.mjs --json\`
 ## 项目/产品
 ## 测试
 ## 业务UAT
@@ -419,6 +426,28 @@ test("fails when the external UAT closure checklist open count drifts from rows"
   const result = evaluateReadinessSnapshot({
     ...completeSnapshot,
     "docs/testing/v1-external-uat-closure-checklist.md": driftedChecklist
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "external-uat-closure-checklist"));
+});
+
+test("fails when the external UAT request omits next closure phase handoff section", () => {
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    "docs/testing/v1-external-uat-request.md": completeSnapshot["docs/testing/v1-external-uat-request.md"]
+      .replace("Next Closure Phase\nPhase:\nOwner side:\nBlocker IDs:\nSource documents:\nValidation commands:\n", "")
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "external-uat-request-doc"));
+});
+
+test("fails when the external UAT closure checklist omits next closure phase handoff section", () => {
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    "docs/testing/v1-external-uat-closure-checklist.md": completeSnapshot["docs/testing/v1-external-uat-closure-checklist.md"]
+      .replace(/## Next Closure Phase[\s\S]*?## 项目\/产品\n/, "## 项目/产品\n")
   });
 
   assert.equal(result.ok, false);

@@ -1,12 +1,24 @@
 # CRM V1 External UAT Closure Checklist
 
-Generated at: 2026-06-21T11:22:45.357Z
+Generated at: 2026-06-21T12:13:11.040Z
 
 Overall: No-Go
 
 Open blocker count: 43
 
 Do not record plaintext passwords, bearer tokens, API keys, or unmasked account custody secrets in closure evidence.
+
+## Next Closure Phase
+
+Phase: `1-governance`
+Order: 10
+Open blockers: 4
+Owner side: 项目/产品
+Blocker IDs: `Kickoff Governance/project-go-decision`, `Kickoff Governance/required-owners`, `Kickoff Governance/scope-freeze`, `Release Gate/kickoff-governance`
+Source documents: `docs/meeting-notes/crm-kickoff-minutes.md`
+Validation commands:
+- `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md`
+- `node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md`
 
 ## 项目/产品
 

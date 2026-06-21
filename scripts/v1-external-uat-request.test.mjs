@@ -135,6 +135,11 @@ test("generates a No-Go external UAT request packet with source documents and va
   assert.match(markdown, /\| Test \| 测试 \| docs\/testing\/v1-uat-environment-evidence\.md; docs\/testing\/v1-uat-defect-register\.md; docs\/testing\/v1-uat-evidence-manifest\.md/);
   assert.match(markdown, /\| Business UAT \| 业务 \| docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md; docs\/testing\/crm-v1-uat-execution-tracker\.md/);
   assert.match(markdown, /\| Engineering \| 研发 \| docs\/testing\/crm-v1-test-environment-validation-runbook\.md; docs\/testing\/v1-automated-validation-report-2026-06-18\.md/);
+  assert.match(markdown, /## Next Closure Phase/);
+  assert.match(markdown, /Phase: `1-governance`/);
+  assert.match(markdown, /Owner side: 项目\/产品/);
+  assert.match(markdown, /Blocker IDs: `Kickoff Governance\/required-owners`, `Kickoff Governance\/scope-freeze`, `Release Gate\/kickoff-governance`/);
+  assert.match(markdown, /Source documents: `docs\/meeting-notes\/crm-kickoff-minutes\.md`/);
   assert.match(markdown, /node scripts\/v1-uat-launch-intake-validate\.mjs docs\/testing\/v1-uat-launch-intake\.md/);
   assert.match(markdown, /node scripts\/v1-uat-evidence-manifest-validate\.mjs docs\/testing\/v1-uat-evidence-manifest\.md/);
   assert.match(markdown, /node scripts\/v1-release-gate\.mjs \. docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md/);
@@ -433,6 +438,11 @@ test("generates an external UAT closure checklist grouped by owner side", () => 
   assert.match(markdown, /## 项目\/产品/);
   assert.match(markdown, /## 测试/);
   assert.match(markdown, /## 业务UAT/);
+  assert.match(markdown, /## Next Closure Phase/);
+  assert.match(markdown, /Phase: `1-governance`/);
+  assert.match(markdown, /Owner side: 项目\/产品/);
+  assert.match(markdown, /Blocker IDs: `Kickoff Governance\/required-owners`, `Kickoff Governance\/scope-freeze`, `Release Gate\/kickoff-governance`/);
+  assert.match(markdown, /Validation commands:/);
   assert.match(markdown, /\| Status \| Gate \| Check ID \| Source document \| Validation command \| Closure evidence needed \|/);
   assert.match(markdown, /\| Open \| Kickoff Governance \| required-owners \| docs\/meeting-notes\/crm-kickoff-minutes\.md \| `node scripts\/v1-kickoff-governance-validate\.mjs docs\/meeting-notes\/crm-kickoff-minutes\.md` \| Incomplete kickoff owners/);
   assert.match(markdown, /\| Open \| UAT Environment Evidence \| environment-summary \| docs\/testing\/v1-uat-environment-evidence\.md \| `node scripts\/v1-uat-environment-validate\.mjs docs\/testing\/v1-uat-environment-evidence\.md` \| Invalid environment summary items/);
