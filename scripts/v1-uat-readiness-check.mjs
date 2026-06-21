@@ -344,6 +344,26 @@ function hasExternalUatBlockersJson(content) {
     const summaryByClosurePhase = payload.summary?.byClosurePhase ?? {};
     const closurePhaseSummaryMatches = Object.keys(closurePhaseCounts).length === Object.keys(summaryByClosurePhase).length
       && Object.entries(closurePhaseCounts).every(([closurePhase, count]) => summaryByClosurePhase[closurePhase] === count);
+    const closurePhaseDetails = payload.summary?.closurePhases ?? [];
+    const closurePhaseDetailsMatch = Array.isArray(closurePhaseDetails)
+      && closurePhaseDetails.length === Object.keys(closurePhaseCounts).length
+      && closurePhaseDetails.every((phase, index) => {
+        const phaseBlockers = (payload.blockers ?? []).filter((blocker) => blocker.closurePhase === phase.phase);
+        const phaseOwnerCounts = phaseBlockers.reduce((counts, blocker) => {
+          counts[blocker.ownerSide] = (counts[blocker.ownerSide] ?? 0) + 1;
+          return counts;
+        }, {});
+        const priorPhase = closurePhaseDetails[index - 1];
+        return typeof phase.phase === "string"
+          && Number.isInteger(phase.order)
+          && Number.isInteger(phase.totalBlockers)
+          && typeof phase.byOwnerSide === "object"
+          && phase.totalBlockers === phaseBlockers.length
+          && summaryByClosurePhase[phase.phase] === phase.totalBlockers
+          && Object.keys(phaseOwnerCounts).length === Object.keys(phase.byOwnerSide).length
+          && Object.entries(phaseOwnerCounts).every(([ownerSide, count]) => phase.byOwnerSide[ownerSide] === count)
+          && (!priorPhase || phase.order >= priorPhase.order);
+      });
     const blockerIdsAreStable = Array.isArray(payload.blockers)
       && blockerIds.length === payload.blockers.length
       && new Set(blockerIds).size === blockerIds.length
@@ -360,9 +380,11 @@ function hasExternalUatBlockersJson(content) {
       && payload.summary.totalBlockers === payload.blockers?.length
       && typeof payload.summary?.byOwnerSide === "object"
       && typeof payload.summary?.byClosurePhase === "object"
+      && Array.isArray(payload.summary?.closurePhases)
       && Array.isArray(payload.blockers)
       && ownerSummaryMatches
       && closurePhaseSummaryMatches
+      && closurePhaseDetailsMatch
       && blockerIdsAreStable
       && payload.blockers.some((blocker) => (
         blocker.gate === "Release Gate"
@@ -846,6 +868,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "deduplicates machine-readable blockers by gate and check id",
       "exports stable machine-readable blocker ids",
       "exports machine-readable blocker closure sequencing",
+      "exports ordered blocker closure phase summaries",
       "keeps external UAT request open when validator blockers remain despite release gate Go",
       "keeps blockers JSON No-Go when validator blockers remain despite release gate Go",
       "generates an external UAT closure checklist grouped by owner side",
@@ -855,7 +878,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "keeps evidence intake manifest ids assigned to a single intake row",
       "generates a No-Go external UAT request packet with source documents and validation commands"
     ]),
-    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board, closure checklist, evidence intake checklist, and machine-readable blocker JSON with stable blocker IDs and closure sequencing for dashboards and validation bots."
+    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board, closure checklist, evidence intake checklist, and machine-readable blocker JSON with stable blocker IDs, closure sequencing, and ordered phase summaries for dashboards and validation bots."
   ));
 
   const generatedDocsChecker = snapshot["scripts/v1-generated-docs-check.mjs"] ?? "";

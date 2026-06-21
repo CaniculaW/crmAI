@@ -302,6 +302,44 @@ test("exports machine-readable blocker closure sequencing", () => {
   );
 });
 
+test("exports ordered blocker closure phase summaries", () => {
+  const json = externalUatRequest.generateV1ExternalUatBlockersJson({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
+    launchIntakeResult: failingLaunchIntake,
+    environmentResult: failingEnvironment,
+    evidenceResult: failingEvidence,
+    manifestResult: failingManifest,
+    trackerResult: failingTracker,
+    defectRegisterResult: failingDefects,
+    signoffRegisterResult: failingSignoffs,
+    releaseGateResult: failingReleaseGate
+  });
+
+  const payload = JSON.parse(json);
+  const phases = payload.summary.closurePhases;
+
+  assert.deepEqual(phases.map((phase) => phase.phase), [
+    "1-governance",
+    "2-uat-launch",
+    "2-uat-environment",
+    "3-uat-evidence",
+    "4-defect-closure",
+    "5-signoff",
+    "6-final-go-decision"
+  ]);
+  assert.ok(phases.every((phase, index) => index === 0 || phase.order >= phases[index - 1].order));
+  assert.equal(
+    phases.find((phase) => phase.phase === "3-uat-evidence").totalBlockers,
+    payload.summary.byClosurePhase["3-uat-evidence"]
+  );
+  assert.deepEqual(
+    phases.find((phase) => phase.phase === "1-governance").byOwnerSide,
+    { "项目/产品": 3 }
+  );
+});
+
 test("deduplicates machine-readable blockers by gate and check id", () => {
   const duplicatedEvidence = {
     ok: false,

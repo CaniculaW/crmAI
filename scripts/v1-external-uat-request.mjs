@@ -66,6 +66,24 @@ function countBy(items, key) {
   }, {});
 }
 
+function closurePhaseSummaries(blockers) {
+  const phaseMap = blockers.reduce((phases, blocker) => {
+    const phase = phases.get(blocker.closurePhase) ?? {
+      phase: blocker.closurePhase,
+      order: blocker.closureOrder,
+      totalBlockers: 0,
+      byOwnerSide: {}
+    };
+    phase.totalBlockers += 1;
+    phase.byOwnerSide[blocker.ownerSide] = (phase.byOwnerSide[blocker.ownerSide] ?? 0) + 1;
+    phase.order = Math.min(phase.order, blocker.closureOrder);
+    phases.set(blocker.closurePhase, phase);
+    return phases;
+  }, new Map());
+
+  return Array.from(phaseMap.values()).sort((left, right) => left.order - right.order || left.phase.localeCompare(right.phase));
+}
+
 function isExternalUatClosed(releaseGateResult, blockers) {
   return blockers.length === 0 && releaseGateResult.ok && releaseGateResult.decision === "Go";
 }
@@ -205,7 +223,7 @@ function closureSequencingFor(gate, checkId) {
     return { closurePhase: "2-uat-launch", closureOrder: 20 };
   }
   if (gate === "UAT Environment Evidence") {
-    return { closurePhase: "2-uat-environment", closureOrder: 20 };
+    return { closurePhase: "2-uat-environment", closureOrder: 21 };
   }
   if (gate === "UAT Evidence Pack" || gate === "UAT Evidence Manifest" || gate === "UAT Evidence References" || gate === "UAT Execution Tracker") {
     return { closurePhase: "3-uat-evidence", closureOrder: 30 };
@@ -220,7 +238,7 @@ function closureSequencingFor(gate, checkId) {
     return {
       "kickoff-governance": { closurePhase: "1-governance", closureOrder: 10 },
       "uat-launch-intake": { closurePhase: "2-uat-launch", closureOrder: 20 },
-      "uat-environment": { closurePhase: "2-uat-environment", closureOrder: 20 },
+      "uat-environment": { closurePhase: "2-uat-environment", closureOrder: 21 },
       "uat-evidence-pack": { closurePhase: "3-uat-evidence", closureOrder: 30 },
       "uat-evidence-manifest": { closurePhase: "3-uat-evidence", closureOrder: 30 },
       "uat-execution-tracker": { closurePhase: "3-uat-evidence", closureOrder: 30 },
@@ -584,7 +602,8 @@ export function generateV1ExternalUatBlockersJson({
     summary: {
       totalBlockers: blockers.length,
       byOwnerSide: countBy(blockers, "ownerSide"),
-      byClosurePhase: countBy(blockers, "closurePhase")
+      byClosurePhase: countBy(blockers, "closurePhase"),
+      closurePhases: closurePhaseSummaries(blockers)
     },
     blockers
   };
