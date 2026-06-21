@@ -7,6 +7,7 @@ import test from "node:test";
 import * as externalUatRequest from "./v1-external-uat-request.mjs";
 
 const {
+  generateV1ExternalUatClosureChecklistMarkdown,
   generateV1ExternalUatRequestFromFiles,
   generateV1ExternalUatRequestMarkdown
 } = externalUatRequest;
@@ -178,6 +179,37 @@ test("exports machine-readable external UAT blockers with owner routing and vali
   ));
   assert.equal(releaseGateBlocker.ownerSide, "项目/产品");
   assert.match(releaseGateBlocker.validationCommand, /node scripts\/v1-release-gate\.mjs --json/);
+});
+
+test("generates an external UAT closure checklist grouped by owner side", () => {
+  assert.equal(typeof generateV1ExternalUatClosureChecklistMarkdown, "function");
+
+  const markdown = generateV1ExternalUatClosureChecklistMarkdown({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
+    launchIntakeResult: failingLaunchIntake,
+    environmentResult: failingEnvironment,
+    evidenceResult: failingEvidence,
+    manifestResult: failingManifest,
+    trackerResult: failingTracker,
+    defectRegisterResult: failingDefects,
+    signoffRegisterResult: failingSignoffs,
+    releaseGateResult: failingReleaseGate
+  });
+
+  assert.match(markdown, /# CRM V1 External UAT Closure Checklist/);
+  assert.match(markdown, /Generated at: 2026-06-19T12:30:00\+08:00/);
+  assert.match(markdown, /Overall: No-Go/);
+  assert.match(markdown, /Open blocker count: \d+/);
+  assert.match(markdown, /## 项目\/产品/);
+  assert.match(markdown, /## 测试/);
+  assert.match(markdown, /## 业务UAT/);
+  assert.match(markdown, /\| Status \| Gate \| Check ID \| Source document \| Validation command \| Closure evidence needed \|/);
+  assert.match(markdown, /\| Open \| Kickoff Governance \| required-owners \| docs\/meeting-notes\/crm-kickoff-minutes\.md \| `node scripts\/v1-kickoff-governance-validate\.mjs docs\/meeting-notes\/crm-kickoff-minutes\.md` \| Incomplete kickoff owners/);
+  assert.match(markdown, /\| Open \| UAT Environment Evidence \| environment-summary \| docs\/testing\/v1-uat-environment-evidence\.md \| `node scripts\/v1-uat-environment-validate\.mjs docs\/testing\/v1-uat-environment-evidence\.md` \| Invalid environment summary items/);
+  assert.match(markdown, /\| Open \| UAT Evidence Pack \| uat-business-cases \| docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md \| `node scripts\/v1-uat-evidence-pack-validate\.mjs docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md` \| Missing passed UAT evidence/);
+  assert.match(markdown, /Do not mark a row Closed until its source document validates PASS and the final release gate returns Go/);
 });
 
 test("generates request packet from absolute UAT source document paths", () => {

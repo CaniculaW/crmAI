@@ -72,6 +72,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/v1-uat-execution-pack.md",
   "docs/testing/v1-go-no-go-meeting.md",
   "docs/testing/v1-external-uat-request.md",
+  "docs/testing/v1-external-uat-closure-checklist.md",
   "docs/testing/v1-external-uat-blockers.json",
   "docs/testing/v1-release-gate-status.json",
   "docs/meeting-notes/crm-kickoff-minutes.md",
@@ -349,6 +350,24 @@ function hasExternalUatBlockersJson(content) {
   } catch {
     return false;
   }
+}
+
+function hasExternalUatClosureChecklist(content) {
+  return includesAll(content, [
+    "CRM V1 External UAT Closure Checklist",
+    "Overall: No-Go",
+    "Open blocker count:",
+    "## 项目/产品",
+    "## 测试",
+    "## 业务UAT",
+    "Status",
+    "Gate",
+    "Check ID",
+    "Source document",
+    "Validation command",
+    "Closure evidence needed",
+    "Do not mark a row Closed until its source document validates PASS and the final release gate returns Go"
+  ]);
 }
 
 function makeCheck(id, ok, message, severity = "fail") {
@@ -727,18 +746,25 @@ export function evaluateReadinessSnapshot(snapshot) {
     "v1-external-uat-request-pack",
     includesAll(workflow + externalUatRequest + externalUatRequestTest, [
       "node --test scripts/v1-external-uat-request.test.mjs",
+      "node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md",
       "node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json",
       "generateV1ExternalUatRequestMarkdown",
       "generateV1ExternalUatBlockersJson",
       "generateV1ExternalUatBlockersFromFiles",
+      "generateV1ExternalUatClosureChecklistMarkdown",
+      "generateV1ExternalUatClosureChecklistFromFiles",
       "Request Status: External UAT Evidence Required",
       "Request Board",
+      "CRM V1 External UAT Closure Checklist",
+      "--closure-checklist",
+      "v1-external-uat-closure-checklist.md",
       "v1-external-uat-blockers.json",
       "node scripts/v1-release-gate.mjs --json",
       "exports machine-readable external UAT blockers with owner routing and validation commands",
+      "generates an external UAT closure checklist grouped by owner side",
       "generates a No-Go external UAT request packet with source documents and validation commands"
     ]),
-    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board plus machine-readable blocker JSON for dashboards and validation bots."
+    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board, closure checklist, and machine-readable blocker JSON for dashboards and validation bots."
   ));
 
   const generatedDocsChecker = snapshot["scripts/v1-generated-docs-check.mjs"] ?? "";
@@ -1090,6 +1116,13 @@ export function evaluateReadinessSnapshot(snapshot) {
     "external-uat-blockers-json",
     hasExternalUatBlockersJson(externalUatBlockersJson),
     "External UAT blockers JSON exposes current No-Go blocker routing, source documents, and validation commands for dashboards and agent handoff."
+  ));
+
+  const externalUatClosureChecklist = snapshot["docs/testing/v1-external-uat-closure-checklist.md"] ?? "";
+  checks.push(makeCheck(
+    "external-uat-closure-checklist",
+    hasExternalUatClosureChecklist(externalUatClosureChecklist),
+    "External UAT closure checklist groups current No-Go blocker closure rows by owner side with source documents and validation commands."
   ));
 
   const readme = snapshot["README.md"] ?? "";

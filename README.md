@@ -278,6 +278,12 @@ V1 外部UAT请求包：
 node scripts/v1-external-uat-request.mjs --output docs/testing/v1-external-uat-request.md
 ```
 
+V1 外部UAT关闭台账：
+
+```bash
+node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md
+```
+
 V1 外部UAT阻塞项JSON：
 
 ```bash

@@ -200,6 +200,61 @@ function blockerRows(gate, result, paths) {
   }));
 }
 
+function collectBlockers({
+  readinessResult,
+  kickoffResult,
+  launchIntakeResult,
+  environmentResult,
+  evidenceResult,
+  manifestResult,
+  evidenceReferenceResult = { ok: true, failed: [] },
+  trackerResult,
+  defectRegisterResult,
+  signoffRegisterResult,
+  releaseGateResult,
+  evidencePath = DEFAULT_EVIDENCE_PATH,
+  trackerPath = DEFAULT_TRACKER_PATH,
+  manifestPath = DEFAULT_MANIFEST_PATH,
+  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH,
+  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH,
+  runbookPath = DEFAULT_RUNBOOK_PATH,
+  automatedReportPath = DEFAULT_AUTOMATED_REPORT_PATH
+}) {
+  const paths = {
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath,
+    runbookPath,
+    automatedReportPath
+  };
+
+  return [
+    ...blockerRows("Readiness", readinessResult, paths),
+    ...blockerRows("Kickoff Governance", kickoffResult, paths),
+    ...blockerRows("UAT Launch Intake", launchIntakeResult, paths),
+    ...blockerRows("UAT Environment Evidence", environmentResult, paths),
+    ...blockerRows("UAT Evidence Pack", evidenceResult, paths),
+    ...blockerRows("UAT Evidence Manifest", manifestResult, paths),
+    ...blockerRows("UAT Evidence References", evidenceReferenceResult, paths),
+    ...blockerRows("UAT Execution Tracker", trackerResult, paths),
+    ...blockerRows("UAT Defect Register", defectRegisterResult, paths),
+    ...blockerRows("UAT Signoff Register", signoffRegisterResult, paths),
+    ...blockerRows("Release Gate", releaseGateResult, paths)
+  ];
+}
+
+function escapeMarkdownTableCell(value) {
+  return String(value).replaceAll("|", "\\|").replace(/\s+/g, " ").trim();
+}
+
 function requestRows({
   evidencePath,
   trackerPath,
@@ -339,7 +394,18 @@ export function generateV1ExternalUatBlockersJson({
   runbookPath = DEFAULT_RUNBOOK_PATH,
   automatedReportPath = DEFAULT_AUTOMATED_REPORT_PATH
 }) {
-  const paths = {
+  const blockers = collectBlockers({
+    readinessResult,
+    kickoffResult,
+    launchIntakeResult,
+    environmentResult,
+    evidenceResult,
+    manifestResult,
+    evidenceReferenceResult,
+    trackerResult,
+    defectRegisterResult,
+    signoffRegisterResult,
+    releaseGateResult,
     evidencePath,
     trackerPath,
     manifestPath,
@@ -350,20 +416,7 @@ export function generateV1ExternalUatBlockersJson({
     kickoffPath,
     runbookPath,
     automatedReportPath
-  };
-  const blockers = [
-    ...blockerRows("Readiness", readinessResult, paths),
-    ...blockerRows("Kickoff Governance", kickoffResult, paths),
-    ...blockerRows("UAT Launch Intake", launchIntakeResult, paths),
-    ...blockerRows("UAT Environment Evidence", environmentResult, paths),
-    ...blockerRows("UAT Evidence Pack", evidenceResult, paths),
-    ...blockerRows("UAT Evidence Manifest", manifestResult, paths),
-    ...blockerRows("UAT Evidence References", evidenceReferenceResult, paths),
-    ...blockerRows("UAT Execution Tracker", trackerResult, paths),
-    ...blockerRows("UAT Defect Register", defectRegisterResult, paths),
-    ...blockerRows("UAT Signoff Register", signoffRegisterResult, paths),
-    ...blockerRows("Release Gate", releaseGateResult, paths)
-  ];
+  });
   const isGo = releaseGateResult.ok && releaseGateResult.decision === "Go";
   const payload = {
     generatedAt,
@@ -378,6 +431,101 @@ export function generateV1ExternalUatBlockersJson({
   };
 
   return `${JSON.stringify(payload, null, 2)}\n`;
+}
+
+export function generateV1ExternalUatClosureChecklistMarkdown({
+  generatedAt,
+  readinessResult,
+  kickoffResult,
+  launchIntakeResult,
+  environmentResult,
+  evidenceResult,
+  manifestResult,
+  evidenceReferenceResult = { ok: true, failed: [] },
+  trackerResult,
+  defectRegisterResult,
+  signoffRegisterResult,
+  releaseGateResult,
+  evidencePath = DEFAULT_EVIDENCE_PATH,
+  trackerPath = DEFAULT_TRACKER_PATH,
+  manifestPath = DEFAULT_MANIFEST_PATH,
+  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH,
+  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH,
+  runbookPath = DEFAULT_RUNBOOK_PATH,
+  automatedReportPath = DEFAULT_AUTOMATED_REPORT_PATH
+}) {
+  const blockers = collectBlockers({
+    readinessResult,
+    kickoffResult,
+    launchIntakeResult,
+    environmentResult,
+    evidenceResult,
+    manifestResult,
+    evidenceReferenceResult,
+    trackerResult,
+    defectRegisterResult,
+    signoffRegisterResult,
+    releaseGateResult,
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath,
+    runbookPath,
+    automatedReportPath
+  });
+  const isGo = releaseGateResult.ok && releaseGateResult.decision === "Go";
+  const ownerSides = ["项目/产品", "测试", "业务UAT", "研发"];
+  const lines = [
+    "# CRM V1 External UAT Closure Checklist",
+    "",
+    `Generated at: ${generatedAt}`,
+    "",
+    `Overall: ${isGo ? "Go" : "No-Go"}`,
+    "",
+    `Open blocker count: ${blockers.length}`,
+    "",
+    "Do not record plaintext passwords, bearer tokens, API keys, or unmasked account custody secrets in closure evidence.",
+    ""
+  ];
+
+  if (blockers.length === 0) {
+    lines.push("All closure rows are closed by validator evidence.");
+  } else {
+    for (const ownerSide of ownerSides) {
+      const ownerBlockers = blockers.filter((blocker) => blocker.ownerSide === ownerSide);
+      if (ownerBlockers.length === 0) {
+        continue;
+      }
+      lines.push(`## ${ownerSide}`);
+      lines.push("");
+      lines.push("| Status | Gate | Check ID | Source document | Validation command | Closure evidence needed |");
+      lines.push("|---|---|---|---|---|---|");
+      for (const blocker of ownerBlockers) {
+        lines.push([
+          "Open",
+          blocker.gate,
+          blocker.checkId,
+          blocker.sourceDocument,
+          `\`${blocker.validationCommand}\``,
+          blocker.message
+        ].map(escapeMarkdownTableCell).join(" | ").replace(/^/, "| ").replace(/$/, " |"));
+      }
+      lines.push("");
+    }
+    lines.push("Do not mark a row Closed until its source document validates PASS and the final release gate returns Go.");
+  }
+
+  lines.push("");
+  lines.push("Note: This checklist is generated from validator output. Update the source evidence documents, then regenerate this file instead of editing closure rows manually.");
+
+  return `${lines.join("\n")}\n`;
 }
 
 export function generateV1ExternalUatRequestFromFiles({
@@ -506,6 +654,69 @@ export function generateV1ExternalUatBlockersFromFiles({
   });
 }
 
+export function generateV1ExternalUatClosureChecklistFromFiles({
+  rootDir = process.cwd(),
+  evidencePath = DEFAULT_EVIDENCE_PATH,
+  trackerPath = DEFAULT_TRACKER_PATH,
+  manifestPath = DEFAULT_MANIFEST_PATH,
+  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH,
+  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH,
+  runbookPath = DEFAULT_RUNBOOK_PATH,
+  automatedReportPath = DEFAULT_AUTOMATED_REPORT_PATH,
+  generatedAt = new Date().toISOString()
+} = {}) {
+  const readinessResult = evaluateReadinessSnapshot(readSnapshot(rootDir));
+  const kickoffResult = evaluateKickoffGovernance(readFileSync(resolveFromRoot(rootDir, kickoffPath), "utf8"));
+  const launchIntakeResult = evaluateUatLaunchIntake(readFileSync(resolveFromRoot(rootDir, launchIntakePath), "utf8"));
+  const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(resolveFromRoot(rootDir, environmentPath), "utf8"));
+  const evidenceResult = evaluateUatEvidencePack(readFileSync(resolveFromRoot(rootDir, evidencePath), "utf8"));
+  const trackerResult = evaluateUatExecutionTracker(readFileSync(resolveFromRoot(rootDir, trackerPath), "utf8"));
+  const manifestResult = evaluateUatEvidenceManifest(readFileSync(resolveFromRoot(rootDir, manifestPath), "utf8"));
+  const evidenceReferenceResult = evaluateEvidenceReferencesFromFiles(rootDir, manifestPath);
+  const defectRegisterResult = evaluateUatDefectRegister(readFileSync(resolveFromRoot(rootDir, defectRegisterPath), "utf8"));
+  const signoffRegisterResult = evaluateUatSignoffRegister(readFileSync(resolveFromRoot(rootDir, signoffRegisterPath), "utf8"));
+  const releaseGateResult = evaluateV1ReleaseGate({
+    readinessResult,
+    kickoffResult,
+    launchIntakeResult,
+    environmentResult,
+    uatEvidenceResult: evidenceResult,
+    trackerResult,
+    evidenceManifestResult: manifestResult,
+    evidenceReferenceResult,
+    defectRegisterResult,
+    signoffRegisterResult
+  });
+
+  return generateV1ExternalUatClosureChecklistMarkdown({
+    generatedAt,
+    readinessResult,
+    kickoffResult,
+    launchIntakeResult,
+    environmentResult,
+    evidenceResult,
+    manifestResult,
+    evidenceReferenceResult,
+    trackerResult,
+    defectRegisterResult,
+    signoffRegisterResult,
+    releaseGateResult,
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath,
+    runbookPath,
+    automatedReportPath
+  });
+}
+
 function parseArgs(argv) {
   const parsed = {
     rootDir: process.cwd(),
@@ -518,7 +729,8 @@ function parseArgs(argv) {
     launchIntakePath: DEFAULT_LAUNCH_INTAKE_PATH,
     kickoffPath: DEFAULT_KICKOFF_PATH,
     outputPath: null,
-    json: false
+    json: false,
+    closureChecklist: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -555,6 +767,8 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--json") {
       parsed.json = true;
+    } else if (arg === "--closure-checklist") {
+      parsed.closureChecklist = true;
     }
   }
 
@@ -562,7 +776,7 @@ function parseArgs(argv) {
 }
 
 function printUsage() {
-  console.error("Usage: node scripts/v1-external-uat-request.mjs [--json] [--root path] [--output docs/testing/v1-external-uat-request.md] [--evidence file] [--tracker file] [--manifest file] [--defects file] [--environment file] [--signoffs file] [--launch-intake file] [--kickoff file]");
+  console.error("Usage: node scripts/v1-external-uat-request.mjs [--json | --closure-checklist] [--root path] [--output docs/testing/v1-external-uat-request.md] [--evidence file] [--tracker file] [--manifest file] [--defects file] [--environment file] [--signoffs file] [--launch-intake file] [--kickoff file]");
 }
 
 const isCli = process.argv[1] === fileURLToPath(import.meta.url);
@@ -572,7 +786,9 @@ if (isCli) {
     const options = parseArgs(process.argv.slice(2));
     const output = options.json
       ? generateV1ExternalUatBlockersFromFiles(options)
-      : generateV1ExternalUatRequestFromFiles(options);
+      : options.closureChecklist
+        ? generateV1ExternalUatClosureChecklistFromFiles(options)
+        : generateV1ExternalUatRequestFromFiles(options);
     if (options.outputPath) {
       writeFileSync(resolveFromRoot(options.rootDir, options.outputPath), output);
     } else {
