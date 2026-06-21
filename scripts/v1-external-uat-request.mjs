@@ -194,16 +194,59 @@ function ownerSideFor(gate, checkId) {
   return "项目/产品";
 }
 
+function closureSequencingFor(gate, checkId) {
+  if (gate === "Readiness") {
+    return { closurePhase: "0-engineering-readiness", closureOrder: 0 };
+  }
+  if (gate === "Kickoff Governance") {
+    return { closurePhase: "1-governance", closureOrder: 10 };
+  }
+  if (gate === "UAT Launch Intake") {
+    return { closurePhase: "2-uat-launch", closureOrder: 20 };
+  }
+  if (gate === "UAT Environment Evidence") {
+    return { closurePhase: "2-uat-environment", closureOrder: 20 };
+  }
+  if (gate === "UAT Evidence Pack" || gate === "UAT Evidence Manifest" || gate === "UAT Evidence References" || gate === "UAT Execution Tracker") {
+    return { closurePhase: "3-uat-evidence", closureOrder: 30 };
+  }
+  if (gate === "UAT Defect Register") {
+    return { closurePhase: "4-defect-closure", closureOrder: 40 };
+  }
+  if (gate === "UAT Signoff Register") {
+    return { closurePhase: "5-signoff", closureOrder: 50 };
+  }
+  if (gate === "Release Gate") {
+    return {
+      "kickoff-governance": { closurePhase: "1-governance", closureOrder: 10 },
+      "uat-launch-intake": { closurePhase: "2-uat-launch", closureOrder: 20 },
+      "uat-environment": { closurePhase: "2-uat-environment", closureOrder: 20 },
+      "uat-evidence-pack": { closurePhase: "3-uat-evidence", closureOrder: 30 },
+      "uat-evidence-manifest": { closurePhase: "3-uat-evidence", closureOrder: 30 },
+      "uat-execution-tracker": { closurePhase: "3-uat-evidence", closureOrder: 30 },
+      "uat-defect-register": { closurePhase: "4-defect-closure", closureOrder: 40 },
+      "uat-signoff-register": { closurePhase: "5-signoff", closureOrder: 50 },
+      "go-decision": { closurePhase: "6-final-go-decision", closureOrder: 60 }
+    }[checkId] ?? { closurePhase: "6-final-go-decision", closureOrder: 60 };
+  }
+
+  return { closurePhase: "6-final-go-decision", closureOrder: 60 };
+}
+
 function blockerRows(gate, result, paths) {
-  return (result.failed ?? []).map((check) => ({
-    blockerId: `${gate}/${check.id}`,
-    gate,
-    checkId: check.id,
-    ownerSide: ownerSideFor(gate, check.id),
-    sourceDocument: sourceDocumentFor(gate, check.id, paths),
-    validationCommand: validationCommandFor(gate, paths),
-    message: check.message
-  }));
+  return (result.failed ?? []).map((check) => {
+    const closureSequencing = closureSequencingFor(gate, check.id);
+    return {
+      blockerId: `${gate}/${check.id}`,
+      gate,
+      checkId: check.id,
+      ownerSide: ownerSideFor(gate, check.id),
+      ...closureSequencing,
+      sourceDocument: sourceDocumentFor(gate, check.id, paths),
+      validationCommand: validationCommandFor(gate, paths),
+      message: check.message
+    };
+  });
 }
 
 function collectBlockers({
@@ -540,7 +583,8 @@ export function generateV1ExternalUatBlockersJson({
     ok: isGo,
     summary: {
       totalBlockers: blockers.length,
-      byOwnerSide: countBy(blockers, "ownerSide")
+      byOwnerSide: countBy(blockers, "ownerSide"),
+      byClosurePhase: countBy(blockers, "closurePhase")
     },
     blockers
   };

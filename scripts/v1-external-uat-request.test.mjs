@@ -270,6 +270,38 @@ test("exports stable machine-readable blocker ids", () => {
   assert.ok(blockerIds.includes("Release Gate/go-decision"));
 });
 
+test("exports machine-readable blocker closure sequencing", () => {
+  const json = externalUatRequest.generateV1ExternalUatBlockersJson({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
+    launchIntakeResult: failingLaunchIntake,
+    environmentResult: failingEnvironment,
+    evidenceResult: failingEvidence,
+    manifestResult: failingManifest,
+    trackerResult: failingTracker,
+    defectRegisterResult: failingDefects,
+    signoffRegisterResult: failingSignoffs,
+    releaseGateResult: failingReleaseGate
+  });
+
+  const payload = JSON.parse(json);
+  const kickoffBlocker = payload.blockers.find((blocker) => blocker.blockerId === "Kickoff Governance/required-owners");
+  const businessCaseBlocker = payload.blockers.find((blocker) => blocker.blockerId === "UAT Evidence Pack/uat-business-cases");
+  const finalGoBlocker = payload.blockers.find((blocker) => blocker.blockerId === "Release Gate/go-decision");
+
+  assert.equal(kickoffBlocker.closurePhase, "1-governance");
+  assert.equal(kickoffBlocker.closureOrder, 10);
+  assert.equal(businessCaseBlocker.closurePhase, "3-uat-evidence");
+  assert.equal(businessCaseBlocker.closureOrder, 30);
+  assert.equal(finalGoBlocker.closurePhase, "6-final-go-decision");
+  assert.equal(finalGoBlocker.closureOrder, 60);
+  assert.equal(
+    payload.summary.byClosurePhase["3-uat-evidence"],
+    payload.blockers.filter((blocker) => blocker.closurePhase === "3-uat-evidence").length
+  );
+});
+
 test("deduplicates machine-readable blockers by gate and check id", () => {
   const duplicatedEvidence = {
     ok: false,
