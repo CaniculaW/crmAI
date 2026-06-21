@@ -325,13 +325,25 @@ function hasUatLaunchIntake(content) {
 function hasExternalUatBlockersJson(content) {
   try {
     const payload = JSON.parse(content);
+    const ownerCounts = (payload.blockers ?? []).reduce((counts, blocker) => {
+      if (typeof blocker.ownerSide === "string" && blocker.ownerSide.length > 0) {
+        counts[blocker.ownerSide] = (counts[blocker.ownerSide] ?? 0) + 1;
+      }
+      return counts;
+    }, {});
+    const summaryByOwnerSide = payload.summary?.byOwnerSide ?? {};
+    const ownerSummaryMatches = Object.keys(ownerCounts).length === Object.keys(summaryByOwnerSide).length
+      && Object.entries(ownerCounts).every(([ownerSide, count]) => summaryByOwnerSide[ownerSide] === count);
+
     return payload.status === "External UAT Evidence Required"
       && payload.decision === "No-Go"
       && payload.ok === false
       && Number.isInteger(payload.summary?.totalBlockers)
       && payload.summary.totalBlockers > 0
+      && payload.summary.totalBlockers === payload.blockers?.length
       && typeof payload.summary?.byOwnerSide === "object"
       && Array.isArray(payload.blockers)
+      && ownerSummaryMatches
       && payload.blockers.some((blocker) => (
         blocker.gate === "Release Gate"
         && blocker.checkId === "go-decision"

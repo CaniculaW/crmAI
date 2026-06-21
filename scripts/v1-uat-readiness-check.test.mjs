@@ -310,6 +310,20 @@ test("fails when the external UAT blockers JSON snapshot is missing", () => {
   assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
 });
 
+test("fails when the external UAT blockers JSON summary drifts from blocker rows", () => {
+  const payload = JSON.parse(completeSnapshot["docs/testing/v1-external-uat-blockers.json"]);
+  payload.summary.totalBlockers = payload.blockers.length + 1;
+  payload.summary.byOwnerSide["项目/产品"] = 0;
+
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    "docs/testing/v1-external-uat-blockers.json": `${JSON.stringify(payload)}\n`
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "external-uat-blockers-json"));
+});
+
 test("fails when the external UAT closure checklist snapshot is missing", () => {
   const snapshot = { ...completeSnapshot };
   delete snapshot["docs/testing/v1-external-uat-closure-checklist.md"];
