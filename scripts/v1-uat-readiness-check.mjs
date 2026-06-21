@@ -649,9 +649,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "Overall: No-Go",
       "Role Workstreams",
       "UAT Environment Evidence",
+      "node scripts/v1-release-gate.mjs --json",
       "generates a No-Go UAT action plan grouped by project, test, business, and engineering workstreams"
     ]),
-    "V1 UAT action plan is tested and turns validator blockers into role-based execution workstreams."
+    "V1 UAT action plan is tested and turns validator blockers into role-based execution workstreams, including machine-readable release-gate output for dashboards and validation bots."
   ));
 
   const uatExecutionPack = snapshot["scripts/v1-uat-execution-pack.mjs"] ?? "";
@@ -665,9 +666,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "Execution Items",
       "ENV-001",
       "UAT-010",
+      "node scripts/v1-release-gate.mjs --json",
       "generates an executable UAT evidence collection pack from failed gates"
     ]),
-    "V1 UAT execution pack is tested and turns failed gates into item-level evidence collection work."
+    "V1 UAT execution pack is tested and turns failed gates into item-level evidence collection work, including machine-readable release-gate output for dashboards and validation bots."
   ));
 
   const goNoGoMeeting = snapshot["scripts/v1-go-no-go-meeting.mjs"] ?? "";

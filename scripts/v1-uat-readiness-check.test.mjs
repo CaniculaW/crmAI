@@ -88,10 +88,10 @@ jobs:
   "scripts/v1-release-gate.test.mjs": "fails when kickoff governance remains incomplete\nfails when the UAT launch intake remains incomplete\nfails when PASS evidence references do not resolve to retained artifacts\nfails when the project decision is Conditional Go\n",
   "scripts/v1-validation-status.mjs": "generateV1ValidationStatusMarkdown\nOverall: No-Go\nKickoff Governance\nUAT Environment Evidence\nUAT Execution Tracker\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-validation-status.test.mjs": "summarizes a No-Go V1 status with concrete blocker commands\nnode scripts/v1-release-gate.mjs --json\n",
-  "scripts/v1-uat-action-plan.mjs": "generateV1UatActionPlanMarkdown\nOverall: No-Go\nRole Workstreams\nKickoff Governance\nUAT Environment Evidence\n",
-  "scripts/v1-uat-action-plan.test.mjs": "generates a No-Go UAT action plan grouped by project, test, business, and engineering workstreams\n",
-  "scripts/v1-uat-execution-pack.mjs": "generateV1UatExecutionPackMarkdown\nOverall: No-Go\nExecution Items\nKICKOFF-OWNERS\nENV-001\nUAT-010\n",
-  "scripts/v1-uat-execution-pack.test.mjs": "generates an executable UAT evidence collection pack from failed gates\n",
+  "scripts/v1-uat-action-plan.mjs": "generateV1UatActionPlanMarkdown\nOverall: No-Go\nRole Workstreams\nKickoff Governance\nUAT Environment Evidence\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-uat-action-plan.test.mjs": "generates a No-Go UAT action plan grouped by project, test, business, and engineering workstreams\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-uat-execution-pack.mjs": "generateV1UatExecutionPackMarkdown\nOverall: No-Go\nExecution Items\nKICKOFF-OWNERS\nENV-001\nUAT-010\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-uat-execution-pack.test.mjs": "generates an executable UAT evidence collection pack from failed gates\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nKickoff Governance\nUAT Environment Evidence\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\nRequest Status: External UAT Evidence Required\nRequest Board\nDo not record plaintext passwords\nnode scripts/v1-release-gate.mjs --json\n",
@@ -1487,6 +1487,36 @@ test("fails when the V1 secret scan checker omits README handoff coverage", () =
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "v1-secret-scan-checker"));
+});
+
+test("fails when the V1 UAT action plan omits machine-readable release gate command coverage", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-action-plan.mjs": completeSnapshot["scripts/v1-uat-action-plan.mjs"]
+      .replace("node scripts/v1-release-gate.mjs --json\n", ""),
+    "scripts/v1-uat-action-plan.test.mjs": completeSnapshot["scripts/v1-uat-action-plan.test.mjs"]
+      .replace("node scripts/v1-release-gate.mjs --json\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-uat-action-plan"));
+});
+
+test("fails when the V1 UAT execution pack omits machine-readable release gate command coverage", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-uat-execution-pack.mjs": completeSnapshot["scripts/v1-uat-execution-pack.mjs"]
+      .replace("node scripts/v1-release-gate.mjs --json\n", ""),
+    "scripts/v1-uat-execution-pack.test.mjs": completeSnapshot["scripts/v1-uat-execution-pack.test.mjs"]
+      .replace("node scripts/v1-release-gate.mjs --json\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-uat-execution-pack"));
 });
 
 test("fails when the V1 UAT execution pack document is missing", () => {
