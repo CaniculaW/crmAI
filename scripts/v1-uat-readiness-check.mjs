@@ -946,8 +946,14 @@ export function evaluateReadinessSnapshot(snapshot) {
   const runbook = snapshot["docs/testing/crm-v1-test-environment-validation-runbook.md"] ?? "";
   checks.push(makeCheck(
     "uat-execution-materials",
-    includesAll(uatTemplate + runbook, ["Go/No-Go", "签署", "证据", "node scripts/v1-uat-coverage-check.mjs"]),
-    "UAT runbook and evidence template include evidence, signature, and Go/No-Go sections."
+    includesAll(uatTemplate + runbook, [
+      "Go/No-Go",
+      "签署",
+      "证据",
+      "node scripts/v1-uat-coverage-check.mjs",
+      "node scripts/v1-release-gate.mjs --json"
+    ]),
+    "UAT runbook and evidence template include evidence, signature, Go/No-Go sections, and the machine-readable final release gate command."
   ));
 
   const uatExecutionTracker = snapshot["docs/testing/crm-v1-uat-execution-tracker.md"] ?? "";

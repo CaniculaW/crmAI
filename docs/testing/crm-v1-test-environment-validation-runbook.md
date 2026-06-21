@@ -290,6 +290,20 @@ node scripts/v1-release-gate.mjs . \
   docs/meeting-notes/crm-kickoff-minutes.md
 ```
 
+同时输出机器可读结果，供 CI、看板或验收机器人读取：
+
+```bash
+node scripts/v1-release-gate.mjs --json . \
+  <crm-v1-uat-evidence-pack.md> \
+  docs/testing/crm-v1-uat-execution-tracker.md \
+  docs/testing/v1-uat-evidence-manifest.md \
+  docs/testing/v1-uat-defect-register.md \
+  docs/testing/v1-uat-environment-evidence.md \
+  docs/testing/v1-uat-signoff-register.md \
+  docs/testing/v1-uat-launch-intake.md \
+  docs/meeting-notes/crm-kickoff-minutes.md
+```
+
 该门禁必须在启动治理、UAT 启动输入、UAT 具名环境证据、UAT 证据包、执行追踪表、证据清单、缺陷台账和签署台账全部 `PASS`，且项目负责人选择 `Go` 后返回 `PASS`。
 
 ## 3. 测试环境 Smoke 步骤
