@@ -11,6 +11,15 @@ const REQUIRED_ACCEPTANCE_IDS = Array.from(
   { length: 17 },
   (_, index) => `AC-${String(index + 1).padStart(3, "0")}`
 );
+const REQUIRED_HANDOFF_ARTIFACTS = [
+  "docs/testing/v1-external-uat-request.md",
+  "docs/testing/v1-external-uat-closure-checklist.md",
+  "docs/testing/v1-external-uat-evidence-intake.md",
+  "docs/testing/v1-external-uat-blockers.json",
+  "scripts/v1-generated-docs-check.mjs",
+  "scripts/v1-final-evidence-handoff-check.mjs",
+  "scripts/v1-secret-scan-check.mjs"
+];
 
 function makeCheck(id, ok, message) {
   return { id, ok, message };
@@ -52,6 +61,9 @@ export function evaluateV1AcceptanceChecklistSnapshot({
   const releaseGateIsGo = releaseGateResult.ok === true && releaseGateResult.decision === "Go";
   const allBusinessAccepted = rows.length === REQUIRED_ACCEPTANCE_IDS.length
     && businessAcceptedRows.length === REQUIRED_ACCEPTANCE_IDS.length;
+  const missingHandoffArtifacts = REQUIRED_HANDOFF_ARTIFACTS.filter(
+    (artifact) => !checklistText.includes(artifact)
+  );
 
   const checks = [
     makeCheck(
@@ -74,6 +86,13 @@ export function evaluateV1AcceptanceChecklistSnapshot({
       releaseGateIsGo || pendingRows.length > 0
         ? "Pending business acceptance remains visible while V1 is not Go."
         : "V1 is not Go, but the acceptance checklist no longer shows pending business acceptance."
+    ),
+    makeCheck(
+      "handoff-artifacts-visible",
+      missingHandoffArtifacts.length === 0,
+      missingHandoffArtifacts.length === 0
+        ? "Acceptance checklist lists current V1 external UAT and final handoff artifacts."
+        : `Acceptance checklist omits current V1 handoff artifacts: ${missingHandoffArtifacts.join(", ")}.`
     )
   ];
 
