@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   buildKickoffGovernanceEvidenceTemplatesFromIntake,
+  evaluateKickoffGovernanceEvidenceIntake,
   generateKickoffGovernanceEvidenceIntakeTemplate
 } from "./v1-kickoff-governance-evidence-intake.mjs";
 import { evaluateKickoffGovernanceEvidenceTemplates } from "./v1-kickoff-governance-evidence-apply.mjs";
@@ -100,4 +101,33 @@ test("rejects pending or role-label intake before writing Ready templates", () =
   assert.equal(result.templatesByPath, undefined);
   assert.ok(result.failed.some((failure) => failure.path === "docs/meeting-notes/evidence/kickoff/product-owner.md"));
   assert.ok(result.failed.some((failure) => failure.failures.includes("Evidence status must be `Ready` before applying.")));
+});
+
+test("summarizes pending kickoff governance intake rows before template writes", () => {
+  const intake = JSON.parse(generateKickoffGovernanceEvidenceIntakeTemplate({
+    generatedAt: "2026-06-22T00:40:00.000Z"
+  }));
+
+  const readiness = evaluateKickoffGovernanceEvidenceIntake(intake);
+
+  assert.equal(readiness.ok, false);
+  assert.equal(readiness.total, 14);
+  assert.equal(readiness.ready, 0);
+  assert.equal(readiness.pending, 14);
+  assert.equal(readiness.failed.length, 14);
+  assert.deepEqual(
+    readiness.failed.find((failure) => failure.filename === "product-owner.md"),
+    {
+      filename: "product-owner.md",
+      type: "owner",
+      label: "产品负责人",
+      failures: [
+        "Evidence status must be `Ready` before writing templates.",
+        "Owner or approver is incomplete.",
+        "Closure value is incomplete.",
+        "Confirmation date must use YYYY-MM-DD.",
+        "Confirmation source is incomplete."
+      ]
+    }
+  );
 });

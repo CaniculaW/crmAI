@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,9 +9,11 @@ import {
   evaluateKickoffGovernanceEvidenceTemplates,
   readKickoffGovernanceEvidenceTemplates
 } from "./v1-kickoff-governance-evidence-apply.mjs";
+import { evaluateKickoffGovernanceEvidenceIntake } from "./v1-kickoff-governance-evidence-intake.mjs";
 
 const DEFAULT_BLOCKERS_JSON_PATH = "docs/testing/v1-external-uat-blockers.json";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-progress-todo.md";
+const DEFAULT_KICKOFF_GOVERNANCE_INTAKE_PATH = "docs/meeting-notes/evidence/kickoff/intake.json";
 const KICKOFF_GOVERNANCE_INTAKE_TEMPLATE_COMMAND = "node scripts/v1-kickoff-governance-evidence-intake.mjs --template --output docs/meeting-notes/evidence/kickoff/intake.json";
 const KICKOFF_GOVERNANCE_INTAKE_WRITE_COMMAND = "node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --write";
 const KICKOFF_GOVERNANCE_APPLY_COMMAND = "node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write";
@@ -119,10 +121,32 @@ function appendKickoffGovernanceEvidenceReadiness(lines, readiness) {
   }
 }
 
+function appendKickoffGovernanceIntakeReadiness(lines, readiness) {
+  if (!readiness) {
+    return;
+  }
+
+  lines.push("");
+  lines.push("## Current Task Intake Readiness");
+  lines.push("");
+  lines.push(`Intake rows ready: \`${readiness.ready}/${readiness.total}\``);
+  lines.push(`Intake rows pending: \`${readiness.pending}\``);
+  lines.push("Fill this intake before writing evidence templates:");
+  lines.push(`- \`${KICKOFF_GOVERNANCE_INTAKE_WRITE_COMMAND}\``);
+  lines.push("");
+  lines.push("| Intake row | Type | Target | Missing readiness |");
+  lines.push("|---|---|---|---|");
+  for (const row of readiness.failed ?? []) {
+    const missingReadiness = row.failures.length > 0 ? row.failures.join("; ") : "-";
+    lines.push(`| ${row.filename} | ${row.type} | ${row.label} | ${missingReadiness} |`);
+  }
+}
+
 export function generateV1ProgressTodoMarkdown({
   generatedAt = new Date().toISOString(),
   blockersPayload,
-  kickoffGovernanceEvidenceReadiness = null
+  kickoffGovernanceEvidenceReadiness = null,
+  kickoffGovernanceIntakeReadiness = null
 } = {}) {
   const summary = blockersPayload?.summary ?? {};
   const closurePhases = summary.closurePhases ?? [];
@@ -176,6 +200,7 @@ export function generateV1ProgressTodoMarkdown({
       lines.push(`- \`${command}\``);
     }
     if (nextPhase.phase === "1-governance") {
+      appendKickoffGovernanceIntakeReadiness(lines, kickoffGovernanceIntakeReadiness);
       appendKickoffGovernanceEvidenceReadiness(lines, kickoffGovernanceEvidenceReadiness);
     }
     lines.push("");
@@ -217,12 +242,22 @@ export function generateV1ProgressTodoFromFiles({
   rootDir = process.cwd(),
   generatedAt = new Date().toISOString(),
   blockersJsonPath = DEFAULT_BLOCKERS_JSON_PATH,
-  evidenceRoot = DEFAULT_EVIDENCE_ROOT
+  evidenceRoot = DEFAULT_EVIDENCE_ROOT,
+  kickoffGovernanceIntakePath = DEFAULT_KICKOFF_GOVERNANCE_INTAKE_PATH
 } = {}) {
   const blockersPayload = JSON.parse(readFileSync(path.join(rootDir, blockersJsonPath), "utf8"));
   const templatesByPath = readKickoffGovernanceEvidenceTemplates(rootDir, evidenceRoot);
   const kickoffGovernanceEvidenceReadiness = evaluateKickoffGovernanceEvidenceTemplates(templatesByPath, { evidenceRoot });
-  return generateV1ProgressTodoMarkdown({ generatedAt, blockersPayload, kickoffGovernanceEvidenceReadiness });
+  const intakeAbsolutePath = path.join(rootDir, kickoffGovernanceIntakePath);
+  const kickoffGovernanceIntakeReadiness = existsSync(intakeAbsolutePath)
+    ? evaluateKickoffGovernanceEvidenceIntake(JSON.parse(readFileSync(intakeAbsolutePath, "utf8")))
+    : null;
+  return generateV1ProgressTodoMarkdown({
+    generatedAt,
+    blockersPayload,
+    kickoffGovernanceEvidenceReadiness,
+    kickoffGovernanceIntakeReadiness
+  });
 }
 
 function parseArgs(argv) {

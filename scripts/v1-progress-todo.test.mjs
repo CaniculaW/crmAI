@@ -99,11 +99,38 @@ const pendingKickoffEvidenceReadiness = {
   ]
 };
 
+const pendingKickoffIntakeReadiness = {
+  total: 14,
+  ready: 0,
+  pending: 14,
+  failed: [
+    {
+      filename: "product-owner.md",
+      label: "产品负责人",
+      type: "owner",
+      failures: [
+        "Evidence status must be `Ready` before writing templates.",
+        "Owner or approver is incomplete."
+      ]
+    },
+    {
+      filename: "v1-scope.md",
+      label: "V1 模块范围",
+      type: "scope",
+      failures: [
+        "Evidence status must be `Ready` before writing templates.",
+        "Closure value is incomplete."
+      ]
+    }
+  ]
+};
+
 test("generates a V1 progress TODO board from blockers", () => {
   const markdown = generateV1ProgressTodoMarkdown({
     generatedAt: "2026-06-21T15:00:00.000Z",
     blockersPayload,
-    kickoffGovernanceEvidenceReadiness: pendingKickoffEvidenceReadiness
+    kickoffGovernanceEvidenceReadiness: pendingKickoffEvidenceReadiness,
+    kickoffGovernanceIntakeReadiness: pendingKickoffIntakeReadiness
   });
 
   assert.match(markdown, /# CRM V1 Progress TODO/);
@@ -116,6 +143,11 @@ test("generates a V1 progress TODO board from blockers", () => {
   assert.match(markdown, /\| In Progress \| `1-governance` \| 4 \| 项目\/产品 \|/);
   assert.match(markdown, /## Current Task Progress/);
   assert.match(markdown, /## Current Task Evidence Readiness/);
+  assert.match(markdown, /## Current Task Intake Readiness/);
+  assert.match(markdown, /Intake rows ready: `0\/14`/);
+  assert.match(markdown, /Intake rows pending: `14`/);
+  assert.match(markdown, /\| product-owner\.md \| owner \| 产品负责人 \| Evidence status must be `Ready` before writing templates\.; Owner or approver is incomplete\. \|/);
+  assert.match(markdown, /\| v1-scope\.md \| scope \| V1 模块范围 \| Evidence status must be `Ready` before writing templates\.; Closure value is incomplete\. \|/);
   assert.match(markdown, /Evidence templates ready: `0\/14`/);
   assert.match(markdown, /node scripts\/v1-kickoff-governance-evidence-intake\.mjs --template --output docs\/meeting-notes\/evidence\/kickoff\/intake\.json/);
   assert.match(markdown, /node scripts\/v1-kickoff-governance-evidence-intake\.mjs --input docs\/meeting-notes\/evidence\/kickoff\/intake\.json --write/);

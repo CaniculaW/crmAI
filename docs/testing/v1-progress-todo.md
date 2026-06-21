@@ -1,6 +1,6 @@
 # CRM V1 Progress TODO
 
-Generated at: 2026-06-21T16:43:54.079Z
+Generated at: 2026-06-21T17:02:35.407Z
 
 Overall status: `External UAT Evidence Required`
 Overall decision: `No-Go`
@@ -32,6 +32,30 @@ Source documents: `docs/meeting-notes/crm-kickoff-minutes.md`
 Validation commands:
 - `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md`
 - `node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md`
+
+## Current Task Intake Readiness
+
+Intake rows ready: `0/14`
+Intake rows pending: `14`
+Fill this intake before writing evidence templates:
+- `node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --write`
+
+| Intake row | Type | Target | Missing readiness |
+|---|---|---|---|
+| product-owner.md | owner | 产品负责人 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
+| sales-owner.md | owner | 业务验收人-销售侧 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
+| manager-owner.md | owner | 业务验收人-管理侧 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
+| dev-owner.md | owner | 研发负责人 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
+| frontend-owner.md | owner | 前端负责人 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
+| backend-owner.md | owner | 后端负责人 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
+| qa-owner.md | owner | 测试负责人 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
+| v1-scope.md | scope | V1 模块范围 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
+| v1-loop.md | scope | V1 业务闭环 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
+| out-of-scope.md | scope | V1 暂不做 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
+| schedule.md | scope | 上线周期 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
+| tech-stack.md | scope | 技术栈 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
+| acceptance-mode.md | scope | 验收方式 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
+| scope-freeze.md | scope | V1范围冻结 | Evidence status must be `Ready` before writing templates.; Owner or approver is incomplete.; Closure value is incomplete.; Confirmation date must use YYYY-MM-DD.; Confirmation source is incomplete. |
 
 ## Current Task Evidence Readiness
 

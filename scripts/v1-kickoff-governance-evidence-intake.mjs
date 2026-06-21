@@ -83,6 +83,103 @@ function intakeItemByFilename(intake) {
   return new Map((intake.items ?? []).map((item) => [item.filename, item]));
 }
 
+function hasPlaceholder(value) {
+  return /待填写|待补充|待确认|PENDING|TBD|TODO|<.+>/i.test(value ?? "");
+}
+
+function isConcrete(value) {
+  return Boolean(value) && !hasPlaceholder(value);
+}
+
+function isNamedOwner(value) {
+  return isConcrete(value)
+    && !/(Owner|负责人|验收人|测试|研发|产品|项目|销售|管理|QA|Dev|PM|Manager|Product|Sales|Test|Frontend|Backend)/i.test(value);
+}
+
+function isIsoDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value ?? "");
+}
+
+function intakeFailureList(item, requirement) {
+  const [, expectedType, expectedLabel, expectedTargetStatus] = requirement;
+  const failures = [];
+
+  if (item.type !== expectedType) {
+    failures.push(`Expected evidence type ${expectedType}.`);
+  }
+  if (item.label !== expectedLabel) {
+    failures.push(`Expected evidence label ${expectedLabel}.`);
+  }
+  if (item.targetStatus !== expectedTargetStatus) {
+    failures.push(`Expected target status ${expectedTargetStatus}.`);
+  }
+  if (item.evidenceStatus !== "Ready") {
+    failures.push("Evidence status must be `Ready` before writing templates.");
+  }
+  if (!isNamedOwner(item.ownerOrApprover)) {
+    failures.push("Owner or approver is incomplete.");
+  }
+  if (!isConcrete(item.closureValue)) {
+    failures.push("Closure value is incomplete.");
+  }
+  if (!isIsoDate(item.confirmationDate)) {
+    failures.push("Confirmation date must use YYYY-MM-DD.");
+  }
+  if (!isConcrete(item.confirmationSource)) {
+    failures.push("Confirmation source is incomplete.");
+  }
+
+  return failures;
+}
+
+export function evaluateKickoffGovernanceEvidenceIntake(intake = {}) {
+  const itemsByFilename = intakeItemByFilename(intake);
+  const entries = [];
+  const failed = [];
+
+  for (const requirement of KICKOFF_GOVERNANCE_TEMPLATE_REQUIREMENTS) {
+    const [filename, type, label, targetStatus] = requirement;
+    const item = {
+      filename,
+      type,
+      label,
+      targetStatus,
+      ...(itemsByFilename.get(filename) ?? {})
+    };
+    const failures = itemsByFilename.has(filename)
+      ? intakeFailureList(item, requirement)
+      : ["Required intake row is missing."];
+    const entry = {
+      filename,
+      type,
+      label,
+      evidenceStatus: item.evidenceStatus ?? "Missing",
+      failures
+    };
+    entries.push(entry);
+    if (failures.length > 0) {
+      failed.push({
+        filename,
+        type,
+        label,
+        failures
+      });
+    }
+  }
+
+  const ready = entries.filter((entry) => entry.evidenceStatus === "Ready" && entry.failures.length === 0).length;
+  const total = entries.length;
+
+  return {
+    ok: failed.length === 0,
+    total,
+    ready,
+    pending: total - ready,
+    entries,
+    failed
+  };
+}
+
 function evidenceMarkdown({
   item,
   generatedAt,
