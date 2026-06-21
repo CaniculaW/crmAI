@@ -69,3 +69,23 @@ test("fails when the release gate result and decision disagree", () => {
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "decision-consistency"));
 });
+
+test("fails when the release gate JSON snapshot does not match the current release gate result", () => {
+  const currentStatus = validStatus({
+    checks: validStatus().checks.map((check) => check.id === "go-decision"
+      ? { ...check, message: "Project decision is No-Go; V1 release gate requires Go." }
+      : check)
+  });
+  const staleStatus = validStatus({
+    checks: validStatus().checks.map((check) => check.id === "go-decision"
+      ? { ...check, message: "Stale project decision message." }
+      : check)
+  });
+
+  const result = evaluateV1ReleaseGateStatusSnapshot(JSON.stringify(staleStatus), {
+    expectedStatus: currentStatus
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "live-release-gate-match"));
+});

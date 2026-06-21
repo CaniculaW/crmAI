@@ -25,7 +25,7 @@ GitHub Actions 已配置 V1 自动验证工作流：
 - 前端：`npm test`
 - 前端生产构建：`npm run build`
 - 部署配置：`docker compose -f compose.v1-test.yml config`
-- UAT 准出材料：RC/UAT readiness、启动治理 validator、UAT 启动输入 validator、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT 缺陷台账 validator、UAT 证据清单 validator、证据引用保全检查、UAT 签署台账 validator、外部UAT请求包、release gate JSON 快照、release gate JSON schema 校验、验收清单一致性检查、UAT覆盖检查、验证追踪矩阵一致性检查、阻塞项一致性检查、外部UAT请求覆盖检查、最终交接证据一致性检查、证据秘密扫描、生成文档一致性检查和计划状态一致性检查测试
+- UAT 准出材料：RC/UAT readiness、启动治理 validator、UAT 启动输入 validator、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT 缺陷台账 validator、UAT 证据清单 validator、证据引用保全检查、UAT 签署台账 validator、外部UAT请求包、release gate JSON 快照、release gate JSON schema 校验、release gate JSON 实时对齐检查、验收清单一致性检查、UAT覆盖检查、验证追踪矩阵一致性检查、阻塞项一致性检查、外部UAT请求覆盖检查、最终交接证据一致性检查、证据秘密扫描、生成文档一致性检查和计划状态一致性检查测试
 - 最终放行门禁：`v1-release-gate` 规则测试
 
 ## V1 测试环境部署
