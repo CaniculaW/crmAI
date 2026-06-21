@@ -4,8 +4,15 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  DEFAULT_EVIDENCE_ROOT,
+  evaluateKickoffGovernanceEvidenceTemplates,
+  readKickoffGovernanceEvidenceTemplates
+} from "./v1-kickoff-governance-evidence-apply.mjs";
+
 const DEFAULT_BLOCKERS_JSON_PATH = "docs/testing/v1-external-uat-blockers.json";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-progress-todo.md";
+const KICKOFF_GOVERNANCE_APPLY_COMMAND = "node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write";
 const CLOSURE_PHASE_ORDER = [
   "1-governance",
   "2-uat-launch",
@@ -51,9 +58,66 @@ function previousTaskFor(currentTask) {
   return CLOSURE_PHASE_ORDER[index - 1];
 }
 
+function failuresByPath(readiness) {
+  return new Map((readiness?.failed ?? []).map((failure) => [failure.path, failure.failures ?? []]));
+}
+
+function kickoffEvidenceReadinessRows(readiness) {
+  const failedByPath = failuresByPath(readiness);
+  const rows = (readiness?.entries ?? []).map((entry) => ({
+    path: entry.path,
+    status: entry.status || "Unknown",
+    type: entry.type || "-",
+    label: entry.label || "-",
+    failures: entry.failures?.length > 0 ? entry.failures : (failedByPath.get(entry.path) ?? [])
+  }));
+  const knownPaths = new Set(rows.map((row) => row.path));
+
+  for (const failure of readiness?.failed ?? []) {
+    if (!knownPaths.has(failure.path)) {
+      rows.push({
+        path: failure.path,
+        status: "Missing",
+        type: "-",
+        label: "-",
+        failures: failure.failures ?? []
+      });
+    }
+  }
+
+  return rows.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+function readyKickoffEvidenceCount(readiness) {
+  const failedByPath = failuresByPath(readiness);
+  return (readiness?.entries ?? []).filter((entry) => entry.status === "Ready" && !failedByPath.has(entry.path)).length;
+}
+
+function appendKickoffGovernanceEvidenceReadiness(lines, readiness) {
+  if (!readiness) {
+    return;
+  }
+
+  const rows = kickoffEvidenceReadinessRows(readiness);
+  lines.push("");
+  lines.push("## Current Task Evidence Readiness");
+  lines.push("");
+  lines.push(`Evidence templates ready: \`${readyKickoffEvidenceCount(readiness)}/${rows.length}\``);
+  lines.push("Apply command after all templates are Ready:");
+  lines.push(`- \`${KICKOFF_GOVERNANCE_APPLY_COMMAND}\``);
+  lines.push("");
+  lines.push("| Status | Evidence template | Type | Target | Missing readiness |");
+  lines.push("|---|---|---|---|---|");
+  for (const row of rows) {
+    const missingReadiness = row.failures.length > 0 ? row.failures.join("; ") : "-";
+    lines.push(`| ${row.status} | ${row.path} | ${row.type} | ${row.label} | ${missingReadiness} |`);
+  }
+}
+
 export function generateV1ProgressTodoMarkdown({
   generatedAt = new Date().toISOString(),
-  blockersPayload
+  blockersPayload,
+  kickoffGovernanceEvidenceReadiness = null
 } = {}) {
   const summary = blockersPayload?.summary ?? {};
   const closurePhases = summary.closurePhases ?? [];
@@ -106,6 +170,9 @@ export function generateV1ProgressTodoMarkdown({
     for (const command of nextPhase.validationCommands) {
       lines.push(`- \`${command}\``);
     }
+    if (nextPhase.phase === "1-governance") {
+      appendKickoffGovernanceEvidenceReadiness(lines, kickoffGovernanceEvidenceReadiness);
+    }
     lines.push("");
     lines.push("| Status | Blocker ID | Gate | Check ID | Owner side | Source document | Validation command | Closure evidence needed |");
     lines.push("|---|---|---|---|---|---|---|---|");
@@ -144,10 +211,13 @@ export function generateV1ProgressTodoMarkdown({
 export function generateV1ProgressTodoFromFiles({
   rootDir = process.cwd(),
   generatedAt = new Date().toISOString(),
-  blockersJsonPath = DEFAULT_BLOCKERS_JSON_PATH
+  blockersJsonPath = DEFAULT_BLOCKERS_JSON_PATH,
+  evidenceRoot = DEFAULT_EVIDENCE_ROOT
 } = {}) {
   const blockersPayload = JSON.parse(readFileSync(path.join(rootDir, blockersJsonPath), "utf8"));
-  return generateV1ProgressTodoMarkdown({ generatedAt, blockersPayload });
+  const templatesByPath = readKickoffGovernanceEvidenceTemplates(rootDir, evidenceRoot);
+  const kickoffGovernanceEvidenceReadiness = evaluateKickoffGovernanceEvidenceTemplates(templatesByPath, { evidenceRoot });
+  return generateV1ProgressTodoMarkdown({ generatedAt, blockersPayload, kickoffGovernanceEvidenceReadiness });
 }
 
 function parseArgs(argv) {

@@ -61,10 +61,49 @@ const blockersPayload = {
   ]
 };
 
+const pendingKickoffEvidenceReadiness = {
+  ok: false,
+  entries: [
+    ["product-owner.md", "owner", "产品负责人"],
+    ["sales-owner.md", "owner", "业务验收人-销售侧"],
+    ["manager-owner.md", "owner", "业务验收人-管理侧"],
+    ["dev-owner.md", "owner", "研发负责人"],
+    ["frontend-owner.md", "owner", "前端负责人"],
+    ["backend-owner.md", "owner", "后端负责人"],
+    ["qa-owner.md", "owner", "测试负责人"],
+    ["v1-scope.md", "scope", "V1 模块范围"],
+    ["v1-loop.md", "scope", "V1 业务闭环"],
+    ["out-of-scope.md", "scope", "V1 暂不做"],
+    ["schedule.md", "scope", "上线周期"],
+    ["tech-stack.md", "scope", "技术栈"],
+    ["acceptance-mode.md", "scope", "验收方式"],
+    ["scope-freeze.md", "scope", "V1范围冻结"]
+  ].map(([filename, type, label]) => ({
+    path: `docs/meeting-notes/evidence/kickoff/${filename}`,
+    type,
+    label,
+    status: "Pending",
+    failures: [
+      "Evidence status must be `Ready` before applying.",
+      "Closure value is incomplete."
+    ]
+  })),
+  failed: [
+    {
+      path: "docs/meeting-notes/evidence/kickoff/product-owner.md",
+      failures: [
+        "Evidence status must be `Ready` before applying.",
+        "Closure value is incomplete."
+      ]
+    }
+  ]
+};
+
 test("generates a V1 progress TODO board from blockers", () => {
   const markdown = generateV1ProgressTodoMarkdown({
     generatedAt: "2026-06-21T15:00:00.000Z",
-    blockersPayload
+    blockersPayload,
+    kickoffGovernanceEvidenceReadiness: pendingKickoffEvidenceReadiness
   });
 
   assert.match(markdown, /# CRM V1 Progress TODO/);
@@ -76,6 +115,11 @@ test("generates a V1 progress TODO board from blockers", () => {
   assert.match(markdown, /## TODOList/);
   assert.match(markdown, /\| In Progress \| `1-governance` \| 4 \| 项目\/产品 \|/);
   assert.match(markdown, /## Current Task Progress/);
+  assert.match(markdown, /## Current Task Evidence Readiness/);
+  assert.match(markdown, /Evidence templates ready: `0\/14`/);
+  assert.match(markdown, /node scripts\/v1-kickoff-governance-evidence-apply\.mjs --decision Go --write/);
+  assert.match(markdown, /\| Pending \| docs\/meeting-notes\/evidence\/kickoff\/product-owner\.md \| owner \| 产品负责人 \| Evidence status must be `Ready` before applying\.; Closure value is incomplete\. \|/);
+  assert.match(markdown, /\| Pending \| docs\/meeting-notes\/evidence\/kickoff\/v1-scope\.md \| scope \| V1 模块范围 \| Evidence status must be `Ready` before applying\.; Closure value is incomplete\. \|/);
   assert.match(markdown, /Kickoff Governance\/required-owners/);
   assert.match(markdown, /Incomplete kickoff owners: 产品负责人/);
   assert.match(markdown, /## Task Switch Snapshot/);

@@ -389,6 +389,9 @@ function hasV1ProgressTodo(content) {
     "Do not record plaintext passwords",
     "TODOList",
     "Current Task Progress",
+    "Current Task Evidence Readiness",
+    "Evidence templates ready:",
+    "node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write",
     "Task Switch Snapshot",
     "Switch readiness",
     "Remaining blockers before switch",
@@ -1123,6 +1126,9 @@ export function evaluateReadinessSnapshot(snapshot) {
       "CRM V1 Progress TODO",
       "TODOList",
       "Current Task Progress",
+      "Current Task Evidence Readiness",
+      "Evidence templates ready:",
+      "node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write",
       "Task Switch Snapshot",
       "Switch readiness",
       "Task Switch Display Rule",
@@ -1520,7 +1526,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   checks.push(makeCheck(
     "v1-progress-todo-doc",
     hasV1ProgressTodo(progressTodoDoc),
-    "V1 progress TODO board inventories total blockers, current task, phase TODOList, task-switch display rules, and validation commands."
+    "V1 progress TODO board inventories total blockers, current task, phase TODOList, kickoff evidence readiness, task-switch display rules, and validation commands."
   ));
 
   const uatLaunchIntake = snapshot["docs/testing/v1-uat-launch-intake.md"] ?? "";

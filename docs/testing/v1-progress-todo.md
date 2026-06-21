@@ -1,6 +1,6 @@
 # CRM V1 Progress TODO
 
-Generated at: 2026-06-21T15:31:18.976Z
+Generated at: 2026-06-21T16:25:48.054Z
 
 Overall status: `External UAT Evidence Required`
 Overall decision: `No-Go`
@@ -32,6 +32,29 @@ Source documents: `docs/meeting-notes/crm-kickoff-minutes.md`
 Validation commands:
 - `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md`
 - `node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md`
+
+## Current Task Evidence Readiness
+
+Evidence templates ready: `0/14`
+Apply command after all templates are Ready:
+- `node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write`
+
+| Status | Evidence template | Type | Target | Missing readiness |
+|---|---|---|---|---|
+| Pending | docs/meeting-notes/evidence/kickoff/acceptance-mode.md | scope | 验收方式 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Scope approver must be a named person, not a role label. |
+| Pending | docs/meeting-notes/evidence/kickoff/backend-owner.md | owner | 后端负责人 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Named owner or approver must be a named person, not a role label. |
+| Pending | docs/meeting-notes/evidence/kickoff/dev-owner.md | owner | 研发负责人 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Named owner or approver must be a named person, not a role label. |
+| Pending | docs/meeting-notes/evidence/kickoff/frontend-owner.md | owner | 前端负责人 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Named owner or approver must be a named person, not a role label. |
+| Pending | docs/meeting-notes/evidence/kickoff/manager-owner.md | owner | 业务验收人-管理侧 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Named owner or approver must be a named person, not a role label. |
+| Pending | docs/meeting-notes/evidence/kickoff/out-of-scope.md | scope | V1 暂不做 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Scope approver must be a named person, not a role label. |
+| Pending | docs/meeting-notes/evidence/kickoff/product-owner.md | owner | 产品负责人 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Named owner or approver must be a named person, not a role label. |
+| Pending | docs/meeting-notes/evidence/kickoff/qa-owner.md | owner | 测试负责人 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Named owner or approver must be a named person, not a role label. |
+| Pending | docs/meeting-notes/evidence/kickoff/sales-owner.md | owner | 业务验收人-销售侧 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Named owner or approver must be a named person, not a role label. |
+| Pending | docs/meeting-notes/evidence/kickoff/schedule.md | scope | 上线周期 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Scope approver must be a named person, not a role label. |
+| Pending | docs/meeting-notes/evidence/kickoff/scope-freeze.md | scope | V1范围冻结 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Scope approver must be a named person, not a role label. |
+| Pending | docs/meeting-notes/evidence/kickoff/tech-stack.md | scope | 技术栈 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Scope approver must be a named person, not a role label. |
+| Pending | docs/meeting-notes/evidence/kickoff/v1-loop.md | scope | V1 业务闭环 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Scope approver must be a named person, not a role label. |
+| Pending | docs/meeting-notes/evidence/kickoff/v1-scope.md | scope | V1 模块范围 | Evidence status must be `Ready` before applying.; Closure value is incomplete.; Retained evidence reference must be a docs/ artifact or http(s) URL.; Scope approver must be a named person, not a role label. |
 
 | Status | Blocker ID | Gate | Check ID | Owner side | Source document | Validation command | Closure evidence needed |
 |---|---|---|---|---|---|---|---|

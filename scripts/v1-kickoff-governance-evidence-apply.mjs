@@ -4,10 +4,10 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_KICKOFF_PATH = "docs/meeting-notes/crm-kickoff-minutes.md";
-const DEFAULT_EVIDENCE_ROOT = "docs/meeting-notes/evidence/kickoff";
+export const DEFAULT_KICKOFF_PATH = "docs/meeting-notes/crm-kickoff-minutes.md";
+export const DEFAULT_EVIDENCE_ROOT = "docs/meeting-notes/evidence/kickoff";
 
-const TEMPLATE_REQUIREMENTS = [
+export const KICKOFF_GOVERNANCE_TEMPLATE_REQUIREMENTS = [
   ["product-owner.md", "owner", "产品负责人", "已确认"],
   ["sales-owner.md", "owner", "业务验收人-销售侧", "已确认"],
   ["manager-owner.md", "owner", "业务验收人-管理侧", "已确认"],
@@ -24,7 +24,7 @@ const TEMPLATE_REQUIREMENTS = [
   ["scope-freeze.md", "scope", "V1范围冻结", "已冻结"]
 ];
 
-function evidencePath(evidenceRoot, filename) {
+export function kickoffGovernanceEvidencePath(evidenceRoot, filename) {
   return `${evidenceRoot.replace(/\/+$/, "")}/${filename}`;
 }
 
@@ -124,9 +124,9 @@ export function evaluateKickoffGovernanceEvidenceTemplates(
   const entries = [];
   const failed = [];
 
-  for (const requirement of TEMPLATE_REQUIREMENTS) {
+  for (const requirement of KICKOFF_GOVERNANCE_TEMPLATE_REQUIREMENTS) {
     const [filename] = requirement;
-    const templatePath = evidencePath(evidenceRoot, filename);
+    const templatePath = kickoffGovernanceEvidencePath(evidenceRoot, filename);
     const content = templatesByPath[templatePath];
     if (!content) {
       failed.push({ path: templatePath, failures: ["Required evidence template is missing."] });
@@ -204,10 +204,10 @@ export function applyKickoffGovernanceEvidenceToMarkdown({
   };
 }
 
-function readTemplates(rootDir, evidenceRoot) {
+export function readKickoffGovernanceEvidenceTemplates(rootDir, evidenceRoot = DEFAULT_EVIDENCE_ROOT) {
   const templatesByPath = {};
-  for (const [filename] of TEMPLATE_REQUIREMENTS) {
-    const templatePath = evidencePath(evidenceRoot, filename);
+  for (const [filename] of KICKOFF_GOVERNANCE_TEMPLATE_REQUIREMENTS) {
+    const templatePath = kickoffGovernanceEvidencePath(evidenceRoot, filename);
     const absolutePath = path.resolve(rootDir, templatePath);
     if (existsSync(absolutePath)) {
       templatesByPath[templatePath] = readFileSync(absolutePath, "utf8");
@@ -257,7 +257,7 @@ if (isCli) {
   } else {
     const kickoffPath = path.resolve(options.kickoffPath);
     const kickoffMarkdown = readFileSync(kickoffPath, "utf8");
-    const templatesByPath = readTemplates(process.cwd(), options.evidenceRoot);
+    const templatesByPath = readKickoffGovernanceEvidenceTemplates(process.cwd(), options.evidenceRoot);
     const result = applyKickoffGovernanceEvidenceToMarkdown({
       kickoffMarkdown,
       templatesByPath,

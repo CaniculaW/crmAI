@@ -123,8 +123,8 @@ jobs:
   "scripts/v1-kickoff-governance-evidence-scaffold.test.mjs": "generates pending kickoff owner evidence templates without approving governance\ngenerates every kickoff governance evidence scaffold path\n",
   "scripts/v1-kickoff-governance-evidence-apply.mjs": "applyKickoffGovernanceEvidenceToMarkdown\nevaluateKickoffGovernanceEvidenceTemplates\nEvidence status must be `Ready` before applying\n--decision\n--write\nKickoff governance evidence templates are not ready\n",
   "scripts/v1-kickoff-governance-evidence-apply.test.mjs": "applies complete Ready kickoff governance templates and produces validator-ready kickoff markdown\nkeeps kickoff markdown unchanged when any required evidence template is still Pending\n",
-  "scripts/v1-progress-todo.mjs": "generateV1ProgressTodoMarkdown\ngenerateV1ProgressTodoFromFiles\nCRM V1 Progress TODO\nTODOList\nCurrent Task Progress\nTask Switch Snapshot\nSwitch readiness\nTask Switch Display Rule\nnode scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md\n",
-  "scripts/v1-progress-todo.test.mjs": "generates a V1 progress TODO board from blockers\ngenerates a closed progress board when no blockers remain\n",
+  "scripts/v1-progress-todo.mjs": "generateV1ProgressTodoMarkdown\ngenerateV1ProgressTodoFromFiles\nCRM V1 Progress TODO\nTODOList\nCurrent Task Progress\nCurrent Task Evidence Readiness\nEvidence templates ready:\nnode scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write\nTask Switch Snapshot\nSwitch readiness\nTask Switch Display Rule\nnode scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md\n",
+  "scripts/v1-progress-todo.test.mjs": "generates a V1 progress TODO board from blockers\nEvidence templates ready: `0/14`\nnode scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write\ngenerates a closed progress board when no blockers remain\n",
   "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\ngenerateV1ExternalUatBlockersJson\ngenerateV1ExternalUatBlockersFromFiles\ngenerateV1ExternalUatClosureChecklistMarkdown\ngenerateV1ExternalUatClosureChecklistFromFiles\ngenerateV1ExternalUatEvidenceIntakeMarkdown\ngenerateV1ExternalUatEvidenceIntakeFromFiles\ngenerateV1NextClosurePhaseMarkdown\ngenerateV1NextClosurePhaseFromFiles\nRequest Status: External UAT Evidence Required\nRequest Board\nCRM V1 External UAT Closure Checklist\nCRM V1 External UAT Evidence Intake\nCRM V1 Next Closure Phase Handoff\nDo not record plaintext passwords\nnode scripts/v1-release-gate.mjs --json\n--json\n--closure-checklist\n--evidence-intake\n--next-closure-phase\nv1-external-uat-blockers.json\nv1-external-uat-closure-checklist.md\nv1-external-uat-evidence-intake.md\nv1-next-closure-phase.md\n",
   "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\nkeeps external UAT request open when validator blockers remain despite release gate Go\nexports machine-readable external UAT blockers with owner routing and validation commands\nkeeps blockers JSON No-Go when validator blockers remain despite release gate Go\ndeduplicates machine-readable blockers by gate and check id\nexports stable machine-readable blocker ids\nexports machine-readable blocker closure sequencing\nexports ordered blocker closure phase summaries\nexports next closure phase handoff metadata\ngenerates a next closure phase handoff packet\ngenerates a closed next closure phase handoff when no blockers remain\ngenerates an external UAT closure checklist grouped by owner side\nkeeps closure checklist No-Go when validator blockers remain despite release gate Go\ngenerates an external UAT evidence intake checklist tied to manifest ids\nkeeps evidence intake No-Go when validator blockers remain despite release gate Go\nkeeps evidence intake manifest ids assigned to a single intake row\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\nvalidation-status-current-commit\ndocs/testing/v1-progress-todo.md\ndocs/meeting-notes/evidence/kickoff/closure-evidence-pack.md\n",
@@ -208,7 +208,7 @@ Validation commands:
 Do not mark this phase Closed until every listed source document validates PASS and the final release gate returns Go
 `,
   "docs/testing/v1-external-uat-blockers.json": "{\"status\":\"External UAT Evidence Required\",\"decision\":\"No-Go\",\"ok\":false,\"summary\":{\"totalBlockers\":1,\"byOwnerSide\":{\"项目/产品\":1},\"byClosurePhase\":{\"6-final-go-decision\":1},\"closurePhases\":[{\"phase\":\"6-final-go-decision\",\"order\":60,\"totalBlockers\":1,\"byOwnerSide\":{\"项目/产品\":1}}],\"nextClosurePhase\":{\"phase\":\"6-final-go-decision\",\"order\":60,\"totalBlockers\":1,\"byOwnerSide\":{\"项目/产品\":1},\"blockerIds\":[\"Release Gate/go-decision\"],\"sourceDocuments\":[\"docs/testing/v1-go-no-go-meeting.md\"],\"validationCommands\":[\"node scripts/v1-release-gate.mjs --json\"]}},\"blockers\":[{\"blockerId\":\"Release Gate/go-decision\",\"gate\":\"Release Gate\",\"checkId\":\"go-decision\",\"ownerSide\":\"项目/产品\",\"closurePhase\":\"6-final-go-decision\",\"closureOrder\":60,\"sourceDocument\":\"docs/testing/v1-go-no-go-meeting.md\",\"validationCommand\":\"node scripts/v1-release-gate.mjs --json\",\"message\":\"Project decision is No-Go; V1 release gate requires Go.\"}]}\n",
-  "docs/testing/v1-progress-todo.md": "CRM V1 Progress TODO\nOverall decision: `No-Go`\nOpen blockers: 1\nCurrent task: `6-final-go-decision`\nCurrent owner side: 项目/产品\nDo not record plaintext passwords\nTODOList\n| In Progress | `6-final-go-decision` | 1 | 项目/产品 |\nCurrent Task Progress\nTask Switch Snapshot\nPrevious task: `5-signoff`\nSwitch readiness: `Blocked`\nRemaining blockers before switch: 1\nNext required validation:\nTask Switch Display Rule\n上一任务\n当前任务\n完成标准\n验证命令\nnode scripts/v1-release-gate.mjs --json\n",
+  "docs/testing/v1-progress-todo.md": "CRM V1 Progress TODO\nOverall decision: `No-Go`\nOpen blockers: 1\nCurrent task: `1-governance`\nCurrent owner side: 项目/产品\nDo not record plaintext passwords\nTODOList\n| In Progress | `1-governance` | 1 | 项目/产品 |\nCurrent Task Progress\nCurrent Task Evidence Readiness\nEvidence templates ready: `0/14`\nnode scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write\nTask Switch Snapshot\nPrevious task: `none`\nSwitch readiness: `Blocked`\nRemaining blockers before switch: 1\nNext required validation:\nTask Switch Display Rule\n上一任务\n当前任务\n完成标准\n验证命令\nnode scripts/v1-release-gate.mjs --json\n",
   "docs/testing/v1-release-gate-status.json": "{\"result\":\"FAIL\",\"decision\":\"No-Go\",\"ok\":false,\"checks\":[{\"id\":\"go-decision\",\"ok\":false}]}\n",
   "docs/meeting-notes/crm-kickoff-minutes.md": `CRM研发启动会纪要
 Decision: No-Go
@@ -2405,6 +2405,19 @@ test("fails when the V1 progress TODO board omits the current task switch snapsh
       .replace("Task Switch Snapshot\n", "")
       .replace("Switch readiness: `Blocked`\n", "")
       .replace("Remaining blockers before switch: 1\n", "")
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-progress-todo-doc"));
+});
+
+test("fails when the V1 progress TODO board omits kickoff evidence readiness", () => {
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    "docs/testing/v1-progress-todo.md": completeSnapshot["docs/testing/v1-progress-todo.md"]
+      .replace("Current Task Evidence Readiness\n", "")
+      .replace("Evidence templates ready: `0/14`\n", "")
+      .replace("node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write\n", "")
   });
 
   assert.equal(result.ok, false);
