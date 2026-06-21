@@ -4,6 +4,23 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+const KICKOFF_GOVERNANCE_EVIDENCE_SCAFFOLD_PATHS = [
+  "docs/meeting-notes/evidence/kickoff/product-owner.md",
+  "docs/meeting-notes/evidence/kickoff/sales-owner.md",
+  "docs/meeting-notes/evidence/kickoff/manager-owner.md",
+  "docs/meeting-notes/evidence/kickoff/dev-owner.md",
+  "docs/meeting-notes/evidence/kickoff/frontend-owner.md",
+  "docs/meeting-notes/evidence/kickoff/backend-owner.md",
+  "docs/meeting-notes/evidence/kickoff/qa-owner.md",
+  "docs/meeting-notes/evidence/kickoff/v1-scope.md",
+  "docs/meeting-notes/evidence/kickoff/v1-loop.md",
+  "docs/meeting-notes/evidence/kickoff/out-of-scope.md",
+  "docs/meeting-notes/evidence/kickoff/schedule.md",
+  "docs/meeting-notes/evidence/kickoff/tech-stack.md",
+  "docs/meeting-notes/evidence/kickoff/acceptance-mode.md",
+  "docs/meeting-notes/evidence/kickoff/scope-freeze.md"
+];
+
 const REQUIRED_ARTIFACTS = [
   ".github/workflows/v1-validation.yml",
   ".env.example",
@@ -47,6 +64,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-kickoff-governance-closure-intake.test.mjs",
   "scripts/v1-kickoff-governance-evidence-pack.mjs",
   "scripts/v1-kickoff-governance-evidence-pack.test.mjs",
+  "scripts/v1-kickoff-governance-evidence-scaffold.mjs",
+  "scripts/v1-kickoff-governance-evidence-scaffold.test.mjs",
   "scripts/v1-progress-todo.mjs",
   "scripts/v1-progress-todo.test.mjs",
   "scripts/v1-external-uat-request.mjs",
@@ -87,6 +106,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/meeting-notes/crm-kickoff-minutes.md",
   "docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
   "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
+  ...KICKOFF_GOVERNANCE_EVIDENCE_SCAFFOLD_PATHS,
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
@@ -617,6 +637,20 @@ function hasNextClosurePhaseHandoff(content) {
   ]);
 }
 
+function hasKickoffGovernanceEvidenceScaffolds(snapshot) {
+  return KICKOFF_GOVERNANCE_EVIDENCE_SCAFFOLD_PATHS.every((scaffoldPath) => {
+    const content = snapshot[scaffoldPath] ?? "";
+    return includesAll(content, [
+      "CRM V1 Kickoff Governance Evidence - ",
+      "Evidence status: `Pending`",
+      "Required closure value:",
+      "This scaffold is not approval evidence",
+      "Do not record plaintext passwords"
+    ]) && !content.includes("Evidence status: `Approved`")
+      && !content.includes("Decision: Go");
+  });
+}
+
 function makeCheck(id, ok, message, severity = "fail") {
   return { id, ok, message, severity };
 }
@@ -651,6 +685,8 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node --test scripts/*.test.mjs",
       "node --test scripts/v1-kickoff-governance-evidence-pack.test.mjs",
       "node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
+      "node --test scripts/v1-kickoff-governance-evidence-scaffold.test.mjs",
+      "node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write",
       "node --test scripts/v1-progress-todo.test.mjs",
       "node scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md",
       "mvn -B test",
@@ -1036,6 +1072,24 @@ export function evaluateReadinessSnapshot(snapshot) {
       "uses custom target kickoff and evidence paths"
     ]),
     "Kickoff governance evidence pack generator is tested and wired into CI to turn current 1-governance blockers into owner confirmation, scope freeze, task-switch, and validation evidence collection work."
+  ));
+
+  const kickoffGovernanceEvidenceScaffoldGenerator = snapshot["scripts/v1-kickoff-governance-evidence-scaffold.mjs"] ?? "";
+  const kickoffGovernanceEvidenceScaffoldGeneratorTest = snapshot["scripts/v1-kickoff-governance-evidence-scaffold.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "kickoff-governance-evidence-scaffold-generator",
+    includesAll(workflow + kickoffGovernanceEvidenceScaffoldGenerator + kickoffGovernanceEvidenceScaffoldGeneratorTest, [
+      "node --test scripts/v1-kickoff-governance-evidence-scaffold.test.mjs",
+      "node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write",
+      "generateKickoffGovernanceEvidenceScaffoldMarkdown",
+      "generateKickoffGovernanceEvidenceScaffolds",
+      "writeKickoffGovernanceEvidenceScaffolds",
+      "Evidence status: `Pending`",
+      "This scaffold is not approval evidence",
+      "generates pending kickoff owner evidence templates without approving governance",
+      "generates every kickoff governance evidence scaffold path"
+    ]),
+    "Kickoff governance evidence scaffold generator is tested and wired into CI to create Pending retained-evidence templates without claiming approval."
   ));
 
   const progressTodoGenerator = snapshot["scripts/v1-progress-todo.mjs"] ?? "";
@@ -1434,6 +1488,12 @@ export function evaluateReadinessSnapshot(snapshot) {
     "kickoff-governance-evidence-pack-doc",
     hasKickoffGovernanceEvidencePack(kickoffGovernanceEvidencePackDoc),
     "Kickoff governance evidence pack inventories current 1-governance blockers, owner confirmation TODOList, scope freeze TODOList, task-switch guidance, and validation commands."
+  ));
+
+  checks.push(makeCheck(
+    "kickoff-governance-evidence-scaffold-docs",
+    hasKickoffGovernanceEvidenceScaffolds(snapshot),
+    "Kickoff governance evidence scaffolds exist for every owner and scope-freeze item, remain Pending, and do not claim approval before validator evidence is complete."
   ));
 
   checks.push(makeCheck(

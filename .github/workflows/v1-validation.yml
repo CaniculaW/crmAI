@@ -102,6 +102,12 @@ jobs:
       - name: Generate V1 kickoff governance evidence pack
         run: node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md
 
+      - name: Run V1 kickoff governance evidence scaffold tests
+        run: node --test scripts/v1-kickoff-governance-evidence-scaffold.test.mjs
+
+      - name: Generate V1 kickoff governance evidence scaffolds
+        run: node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write
+
       - name: Run V1 external UAT request packet tests
         run: node --test scripts/v1-external-uat-request.test.mjs
 

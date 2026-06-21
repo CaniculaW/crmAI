@@ -37,6 +37,8 @@ jobs:
       - run: node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md
       - run: node --test scripts/v1-kickoff-governance-evidence-pack.test.mjs
       - run: node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md
+      - run: node --test scripts/v1-kickoff-governance-evidence-scaffold.test.mjs
+      - run: node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write
       - run: node --test scripts/v1-external-uat-request.test.mjs
       - run: node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md
       - run: node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md
@@ -116,6 +118,8 @@ jobs:
   "scripts/v1-kickoff-governance-closure-intake.test.mjs": "generates a kickoff governance closure intake template\nuses custom source and output guidance paths\n",
   "scripts/v1-kickoff-governance-evidence-pack.mjs": "generateKickoffGovernanceEvidencePackMarkdown\ngenerateKickoffGovernanceEvidencePackFromFiles\nCRM V1 Kickoff Governance Evidence Pack\nOwner Confirmation TODOList\nScope Freeze TODOList\nCurrent Governance Blockers\nTask Switch Display Rule\nnode scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md\n",
   "scripts/v1-kickoff-governance-evidence-pack.test.mjs": "generates a kickoff governance evidence pack for the current 1-governance task\nuses custom target kickoff and evidence paths\n",
+  "scripts/v1-kickoff-governance-evidence-scaffold.mjs": "generateKickoffGovernanceEvidenceScaffoldMarkdown\ngenerateKickoffGovernanceEvidenceScaffolds\nwriteKickoffGovernanceEvidenceScaffolds\nEvidence status: `Pending`\nThis scaffold is not approval evidence\n--write\n",
+  "scripts/v1-kickoff-governance-evidence-scaffold.test.mjs": "generates pending kickoff owner evidence templates without approving governance\ngenerates every kickoff governance evidence scaffold path\n",
   "scripts/v1-progress-todo.mjs": "generateV1ProgressTodoMarkdown\ngenerateV1ProgressTodoFromFiles\nCRM V1 Progress TODO\nTODOList\nCurrent Task Progress\nTask Switch Snapshot\nSwitch readiness\nTask Switch Display Rule\nnode scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md\n",
   "scripts/v1-progress-todo.test.mjs": "generates a V1 progress TODO board from blockers\ngenerates a closed progress board when no blockers remain\n",
   "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\ngenerateV1ExternalUatBlockersJson\ngenerateV1ExternalUatBlockersFromFiles\ngenerateV1ExternalUatClosureChecklistMarkdown\ngenerateV1ExternalUatClosureChecklistFromFiles\ngenerateV1ExternalUatEvidenceIntakeMarkdown\ngenerateV1ExternalUatEvidenceIntakeFromFiles\ngenerateV1NextClosurePhaseMarkdown\ngenerateV1NextClosurePhaseFromFiles\nRequest Status: External UAT Evidence Required\nRequest Board\nCRM V1 External UAT Closure Checklist\nCRM V1 External UAT Evidence Intake\nCRM V1 Next Closure Phase Handoff\nDo not record plaintext passwords\nnode scripts/v1-release-gate.mjs --json\n--json\n--closure-checklist\n--evidence-intake\n--next-closure-phase\nv1-external-uat-blockers.json\nv1-external-uat-closure-checklist.md\nv1-external-uat-evidence-intake.md\nv1-next-closure-phase.md\n",
@@ -266,6 +270,20 @@ Task Switch Display Rule
 完成标准
 验证命令
 `,
+  "docs/meeting-notes/evidence/kickoff/product-owner.md": "CRM V1 Kickoff Governance Evidence - 产品负责人\nEvidence type: `owner`\nEvidence status: `Pending`\nRequired closure value: Named person, not a role label\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
+  "docs/meeting-notes/evidence/kickoff/sales-owner.md": "CRM V1 Kickoff Governance Evidence - 业务验收人-销售侧\nEvidence type: `owner`\nEvidence status: `Pending`\nRequired closure value: Named person, not a role label\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
+  "docs/meeting-notes/evidence/kickoff/manager-owner.md": "CRM V1 Kickoff Governance Evidence - 业务验收人-管理侧\nEvidence type: `owner`\nEvidence status: `Pending`\nRequired closure value: Named person, not a role label\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
+  "docs/meeting-notes/evidence/kickoff/dev-owner.md": "CRM V1 Kickoff Governance Evidence - 研发负责人\nEvidence type: `owner`\nEvidence status: `Pending`\nRequired closure value: Named person, not a role label\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
+  "docs/meeting-notes/evidence/kickoff/frontend-owner.md": "CRM V1 Kickoff Governance Evidence - 前端负责人\nEvidence type: `owner`\nEvidence status: `Pending`\nRequired closure value: Named person, not a role label\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
+  "docs/meeting-notes/evidence/kickoff/backend-owner.md": "CRM V1 Kickoff Governance Evidence - 后端负责人\nEvidence type: `owner`\nEvidence status: `Pending`\nRequired closure value: Named person, not a role label\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
+  "docs/meeting-notes/evidence/kickoff/qa-owner.md": "CRM V1 Kickoff Governance Evidence - 测试负责人\nEvidence type: `owner`\nEvidence status: `Pending`\nRequired closure value: Named person, not a role label\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
+  "docs/meeting-notes/evidence/kickoff/v1-scope.md": "CRM V1 Kickoff Governance Evidence - V1 模块范围\nEvidence type: `scope`\nEvidence status: `Pending`\nRequired closure value: Confirmed V1 sales foundation modules\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
+  "docs/meeting-notes/evidence/kickoff/v1-loop.md": "CRM V1 Kickoff Governance Evidence - V1 业务闭环\nEvidence type: `scope`\nEvidence status: `Pending`\nRequired closure value: Confirmed end-to-end sales foundation flow\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
+  "docs/meeting-notes/evidence/kickoff/out-of-scope.md": "CRM V1 Kickoff Governance Evidence - V1 暂不做\nEvidence type: `scope`\nEvidence status: `Pending`\nRequired closure value: Confirmed later-version and out-of-scope items\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
+  "docs/meeting-notes/evidence/kickoff/schedule.md": "CRM V1 Kickoff Governance Evidence - 上线周期\nEvidence type: `scope`\nEvidence status: `Pending`\nRequired closure value: `YYYY-MM-DD 至 YYYY-MM-DD` with end after start\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
+  "docs/meeting-notes/evidence/kickoff/tech-stack.md": "CRM V1 Kickoff Governance Evidence - 技术栈\nEvidence type: `scope`\nEvidence status: `Pending`\nRequired closure value: Confirmed React + Ant Design, Java Spring Boot, PostgreSQL or approved change\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
+  "docs/meeting-notes/evidence/kickoff/acceptance-mode.md": "CRM V1 Kickoff Governance Evidence - 验收方式\nEvidence type: `scope`\nEvidence status: `Pending`\nRequired closure value: Confirmed sales-side and management-side acceptance mode\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
+  "docs/meeting-notes/evidence/kickoff/scope-freeze.md": "CRM V1 Kickoff Governance Evidence - V1范围冻结\nEvidence type: `scope`\nEvidence status: `Pending`\nRequired closure value: Confirm V1 only includes sales foundation loop and later-version items stay out\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
   "docs/testing/crm-v1-validation-traceability.md": "研发验证通过\n若目标口径是“项目 V1 验收通过”，仍需完成具名测试环境验证和业务验收签署。\nnode scripts/v1-traceability-check.mjs\n",
   "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\nUAT-001\nUAT-010\nAC-005\nAC-014\nnode scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md\nnode scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md\nnode scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md\nnode scripts/v1-generated-docs-check.mjs\nnode scripts/v1-plan-status-check.mjs\nnode scripts/v1-uat-coverage-check.mjs\nnode scripts/v1-blocker-consistency-check.mjs\nnode scripts/v1-external-uat-request-coverage-check.mjs\nnode scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md\nnode scripts/v1-final-evidence-handoff-check.mjs\nnode scripts/v1-secret-scan-check.mjs\nnode scripts/v1-release-gate.mjs --json\n",
   "docs/testing/crm-v1-uat-evidence-pack-template.md": "Go/No-Go\n签署\n缺陷\n",
@@ -816,6 +834,20 @@ test("fails when the kickoff governance evidence pack generator is missing", () 
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "kickoff-governance-evidence-pack-generator"));
+});
+
+test("fails when the kickoff governance evidence scaffold generator is missing", () => {
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
+      .replace("      - run: node --test scripts/v1-kickoff-governance-evidence-scaffold.test.mjs\n", "")
+      .replace("      - run: node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write\n", ""),
+    "scripts/v1-kickoff-governance-evidence-scaffold.mjs": "",
+    "scripts/v1-kickoff-governance-evidence-scaffold.test.mjs": ""
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "kickoff-governance-evidence-scaffold-generator"));
 });
 
 test("fails when the V1 progress TODO generator is missing", () => {
@@ -2303,6 +2335,28 @@ test("fails when the kickoff governance evidence pack omits task guidance", () =
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "kickoff-governance-evidence-pack-doc"));
+});
+
+test("fails when a kickoff governance evidence scaffold is missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["docs/meeting-notes/evidence/kickoff/product-owner.md"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when kickoff governance evidence scaffolds claim approval", () => {
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    "docs/meeting-notes/evidence/kickoff/product-owner.md": completeSnapshot["docs/meeting-notes/evidence/kickoff/product-owner.md"]
+      .replace("Evidence status: `Pending`", "Evidence status: `Approved`")
+      .replace("This scaffold is not approval evidence\n", "")
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "kickoff-governance-evidence-scaffold-docs"));
 });
 
 test("fails when the V1 progress TODO board is missing", () => {

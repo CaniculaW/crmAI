@@ -151,6 +151,14 @@ node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes
 
 该证据包用于项目/产品侧按当前 `1-governance` 阻塞逐项留痕负责人确认、范围冻结、当前阻塞、任务切换展示和验证命令；不能替代 `docs/meeting-notes/crm-kickoff-minutes.md` 的正式 PASS 证据。
 
+生成启动治理 Pending 补证模板：
+
+```bash
+node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write
+```
+
+该命令会生成 7 个负责人确认模板和 7 个范围冻结模板；所有模板默认 `Pending`，只有补齐具名人员、确认来源、留存证据引用，并更新启动会纪要且 validator 返回 PASS 后，才能作为正式启动治理证据使用。
+
 证据包填写完成后执行准出一致性校验：
 
 ```bash
