@@ -232,6 +232,20 @@ node scripts/v1-release-gate.mjs . \
   docs/meeting-notes/crm-kickoff-minutes.md
 ```
 
+机器可读最终放行门禁：
+
+```bash
+node scripts/v1-release-gate.mjs --json . \
+  <crm-v1-uat-evidence-pack.md> \
+  docs/testing/crm-v1-uat-execution-tracker.md \
+  docs/testing/v1-uat-evidence-manifest.md \
+  docs/testing/v1-uat-defect-register.md \
+  docs/testing/v1-uat-environment-evidence.md \
+  docs/testing/v1-uat-signoff-register.md \
+  docs/testing/v1-uat-launch-intake.md \
+  docs/meeting-notes/crm-kickoff-minutes.md
+```
+
 V1 聚合状态报告：
 
 ```bash

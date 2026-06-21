@@ -30,7 +30,8 @@ function completeDocuments(overrides = {}) {
     "node scripts/v1-external-uat-request-coverage-check.mjs",
     "node scripts/v1-final-evidence-handoff-check.mjs",
     "node scripts/v1-secret-scan-check.mjs",
-    "node scripts/v1-release-gate.mjs"
+    "node scripts/v1-release-gate.mjs",
+    "node scripts/v1-release-gate.mjs --json"
   ].join("\n");
 
   return {
@@ -75,6 +76,19 @@ test("fails when final handoff materials omit the final release gate command", (
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "handoff-command-coverage"));
+});
+
+test("fails when final handoff materials omit the machine-readable final release gate command", () => {
+  const docs = completeDocuments();
+  for (const path of Object.keys(docs)) {
+    docs[path] = docs[path].replaceAll("node scripts/v1-release-gate.mjs --json", "");
+  }
+
+  const result = evaluateV1FinalEvidenceHandoffSnapshot(docs);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "handoff-command-coverage"));
+  assert.ok(result.missingCommands.includes("node scripts/v1-release-gate.mjs --json"));
 });
 
 test("fails when final handoff materials omit acceptance and traceability commands", () => {

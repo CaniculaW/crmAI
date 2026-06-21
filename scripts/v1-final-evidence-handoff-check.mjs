@@ -31,7 +31,8 @@ const REQUIRED_HANDOFF_COMMANDS = [
   "node scripts/v1-external-uat-request-coverage-check.mjs",
   "node scripts/v1-final-evidence-handoff-check.mjs",
   "node scripts/v1-secret-scan-check.mjs",
-  "node scripts/v1-release-gate.mjs"
+  "node scripts/v1-release-gate.mjs",
+  "node scripts/v1-release-gate.mjs --json"
 ];
 
 const REQUIRED_NO_GO_BLOCKER_TERMS = [

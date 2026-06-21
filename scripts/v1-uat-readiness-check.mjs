@@ -679,9 +679,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "Decision Recommendation: No-Go",
       "Final Signoff Table",
       "UAT Environment Evidence",
+      "node scripts/v1-release-gate.mjs --json",
       "generates a No-Go meeting pack that blocks approval until validators pass"
     ]),
-    "V1 Go/No-Go meeting pack is tested and keeps final approval tied to validator PASS plus project Go."
+    "V1 Go/No-Go meeting pack is tested and keeps final approval tied to validator PASS plus project Go, with machine-readable release-gate output available for dashboards and validation bots."
   ));
 
   const externalUatRequest = snapshot["scripts/v1-external-uat-request.mjs"] ?? "";
@@ -841,8 +842,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node scripts/v1-uat-coverage-check.mjs",
       "node scripts/v1-traceability-check.mjs",
       "node scripts/v1-final-evidence-handoff-check.mjs",
+      "node scripts/v1-release-gate.mjs --json",
       "fails when final handoff materials claim V1 acceptance while release gate is No-Go",
       "fails when final handoff materials omit acceptance and traceability commands",
+      "fails when final handoff materials omit the machine-readable final release gate command",
       "fails when No-Go final handoff materials hide external UAT blockers",
       "fails when generated UAT handoff packets are missing"
     ]),

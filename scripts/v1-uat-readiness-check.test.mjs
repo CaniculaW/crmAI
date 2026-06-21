@@ -92,8 +92,8 @@ jobs:
   "scripts/v1-uat-action-plan.test.mjs": "generates a No-Go UAT action plan grouped by project, test, business, and engineering workstreams\n",
   "scripts/v1-uat-execution-pack.mjs": "generateV1UatExecutionPackMarkdown\nOverall: No-Go\nExecution Items\nKICKOFF-OWNERS\nENV-001\nUAT-010\n",
   "scripts/v1-uat-execution-pack.test.mjs": "generates an executable UAT evidence collection pack from failed gates\n",
-  "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nKickoff Governance\nUAT Environment Evidence\n",
-  "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\n",
+  "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nKickoff Governance\nUAT Environment Evidence\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\nRequest Status: External UAT Evidence Required\nRequest Board\nDo not record plaintext passwords\n",
   "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\n",
   "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\nvalidation-status-current-commit\n",
@@ -112,8 +112,8 @@ jobs:
   "scripts/v1-blocker-consistency-check.test.mjs": "fails when a decision document omits a release gate blocker\nfails when the external UAT request packet omits a release gate blocker\n",
   "scripts/v1-external-uat-request-coverage-check.mjs": "evaluateV1ExternalUatRequestCoverageSnapshot\nrequest-blocker-coverage\nrequest-command-coverage\nrequest-workstream-routing\nnode scripts/v1-external-uat-request-coverage-check.mjs\n",
   "scripts/v1-external-uat-request-coverage-check.test.mjs": "fails when the external UAT request packet omits a failed validator check\n",
-  "scripts/v1-final-evidence-handoff-check.mjs": "evaluateV1FinalEvidenceHandoffSnapshot\nhandoff-materials-present\nrelease-gate-status-readable\nexternal-blockers-visible\nno-go-handoff-guardrail\nhandoff-command-coverage\nnode scripts/v1-evidence-reference-check.mjs docs/testing/v1-uat-evidence-manifest.md\nnode scripts/v1-acceptance-checklist-check.mjs\nnode scripts/v1-uat-coverage-check.mjs\nnode scripts/v1-traceability-check.mjs\nnode scripts/v1-final-evidence-handoff-check.mjs\n",
-  "scripts/v1-final-evidence-handoff-check.test.mjs": "fails when final handoff materials claim V1 acceptance while release gate is No-Go\nfails when final handoff materials omit acceptance and traceability commands\nfails when No-Go final handoff materials hide external UAT blockers\nfails when generated UAT handoff packets are missing\n",
+  "scripts/v1-final-evidence-handoff-check.mjs": "evaluateV1FinalEvidenceHandoffSnapshot\nhandoff-materials-present\nrelease-gate-status-readable\nexternal-blockers-visible\nno-go-handoff-guardrail\nhandoff-command-coverage\nnode scripts/v1-evidence-reference-check.mjs docs/testing/v1-uat-evidence-manifest.md\nnode scripts/v1-acceptance-checklist-check.mjs\nnode scripts/v1-uat-coverage-check.mjs\nnode scripts/v1-traceability-check.mjs\nnode scripts/v1-final-evidence-handoff-check.mjs\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-final-evidence-handoff-check.test.mjs": "fails when final handoff materials claim V1 acceptance while release gate is No-Go\nfails when final handoff materials omit acceptance and traceability commands\nfails when final handoff materials omit the machine-readable final release gate command\nfails when No-Go final handoff materials hide external UAT blockers\nfails when generated UAT handoff packets are missing\n",
   "scripts/v1-secret-scan-check.mjs": "evaluateV1SecretScanSnapshot\ncurrent-v1-evidence-no-secrets\nREADME.md\n",
   "scripts/v1-secret-scan-check.test.mjs": "fails when a current V1 evidence document contains a bearer token\ntracks the README final handoff entrypoint as current V1 evidence\n",
   "scripts/v1-deployment-config-check.mjs": "evaluateDeploymentConfigSnapshot\nCRM_BACKEND_BUILD_IMAGE\nCRM_FRONTEND_RUNTIME_IMAGE\n",
@@ -1096,6 +1096,21 @@ test("fails when the V1 Go/No-Go meeting pack is missing from readiness material
   assert.ok(result.failed.some((check) => check.id === "v1-go-no-go-meeting-pack"));
 });
 
+test("fails when the V1 Go/No-Go meeting pack omits machine-readable release gate command coverage", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-go-no-go-meeting.mjs": completeSnapshot["scripts/v1-go-no-go-meeting.mjs"]
+      .replace("node scripts/v1-release-gate.mjs --json\n", ""),
+    "scripts/v1-go-no-go-meeting.test.mjs": completeSnapshot["scripts/v1-go-no-go-meeting.test.mjs"]
+      .replace("node scripts/v1-release-gate.mjs --json\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-go-no-go-meeting-pack"));
+});
+
 test("fails when the V1 external UAT request packet is missing from readiness materials", () => {
   const snapshot = {
     ...completeSnapshot,
@@ -1362,6 +1377,21 @@ test("fails when the V1 final evidence handoff checker omits critical verificati
       .replace("node scripts/v1-uat-coverage-check.mjs\n", "")
       .replace("node scripts/v1-traceability-check.mjs\n", "")
       .replace("node scripts/v1-final-evidence-handoff-check.mjs\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-final-evidence-handoff-checker"));
+});
+
+test("fails when the V1 final evidence handoff checker omits machine-readable release gate command coverage", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-final-evidence-handoff-check.mjs": completeSnapshot["scripts/v1-final-evidence-handoff-check.mjs"]
+      .replace("node scripts/v1-release-gate.mjs --json\n", ""),
+    "scripts/v1-final-evidence-handoff-check.test.mjs": completeSnapshot["scripts/v1-final-evidence-handoff-check.test.mjs"]
+      .replace("fails when final handoff materials omit the machine-readable final release gate command\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);
