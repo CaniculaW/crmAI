@@ -30,6 +30,7 @@ function completeDocuments(overrides = {}) {
     "node scripts/v1-external-uat-request-coverage-check.mjs",
     "node scripts/v1-final-evidence-handoff-check.mjs",
     "node scripts/v1-secret-scan-check.mjs",
+    "node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
     "node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md",
     "node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md",
     "node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md",
@@ -51,6 +52,7 @@ function completeDocuments(overrides = {}) {
     "docs/testing/v1-external-uat-closure-checklist.md": shared,
     "docs/testing/v1-external-uat-evidence-intake.md": shared,
     "docs/testing/v1-next-closure-phase.md": shared,
+    "docs/meeting-notes/crm-kickoff-governance-closure-intake.md": shared,
     "docs/testing/v1-external-uat-blockers.json": JSON.stringify({
       status: "External UAT Evidence Required",
       decision: "No-Go",
@@ -178,6 +180,22 @@ test("fails when final handoff materials omit the next closure phase generation 
   assert.ok(result.missingCommands.includes("node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md"));
 });
 
+test("fails when final handoff materials omit the kickoff governance closure intake generation command", () => {
+  const docs = completeDocuments();
+  for (const path of Object.keys(docs)) {
+    docs[path] = docs[path].replaceAll(
+      "node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
+      ""
+    );
+  }
+
+  const result = evaluateV1FinalEvidenceHandoffSnapshot(docs);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "handoff-command-coverage"));
+  assert.ok(result.missingCommands.includes("node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md"));
+});
+
 test("fails when final handoff materials omit acceptance and traceability commands", () => {
   const docs = completeDocuments();
   for (const path of Object.keys(docs)) {
@@ -209,6 +227,7 @@ test("fails when generated UAT handoff packets are missing", () => {
   delete docs["docs/testing/v1-external-uat-closure-checklist.md"];
   delete docs["docs/testing/v1-external-uat-evidence-intake.md"];
   delete docs["docs/testing/v1-next-closure-phase.md"];
+  delete docs["docs/meeting-notes/crm-kickoff-governance-closure-intake.md"];
   delete docs["docs/testing/v1-external-uat-blockers.json"];
 
   const result = evaluateV1FinalEvidenceHandoffSnapshot(docs);
@@ -223,6 +242,7 @@ test("fails when generated UAT handoff packets are missing", () => {
     "docs/testing/v1-external-uat-closure-checklist.md",
     "docs/testing/v1-external-uat-evidence-intake.md",
     "docs/testing/v1-next-closure-phase.md",
+    "docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
     "docs/testing/v1-external-uat-blockers.json"
   ]);
 });

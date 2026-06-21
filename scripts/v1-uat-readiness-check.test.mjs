@@ -30,6 +30,8 @@ jobs:
       - run: node --test scripts/v1-uat-action-plan.test.mjs
       - run: node --test scripts/v1-uat-execution-pack.test.mjs
       - run: node --test scripts/v1-go-no-go-meeting.test.mjs
+      - run: node --test scripts/v1-kickoff-governance-closure-intake.test.mjs
+      - run: node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md
       - run: node --test scripts/v1-external-uat-request.test.mjs
       - run: node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md
       - run: node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md
@@ -99,6 +101,8 @@ jobs:
   "scripts/v1-uat-execution-pack.test.mjs": "generates an executable UAT evidence collection pack from failed gates\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nKickoff Governance\nUAT Environment Evidence\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-kickoff-governance-closure-intake.mjs": "generateKickoffGovernanceClosureIntakeMarkdown\nCRM V1 Kickoff Governance Closure Intake\nRequired Owner Closures\nRequired Scope Freeze Closures\nDecision target: `Go`\nnode scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-kickoff-governance-closure-intake.test.mjs": "generates a kickoff governance closure intake template\nuses custom source and output guidance paths\n",
   "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\ngenerateV1ExternalUatBlockersJson\ngenerateV1ExternalUatBlockersFromFiles\ngenerateV1ExternalUatClosureChecklistMarkdown\ngenerateV1ExternalUatClosureChecklistFromFiles\ngenerateV1ExternalUatEvidenceIntakeMarkdown\ngenerateV1ExternalUatEvidenceIntakeFromFiles\ngenerateV1NextClosurePhaseMarkdown\ngenerateV1NextClosurePhaseFromFiles\nRequest Status: External UAT Evidence Required\nRequest Board\nCRM V1 External UAT Closure Checklist\nCRM V1 External UAT Evidence Intake\nCRM V1 Next Closure Phase Handoff\nDo not record plaintext passwords\nnode scripts/v1-release-gate.mjs --json\n--json\n--closure-checklist\n--evidence-intake\n--next-closure-phase\nv1-external-uat-blockers.json\nv1-external-uat-closure-checklist.md\nv1-external-uat-evidence-intake.md\nv1-next-closure-phase.md\n",
   "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\nkeeps external UAT request open when validator blockers remain despite release gate Go\nexports machine-readable external UAT blockers with owner routing and validation commands\nkeeps blockers JSON No-Go when validator blockers remain despite release gate Go\ndeduplicates machine-readable blockers by gate and check id\nexports stable machine-readable blocker ids\nexports machine-readable blocker closure sequencing\nexports ordered blocker closure phase summaries\nexports next closure phase handoff metadata\ngenerates a next closure phase handoff packet\ngenerates a closed next closure phase handoff when no blockers remain\ngenerates an external UAT closure checklist grouped by owner side\nkeeps closure checklist No-Go when validator blockers remain despite release gate Go\ngenerates an external UAT evidence intake checklist tied to manifest ids\nkeeps evidence intake No-Go when validator blockers remain despite release gate Go\nkeeps evidence intake manifest ids assigned to a single intake row\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\nvalidation-status-current-commit\n",
@@ -202,8 +206,32 @@ V1范围冻结
 不记录明文密码
 node scripts/v1-kickoff-governance-validate.mjs
 `,
+  "docs/meeting-notes/crm-kickoff-governance-closure-intake.md": `CRM V1 Kickoff Governance Closure Intake
+Target source document: docs/meeting-notes/crm-kickoff-minutes.md
+Current blocker phase: \`1-governance\`
+Decision target: \`Go\`
+Do not record plaintext passwords
+Required Owner Closures
+| Role | Required closure value | Target status | Evidence requirement | Suggested evidence path |
+|---|---|---|---|---|
+| 产品负责人 | Named person, not a role label | 已确认 | Existing non-empty \`docs/\` artifact or external \`http(s)\` URL | docs/meeting-notes/evidence/kickoff/product-owner.md |
+| 业务验收人-销售侧 | Named person, not a role label | 已确认 | Existing non-empty \`docs/\` artifact or external \`http(s)\` URL | docs/meeting-notes/evidence/kickoff/sales-owner.md |
+| 业务验收人-管理侧 | Named person, not a role label | 已确认 | Existing non-empty \`docs/\` artifact or external \`http(s)\` URL | docs/meeting-notes/evidence/kickoff/manager-owner.md |
+| 研发负责人 | Named person, not a role label | 已确认 | Existing non-empty \`docs/\` artifact or external \`http(s)\` URL | docs/meeting-notes/evidence/kickoff/dev-owner.md |
+| 前端负责人 | Named person, not a role label | 已确认 | Existing non-empty \`docs/\` artifact or external \`http(s)\` URL | docs/meeting-notes/evidence/kickoff/frontend-owner.md |
+| 后端负责人 | Named person, not a role label | 已确认 | Existing non-empty \`docs/\` artifact or external \`http(s)\` URL | docs/meeting-notes/evidence/kickoff/backend-owner.md |
+| 测试负责人 | Named person, not a role label | 已确认 | Existing non-empty \`docs/\` artifact or external \`http(s)\` URL | docs/meeting-notes/evidence/kickoff/qa-owner.md |
+Required Scope Freeze Closures
+| Scope item | Required closure value | Target status | Evidence requirement | Suggested evidence path |
+|---|---|---|---|---|
+| V1 模块范围 | Confirmed V1 sales foundation modules | 已确认 | Existing non-empty \`docs/\` artifact or external \`http(s)\` URL | docs/meeting-notes/evidence/kickoff/v1-scope.md |
+| 上线周期 | \`YYYY-MM-DD 至 YYYY-MM-DD\` with end after start | 已确认 | Existing non-empty \`docs/\` artifact or external \`http(s)\` URL | docs/meeting-notes/evidence/kickoff/schedule.md |
+| V1范围冻结 | Confirm V1 only includes sales foundation loop and later-version items stay out | 已冻结 | Existing non-empty \`docs/\` artifact or external \`http(s)\` URL | docs/meeting-notes/evidence/kickoff/scope-freeze.md |
+node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md
+node scripts/v1-release-gate.mjs --json
+`,
   "docs/testing/crm-v1-validation-traceability.md": "研发验证通过\n若目标口径是“项目 V1 验收通过”，仍需完成具名测试环境验证和业务验收签署。\nnode scripts/v1-traceability-check.mjs\n",
-  "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\nUAT-001\nUAT-010\nAC-005\nAC-014\nnode scripts/v1-generated-docs-check.mjs\nnode scripts/v1-plan-status-check.mjs\nnode scripts/v1-uat-coverage-check.mjs\nnode scripts/v1-blocker-consistency-check.mjs\nnode scripts/v1-external-uat-request-coverage-check.mjs\nnode scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md\nnode scripts/v1-final-evidence-handoff-check.mjs\nnode scripts/v1-secret-scan-check.mjs\nnode scripts/v1-release-gate.mjs --json\n",
+  "docs/testing/crm-v1-test-environment-validation-runbook.md": "具名测试环境\n证据包\n签署\nUAT-001\nUAT-010\nAC-005\nAC-014\nnode scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md\nnode scripts/v1-generated-docs-check.mjs\nnode scripts/v1-plan-status-check.mjs\nnode scripts/v1-uat-coverage-check.mjs\nnode scripts/v1-blocker-consistency-check.mjs\nnode scripts/v1-external-uat-request-coverage-check.mjs\nnode scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md\nnode scripts/v1-final-evidence-handoff-check.mjs\nnode scripts/v1-secret-scan-check.mjs\nnode scripts/v1-release-gate.mjs --json\n",
   "docs/testing/crm-v1-uat-evidence-pack-template.md": "Go/No-Go\n签署\n缺陷\n",
   "docs/testing/crm-v1-uat-execution-tracker.md": `CRM V1 UAT执行派工与证据追踪表
 v1.0.0-rc.8
@@ -318,7 +346,7 @@ node scripts/v1-evidence-reference-check.mjs
     const id = String(index + 1).padStart(3, "0");
     return `AC-${id} | 研发验证通过，待业务验收`;
   }).join("\n") + "\n具名测试环境待部署确认\n",
-  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-evidence-reference-check.mjs\nv1-release-gate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-external-uat-request.mjs\nnode scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md\nnode scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md\nnode scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md\nnode scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json\nv1-generated-docs-check.mjs\nv1-release-gate-status-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\nv1-uat-coverage-check.mjs\nv1-traceability-check.mjs\nv1-blocker-consistency-check.mjs\nv1-external-uat-request-coverage-check.mjs\nv1-final-evidence-handoff-check.mjs\nv1-secret-scan-check.mjs\n"
+  "README.md": "docs/releases/v1.0.0-rc.8.md\ncompose.v1-test.yml\nv1-kickoff-governance-validate.mjs\nv1-kickoff-governance-closure-intake.mjs\nnode scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md\nv1-uat-environment-validate.mjs\nv1-uat-evidence-pack-validate.mjs\nv1-uat-defect-register-validate.mjs\nv1-uat-signoff-register-validate.mjs\nv1-uat-launch-intake-validate.mjs\nv1-uat-evidence-manifest-validate.mjs\nv1-evidence-reference-check.mjs\nv1-release-gate.mjs\nv1-validation-status.mjs\nv1-uat-action-plan.mjs\nv1-uat-execution-pack.mjs\nv1-go-no-go-meeting.mjs\nv1-external-uat-request.mjs\nnode scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md\nnode scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md\nnode scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md\nnode scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json\nv1-generated-docs-check.mjs\nv1-release-gate-status-check.mjs\nv1-plan-status-check.mjs\nv1-acceptance-checklist-check.mjs\nv1-uat-coverage-check.mjs\nv1-traceability-check.mjs\nv1-blocker-consistency-check.mjs\nv1-external-uat-request-coverage-check.mjs\nv1-final-evidence-handoff-check.mjs\nv1-secret-scan-check.mjs\n"
 };
 
 test("passes when V1 rc8 and UAT readiness artifacts are documented", () => {
@@ -710,6 +738,20 @@ test("fails when the external UAT request generator omits the next closure phase
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "v1-external-uat-request-pack"));
+});
+
+test("fails when the kickoff governance closure intake generator is missing", () => {
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
+      .replace("      - run: node --test scripts/v1-kickoff-governance-closure-intake.test.mjs\n", "")
+      .replace("      - run: node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md\n", ""),
+    "scripts/v1-kickoff-governance-closure-intake.mjs": "",
+    "scripts/v1-kickoff-governance-closure-intake.test.mjs": ""
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "kickoff-governance-closure-intake-generator"));
 });
 
 test("fails when the external UAT request tests omit evidence intake manifest ownership coverage", () => {
@@ -1591,7 +1633,8 @@ test("fails when README omits critical V1 release verification entrypoints", () 
     "v1-evidence-reference-check.mjs",
     "v1-release-gate.mjs",
     "v1-release-gate-status-check.mjs",
-    "v1-blocker-consistency-check.mjs"
+    "v1-blocker-consistency-check.mjs",
+    "v1-kickoff-governance-closure-intake.mjs"
   ]) {
     const snapshot = {
       ...completeSnapshot,
@@ -1603,6 +1646,21 @@ test("fails when README omits critical V1 release verification entrypoints", () 
     assert.equal(result.ok, false, `${entrypoint} should be required in README`);
     assert.ok(result.failed.some((check) => check.id === "readme-entrypoints"));
   }
+});
+
+test("fails when README omits the kickoff governance closure intake generation command", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "README.md": completeSnapshot["README.md"].replace(
+      "node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md\n",
+      ""
+    )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "readme-entrypoints"));
 });
 
 test("fails when README omits external UAT generated handoff commands", () => {
@@ -2094,6 +2152,29 @@ test("fails when the kickoff minutes are missing", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the kickoff governance closure intake is missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["docs/meeting-notes/crm-kickoff-governance-closure-intake.md"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the kickoff governance closure intake omits required owner guidance", () => {
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    "docs/meeting-notes/crm-kickoff-governance-closure-intake.md": completeSnapshot["docs/meeting-notes/crm-kickoff-governance-closure-intake.md"]
+      .replace("Required Owner Closures\n", "")
+      .replace("| 产品负责人 | Named person, not a role label | 已确认 | Existing non-empty `docs/` artifact or external `http(s)` URL | docs/meeting-notes/evidence/kickoff/product-owner.md |\n", "")
+      .replace("Decision target: `Go`\n", "")
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "kickoff-governance-closure-intake-doc"));
 });
 
 test("fails when the kickoff minutes omit scope freeze rows", () => {

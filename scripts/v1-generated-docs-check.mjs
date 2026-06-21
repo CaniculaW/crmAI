@@ -17,12 +17,14 @@ import { generateV1UatActionPlanFromFiles } from "./v1-uat-action-plan.mjs";
 import { generateV1UatExecutionPackFromFiles } from "./v1-uat-execution-pack.mjs";
 import { generateV1ValidationStatusFromFiles } from "./v1-validation-status.mjs";
 import { evaluateV1ReleaseGateFromFiles, renderResult } from "./v1-release-gate.mjs";
+import { generateKickoffGovernanceClosureIntakeMarkdown } from "./v1-kickoff-governance-closure-intake.mjs";
 
 const GENERATED_DOC_PATHS = [
   "docs/testing/v1-validation-status.md",
   "docs/testing/v1-uat-action-plan.md",
   "docs/testing/v1-uat-execution-pack.md",
   "docs/testing/v1-go-no-go-meeting.md",
+  "docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
   "docs/testing/v1-external-uat-request.md",
   "docs/testing/v1-external-uat-closure-checklist.md",
   "docs/testing/v1-external-uat-evidence-intake.md",
@@ -126,6 +128,9 @@ function defaultGenerators(rootDir) {
       rootDir,
       generatedAt: generatedAtFrom(rootDir, "docs/testing/v1-go-no-go-meeting.md")
     }),
+    "docs/meeting-notes/crm-kickoff-governance-closure-intake.md": () => generateKickoffGovernanceClosureIntakeMarkdown({
+      generatedAt: generatedAtFrom(rootDir, "docs/meeting-notes/crm-kickoff-governance-closure-intake.md")
+    }),
     "docs/testing/v1-external-uat-request.md": () => generateV1ExternalUatRequestFromFiles({
       rootDir,
       generatedAt: generatedAtFrom(rootDir, "docs/testing/v1-external-uat-request.md")
@@ -216,7 +221,7 @@ function printResult(result) {
   }
 
   lines.push("");
-  lines.push("Note: PASS means generated V1 status, action, execution, Go/No-Go, external UAT request, external UAT closure checklist, external UAT evidence intake, next closure phase handoff, external UAT blockers JSON, and release gate JSON snapshot documents match their current generator outputs.");
+  lines.push("Note: PASS means generated V1 status, action, execution, Go/No-Go, kickoff governance closure intake, external UAT request, external UAT closure checklist, external UAT evidence intake, next closure phase handoff, external UAT blockers JSON, and release gate JSON snapshot documents match their current generator outputs.");
 
   console.log(lines.join("\n"));
 }

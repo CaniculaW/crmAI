@@ -1,6 +1,6 @@
 # CRM V1 Next Closure Phase Handoff
 
-Generated at: 2026-06-21T12:34:46.755Z
+Generated at: 2026-06-21T14:38:31.222Z
 
 Overall: No-Go
 

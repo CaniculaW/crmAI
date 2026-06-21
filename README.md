@@ -25,7 +25,7 @@ GitHub Actions 已配置 V1 自动验证工作流：
 - 前端：`npm test`
 - 前端生产构建：`npm run build`
 - 部署配置：`docker compose -f compose.v1-test.yml config`
-- UAT 准出材料：RC/UAT readiness、启动治理 validator、UAT 启动输入 validator、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT 缺陷台账 validator、UAT 证据清单 validator、证据引用保全检查、UAT 签署台账 validator、外部UAT请求包、外部UAT关闭台账、外部UAT证据收件清单、外部UAT阻塞项JSON、release gate JSON 快照、release gate JSON schema 校验、release gate JSON 实时对齐检查、验收清单一致性检查、UAT覆盖检查、验证追踪矩阵一致性检查、阻塞项一致性检查、外部UAT请求覆盖检查、最终交接证据一致性检查、证据秘密扫描、生成文档一致性检查和计划状态一致性检查测试
+- UAT 准出材料：RC/UAT readiness、启动治理 validator、启动治理补证模板、UAT 启动输入 validator、UAT 证据包生成器、UAT 证据包 Go/No-Go validator、UAT 缺陷台账 validator、UAT 证据清单 validator、证据引用保全检查、UAT 签署台账 validator、外部UAT请求包、外部UAT关闭台账、外部UAT证据收件清单、外部UAT阻塞项JSON、release gate JSON 快照、release gate JSON schema 校验、release gate JSON 实时对齐检查、验收清单一致性检查、UAT覆盖检查、验证追踪矩阵一致性检查、阻塞项一致性检查、外部UAT请求覆盖检查、最终交接证据一致性检查、证据秘密扫描、生成文档一致性检查和计划状态一致性检查测试
 - 最终放行门禁：`v1-release-gate` 规则测试
 
 ## V1 测试环境部署
@@ -120,6 +120,20 @@ node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-m
 
 已确认启动治理负责人和业务验收人必须填写具体姓名，不能用“产品负责人”“业务验收人-销售侧”等角色标签替代。
 启动治理中的上线周期正式确认后必须使用 `YYYY-MM-DD 至 YYYY-MM-DD`，结束日期晚于开始日期。
+
+启动治理补证模板生成器入口：
+
+```text
+v1-kickoff-governance-closure-intake.mjs
+```
+
+V1 启动治理补证模板：
+
+```bash
+node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md
+```
+
+该模板用于把当前 `1-governance` 阶段的负责人、范围冻结、证据引用和项目 `Go` 结论拆成可认领补证项；模板本身不替代 `crm-kickoff-minutes.md` 的正式 PASS 证据。
 
 UAT 证据包草稿生成：
 

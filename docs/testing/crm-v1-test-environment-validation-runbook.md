@@ -16,12 +16,14 @@
 - `docs/testing/crm-v1-uat-execution-tracker.md`：用于把 PRE、SMK、UAT-001 至 UAT-010、缺陷和签署逐项派工、追踪和归档。
 - `docs/testing/v1-uat-launch-intake.md`：用于在正式 UAT 启动前收敛具名环境、前后端 `http(s)` URL、40位 Git 提交号、结构化 UAT窗口、证据归档位置、参与人、账号准备状态和可留存证据引用。
 - `docs/meeting-notes/crm-kickoff-minutes.md`：用于收敛产品、业务验收、研发、前端、后端和测试负责人，以及 V1 范围冻结结论。
+- `docs/meeting-notes/crm-kickoff-governance-closure-intake.md`：用于把当前 `1-governance` 启动治理阻塞拆成负责人、范围冻结、证据引用和项目 `Go` 结论补证项。
 - `docs/testing/v1-uat-environment-evidence.md`：用于记录具名测试环境、前后端地址、账号 Smoke、权限样本和浏览器 Smoke 证据。
 - `docs/testing/v1-uat-defect-register.md`：用于记录 P0/P1 缺陷闭环、回归证据和项目准出结论。
 - `docs/testing/v1-uat-signoff-register.md`：用于记录销售侧、管理侧、产品、测试、研发和项目负责人六方签署结论。
 - `scripts/v1-uat-evidence-pack.mjs`：用于按具名测试环境参数生成 UAT 证据包草稿，不写入明文密码或 API Token。
 - `scripts/v1-uat-launch-intake-validate.mjs`：用于在正式 UAT 启动前校验具名环境、前后端 `http(s)` URL、40位 Git 提交号、具体参与人姓名、不得以角色标签替代参与人或账号保管 Owner、账号保管、结构化 UAT窗口、证据归档位置，以及启动输入证据引用是否指向已存在且非空的 `docs/` 留存工件或外部 URL。
 - `scripts/v1-kickoff-governance-validate.mjs`：用于在正式 UAT 准出前校验启动会负责人、业务验收人、负责人不得以角色标签替代具体姓名、`YYYY-MM-DD 至 YYYY-MM-DD` 上线周期、V1范围冻结、确认/冻结证据引用是否指向已存在且非空的 `docs/` 留存工件或外部 URL、项目 Go 结论和敏感材料。
+- `scripts/v1-kickoff-governance-closure-intake.mjs`：用于生成启动治理补证模板，指导项目/产品侧补齐 `crm-kickoff-minutes.md` 所需的具名负责人、范围冻结、证据引用和 `Go` 决策。
 - `scripts/v1-uat-evidence-pack-validate.mjs`：用于在证据包填写完成后校验 Go/No-Go 条件、P0/P1 缺陷、签署是否一致、验收日期/前后端地址/Git 提交号是否结构化、候选版本/前端构建/后端构建/数据库版本是否补齐、基本信息责任人是否必填且具名、已通过 UAT 用例验收人/已同意签署人是否具名、已同意签署日期是否为 `YYYY-MM-DD`，通过项证据是否指向已存在且非空的 `docs/` 留存工件或外部 URL，以及敏感材料。
 - `scripts/v1-uat-environment-validate.mjs`：用于在具名环境证据填写完成后校验 ENV-001 至 ENV-008、环境元数据、前后端 `http(s)` URL、40位 Git 提交号、PASS 环境检查 Owner 不得以角色标签替代具体姓名、证据引用是否指向 `docs/` 留存工件或外部 URL，以及敏感材料。
 - `scripts/v1-uat-defect-register-validate.mjs`：用于在缺陷台账填写完成后校验 P0/P1 未关闭数量、P0/P1 缺陷 Owner 不得以角色标签替代具体姓名、回归证据是否指向已存在且非空的 `docs/` 留存工件或外部 URL、敏感材料和 Go/No-Go 条件。
@@ -129,6 +131,14 @@ node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-m
 ```
 
 要求：正式准出前，启动治理 validator 必须返回 `PASS`；若返回 `FAIL`，按输出补齐产品负责人、销售侧/管理侧业务验收人、研发负责人、前端负责人、后端负责人、测试负责人的具体姓名，不能用角色标签替代；同时补齐 `YYYY-MM-DD 至 YYYY-MM-DD` 上线周期、V1范围冻结状态、可留存确认/冻结证据引用、已存在且非空的本地 `docs/` 证据工件或项目 `Go` 结论。
+
+当前下一闭环阶段仍为启动治理时，生成补证模板：
+
+```bash
+node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md
+```
+
+该模板用于项目/产品侧逐项认领负责人、范围冻结、证据引用和项目 `Go` 决策补证；不能替代 `docs/meeting-notes/crm-kickoff-minutes.md` 的正式 PASS 证据。
 
 证据包填写完成后执行准出一致性校验：
 

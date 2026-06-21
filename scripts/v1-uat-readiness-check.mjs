@@ -43,6 +43,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-uat-execution-pack.test.mjs",
   "scripts/v1-go-no-go-meeting.mjs",
   "scripts/v1-go-no-go-meeting.test.mjs",
+  "scripts/v1-kickoff-governance-closure-intake.mjs",
+  "scripts/v1-kickoff-governance-closure-intake.test.mjs",
   "scripts/v1-external-uat-request.mjs",
   "scripts/v1-external-uat-request.test.mjs",
   "scripts/v1-generated-docs-check.mjs",
@@ -78,6 +80,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/v1-external-uat-blockers.json",
   "docs/testing/v1-release-gate-status.json",
   "docs/meeting-notes/crm-kickoff-minutes.md",
+  "docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",
   "docs/testing/crm-v1-uat-evidence-pack-template.md",
@@ -294,6 +297,30 @@ function hasKickoffGovernance(content) {
     "V1范围冻结",
     "不记录明文密码",
     "node scripts/v1-kickoff-governance-validate.mjs"
+  ]);
+}
+
+function hasKickoffGovernanceClosureIntake(content) {
+  return includesAll(content, [
+    "CRM V1 Kickoff Governance Closure Intake",
+    "Target source document: docs/meeting-notes/crm-kickoff-minutes.md",
+    "Current blocker phase: `1-governance`",
+    "Decision target: `Go`",
+    "Do not record plaintext passwords",
+    "Required Owner Closures",
+    "产品负责人",
+    "业务验收人-销售侧",
+    "业务验收人-管理侧",
+    "研发负责人",
+    "前端负责人",
+    "后端负责人",
+    "测试负责人",
+    "Required Scope Freeze Closures",
+    "V1 模块范围",
+    "上线周期",
+    "V1范围冻结",
+    "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
+    "node scripts/v1-release-gate.mjs --json"
   ]);
 }
 
@@ -905,6 +932,26 @@ export function evaluateReadinessSnapshot(snapshot) {
     "V1 Go/No-Go meeting pack is tested and keeps final approval tied to validator PASS plus project Go, with machine-readable release-gate output available for dashboards and validation bots."
   ));
 
+  const kickoffGovernanceClosureIntakeGenerator = snapshot["scripts/v1-kickoff-governance-closure-intake.mjs"] ?? "";
+  const kickoffGovernanceClosureIntakeGeneratorTest = snapshot["scripts/v1-kickoff-governance-closure-intake.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "kickoff-governance-closure-intake-generator",
+    includesAll(workflow + kickoffGovernanceClosureIntakeGenerator + kickoffGovernanceClosureIntakeGeneratorTest, [
+      "node --test scripts/v1-kickoff-governance-closure-intake.test.mjs",
+      "node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
+      "generateKickoffGovernanceClosureIntakeMarkdown",
+      "CRM V1 Kickoff Governance Closure Intake",
+      "Required Owner Closures",
+      "Required Scope Freeze Closures",
+      "Decision target: `Go`",
+      "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
+      "node scripts/v1-release-gate.mjs --json",
+      "generates a kickoff governance closure intake template",
+      "uses custom source and output guidance paths"
+    ]),
+    "Kickoff governance closure intake generator is tested and wired into CI to turn the earliest governance blockers into owner, scope-freeze, evidence, and Go decision collection work."
+  ));
+
   const externalUatRequest = snapshot["scripts/v1-external-uat-request.mjs"] ?? "";
   const externalUatRequestTest = snapshot["scripts/v1-external-uat-request.test.mjs"] ?? "";
   checks.push(makeCheck(
@@ -1191,9 +1238,10 @@ export function evaluateReadinessSnapshot(snapshot) {
   const uatActionPlanDoc = snapshot["docs/testing/v1-uat-action-plan.md"] ?? "";
   const goNoGoMeetingDoc = snapshot["docs/testing/v1-go-no-go-meeting.md"] ?? "";
   const externalUatRequestDoc = snapshot["docs/testing/v1-external-uat-request.md"] ?? "";
+  const kickoffGovernanceClosureIntakeDoc = snapshot["docs/meeting-notes/crm-kickoff-governance-closure-intake.md"] ?? "";
   checks.push(makeCheck(
     "external-uat-blockers-documented",
-    includesAll(traceability + validationReport + validationStatusDoc + uatActionPlanDoc + goNoGoMeetingDoc + externalUatRequestDoc + release + acceptance, [
+    includesAll(traceability + validationReport + validationStatusDoc + uatActionPlanDoc + goNoGoMeetingDoc + externalUatRequestDoc + kickoffGovernanceClosureIntakeDoc + release + acceptance, [
       "具名测试环境",
       "业务验收签署",
       "仍需"
@@ -1210,6 +1258,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "Go/No-Go",
       "签署",
       "证据",
+      "node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
       "node scripts/v1-uat-coverage-check.mjs",
       "node scripts/v1-external-uat-request.mjs --next-closure-phase --output docs/testing/v1-next-closure-phase.md",
       "node scripts/v1-release-gate.mjs --json"
@@ -1250,6 +1299,12 @@ export function evaluateReadinessSnapshot(snapshot) {
     "kickoff-governance",
     hasKickoffGovernance(kickoffGovernance),
     "Kickoff minutes inventory owners, V1 scope freeze, out-of-scope items, acceptance mode, and No-Go status without secrets."
+  ));
+
+  checks.push(makeCheck(
+    "kickoff-governance-closure-intake-doc",
+    hasKickoffGovernanceClosureIntake(kickoffGovernanceClosureIntakeDoc),
+    "Kickoff governance closure intake inventories owner, scope-freeze, evidence, and Go decision collection work for the earliest open closure phase."
   ));
 
   const uatLaunchIntake = snapshot["docs/testing/v1-uat-launch-intake.md"] ?? "";
@@ -1349,6 +1404,8 @@ export function evaluateReadinessSnapshot(snapshot) {
       "compose.v1-test.yml",
       "docs/releases/v1.0.0-rc.8.md",
       "v1-kickoff-governance-validate.mjs",
+      "\nv1-kickoff-governance-closure-intake.mjs\n",
+      "node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
       "v1-uat-environment-validate.mjs",
       "v1-uat-evidence-pack-validate.mjs",
       "v1-uat-defect-register-validate.mjs",
