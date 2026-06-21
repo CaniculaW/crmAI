@@ -68,6 +68,25 @@ test("fails when the release gate JSON snapshot repeats a check id", () => {
   assert.ok(result.failed.some((check) => check.id === "unique-check-ids"));
 });
 
+test("fails when the release gate JSON snapshot includes an unknown check id", () => {
+  const status = validStatus({
+    checks: [
+      ...validStatus().checks,
+      {
+        id: "unexpected-check",
+        ok: true,
+        message: "This check is not part of the V1 release gate contract."
+      }
+    ]
+  });
+
+  const result = evaluateV1ReleaseGateStatusSnapshot(JSON.stringify(status));
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.unexpectedCheckIds, ["unexpected-check"]);
+  assert.ok(result.failed.some((check) => check.id === "known-check-ids"));
+});
+
 test("fails when the release gate result and ok flag disagree", () => {
   const result = evaluateV1ReleaseGateStatusSnapshot(JSON.stringify(validStatus({
     result: "PASS",
