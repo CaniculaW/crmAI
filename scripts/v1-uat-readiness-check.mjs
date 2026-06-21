@@ -110,6 +110,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/meeting-notes/crm-kickoff-minutes.md",
   "docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
   "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
+  "docs/meeting-notes/evidence/kickoff/intake.json",
   ...KICKOFF_GOVERNANCE_EVIDENCE_SCAFFOLD_PATHS,
   "docs/testing/crm-v1-validation-traceability.md",
   "docs/testing/crm-v1-test-environment-validation-runbook.md",

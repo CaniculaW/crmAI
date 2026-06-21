@@ -130,8 +130,8 @@ jobs:
   "scripts/v1-progress-todo.test.mjs": "generates a V1 progress TODO board from blockers\nEvidence templates ready: `0/14`\nnode scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write\ngenerates a closed progress board when no blockers remain\n",
   "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\ngenerateV1ExternalUatBlockersJson\ngenerateV1ExternalUatBlockersFromFiles\ngenerateV1ExternalUatClosureChecklistMarkdown\ngenerateV1ExternalUatClosureChecklistFromFiles\ngenerateV1ExternalUatEvidenceIntakeMarkdown\ngenerateV1ExternalUatEvidenceIntakeFromFiles\ngenerateV1NextClosurePhaseMarkdown\ngenerateV1NextClosurePhaseFromFiles\nRequest Status: External UAT Evidence Required\nRequest Board\nCRM V1 External UAT Closure Checklist\nCRM V1 External UAT Evidence Intake\nCRM V1 Next Closure Phase Handoff\nDo not record plaintext passwords\nnode scripts/v1-release-gate.mjs --json\n--json\n--closure-checklist\n--evidence-intake\n--next-closure-phase\nv1-external-uat-blockers.json\nv1-external-uat-closure-checklist.md\nv1-external-uat-evidence-intake.md\nv1-next-closure-phase.md\n",
   "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\nkeeps external UAT request open when validator blockers remain despite release gate Go\nexports machine-readable external UAT blockers with owner routing and validation commands\nkeeps blockers JSON No-Go when validator blockers remain despite release gate Go\ndeduplicates machine-readable blockers by gate and check id\nexports stable machine-readable blocker ids\nexports machine-readable blocker closure sequencing\nexports ordered blocker closure phase summaries\nexports next closure phase handoff metadata\ngenerates a next closure phase handoff packet\ngenerates a closed next closure phase handoff when no blockers remain\ngenerates an external UAT closure checklist grouped by owner side\nkeeps closure checklist No-Go when validator blockers remain despite release gate Go\ngenerates an external UAT evidence intake checklist tied to manifest ids\nkeeps evidence intake No-Go when validator blockers remain despite release gate Go\nkeeps evidence intake manifest ids assigned to a single intake row\nnode scripts/v1-release-gate.mjs --json\n",
-  "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\nvalidation-status-current-commit\ndocs/testing/v1-progress-todo.md\ndocs/meeting-notes/evidence/kickoff/closure-evidence-pack.md\n",
-  "scripts/v1-generated-docs-check.test.mjs": "fails when a generated document drifts from its generator\nfails when the validation status document is not bound to the current git commit\nfails when the generated V1 progress TODO board is missing\nfails when the generated kickoff governance evidence pack is missing\n",
+  "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\nvalidation-status-current-commit\ndocs/testing/v1-progress-todo.md\ndocs/meeting-notes/evidence/kickoff/closure-evidence-pack.md\ndocs/meeting-notes/evidence/kickoff/intake.json\n",
+  "scripts/v1-generated-docs-check.test.mjs": "fails when a generated document drifts from its generator\nfails when the validation status document is not bound to the current git commit\nfails when the generated V1 progress TODO board is missing\nfails when the generated kickoff governance evidence pack is missing\nfails when the generated kickoff governance evidence intake JSON is missing\n",
   "scripts/v1-release-gate-status-check.mjs": "evaluateV1ReleaseGateStatusSnapshot\nrequired-checks\nunique-check-ids\nknown-check-ids\nresult-shape\ndecision-consistency\nlive-release-gate-match\nevaluateV1ReleaseGateFromFiles\nnode scripts/v1-release-gate-status-check.mjs\n",
   "scripts/v1-release-gate-status-check.test.mjs": "fails when the release gate JSON snapshot omits a required check\nfails when the release gate JSON snapshot repeats a check id\nfails when the release gate JSON snapshot includes an unknown check id\nfails when the release gate result and decision disagree\nfails when the release gate JSON snapshot does not match the current release gate result\n",
   "scripts/v1-plan-status-check.mjs": "evaluateV1PlanStatusSnapshot\nopen-plan-items-no-go\n",
@@ -149,7 +149,7 @@ jobs:
   "scripts/v1-final-evidence-handoff-check.mjs": "evaluateV1FinalEvidenceHandoffSnapshot\nhandoff-materials-present\nrelease-gate-status-readable\nexternal-blockers-visible\nno-go-handoff-guardrail\nno-go-external-uat-open-guardrail\nhandoff-command-coverage\nnode scripts/v1-evidence-reference-check.mjs docs/testing/v1-uat-evidence-manifest.md\nnode scripts/v1-acceptance-checklist-check.mjs\nnode scripts/v1-uat-coverage-check.mjs\nnode scripts/v1-traceability-check.mjs\nnode scripts/v1-final-evidence-handoff-check.mjs\nnode scripts/v1-release-gate.mjs --json\nnode scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md\nnode scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md\n",
   "scripts/v1-final-evidence-handoff-check.test.mjs": "fails when final handoff materials claim V1 acceptance while release gate is No-Go\nfails when final handoff materials omit acceptance and traceability commands\nfails when final handoff materials omit the machine-readable final release gate command\nfails when final handoff materials omit the kickoff governance evidence pack generation command\nfails when final handoff materials omit the V1 progress TODO generation command\nfails when No-Go final handoff materials hide external UAT blockers\nfails when No-Go external UAT handoff packets claim all rows are closed\nfails when generated UAT handoff packets are missing\n",
   "scripts/v1-secret-scan-check.mjs": "evaluateV1SecretScanSnapshot\ncurrent-v1-evidence-no-secrets\nREADME.md\ndocs/testing/v1-progress-todo.md\ndocs/meeting-notes/evidence/kickoff/closure-evidence-pack.md\n",
-  "scripts/v1-secret-scan-check.test.mjs": "fails when a current V1 evidence document contains a bearer token\ntracks the README final handoff entrypoint as current V1 evidence\ntracks the V1 progress TODO board as current V1 evidence\ntracks the kickoff governance evidence pack as current V1 evidence\n",
+  "scripts/v1-secret-scan-check.test.mjs": "fails when a current V1 evidence document contains a bearer token\ntracks the README final handoff entrypoint as current V1 evidence\ntracks the V1 progress TODO board as current V1 evidence\ntracks the kickoff governance evidence pack as current V1 evidence\ntracks the kickoff governance evidence intake JSON as current V1 evidence\n",
   "scripts/v1-deployment-config-check.mjs": "evaluateDeploymentConfigSnapshot\nCRM_BACKEND_BUILD_IMAGE\nCRM_FRONTEND_RUNTIME_IMAGE\n",
   "scripts/v1-deployment-config-check.test.mjs": "configurable for mirrored registries\n",
   "docs/releases/v1.0.0-rc.8.md": "v1.0.0-rc.8\nGitHub Actions `V1 Validation`\nsuccess\nUAT\nGo/No-Go\nV1-local-uat-20260618\nCRM_BACKEND_BUILD_IMAGE\nv1-uat-evidence-pack-validate\nV1演示业务数据\n仍需在具名测试环境完成验收签署\n",
@@ -275,6 +275,20 @@ Task Switch Display Rule
 当前任务
 完成标准
 验证命令
+`,
+  "docs/meeting-notes/evidence/kickoff/intake.json": `{
+  "generatedAt": "2026-06-22T00:50:00.000Z",
+  "decision": "Go",
+  "evidenceRoot": "docs/meeting-notes/evidence/kickoff",
+  "items": [
+    {
+      "filename": "product-owner.md",
+      "evidenceStatus": "Pending",
+      "ownerOrApprover": "待填写",
+      "retainedEvidenceReference": "docs/meeting-notes/evidence/kickoff/product-owner.md"
+    }
+  ]
+}
 `,
   "docs/meeting-notes/evidence/kickoff/product-owner.md": "CRM V1 Kickoff Governance Evidence - 产品负责人\nEvidence type: `owner`\nEvidence status: `Pending`\nRequired closure value: Named person, not a role label\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
   "docs/meeting-notes/evidence/kickoff/sales-owner.md": "CRM V1 Kickoff Governance Evidence - 业务验收人-销售侧\nEvidence type: `owner`\nEvidence status: `Pending`\nRequired closure value: Named person, not a role label\nThis scaffold is not approval evidence\nDo not record plaintext passwords\n",
@@ -2349,6 +2363,16 @@ test("fails when the kickoff governance closure intake omits required owner guid
 test("fails when the kickoff governance evidence pack is missing", () => {
   const snapshot = { ...completeSnapshot };
   delete snapshot["docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md"];
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the kickoff governance evidence intake JSON is missing", () => {
+  const snapshot = { ...completeSnapshot };
+  delete snapshot["docs/meeting-notes/evidence/kickoff/intake.json"];
 
   const result = evaluateReadinessSnapshot(snapshot);
 
