@@ -72,6 +72,7 @@ const REQUIRED_ARTIFACTS = [
   "docs/testing/v1-uat-execution-pack.md",
   "docs/testing/v1-go-no-go-meeting.md",
   "docs/testing/v1-external-uat-request.md",
+  "docs/testing/v1-external-uat-blockers.json",
   "docs/testing/v1-release-gate-status.json",
   "docs/meeting-notes/crm-kickoff-minutes.md",
   "docs/testing/crm-v1-validation-traceability.md",
@@ -317,6 +318,37 @@ function hasUatLaunchIntake(content) {
     "不记录明文密码",
     "node scripts/v1-uat-launch-intake-validate.mjs"
   ]);
+}
+
+function hasExternalUatBlockersJson(content) {
+  try {
+    const payload = JSON.parse(content);
+    return payload.status === "External UAT Evidence Required"
+      && payload.decision === "No-Go"
+      && payload.ok === false
+      && Number.isInteger(payload.summary?.totalBlockers)
+      && payload.summary.totalBlockers > 0
+      && typeof payload.summary?.byOwnerSide === "object"
+      && Array.isArray(payload.blockers)
+      && payload.blockers.some((blocker) => (
+        blocker.gate === "Release Gate"
+        && blocker.checkId === "go-decision"
+        && blocker.ownerSide === "项目/产品"
+        && typeof blocker.sourceDocument === "string"
+        && typeof blocker.validationCommand === "string"
+        && blocker.validationCommand.includes("node scripts/v1-release-gate.mjs --json")
+      ))
+      && payload.blockers.every((blocker) => (
+        typeof blocker.gate === "string"
+        && typeof blocker.checkId === "string"
+        && typeof blocker.ownerSide === "string"
+        && typeof blocker.sourceDocument === "string"
+        && typeof blocker.validationCommand === "string"
+        && typeof blocker.message === "string"
+      ));
+  } catch {
+    return false;
+  }
 }
 
 function makeCheck(id, ok, message, severity = "fail") {
@@ -695,13 +727,18 @@ export function evaluateReadinessSnapshot(snapshot) {
     "v1-external-uat-request-pack",
     includesAll(workflow + externalUatRequest + externalUatRequestTest, [
       "node --test scripts/v1-external-uat-request.test.mjs",
+      "node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json",
       "generateV1ExternalUatRequestMarkdown",
+      "generateV1ExternalUatBlockersJson",
+      "generateV1ExternalUatBlockersFromFiles",
       "Request Status: External UAT Evidence Required",
       "Request Board",
+      "v1-external-uat-blockers.json",
       "node scripts/v1-release-gate.mjs --json",
+      "exports machine-readable external UAT blockers with owner routing and validation commands",
       "generates a No-Go external UAT request packet with source documents and validation commands"
     ]),
-    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board with machine-readable release-gate output available for dashboards and validation bots."
+    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board plus machine-readable blocker JSON for dashboards and validation bots."
   ));
 
   const generatedDocsChecker = snapshot["scripts/v1-generated-docs-check.mjs"] ?? "";
@@ -1046,6 +1083,13 @@ export function evaluateReadinessSnapshot(snapshot) {
       "Release Gate"
     ]),
     "External UAT request packet inventories stakeholder-facing source documents, validation commands, and No-Go blockers."
+  ));
+
+  const externalUatBlockersJson = snapshot["docs/testing/v1-external-uat-blockers.json"] ?? "";
+  checks.push(makeCheck(
+    "external-uat-blockers-json",
+    hasExternalUatBlockersJson(externalUatBlockersJson),
+    "External UAT blockers JSON exposes current No-Go blocker routing, source documents, and validation commands for dashboards and agent handoff."
   ));
 
   const readme = snapshot["README.md"] ?? "";

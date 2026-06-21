@@ -57,8 +57,147 @@ function failedLines(label, result) {
   return (result.failed ?? []).map((check) => `- ${label}/${check.id}: ${check.message}`);
 }
 
+function countBy(items, key) {
+  return items.reduce((counts, item) => {
+    const value = item[key];
+    counts[value] = (counts[value] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
 function resolveFromRoot(rootDir, filePath) {
   return path.resolve(rootDir, filePath);
+}
+
+function validationCommandFor(gate, paths) {
+  const {
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath
+  } = paths;
+
+  const commands = {
+    "Readiness": "node scripts/v1-uat-readiness-check.mjs",
+    "Kickoff Governance": `node scripts/v1-kickoff-governance-validate.mjs ${kickoffPath}`,
+    "UAT Launch Intake": `node scripts/v1-uat-launch-intake-validate.mjs ${launchIntakePath}`,
+    "UAT Environment Evidence": `node scripts/v1-uat-environment-validate.mjs ${environmentPath}`,
+    "UAT Evidence Pack": `node scripts/v1-uat-evidence-pack-validate.mjs ${evidencePath}`,
+    "UAT Evidence Manifest": `node scripts/v1-uat-evidence-manifest-validate.mjs ${manifestPath}`,
+    "UAT Evidence References": `node scripts/v1-evidence-reference-check.mjs ${manifestPath}`,
+    "UAT Execution Tracker": `node scripts/v1-uat-execution-tracker-validate.mjs ${trackerPath}`,
+    "UAT Defect Register": `node scripts/v1-uat-defect-register-validate.mjs ${defectRegisterPath}`,
+    "UAT Signoff Register": `node scripts/v1-uat-signoff-register-validate.mjs ${signoffRegisterPath}`,
+    "Release Gate": `node scripts/v1-release-gate.mjs --json . ${evidencePath} ${trackerPath} ${manifestPath} ${defectRegisterPath} ${environmentPath} ${signoffRegisterPath} ${launchIntakePath} ${kickoffPath}`
+  };
+
+  return commands[gate] ?? "node scripts/v1-release-gate.mjs --json";
+}
+
+function sourceDocumentFor(gate, checkId, paths) {
+  const {
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath,
+    runbookPath,
+    automatedReportPath
+  } = paths;
+
+  if (gate === "Release Gate") {
+    return {
+      "kickoff-governance": kickoffPath,
+      "uat-launch-intake": launchIntakePath,
+      "uat-environment": environmentPath,
+      "uat-evidence-pack": evidencePath,
+      "uat-evidence-manifest": manifestPath,
+      "uat-defect-register": defectRegisterPath,
+      "uat-signoff-register": signoffRegisterPath,
+      "uat-execution-tracker": trackerPath,
+      "go-decision": "docs/testing/v1-go-no-go-meeting.md"
+    }[checkId] ?? "docs/testing/v1-validation-status.md";
+  }
+
+  return {
+    "Readiness": runbookPath,
+    "Kickoff Governance": kickoffPath,
+    "UAT Launch Intake": launchIntakePath,
+    "UAT Environment Evidence": environmentPath,
+    "UAT Evidence Pack": evidencePath,
+    "UAT Evidence Manifest": manifestPath,
+    "UAT Evidence References": manifestPath,
+    "UAT Execution Tracker": trackerPath,
+    "UAT Defect Register": defectRegisterPath,
+    "UAT Signoff Register": signoffRegisterPath
+  }[gate] ?? automatedReportPath;
+}
+
+function ownerSideFor(gate, checkId) {
+  if (gate === "Readiness") {
+    return "研发";
+  }
+  if (gate === "UAT Environment Evidence" || gate === "UAT Evidence Manifest" || gate === "UAT Evidence References" || gate === "UAT Defect Register") {
+    return "测试";
+  }
+  if (gate === "UAT Evidence Pack") {
+    return {
+      "environment-results": "测试",
+      "p0-defects": "测试",
+      "p1-defects": "测试",
+      "uat-business-cases": "业务UAT",
+      "signoff-complete": "项目/产品",
+      "go-criteria": "项目/产品",
+      "basic-owners-complete": "项目/产品",
+      "basic-owner-name-format": "项目/产品",
+      "no-placeholders": "项目/产品"
+    }[checkId] ?? "业务UAT";
+  }
+  if (gate === "UAT Execution Tracker") {
+    return {
+      "pre-checks": "测试",
+      "smoke-checks": "测试",
+      "uat-cases": "业务UAT",
+      "p0-p1-defects": "测试",
+      "roles-assigned": "项目/产品",
+      "tracker-role-owner-name-format": "项目/产品",
+      "release-gates": "项目/产品",
+      "go-decision": "项目/产品"
+    }[checkId] ?? "项目/产品";
+  }
+  if (gate === "Release Gate") {
+    return {
+      "uat-environment": "测试",
+      "uat-evidence-manifest": "测试",
+      "uat-defect-register": "测试",
+      "uat-evidence-pack": "业务UAT",
+      "uat-execution-tracker": "项目/产品",
+      "uat-signoff-register": "项目/产品",
+      "uat-launch-intake": "项目/产品",
+      "kickoff-governance": "项目/产品",
+      "go-decision": "项目/产品"
+    }[checkId] ?? "项目/产品";
+  }
+
+  return "项目/产品";
+}
+
+function blockerRows(gate, result, paths) {
+  return (result.failed ?? []).map((check) => ({
+    gate,
+    checkId: check.id,
+    ownerSide: ownerSideFor(gate, check.id),
+    sourceDocument: sourceDocumentFor(gate, check.id, paths),
+    validationCommand: validationCommandFor(gate, paths),
+    message: check.message
+  }));
 }
 
 function requestRows({
@@ -176,6 +315,71 @@ export function generateV1ExternalUatRequestMarkdown({
   return `${lines.join("\n")}\n`;
 }
 
+export function generateV1ExternalUatBlockersJson({
+  generatedAt,
+  readinessResult,
+  kickoffResult,
+  launchIntakeResult,
+  environmentResult,
+  evidenceResult,
+  manifestResult,
+  evidenceReferenceResult = { ok: true, failed: [] },
+  trackerResult,
+  defectRegisterResult,
+  signoffRegisterResult,
+  releaseGateResult,
+  evidencePath = DEFAULT_EVIDENCE_PATH,
+  trackerPath = DEFAULT_TRACKER_PATH,
+  manifestPath = DEFAULT_MANIFEST_PATH,
+  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH,
+  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH,
+  runbookPath = DEFAULT_RUNBOOK_PATH,
+  automatedReportPath = DEFAULT_AUTOMATED_REPORT_PATH
+}) {
+  const paths = {
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath,
+    runbookPath,
+    automatedReportPath
+  };
+  const blockers = [
+    ...blockerRows("Readiness", readinessResult, paths),
+    ...blockerRows("Kickoff Governance", kickoffResult, paths),
+    ...blockerRows("UAT Launch Intake", launchIntakeResult, paths),
+    ...blockerRows("UAT Environment Evidence", environmentResult, paths),
+    ...blockerRows("UAT Evidence Pack", evidenceResult, paths),
+    ...blockerRows("UAT Evidence Manifest", manifestResult, paths),
+    ...blockerRows("UAT Evidence References", evidenceReferenceResult, paths),
+    ...blockerRows("UAT Execution Tracker", trackerResult, paths),
+    ...blockerRows("UAT Defect Register", defectRegisterResult, paths),
+    ...blockerRows("UAT Signoff Register", signoffRegisterResult, paths),
+    ...blockerRows("Release Gate", releaseGateResult, paths)
+  ];
+  const isGo = releaseGateResult.ok && releaseGateResult.decision === "Go";
+  const payload = {
+    generatedAt,
+    status: isGo ? "No External UAT Requests Open" : "External UAT Evidence Required",
+    decision: releaseGateResult.decision ?? (isGo ? "Go" : "No-Go"),
+    ok: isGo,
+    summary: {
+      totalBlockers: blockers.length,
+      byOwnerSide: countBy(blockers, "ownerSide")
+    },
+    blockers
+  };
+
+  return `${JSON.stringify(payload, null, 2)}\n`;
+}
+
 export function generateV1ExternalUatRequestFromFiles({
   rootDir = process.cwd(),
   evidencePath = DEFAULT_EVIDENCE_PATH,
@@ -239,6 +443,69 @@ export function generateV1ExternalUatRequestFromFiles({
   });
 }
 
+export function generateV1ExternalUatBlockersFromFiles({
+  rootDir = process.cwd(),
+  evidencePath = DEFAULT_EVIDENCE_PATH,
+  trackerPath = DEFAULT_TRACKER_PATH,
+  manifestPath = DEFAULT_MANIFEST_PATH,
+  defectRegisterPath = DEFAULT_DEFECT_REGISTER_PATH,
+  environmentPath = DEFAULT_ENVIRONMENT_PATH,
+  signoffRegisterPath = DEFAULT_SIGNOFF_REGISTER_PATH,
+  launchIntakePath = DEFAULT_LAUNCH_INTAKE_PATH,
+  kickoffPath = DEFAULT_KICKOFF_PATH,
+  runbookPath = DEFAULT_RUNBOOK_PATH,
+  automatedReportPath = DEFAULT_AUTOMATED_REPORT_PATH,
+  generatedAt = new Date().toISOString()
+} = {}) {
+  const readinessResult = evaluateReadinessSnapshot(readSnapshot(rootDir));
+  const kickoffResult = evaluateKickoffGovernance(readFileSync(resolveFromRoot(rootDir, kickoffPath), "utf8"));
+  const launchIntakeResult = evaluateUatLaunchIntake(readFileSync(resolveFromRoot(rootDir, launchIntakePath), "utf8"));
+  const environmentResult = evaluateUatEnvironmentEvidence(readFileSync(resolveFromRoot(rootDir, environmentPath), "utf8"));
+  const evidenceResult = evaluateUatEvidencePack(readFileSync(resolveFromRoot(rootDir, evidencePath), "utf8"));
+  const trackerResult = evaluateUatExecutionTracker(readFileSync(resolveFromRoot(rootDir, trackerPath), "utf8"));
+  const manifestResult = evaluateUatEvidenceManifest(readFileSync(resolveFromRoot(rootDir, manifestPath), "utf8"));
+  const evidenceReferenceResult = evaluateEvidenceReferencesFromFiles(rootDir, manifestPath);
+  const defectRegisterResult = evaluateUatDefectRegister(readFileSync(resolveFromRoot(rootDir, defectRegisterPath), "utf8"));
+  const signoffRegisterResult = evaluateUatSignoffRegister(readFileSync(resolveFromRoot(rootDir, signoffRegisterPath), "utf8"));
+  const releaseGateResult = evaluateV1ReleaseGate({
+    readinessResult,
+    kickoffResult,
+    launchIntakeResult,
+    environmentResult,
+    uatEvidenceResult: evidenceResult,
+    trackerResult,
+    evidenceManifestResult: manifestResult,
+    evidenceReferenceResult,
+    defectRegisterResult,
+    signoffRegisterResult
+  });
+
+  return generateV1ExternalUatBlockersJson({
+    generatedAt,
+    readinessResult,
+    kickoffResult,
+    launchIntakeResult,
+    environmentResult,
+    evidenceResult,
+    manifestResult,
+    evidenceReferenceResult,
+    trackerResult,
+    defectRegisterResult,
+    signoffRegisterResult,
+    releaseGateResult,
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath,
+    runbookPath,
+    automatedReportPath
+  });
+}
+
 function parseArgs(argv) {
   const parsed = {
     rootDir: process.cwd(),
@@ -250,7 +517,8 @@ function parseArgs(argv) {
     signoffRegisterPath: DEFAULT_SIGNOFF_REGISTER_PATH,
     launchIntakePath: DEFAULT_LAUNCH_INTAKE_PATH,
     kickoffPath: DEFAULT_KICKOFF_PATH,
-    outputPath: null
+    outputPath: null,
+    json: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -285,6 +553,8 @@ function parseArgs(argv) {
     } else if (arg === "--output") {
       parsed.outputPath = argv[index + 1];
       index += 1;
+    } else if (arg === "--json") {
+      parsed.json = true;
     }
   }
 
@@ -292,7 +562,7 @@ function parseArgs(argv) {
 }
 
 function printUsage() {
-  console.error("Usage: node scripts/v1-external-uat-request.mjs [--root path] [--output docs/testing/v1-external-uat-request.md] [--evidence file] [--tracker file] [--manifest file] [--defects file] [--environment file] [--signoffs file] [--launch-intake file] [--kickoff file]");
+  console.error("Usage: node scripts/v1-external-uat-request.mjs [--json] [--root path] [--output docs/testing/v1-external-uat-request.md] [--evidence file] [--tracker file] [--manifest file] [--defects file] [--environment file] [--signoffs file] [--launch-intake file] [--kickoff file]");
 }
 
 const isCli = process.argv[1] === fileURLToPath(import.meta.url);
@@ -300,11 +570,13 @@ const isCli = process.argv[1] === fileURLToPath(import.meta.url);
 if (isCli) {
   try {
     const options = parseArgs(process.argv.slice(2));
-    const markdown = generateV1ExternalUatRequestFromFiles(options);
+    const output = options.json
+      ? generateV1ExternalUatBlockersFromFiles(options)
+      : generateV1ExternalUatRequestFromFiles(options);
     if (options.outputPath) {
-      writeFileSync(resolveFromRoot(options.rootDir, options.outputPath), markdown);
+      writeFileSync(resolveFromRoot(options.rootDir, options.outputPath), output);
     } else {
-      process.stdout.write(markdown);
+      process.stdout.write(output);
     }
   } catch (error) {
     printUsage();

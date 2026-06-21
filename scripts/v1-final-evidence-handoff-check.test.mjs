@@ -30,6 +30,7 @@ function completeDocuments(overrides = {}) {
     "node scripts/v1-external-uat-request-coverage-check.mjs",
     "node scripts/v1-final-evidence-handoff-check.mjs",
     "node scripts/v1-secret-scan-check.mjs",
+    "node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json",
     "node scripts/v1-release-gate.mjs",
     "node scripts/v1-release-gate.mjs --json"
   ].join("\n");
@@ -44,6 +45,22 @@ function completeDocuments(overrides = {}) {
     "docs/testing/v1-uat-execution-pack.md": shared,
     "docs/testing/v1-go-no-go-meeting.md": shared,
     "docs/testing/v1-external-uat-request.md": shared,
+    "docs/testing/v1-external-uat-blockers.json": JSON.stringify({
+      status: "External UAT Evidence Required",
+      decision: "No-Go",
+      ok: false,
+      summary: { totalBlockers: 1, byOwnerSide: { "项目/产品": 1 } },
+      blockers: [
+        {
+          gate: "Release Gate",
+          checkId: "go-decision",
+          ownerSide: "项目/产品",
+          sourceDocument: "docs/testing/v1-go-no-go-meeting.md",
+          validationCommand: "node scripts/v1-release-gate.mjs --json",
+          message: "Project decision is No-Go."
+        }
+      ]
+    }),
     "docs/testing/v1-release-gate-status.json": `${releaseGateStatus}\n`,
     ...overrides
   };
@@ -91,6 +108,22 @@ test("fails when final handoff materials omit the machine-readable final release
   assert.ok(result.missingCommands.includes("node scripts/v1-release-gate.mjs --json"));
 });
 
+test("fails when final handoff materials omit the external UAT blockers JSON generation command", () => {
+  const docs = completeDocuments();
+  for (const path of Object.keys(docs)) {
+    docs[path] = docs[path].replaceAll(
+      "node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json",
+      ""
+    );
+  }
+
+  const result = evaluateV1FinalEvidenceHandoffSnapshot(docs);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "handoff-command-coverage"));
+  assert.ok(result.missingCommands.includes("node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json"));
+});
+
 test("fails when final handoff materials omit acceptance and traceability commands", () => {
   const docs = completeDocuments();
   for (const path of Object.keys(docs)) {
@@ -119,6 +152,7 @@ test("fails when generated UAT handoff packets are missing", () => {
   delete docs["docs/testing/v1-uat-execution-pack.md"];
   delete docs["docs/testing/v1-go-no-go-meeting.md"];
   delete docs["docs/testing/v1-external-uat-request.md"];
+  delete docs["docs/testing/v1-external-uat-blockers.json"];
 
   const result = evaluateV1FinalEvidenceHandoffSnapshot(docs);
 
@@ -128,7 +162,8 @@ test("fails when generated UAT handoff packets are missing", () => {
     "docs/testing/v1-uat-action-plan.md",
     "docs/testing/v1-uat-execution-pack.md",
     "docs/testing/v1-go-no-go-meeting.md",
-    "docs/testing/v1-external-uat-request.md"
+    "docs/testing/v1-external-uat-request.md",
+    "docs/testing/v1-external-uat-blockers.json"
   ]);
 });
 

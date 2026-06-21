@@ -14,6 +14,10 @@ test("tracks the release gate JSON snapshot as current V1 evidence", () => {
   assert.ok(CURRENT_V1_EVIDENCE_DOCS.includes("docs/testing/v1-release-gate-status.json"));
 });
 
+test("tracks the external UAT blockers JSON snapshot as current V1 evidence", () => {
+  assert.ok(CURRENT_V1_EVIDENCE_DOCS.includes("docs/testing/v1-external-uat-blockers.json"));
+});
+
 test("tracks the README final handoff entrypoint as current V1 evidence", () => {
   assert.ok(CURRENT_V1_EVIDENCE_DOCS.includes("README.md"));
 });

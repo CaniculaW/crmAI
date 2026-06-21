@@ -196,6 +196,14 @@ node scripts/v1-go-no-go-meeting.mjs --output docs/testing/v1-go-no-go-meeting.m
 
 该会议包集中列出参会角色、门禁命令、开放阻塞项和最终签署表；只有证据包 validator、tracker validator、最终 release gate 全部通过且项目负责人选择 `Go` 后，才能作为准出会议留痕。
 
+生成或更新外部 UAT 阻塞项 JSON 时，执行：
+
+```bash
+node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json
+```
+
+该 JSON 按责任侧、来源 gate、check id、源文档和验证命令输出当前 No-Go 阻塞项，供看板或团队 Agent 认领补证工作。
+
 生成聚合状态报告、UAT行动计划、逐项执行包或 Go/No-Go 会议包后，执行生成文档一致性检查：
 
 ```bash
@@ -266,7 +274,7 @@ node scripts/v1-external-uat-request-coverage-check.mjs
 node scripts/v1-final-evidence-handoff-check.mjs
 ```
 
-该检查用于确认 README、候选版本记录、自动化验证报告、Runbook、验收清单、UAT行动计划、UAT逐项执行包、Go/No-Go会议包和外部UAT请求包仍列出最终门禁命令、release gate JSON 状态和外部 UAT/签署阻塞项，防止 `No-Go` 状态下误写为 V1 已验收通过或可正式发布。
+该检查用于确认 README、候选版本记录、自动化验证报告、Runbook、验收清单、UAT行动计划、UAT逐项执行包、Go/No-Go会议包、外部UAT请求包和外部UAT阻塞项JSON仍列出最终门禁命令、release gate JSON 状态和外部 UAT/签署阻塞项，防止 `No-Go` 状态下误写为 V1 已验收通过或可正式发布。
 
 当前 V1 证据材料更新后，执行秘密扫描：
 

@@ -4,10 +4,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import {
+import * as externalUatRequest from "./v1-external-uat-request.mjs";
+
+const {
   generateV1ExternalUatRequestFromFiles,
   generateV1ExternalUatRequestMarkdown
-} from "./v1-external-uat-request.mjs";
+} = externalUatRequest;
 
 const passingReadiness = {
   ok: true,
@@ -129,6 +131,53 @@ test("generates a No-Go external UAT request packet with source documents and va
   assert.match(markdown, /UAT Launch Intake\/participant-roster: Incomplete UAT participants/);
   assert.match(markdown, /UAT Evidence Manifest\/evidence-complete: Evidence rows not marked PASS/);
   assert.match(markdown, /Release Gate\/go-decision: Project decision is No-Go/);
+});
+
+test("exports machine-readable external UAT blockers with owner routing and validation commands", () => {
+  assert.equal(typeof externalUatRequest.generateV1ExternalUatBlockersJson, "function");
+
+  const json = externalUatRequest.generateV1ExternalUatBlockersJson({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
+    launchIntakeResult: failingLaunchIntake,
+    environmentResult: failingEnvironment,
+    evidenceResult: failingEvidence,
+    manifestResult: failingManifest,
+    trackerResult: failingTracker,
+    defectRegisterResult: failingDefects,
+    signoffRegisterResult: failingSignoffs,
+    releaseGateResult: failingReleaseGate
+  });
+
+  const payload = JSON.parse(json);
+
+  assert.equal(payload.generatedAt, "2026-06-19T12:30:00+08:00");
+  assert.equal(payload.status, "External UAT Evidence Required");
+  assert.equal(payload.decision, "No-Go");
+  assert.equal(payload.ok, false);
+  assert.ok(payload.summary.totalBlockers > 0);
+  assert.ok(payload.summary.byOwnerSide["项目/产品"] > 0);
+  assert.ok(payload.summary.byOwnerSide["业务UAT"] > 0);
+  assert.ok(payload.summary.byOwnerSide["测试"] > 0);
+
+  const businessCaseBlocker = payload.blockers.find((blocker) => (
+    blocker.gate === "UAT Evidence Pack" && blocker.checkId === "uat-business-cases"
+  ));
+
+  assert.equal(businessCaseBlocker.ownerSide, "业务UAT");
+  assert.equal(businessCaseBlocker.sourceDocument, "docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md");
+  assert.equal(
+    businessCaseBlocker.validationCommand,
+    "node scripts/v1-uat-evidence-pack-validate.mjs docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md"
+  );
+  assert.match(businessCaseBlocker.message, /Missing passed UAT evidence/);
+
+  const releaseGateBlocker = payload.blockers.find((blocker) => (
+    blocker.gate === "Release Gate" && blocker.checkId === "go-decision"
+  ));
+  assert.equal(releaseGateBlocker.ownerSide, "项目/产品");
+  assert.match(releaseGateBlocker.validationCommand, /node scripts\/v1-release-gate\.mjs --json/);
 });
 
 test("generates request packet from absolute UAT source document paths", () => {
