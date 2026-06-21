@@ -80,6 +80,7 @@ function completeRequestText() {
     "node scripts/v1-uat-defect-register-validate.mjs docs/testing/v1-uat-defect-register.md",
     "node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md",
     "node scripts/v1-release-gate.mjs . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md",
+    "node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md",
     "Kickoff Governance/required-owners",
     "Kickoff Governance/scope-freeze",
     "UAT Launch Intake/environment-intake",
@@ -123,6 +124,17 @@ test("fails when the external UAT request packet omits a required validation com
 
   assert.equal(result.ok, false);
   assert.ok(result.missingCommands.some((command) => command.includes("v1-uat-signoff-register-validate.mjs")));
+  assert.ok(result.failed.some((check) => check.id === "request-command-coverage"));
+});
+
+test("fails when the external UAT request packet omits the machine-readable release gate command", () => {
+  const result = evaluateV1ExternalUatRequestCoverageSnapshot({
+    requestText: completeRequestText().replace("node scripts/v1-release-gate.mjs --json", ""),
+    ...gateResults
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.missingCommands.includes("node scripts/v1-release-gate.mjs --json"));
   assert.ok(result.failed.some((check) => check.id === "request-command-coverage"));
 });
 

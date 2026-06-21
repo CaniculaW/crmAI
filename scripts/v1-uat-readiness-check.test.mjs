@@ -94,8 +94,8 @@ jobs:
   "scripts/v1-uat-execution-pack.test.mjs": "generates an executable UAT evidence collection pack from failed gates\n",
   "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nKickoff Governance\nUAT Environment Evidence\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\nnode scripts/v1-release-gate.mjs --json\n",
-  "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\nRequest Status: External UAT Evidence Required\nRequest Board\nDo not record plaintext passwords\n",
-  "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\n",
+  "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\nRequest Status: External UAT Evidence Required\nRequest Board\nDo not record plaintext passwords\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\nvalidation-status-current-commit\n",
   "scripts/v1-generated-docs-check.test.mjs": "fails when a generated document drifts from its generator\nfails when the validation status document is not bound to the current git commit\n",
   "scripts/v1-release-gate-status-check.mjs": "evaluateV1ReleaseGateStatusSnapshot\nrequired-checks\nresult-shape\ndecision-consistency\nlive-release-gate-match\nevaluateV1ReleaseGateFromFiles\nnode scripts/v1-release-gate-status-check.mjs\n",
@@ -110,8 +110,8 @@ jobs:
   "scripts/v1-traceability-check.test.mjs": "fails when traceability claims project acceptance while release gate is No-Go\n",
   "scripts/v1-blocker-consistency-check.mjs": "evaluateV1BlockerConsistencySnapshot\ndecision-doc-release-blockers\n",
   "scripts/v1-blocker-consistency-check.test.mjs": "fails when a decision document omits a release gate blocker\nfails when the external UAT request packet omits a release gate blocker\n",
-  "scripts/v1-external-uat-request-coverage-check.mjs": "evaluateV1ExternalUatRequestCoverageSnapshot\nrequest-blocker-coverage\nrequest-command-coverage\nrequest-workstream-routing\nnode scripts/v1-external-uat-request-coverage-check.mjs\n",
-  "scripts/v1-external-uat-request-coverage-check.test.mjs": "fails when the external UAT request packet omits a failed validator check\n",
+  "scripts/v1-external-uat-request-coverage-check.mjs": "evaluateV1ExternalUatRequestCoverageSnapshot\nrequest-blocker-coverage\nrequest-command-coverage\nrequest-workstream-routing\nnode scripts/v1-external-uat-request-coverage-check.mjs\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-external-uat-request-coverage-check.test.mjs": "fails when the external UAT request packet omits a failed validator check\nfails when the external UAT request packet omits the machine-readable release gate command\n",
   "scripts/v1-final-evidence-handoff-check.mjs": "evaluateV1FinalEvidenceHandoffSnapshot\nhandoff-materials-present\nrelease-gate-status-readable\nexternal-blockers-visible\nno-go-handoff-guardrail\nhandoff-command-coverage\nnode scripts/v1-evidence-reference-check.mjs docs/testing/v1-uat-evidence-manifest.md\nnode scripts/v1-acceptance-checklist-check.mjs\nnode scripts/v1-uat-coverage-check.mjs\nnode scripts/v1-traceability-check.mjs\nnode scripts/v1-final-evidence-handoff-check.mjs\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-final-evidence-handoff-check.test.mjs": "fails when final handoff materials claim V1 acceptance while release gate is No-Go\nfails when final handoff materials omit acceptance and traceability commands\nfails when final handoff materials omit the machine-readable final release gate command\nfails when No-Go final handoff materials hide external UAT blockers\nfails when generated UAT handoff packets are missing\n",
   "scripts/v1-secret-scan-check.mjs": "evaluateV1SecretScanSnapshot\ncurrent-v1-evidence-no-secrets\nREADME.md\n",
@@ -1127,6 +1127,21 @@ test("fails when the V1 external UAT request packet is missing from readiness ma
   assert.ok(result.failed.some((check) => check.id === "v1-external-uat-request-pack"));
 });
 
+test("fails when the V1 external UAT request packet omits machine-readable release gate command coverage", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-external-uat-request.mjs": completeSnapshot["scripts/v1-external-uat-request.mjs"]
+      .replace("node scripts/v1-release-gate.mjs --json\n", ""),
+    "scripts/v1-external-uat-request.test.mjs": completeSnapshot["scripts/v1-external-uat-request.test.mjs"]
+      .replace("node scripts/v1-release-gate.mjs --json\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-external-uat-request-pack"));
+});
+
 test("fails when README omits the V1 secret scan entrypoint", () => {
   const snapshot = {
     ...completeSnapshot,
@@ -1344,6 +1359,21 @@ test("fails when the V1 external UAT request coverage checker omits owner-side r
     ...completeSnapshot,
     "scripts/v1-external-uat-request-coverage-check.mjs": completeSnapshot["scripts/v1-external-uat-request-coverage-check.mjs"]
       .replace("request-workstream-routing\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-external-uat-request-coverage-checker"));
+});
+
+test("fails when the V1 external UAT request coverage checker omits machine-readable release gate command coverage", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-external-uat-request-coverage-check.mjs": completeSnapshot["scripts/v1-external-uat-request-coverage-check.mjs"]
+      .replace("node scripts/v1-release-gate.mjs --json\n", ""),
+    "scripts/v1-external-uat-request-coverage-check.test.mjs": completeSnapshot["scripts/v1-external-uat-request-coverage-check.test.mjs"]
+      .replace("fails when the external UAT request packet omits the machine-readable release gate command\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

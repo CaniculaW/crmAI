@@ -36,7 +36,8 @@ const REQUIRED_COMMANDS = [
   "node scripts/v1-uat-execution-tracker-validate.mjs",
   "node scripts/v1-uat-defect-register-validate.mjs",
   "node scripts/v1-uat-signoff-register-validate.mjs",
-  "node scripts/v1-release-gate.mjs"
+  "node scripts/v1-release-gate.mjs",
+  "node scripts/v1-release-gate.mjs --json"
 ];
 
 const REQUIRED_WORKSTREAM_ROUTES = [

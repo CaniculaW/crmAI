@@ -694,9 +694,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "generateV1ExternalUatRequestMarkdown",
       "Request Status: External UAT Evidence Required",
       "Request Board",
+      "node scripts/v1-release-gate.mjs --json",
       "generates a No-Go external UAT request packet with source documents and validation commands"
     ]),
-    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board."
+    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board with machine-readable release-gate output available for dashboards and validation bots."
   ));
 
   const generatedDocsChecker = snapshot["scripts/v1-generated-docs-check.mjs"] ?? "";
@@ -819,9 +820,11 @@ export function evaluateReadinessSnapshot(snapshot) {
       "request-blocker-coverage",
       "request-command-coverage",
       "request-workstream-routing",
+      "node scripts/v1-release-gate.mjs --json",
+      "fails when the external UAT request packet omits the machine-readable release gate command",
       "fails when the external UAT request packet omits a failed validator check"
     ]),
-    "V1 external UAT request coverage checker is tested and wired into CI to keep stakeholder request packets aligned with current failed validator checks and owner-side routing."
+    "V1 external UAT request coverage checker is tested and wired into CI to keep stakeholder request packets aligned with current failed validator checks, owner-side routing, and the machine-readable final release gate command."
   ));
 
   const finalEvidenceHandoffChecker = snapshot["scripts/v1-final-evidence-handoff-check.mjs"] ?? "";
