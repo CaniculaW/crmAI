@@ -644,6 +644,16 @@ export function generateV1ExternalUatClosureChecklistMarkdown({
 
 export function generateV1ExternalUatEvidenceIntakeMarkdown({
   generatedAt,
+  readinessResult = { ok: true, failed: [] },
+  kickoffResult = { ok: true, failed: [] },
+  launchIntakeResult = { ok: true, failed: [] },
+  environmentResult = { ok: true, failed: [] },
+  evidenceResult = { ok: true, failed: [] },
+  manifestResult = { ok: true, failed: [] },
+  evidenceReferenceResult = { ok: true, failed: [] },
+  trackerResult = { ok: true, failed: [] },
+  defectRegisterResult = { ok: true, failed: [] },
+  signoffRegisterResult = { ok: true, failed: [] },
   releaseGateResult,
   evidencePath = DEFAULT_EVIDENCE_PATH,
   trackerPath = DEFAULT_TRACKER_PATH,
@@ -655,7 +665,28 @@ export function generateV1ExternalUatEvidenceIntakeMarkdown({
   kickoffPath = DEFAULT_KICKOFF_PATH,
   closureChecklistPath = DEFAULT_CLOSURE_CHECKLIST_PATH
 }) {
-  const isGo = releaseGateResult.ok && releaseGateResult.decision === "Go";
+  const blockers = collectBlockers({
+    readinessResult,
+    kickoffResult,
+    launchIntakeResult,
+    environmentResult,
+    evidenceResult,
+    manifestResult,
+    evidenceReferenceResult,
+    trackerResult,
+    defectRegisterResult,
+    signoffRegisterResult,
+    releaseGateResult,
+    evidencePath,
+    trackerPath,
+    manifestPath,
+    defectRegisterPath,
+    environmentPath,
+    signoffRegisterPath,
+    launchIntakePath,
+    kickoffPath
+  });
+  const isGo = isExternalUatClosed(releaseGateResult, blockers);
   const lines = [
     "# CRM V1 External UAT Evidence Intake",
     "",
@@ -945,6 +976,16 @@ export function generateV1ExternalUatEvidenceIntakeFromFiles({
 
   return generateV1ExternalUatEvidenceIntakeMarkdown({
     generatedAt,
+    readinessResult,
+    kickoffResult,
+    launchIntakeResult,
+    environmentResult,
+    evidenceResult,
+    manifestResult,
+    evidenceReferenceResult,
+    trackerResult,
+    defectRegisterResult,
+    signoffRegisterResult,
     releaseGateResult,
     evidencePath,
     trackerPath,

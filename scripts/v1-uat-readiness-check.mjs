@@ -824,6 +824,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "generates an external UAT closure checklist grouped by owner side",
       "keeps closure checklist No-Go when validator blockers remain despite release gate Go",
       "generates an external UAT evidence intake checklist tied to manifest ids",
+      "keeps evidence intake No-Go when validator blockers remain despite release gate Go",
       "keeps evidence intake manifest ids assigned to a single intake row",
       "generates a No-Go external UAT request packet with source documents and validation commands"
     ]),

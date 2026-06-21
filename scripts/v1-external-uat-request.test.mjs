@@ -358,6 +358,26 @@ test("generates an external UAT evidence intake checklist tied to manifest ids",
   assert.match(markdown, /Do not paste passwords, bearer tokens, API keys, or unmasked account secrets/);
 });
 
+test("keeps evidence intake No-Go when validator blockers remain despite release gate Go", () => {
+  const markdown = generateV1ExternalUatEvidenceIntakeMarkdown({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
+    launchIntakeResult: { ok: true, decision: "Go", failed: [] },
+    environmentResult: { ok: true, decision: "Go", failed: [] },
+    evidenceResult: { ok: true, decision: "Go", failed: [] },
+    manifestResult: { ok: true, decision: "Go", failed: [] },
+    trackerResult: { ok: true, decision: "Go", failed: [] },
+    defectRegisterResult: { ok: true, decision: "Go", failed: [] },
+    signoffRegisterResult: { ok: true, decision: "Go", failed: [] },
+    releaseGateResult: { ok: true, decision: "Go", failed: [] }
+  });
+
+  assert.match(markdown, /Overall: No-Go/);
+  assert.match(markdown, /\| KICKOFF-LAUNCH \| 项目\/产品 \| PRE-006 \|/);
+  assert.doesNotMatch(markdown, /All intake rows are closed/);
+});
+
 test("keeps evidence intake manifest ids assigned to a single intake row", () => {
   const markdown = generateV1ExternalUatEvidenceIntakeMarkdown({
     generatedAt: "2026-06-19T12:30:00+08:00",
