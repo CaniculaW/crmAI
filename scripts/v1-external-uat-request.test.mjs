@@ -145,6 +145,26 @@ test("generates a No-Go external UAT request packet with source documents and va
   assert.match(markdown, /Release Gate\/go-decision: Project decision is No-Go/);
 });
 
+test("keeps external UAT request open when validator blockers remain despite release gate Go", () => {
+  const markdown = generateV1ExternalUatRequestMarkdown({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
+    launchIntakeResult: { ok: true, decision: "Go", failed: [] },
+    environmentResult: { ok: true, decision: "Go", failed: [] },
+    evidenceResult: { ok: true, decision: "Go", failed: [] },
+    manifestResult: { ok: true, decision: "Go", failed: [] },
+    trackerResult: { ok: true, decision: "Go", failed: [] },
+    defectRegisterResult: { ok: true, decision: "Go", failed: [] },
+    signoffRegisterResult: { ok: true, decision: "Go", failed: [] },
+    releaseGateResult: { ok: true, decision: "Go", failed: [] }
+  });
+
+  assert.match(markdown, /Request Status: External UAT Evidence Required/);
+  assert.match(markdown, /Kickoff Governance\/required-owners: Incomplete kickoff owners/);
+  assert.doesNotMatch(markdown, /All external UAT request items are closed/);
+});
+
 test("exports machine-readable external UAT blockers with owner routing and validation commands", () => {
   assert.equal(typeof externalUatRequest.generateV1ExternalUatBlockersJson, "function");
 
@@ -190,6 +210,32 @@ test("exports machine-readable external UAT blockers with owner routing and vali
   ));
   assert.equal(releaseGateBlocker.ownerSide, "项目/产品");
   assert.match(releaseGateBlocker.validationCommand, /node scripts\/v1-release-gate\.mjs --json/);
+});
+
+test("keeps blockers JSON No-Go when validator blockers remain despite release gate Go", () => {
+  const json = externalUatRequest.generateV1ExternalUatBlockersJson({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
+    launchIntakeResult: { ok: true, decision: "Go", failed: [] },
+    environmentResult: { ok: true, decision: "Go", failed: [] },
+    evidenceResult: { ok: true, decision: "Go", failed: [] },
+    manifestResult: { ok: true, decision: "Go", failed: [] },
+    trackerResult: { ok: true, decision: "Go", failed: [] },
+    defectRegisterResult: { ok: true, decision: "Go", failed: [] },
+    signoffRegisterResult: { ok: true, decision: "Go", failed: [] },
+    releaseGateResult: { ok: true, decision: "Go", failed: [] }
+  });
+
+  const payload = JSON.parse(json);
+
+  assert.equal(payload.status, "External UAT Evidence Required");
+  assert.equal(payload.decision, "No-Go");
+  assert.equal(payload.ok, false);
+  assert.equal(payload.summary.totalBlockers, payload.blockers.length);
+  assert.ok(payload.blockers.some((blocker) => (
+    blocker.gate === "Kickoff Governance" && blocker.checkId === "required-owners"
+  )));
 });
 
 test("deduplicates machine-readable blockers by gate and check id", () => {
@@ -255,6 +301,30 @@ test("generates an external UAT closure checklist grouped by owner side", () => 
   assert.match(markdown, /\| Open \| UAT Environment Evidence \| environment-summary \| docs\/testing\/v1-uat-environment-evidence\.md \| `node scripts\/v1-uat-environment-validate\.mjs docs\/testing\/v1-uat-environment-evidence\.md` \| Invalid environment summary items/);
   assert.match(markdown, /\| Open \| UAT Evidence Pack \| uat-business-cases \| docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md \| `node scripts\/v1-uat-evidence-pack-validate\.mjs docs\/testing\/evidence\/crm-v1-uat-evidence-pack-rc8-draft\.md` \| Missing passed UAT evidence/);
   assert.match(markdown, /Do not mark a row Closed until its source document validates PASS and the final release gate returns Go/);
+});
+
+test("keeps closure checklist No-Go when validator blockers remain despite release gate Go", () => {
+  const markdown = generateV1ExternalUatClosureChecklistMarkdown({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
+    launchIntakeResult: { ok: true, decision: "Go", failed: [] },
+    environmentResult: { ok: true, decision: "Go", failed: [] },
+    evidenceResult: { ok: true, decision: "Go", failed: [] },
+    manifestResult: { ok: true, decision: "Go", failed: [] },
+    trackerResult: { ok: true, decision: "Go", failed: [] },
+    defectRegisterResult: { ok: true, decision: "Go", failed: [] },
+    signoffRegisterResult: { ok: true, decision: "Go", failed: [] },
+    releaseGateResult: { ok: true, decision: "Go", failed: [] }
+  });
+
+  const declaredCount = Number.parseInt(markdown.match(/Open blocker count: (\d+)/)[1], 10);
+  const openRows = markdown.split("\n").filter((line) => line.startsWith("| Open |"));
+
+  assert.match(markdown, /Overall: No-Go/);
+  assert.equal(declaredCount, openRows.length);
+  assert.equal(declaredCount, 2);
+  assert.match(markdown, /\| Open \| Kickoff Governance \| required-owners \|/);
 });
 
 test("generates an external UAT evidence intake checklist tied to manifest ids", () => {

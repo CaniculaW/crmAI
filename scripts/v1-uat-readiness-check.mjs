@@ -819,7 +819,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node scripts/v1-release-gate.mjs --json",
       "exports machine-readable external UAT blockers with owner routing and validation commands",
       "deduplicates machine-readable blockers by gate and check id",
+      "keeps external UAT request open when validator blockers remain despite release gate Go",
+      "keeps blockers JSON No-Go when validator blockers remain despite release gate Go",
       "generates an external UAT closure checklist grouped by owner side",
+      "keeps closure checklist No-Go when validator blockers remain despite release gate Go",
       "generates an external UAT evidence intake checklist tied to manifest ids",
       "keeps evidence intake manifest ids assigned to a single intake row",
       "generates a No-Go external UAT request packet with source documents and validation commands"

@@ -66,6 +66,10 @@ function countBy(items, key) {
   }, {});
 }
 
+function isExternalUatClosed(releaseGateResult, blockers) {
+  return blockers.length === 0 && releaseGateResult.ok && releaseGateResult.decision === "Go";
+}
+
 function resolveFromRoot(rootDir, filePath) {
   return path.resolve(rootDir, filePath);
 }
@@ -422,7 +426,7 @@ export function generateV1ExternalUatRequestMarkdown({
     ...failedLines("UAT Signoff Register", signoffRegisterResult),
     ...failedLines("Release Gate", releaseGateResult)
   ];
-  const isGo = releaseGateResult.ok && releaseGateResult.decision === "Go";
+  const isGo = isExternalUatClosed(releaseGateResult, blockers);
 
   const lines = [
     "# CRM V1 External UAT Request Packet",
@@ -527,11 +531,11 @@ export function generateV1ExternalUatBlockersJson({
     runbookPath,
     automatedReportPath
   });
-  const isGo = releaseGateResult.ok && releaseGateResult.decision === "Go";
+  const isGo = isExternalUatClosed(releaseGateResult, blockers);
   const payload = {
     generatedAt,
     status: isGo ? "No External UAT Requests Open" : "External UAT Evidence Required",
-    decision: releaseGateResult.decision ?? (isGo ? "Go" : "No-Go"),
+    decision: isGo ? "Go" : "No-Go",
     ok: isGo,
     summary: {
       totalBlockers: blockers.length,
@@ -590,7 +594,7 @@ export function generateV1ExternalUatClosureChecklistMarkdown({
     runbookPath,
     automatedReportPath
   });
-  const isGo = releaseGateResult.ok && releaseGateResult.decision === "Go";
+  const isGo = isExternalUatClosed(releaseGateResult, blockers);
   const ownerSides = ["项目/产品", "测试", "业务UAT", "研发"];
   const lines = [
     "# CRM V1 External UAT Closure Checklist",
