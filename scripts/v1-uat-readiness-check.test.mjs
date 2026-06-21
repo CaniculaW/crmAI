@@ -13,6 +13,7 @@ jobs:
         with:
           fetch-depth: 2
       - run: node scripts/v1-deployment-config-check.mjs
+      - run: node --test scripts/*.test.mjs
       - run: node --test scripts/v1-deployment-config-check.test.mjs
       - run: node --test scripts/v1-uat-environment-validate.test.mjs
       - run: node --test scripts/v1-uat-evidence-pack-validate.test.mjs
@@ -298,6 +299,19 @@ test("fails when V1 validation checkout cannot verify status commit freshness", 
     ...completeSnapshot,
     ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
       .replace("      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 2\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "workflow-v1-validation"));
+});
+
+test("fails when V1 validation omits the full scripts test suite safety net", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
+      .replace("      - run: node --test scripts/*.test.mjs\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

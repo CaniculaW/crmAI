@@ -347,12 +347,13 @@ export function evaluateReadinessSnapshot(snapshot) {
       "docker compose -f compose.v1-test.yml config",
       "node scripts/v1-deployment-config-check.mjs",
       "node --test scripts/v1-deployment-config-check.test.mjs",
+      "node --test scripts/*.test.mjs",
       "mvn -B test",
       "mvn -B verify -Ppostgres-it",
       "npm test",
       "npm run build"
     ]),
-    "GitHub Actions V1 Validation covers deployment config, backend, PostgreSQL integration, frontend tests, build, and checkout history depth for validation status commit freshness."
+    "GitHub Actions V1 Validation covers deployment config, the complete scripts test suite, backend, PostgreSQL integration, frontend tests, build, and checkout history depth for validation status commit freshness."
   ));
 
   const compose = snapshot["compose.v1-test.yml"] ?? "";
