@@ -129,7 +129,17 @@ jobs:
   "docs/testing/v1-uat-execution-pack.md": "CRM V1 UAT Execution Pack\nOverall: No-Go\nExecution Items\nENV-001\nPRE-001\nSMK-001\nUAT-001\nDEF-REGISTER\nSIGNOFF-SALES\nGO-NOGO\n",
   "docs/testing/v1-go-no-go-meeting.md": "CRM V1 Go/No-Go Meeting Pack\nDecision Recommendation: No-Go\nFinal Signoff Table\nUAT Environment Evidence\n具名测试环境\n业务验收签署\n仍需\n",
   "docs/testing/v1-external-uat-request.md": "CRM V1 External UAT Request Packet\nRequest Status: External UAT Evidence Required\nRequest Board\nProject / Product\nTest\nBusiness UAT\nEngineering\nDo not record plaintext passwords\nKickoff Governance\nUAT Launch Intake\nUAT Environment Evidence\nUAT Evidence Pack\nUAT Evidence Manifest\nUAT Execution Tracker\nUAT Defect Register\nUAT Signoff Register\nRelease Gate\n",
-  "docs/testing/v1-external-uat-closure-checklist.md": "CRM V1 External UAT Closure Checklist\nOverall: No-Go\nOpen blocker count: 1\n## 项目/产品\n## 测试\n## 业务UAT\nStatus\nGate\nCheck ID\nSource document\nValidation command\nClosure evidence needed\nDo not mark a row Closed until its source document validates PASS and the final release gate returns Go\n",
+  "docs/testing/v1-external-uat-closure-checklist.md": `CRM V1 External UAT Closure Checklist
+Overall: No-Go
+Open blocker count: 1
+## 项目/产品
+## 测试
+## 业务UAT
+| Status | Gate | Check ID | Source document | Validation command | Closure evidence needed |
+|---|---|---|---|---|---|
+| Open | Release Gate | go-decision | docs/testing/v1-go-no-go-meeting.md | node scripts/v1-release-gate.mjs --json | Project decision is No-Go |
+Do not mark a row Closed until its source document validates PASS and the final release gate returns Go
+`,
   "docs/testing/v1-external-uat-evidence-intake.md": `CRM V1 External UAT Evidence Intake
 Overall: No-Go
 Closure checklist: docs/testing/v1-external-uat-closure-checklist.md
@@ -346,6 +356,19 @@ test("fails when the external UAT closure checklist snapshot is missing", () => 
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "required-artifacts"));
+});
+
+test("fails when the external UAT closure checklist open count drifts from rows", () => {
+  const driftedChecklist = completeSnapshot["docs/testing/v1-external-uat-closure-checklist.md"]
+    .replace("Open blocker count: 1", "Open blocker count: 2");
+
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    "docs/testing/v1-external-uat-closure-checklist.md": driftedChecklist
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "external-uat-closure-checklist"));
 });
 
 test("fails when the external UAT evidence intake checklist snapshot is missing", () => {

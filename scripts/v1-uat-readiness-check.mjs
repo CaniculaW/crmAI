@@ -366,7 +366,15 @@ function hasExternalUatBlockersJson(content) {
 }
 
 function hasExternalUatClosureChecklist(content) {
-  return includesAll(content, [
+  const openCountMatch = content.match(/Open blocker count:\s*(\d+)/);
+  const declaredOpenCount = openCountMatch ? Number.parseInt(openCountMatch[1], 10) : Number.NaN;
+  const openRows = content
+    .split("\n")
+    .filter((line) => line.trim().startsWith("| Open |"));
+  const openCountMatches = Number.isInteger(declaredOpenCount)
+    && declaredOpenCount === openRows.length;
+
+  return openCountMatches && includesAll(content, [
     "CRM V1 External UAT Closure Checklist",
     "Overall: No-Go",
     "Open blocker count:",
