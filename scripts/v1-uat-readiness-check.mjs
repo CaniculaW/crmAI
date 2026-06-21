@@ -724,9 +724,11 @@ export function evaluateReadinessSnapshot(snapshot) {
       "evaluateV1ReleaseGateStatusSnapshot",
       "required-checks",
       "result-shape",
-      "fails when the release gate JSON snapshot omits a required check"
+      "decision-consistency",
+      "fails when the release gate JSON snapshot omits a required check",
+      "fails when the release gate result and decision disagree"
     ]),
-    "V1 release gate JSON status checker is tested and wired into CI to keep the machine-readable release gate snapshot schema stable."
+    "V1 release gate JSON status checker is tested and wired into CI to keep the machine-readable release gate snapshot schema and result/decision consistency stable."
   ));
 
   const planStatusChecker = snapshot["scripts/v1-plan-status-check.mjs"] ?? "";

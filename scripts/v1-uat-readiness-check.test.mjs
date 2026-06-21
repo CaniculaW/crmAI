@@ -98,8 +98,8 @@ jobs:
   "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\n",
   "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\nvalidation-status-current-commit\n",
   "scripts/v1-generated-docs-check.test.mjs": "fails when a generated document drifts from its generator\nfails when the validation status document is not bound to the current git commit\n",
-  "scripts/v1-release-gate-status-check.mjs": "evaluateV1ReleaseGateStatusSnapshot\nrequired-checks\nresult-shape\nnode scripts/v1-release-gate-status-check.mjs\n",
-  "scripts/v1-release-gate-status-check.test.mjs": "fails when the release gate JSON snapshot omits a required check\n",
+  "scripts/v1-release-gate-status-check.mjs": "evaluateV1ReleaseGateStatusSnapshot\nrequired-checks\nresult-shape\ndecision-consistency\nnode scripts/v1-release-gate-status-check.mjs\n",
+  "scripts/v1-release-gate-status-check.test.mjs": "fails when the release gate JSON snapshot omits a required check\nfails when the release gate result and decision disagree\n",
   "scripts/v1-plan-status-check.mjs": "evaluateV1PlanStatusSnapshot\nopen-plan-items-no-go\n",
   "scripts/v1-plan-status-check.test.mjs": "fails when open plan items are paired with a Go validation status\n",
   "scripts/v1-acceptance-checklist-check.mjs": "evaluateV1AcceptanceChecklistSnapshot\nacceptance-status-release-alignment\n",
@@ -1181,6 +1181,21 @@ test("fails when the V1 release gate status JSON checker is missing from readine
     ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
       .replace("      - run: node --test scripts/v1-release-gate-status-check.test.mjs\n", "")
       .replace("      - run: node scripts/v1-release-gate-status-check.mjs\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-release-gate-status-checker"));
+});
+
+test("fails when the V1 release gate status JSON checker omits decision consistency", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-release-gate-status-check.mjs": completeSnapshot["scripts/v1-release-gate-status-check.mjs"]
+      .replace("decision-consistency\n", ""),
+    "scripts/v1-release-gate-status-check.test.mjs": completeSnapshot["scripts/v1-release-gate-status-check.test.mjs"]
+      .replace("fails when the release gate result and decision disagree\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

@@ -58,3 +58,14 @@ test("fails when the release gate result and ok flag disagree", () => {
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "result-consistency"));
 });
+
+test("fails when the release gate result and decision disagree", () => {
+  const result = evaluateV1ReleaseGateStatusSnapshot(JSON.stringify(validStatus({
+    result: "FAIL",
+    ok: false,
+    decision: "Go"
+  })));
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "decision-consistency"));
+});

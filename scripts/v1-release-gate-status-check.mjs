@@ -63,6 +63,18 @@ function resultIsConsistent(status) {
   return status.result === "FAIL" && failedChecks.length > 0;
 }
 
+function decisionIsConsistent(status) {
+  if (!status || !VALID_RESULTS.has(status.result) || typeof status.ok !== "boolean" || !VALID_DECISIONS.has(status.decision)) {
+    return false;
+  }
+
+  if (status.ok || status.result === "PASS") {
+    return status.decision === "Go";
+  }
+
+  return status.decision !== "Go";
+}
+
 export function evaluateV1ReleaseGateStatusSnapshot(snapshotText) {
   const parsed = parseSnapshot(snapshotText);
   const status = parsed.value;
@@ -99,6 +111,11 @@ export function evaluateV1ReleaseGateStatusSnapshot(snapshotText) {
       "result-consistency",
       resultIsConsistent(status),
       "Release gate result, ok flag, and failed checks are consistent."
+    ),
+    makeCheck(
+      "decision-consistency",
+      decisionIsConsistent(status),
+      "Release gate decision is consistent with result and ok flag."
     )
   ];
 
