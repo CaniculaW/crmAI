@@ -856,15 +856,17 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node scripts/v1-release-gate-status-check.mjs",
       "evaluateV1ReleaseGateStatusSnapshot",
       "required-checks",
+      "unique-check-ids",
       "result-shape",
       "decision-consistency",
       "live-release-gate-match",
       "evaluateV1ReleaseGateFromFiles",
       "fails when the release gate JSON snapshot omits a required check",
+      "fails when the release gate JSON snapshot repeats a check id",
       "fails when the release gate result and decision disagree",
       "fails when the release gate JSON snapshot does not match the current release gate result"
     ]),
-    "V1 release gate JSON status checker is tested and wired into CI to keep the machine-readable release gate snapshot schema, result/decision consistency, and live release-gate alignment stable."
+    "V1 release gate JSON status checker is tested and wired into CI to keep the machine-readable release gate snapshot schema, check-id uniqueness, result/decision consistency, and live release-gate alignment stable."
   ));
 
   const planStatusChecker = snapshot["scripts/v1-plan-status-check.mjs"] ?? "";

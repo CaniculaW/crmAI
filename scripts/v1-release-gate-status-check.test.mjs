@@ -49,6 +49,25 @@ test("fails when the release gate JSON snapshot omits a required check", () => {
   assert.ok(result.failed.some((check) => check.id === "required-checks"));
 });
 
+test("fails when the release gate JSON snapshot repeats a check id", () => {
+  const status = validStatus({
+    checks: [
+      ...validStatus().checks,
+      {
+        id: "go-decision",
+        ok: false,
+        message: "Duplicate project decision row."
+      }
+    ]
+  });
+
+  const result = evaluateV1ReleaseGateStatusSnapshot(JSON.stringify(status));
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.duplicateCheckIds, ["go-decision"]);
+  assert.ok(result.failed.some((check) => check.id === "unique-check-ids"));
+});
+
 test("fails when the release gate result and ok flag disagree", () => {
   const result = evaluateV1ReleaseGateStatusSnapshot(JSON.stringify(validStatus({
     result: "PASS",

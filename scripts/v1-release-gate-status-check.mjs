@@ -49,6 +49,26 @@ function missingRequiredChecks(status) {
   return REQUIRED_RELEASE_GATE_CHECK_IDS.filter((id) => !ids.has(id));
 }
 
+function duplicateCheckIds(status) {
+  if (!Array.isArray(status?.checks)) {
+    return [];
+  }
+
+  const seen = new Set();
+  const duplicates = new Set();
+  for (const check of status.checks) {
+    if (typeof check?.id !== "string") {
+      continue;
+    }
+    if (seen.has(check.id)) {
+      duplicates.add(check.id);
+      continue;
+    }
+    seen.add(check.id);
+  }
+  return [...duplicates].sort();
+}
+
 function resultIsConsistent(status) {
   if (!status || !VALID_RESULTS.has(status.result) || typeof status.ok !== "boolean") {
     return false;
@@ -110,6 +130,7 @@ export function evaluateV1ReleaseGateStatusSnapshot(snapshotText, {
   const parsed = parseSnapshot(snapshotText);
   const status = parsed.value;
   const missing = missingRequiredChecks(status);
+  const duplicates = duplicateCheckIds(status);
 
   const checks = [
     makeCheck(
@@ -139,6 +160,13 @@ export function evaluateV1ReleaseGateStatusSnapshot(snapshotText, {
         : `Release gate status snapshot is missing required check ids: ${missing.join(", ")}`
     ),
     makeCheck(
+      "unique-check-ids",
+      duplicates.length === 0,
+      duplicates.length === 0
+        ? "Release gate status snapshot uses unique check ids."
+        : `Release gate status snapshot repeats check ids: ${duplicates.join(", ")}`
+    ),
+    makeCheck(
       "result-consistency",
       resultIsConsistent(status),
       "Release gate result, ok flag, and failed checks are consistent."
@@ -161,6 +189,7 @@ export function evaluateV1ReleaseGateStatusSnapshot(snapshotText, {
   return {
     ok: failed.length === 0,
     missingRequiredChecks: missing,
+    duplicateCheckIds: duplicates,
     passed,
     failed,
     checks
