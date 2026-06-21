@@ -180,6 +180,25 @@ export function evaluateKickoffGovernanceEvidenceIntake(intake = {}) {
   };
 }
 
+export function renderKickoffGovernanceEvidenceIntakeStatus(readiness) {
+  const lines = [
+    "# Kickoff Governance Intake Status",
+    "",
+    `Ready rows: \`${readiness.ready}/${readiness.total}\``,
+    `Pending rows: \`${readiness.pending}\``,
+    "",
+    "| Intake row | Type | Target | Missing readiness |",
+    "|---|---|---|---|"
+  ];
+
+  for (const failure of readiness.failed ?? []) {
+    const missingReadiness = failure.failures.length > 0 ? failure.failures.join("; ") : "-";
+    lines.push(`| ${failure.filename} | ${failure.type} | ${failure.label} | ${missingReadiness} |`);
+  }
+
+  return `${lines.join("\n")}\n`;
+}
+
 function evidenceMarkdown({
   item,
   generatedAt,
@@ -278,7 +297,8 @@ function parseArgs(argv) {
     template: false,
     inputPath: null,
     outputPath: null,
-    write: false
+    write: false,
+    status: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -293,6 +313,8 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--write") {
       parsed.write = true;
+    } else if (arg === "--status") {
+      parsed.status = true;
     }
   }
 
@@ -301,6 +323,7 @@ function parseArgs(argv) {
 
 function printUsage() {
   console.error("Usage: node scripts/v1-kickoff-governance-evidence-intake.mjs --template [--output intake.json]");
+  console.error("   or: node scripts/v1-kickoff-governance-evidence-intake.mjs --input intake.json --status");
   console.error("   or: node scripts/v1-kickoff-governance-evidence-intake.mjs --input intake.json --write");
 }
 
@@ -318,18 +341,26 @@ if (isCli) {
     }
   } else if (options.inputPath) {
     const intake = JSON.parse(readFileSync(path.resolve(options.inputPath), "utf8"));
-    const result = options.write
-      ? writeKickoffGovernanceEvidenceTemplatesFromIntake({ intake })
-      : buildKickoffGovernanceEvidenceTemplatesFromIntake(intake);
-    if (!result.ok) {
-      console.error("Kickoff governance intake is not ready:");
-      for (const failure of result.failed) {
-        console.error(`- ${failure.path}: ${failure.failures.join("; ")}`);
+    if (options.status) {
+      const readiness = evaluateKickoffGovernanceEvidenceIntake(intake);
+      process.stdout.write(renderKickoffGovernanceEvidenceIntakeStatus(readiness));
+      if (!readiness.ok) {
+        process.exitCode = 1;
       }
-      process.exitCode = 1;
     } else {
-      for (const templatePath of Object.keys(result.templatesByPath)) {
-        console.log(templatePath);
+      const result = options.write
+        ? writeKickoffGovernanceEvidenceTemplatesFromIntake({ intake })
+        : buildKickoffGovernanceEvidenceTemplatesFromIntake(intake);
+      if (!result.ok) {
+        console.error("Kickoff governance intake is not ready:");
+        for (const failure of result.failed) {
+          console.error(`- ${failure.path}: ${failure.failures.join("; ")}`);
+        }
+        process.exitCode = 1;
+      } else {
+        for (const templatePath of Object.keys(result.templatesByPath)) {
+          console.log(templatePath);
+        }
       }
     }
   } else {

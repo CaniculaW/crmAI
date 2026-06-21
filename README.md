@@ -163,7 +163,13 @@ V1 启动治理一次性补证收集表：
 node scripts/v1-kickoff-governance-evidence-intake.mjs --template --output docs/meeting-notes/evidence/kickoff/intake.json
 ```
 
-项目/产品侧把 `intake.json` 中 14 项全部补齐为真实姓名、闭环值、确认来源和 `docs/` 或 `http(s)` 留存证据引用后，再执行：
+项目/产品侧把 `intake.json` 中 14 项全部补齐为真实姓名、闭环值、确认来源和 `docs/` 或 `http(s)` 留存证据引用后，先执行只读状态检查：
+
+```bash
+node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --status
+```
+
+该状态检查会显示 `Ready/Pending` 行数；返回非 0 表示仍有未闭合行，需要继续补证。14 项全部 `Ready` 后，再执行：
 
 ```bash
 node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --write

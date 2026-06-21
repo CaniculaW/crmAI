@@ -165,7 +165,13 @@ node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write
 node scripts/v1-kickoff-governance-evidence-intake.mjs --template --output docs/meeting-notes/evidence/kickoff/intake.json
 ```
 
-项目/产品侧把 14 项补齐为真实姓名、闭环值、确认来源和 `docs/` 或 `http(s)` 留存证据引用后，批量写入补证模板：
+项目/产品侧把 14 项补齐为真实姓名、闭环值、确认来源和 `docs/` 或 `http(s)` 留存证据引用后，先查看只读状态：
+
+```bash
+node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --status
+```
+
+该命令会显示 `Ready/Pending` 行数；返回非 0 表示仍有未闭合行，需要继续补证。14 项全部 `Ready` 后，再批量写入补证模板：
 
 ```bash
 node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --write

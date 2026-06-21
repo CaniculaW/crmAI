@@ -15,6 +15,7 @@ const DEFAULT_BLOCKERS_JSON_PATH = "docs/testing/v1-external-uat-blockers.json";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-progress-todo.md";
 const DEFAULT_KICKOFF_GOVERNANCE_INTAKE_PATH = "docs/meeting-notes/evidence/kickoff/intake.json";
 const KICKOFF_GOVERNANCE_INTAKE_TEMPLATE_COMMAND = "node scripts/v1-kickoff-governance-evidence-intake.mjs --template --output docs/meeting-notes/evidence/kickoff/intake.json";
+const KICKOFF_GOVERNANCE_INTAKE_STATUS_COMMAND = "node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --status";
 const KICKOFF_GOVERNANCE_INTAKE_WRITE_COMMAND = "node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --write";
 const KICKOFF_GOVERNANCE_APPLY_COMMAND = "node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write";
 const CLOSURE_PHASE_ORDER = [
@@ -131,7 +132,9 @@ function appendKickoffGovernanceIntakeReadiness(lines, readiness) {
   lines.push("");
   lines.push(`Intake rows ready: \`${readiness.ready}/${readiness.total}\``);
   lines.push(`Intake rows pending: \`${readiness.pending}\``);
-  lines.push("Fill this intake before writing evidence templates:");
+  lines.push("Check this intake before writing evidence templates:");
+  lines.push(`- \`${KICKOFF_GOVERNANCE_INTAKE_STATUS_COMMAND}\``);
+  lines.push("Write evidence templates after all intake rows are Ready:");
   lines.push(`- \`${KICKOFF_GOVERNANCE_INTAKE_WRITE_COMMAND}\``);
   lines.push("");
   lines.push("| Intake row | Type | Target | Missing readiness |");

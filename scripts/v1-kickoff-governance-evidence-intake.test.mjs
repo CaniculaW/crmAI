@@ -1,4 +1,8 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import {
@@ -130,4 +134,37 @@ test("summarizes pending kickoff governance intake rows before template writes",
       ]
     }
   );
+});
+
+test("prints a status summary for pending kickoff governance intake without writing templates", () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), "crm-v1-kickoff-intake-"));
+  const intakePath = path.join(tempDir, "intake.json");
+  writeFileSync(intakePath, generateKickoffGovernanceEvidenceIntakeTemplate({
+    generatedAt: "2026-06-22T00:40:00.000Z"
+  }));
+
+  let output = "";
+  assert.throws(
+    () => {
+      execFileSync(process.execPath, [
+        "scripts/v1-kickoff-governance-evidence-intake.mjs",
+        "--input",
+        intakePath,
+        "--status"
+      ], {
+        cwd: process.cwd(),
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"]
+      });
+    },
+    (error) => {
+      output = `${error.stdout}${error.stderr}`;
+      return error.status === 1;
+    }
+  );
+
+  assert.match(output, /# Kickoff Governance Intake Status/);
+  assert.match(output, /Ready rows: `0\/14`/);
+  assert.match(output, /Pending rows: `14`/);
+  assert.match(output, /\| product-owner\.md \| owner \| 产品负责人 \| Evidence status must be `Ready` before writing templates\.; Owner or approver is incomplete\.; Closure value is incomplete\.; Confirmation date must use YYYY-MM-DD\.; Confirmation source is incomplete\. \|/);
 });
