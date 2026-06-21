@@ -99,7 +99,7 @@ jobs:
   "scripts/v1-go-no-go-meeting.mjs": "generateV1GoNoGoMeetingMarkdown\nDecision Recommendation: No-Go\nFinal Signoff Table\nKickoff Governance\nUAT Environment Evidence\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-go-no-go-meeting.test.mjs": "generates a No-Go meeting pack that blocks approval until validators pass\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-external-uat-request.mjs": "generateV1ExternalUatRequestMarkdown\ngenerateV1ExternalUatBlockersJson\ngenerateV1ExternalUatBlockersFromFiles\ngenerateV1ExternalUatClosureChecklistMarkdown\ngenerateV1ExternalUatClosureChecklistFromFiles\ngenerateV1ExternalUatEvidenceIntakeMarkdown\ngenerateV1ExternalUatEvidenceIntakeFromFiles\nRequest Status: External UAT Evidence Required\nRequest Board\nCRM V1 External UAT Closure Checklist\nCRM V1 External UAT Evidence Intake\nDo not record plaintext passwords\nnode scripts/v1-release-gate.mjs --json\n--json\n--closure-checklist\n--evidence-intake\nv1-external-uat-blockers.json\nv1-external-uat-closure-checklist.md\nv1-external-uat-evidence-intake.md\n",
-  "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\nexports machine-readable external UAT blockers with owner routing and validation commands\ngenerates an external UAT closure checklist grouped by owner side\ngenerates an external UAT evidence intake checklist tied to manifest ids\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-external-uat-request.test.mjs": "generates a No-Go external UAT request packet with source documents and validation commands\nexports machine-readable external UAT blockers with owner routing and validation commands\ndeduplicates machine-readable blockers by gate and check id\ngenerates an external UAT closure checklist grouped by owner side\ngenerates an external UAT evidence intake checklist tied to manifest ids\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-generated-docs-check.mjs": "evaluateGeneratedDocsSnapshot\nGenerated document is stale\nvalidation-status-current-commit\n",
   "scripts/v1-generated-docs-check.test.mjs": "fails when a generated document drifts from its generator\nfails when the validation status document is not bound to the current git commit\n",
   "scripts/v1-release-gate-status-check.mjs": "evaluateV1ReleaseGateStatusSnapshot\nrequired-checks\nresult-shape\ndecision-consistency\nlive-release-gate-match\nevaluateV1ReleaseGateFromFiles\nnode scripts/v1-release-gate-status-check.mjs\n",
@@ -382,6 +382,19 @@ test("fails when the external UAT request generator omits the machine-readable b
       .replace("v1-external-uat-blockers.json\n", ""),
     "scripts/v1-external-uat-request.test.mjs": completeSnapshot["scripts/v1-external-uat-request.test.mjs"]
       .replace("exports machine-readable external UAT blockers with owner routing and validation commands\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-external-uat-request-pack"));
+});
+
+test("fails when the external UAT request tests omit blocker deduplication coverage", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-external-uat-request.test.mjs": completeSnapshot["scripts/v1-external-uat-request.test.mjs"]
+      .replace("deduplicates machine-readable blockers by gate and check id\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

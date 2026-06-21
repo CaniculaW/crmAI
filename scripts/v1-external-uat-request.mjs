@@ -237,7 +237,7 @@ function collectBlockers({
     automatedReportPath
   };
 
-  return [
+  const rows = [
     ...blockerRows("Readiness", readinessResult, paths),
     ...blockerRows("Kickoff Governance", kickoffResult, paths),
     ...blockerRows("UAT Launch Intake", launchIntakeResult, paths),
@@ -250,6 +250,16 @@ function collectBlockers({
     ...blockerRows("UAT Signoff Register", signoffRegisterResult, paths),
     ...blockerRows("Release Gate", releaseGateResult, paths)
   ];
+
+  const seen = new Set();
+  return rows.filter((row) => {
+    const key = `${row.gate}::${row.checkId}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }
 
 function escapeMarkdownTableCell(value) {

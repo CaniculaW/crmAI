@@ -182,6 +182,40 @@ test("exports machine-readable external UAT blockers with owner routing and vali
   assert.match(releaseGateBlocker.validationCommand, /node scripts\/v1-release-gate\.mjs --json/);
 });
 
+test("deduplicates machine-readable blockers by gate and check id", () => {
+  const duplicatedEvidence = {
+    ok: false,
+    decision: "No-Go",
+    failed: [
+      { id: "uat-business-cases", message: "Missing passed UAT evidence: UAT-001" },
+      { id: "uat-business-cases", message: "Missing passed UAT evidence: UAT-001" }
+    ]
+  };
+
+  const json = externalUatRequest.generateV1ExternalUatBlockersJson({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: { ok: true, decision: "Go", failed: [] },
+    launchIntakeResult: { ok: true, decision: "Go", failed: [] },
+    environmentResult: { ok: true, decision: "Go", failed: [] },
+    evidenceResult: duplicatedEvidence,
+    manifestResult: { ok: true, decision: "Go", failed: [] },
+    trackerResult: { ok: true, decision: "Go", failed: [] },
+    defectRegisterResult: { ok: true, decision: "Go", failed: [] },
+    signoffRegisterResult: { ok: true, decision: "Go", failed: [] },
+    releaseGateResult: { ok: false, decision: "No-Go", failed: [] }
+  });
+
+  const payload = JSON.parse(json);
+  const businessCaseRows = payload.blockers.filter((blocker) => (
+    blocker.gate === "UAT Evidence Pack" && blocker.checkId === "uat-business-cases"
+  ));
+
+  assert.equal(payload.summary.totalBlockers, 1);
+  assert.equal(payload.summary.byOwnerSide["业务UAT"], 1);
+  assert.equal(businessCaseRows.length, 1);
+});
+
 test("generates an external UAT closure checklist grouped by owner side", () => {
   assert.equal(typeof generateV1ExternalUatClosureChecklistMarkdown, "function");
 
