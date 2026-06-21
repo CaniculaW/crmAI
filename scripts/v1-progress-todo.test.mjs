@@ -1,0 +1,111 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { generateV1ProgressTodoMarkdown } from "./v1-progress-todo.mjs";
+
+const blockersPayload = {
+  status: "External UAT Evidence Required",
+  decision: "No-Go",
+  ok: false,
+  summary: {
+    totalBlockers: 4,
+    byOwnerSide: {
+      "项目/产品": 4
+    },
+    byClosurePhase: {
+      "1-governance": 4
+    },
+    closurePhases: [
+      {
+        phase: "1-governance",
+        order: 10,
+        totalBlockers: 4,
+        byOwnerSide: {
+          "项目/产品": 4
+        }
+      }
+    ],
+    nextClosurePhase: {
+      phase: "1-governance",
+      order: 10,
+      totalBlockers: 4,
+      byOwnerSide: {
+        "项目/产品": 4
+      },
+      blockerIds: [
+        "Kickoff Governance/project-go-decision",
+        "Kickoff Governance/required-owners",
+        "Kickoff Governance/scope-freeze",
+        "Release Gate/kickoff-governance"
+      ],
+      sourceDocuments: [
+        "docs/meeting-notes/crm-kickoff-minutes.md"
+      ],
+      validationCommands: [
+        "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
+        "node scripts/v1-release-gate.mjs --json"
+      ]
+    }
+  },
+  blockers: [
+    {
+      blockerId: "Kickoff Governance/required-owners",
+      gate: "Kickoff Governance",
+      checkId: "required-owners",
+      ownerSide: "项目/产品",
+      closurePhase: "1-governance",
+      sourceDocument: "docs/meeting-notes/crm-kickoff-minutes.md",
+      validationCommand: "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
+      message: "Incomplete kickoff owners: 产品负责人"
+    }
+  ]
+};
+
+test("generates a V1 progress TODO board from blockers", () => {
+  const markdown = generateV1ProgressTodoMarkdown({
+    generatedAt: "2026-06-21T15:00:00.000Z",
+    blockersPayload
+  });
+
+  assert.match(markdown, /# CRM V1 Progress TODO/);
+  assert.match(markdown, /Generated at: 2026-06-21T15:00:00\.000Z/);
+  assert.match(markdown, /Overall decision: `No-Go`/);
+  assert.match(markdown, /Open blockers: 4/);
+  assert.match(markdown, /Current task: `1-governance`/);
+  assert.match(markdown, /Current owner side: 项目\/产品/);
+  assert.match(markdown, /## TODOList/);
+  assert.match(markdown, /\| In Progress \| `1-governance` \| 4 \| 项目\/产品 \|/);
+  assert.match(markdown, /## Current Task Progress/);
+  assert.match(markdown, /Kickoff Governance\/required-owners/);
+  assert.match(markdown, /Incomplete kickoff owners: 产品负责人/);
+  assert.match(markdown, /## Task Switch Display Rule/);
+  assert.match(markdown, /当前任务/);
+  assert.match(markdown, /完成标准/);
+  assert.match(markdown, /验证命令/);
+  assert.match(markdown, /node scripts\/v1-kickoff-governance-validate\.mjs docs\/meeting-notes\/crm-kickoff-minutes\.md/);
+  assert.match(markdown, /node scripts\/v1-release-gate\.mjs --json/);
+});
+
+test("generates a closed progress board when no blockers remain", () => {
+  const markdown = generateV1ProgressTodoMarkdown({
+    generatedAt: "2026-06-21T15:00:00.000Z",
+    blockersPayload: {
+      status: "Closed",
+      decision: "Go",
+      ok: true,
+      summary: {
+        totalBlockers: 0,
+        byOwnerSide: {},
+        byClosurePhase: {},
+        closurePhases: [],
+        nextClosurePhase: null
+      },
+      blockers: []
+    }
+  });
+
+  assert.match(markdown, /Overall decision: `Go`/);
+  assert.match(markdown, /Open blockers: 0/);
+  assert.match(markdown, /Current task: `complete`/);
+  assert.match(markdown, /No open V1 blockers remain/);
+});

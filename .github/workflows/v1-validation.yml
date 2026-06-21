@@ -111,6 +111,12 @@ jobs:
       - name: Generate V1 external UAT blockers JSON
         run: node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json
 
+      - name: Run V1 progress TODO tests
+        run: node --test scripts/v1-progress-todo.test.mjs
+
+      - name: Generate V1 progress TODO board
+        run: node scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md
+
       - name: Run V1 generated docs consistency tests
         run: node --test scripts/v1-generated-docs-check.test.mjs
 

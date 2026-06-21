@@ -316,6 +316,14 @@ V1 外部UAT阻塞项JSON：
 node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-external-uat-blockers.json
 ```
 
+V1 进度 TODO 看板：
+
+```bash
+node scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md
+```
+
+该看板从 `docs/testing/v1-external-uat-blockers.json` 生成，固定展示总阻塞数、当前任务、阶段 TODOList、切换任务时应展示的进度信息和验证命令。
+
 V1 生成文档一致性检查：
 
 ```bash

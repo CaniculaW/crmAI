@@ -20,6 +20,7 @@
 - `docs/testing/v1-uat-environment-evidence.md`：用于记录具名测试环境、前后端地址、账号 Smoke、权限样本和浏览器 Smoke 证据。
 - `docs/testing/v1-uat-defect-register.md`：用于记录 P0/P1 缺陷闭环、回归证据和项目准出结论。
 - `docs/testing/v1-uat-signoff-register.md`：用于记录销售侧、管理侧、产品、测试、研发和项目负责人六方签署结论。
+- `docs/testing/v1-progress-todo.md`：用于展示当前 V1 总阻塞数、阶段 TODOList、当前任务、任务切换展示规则和对应验证命令。
 - `scripts/v1-uat-evidence-pack.mjs`：用于按具名测试环境参数生成 UAT 证据包草稿，不写入明文密码或 API Token。
 - `scripts/v1-uat-launch-intake-validate.mjs`：用于在正式 UAT 启动前校验具名环境、前后端 `http(s)` URL、40位 Git 提交号、具体参与人姓名、不得以角色标签替代参与人或账号保管 Owner、账号保管、结构化 UAT窗口、证据归档位置，以及启动输入证据引用是否指向已存在且非空的 `docs/` 留存工件或外部 URL。
 - `scripts/v1-kickoff-governance-validate.mjs`：用于在正式 UAT 准出前校验启动会负责人、业务验收人、负责人不得以角色标签替代具体姓名、`YYYY-MM-DD 至 YYYY-MM-DD` 上线周期、V1范围冻结、确认/冻结证据引用是否指向已存在且非空的 `docs/` 留存工件或外部 URL、项目 Go 结论和敏感材料。
@@ -237,6 +238,14 @@ node scripts/v1-external-uat-request.mjs --json --output docs/testing/v1-externa
 ```
 
 该 JSON 按责任侧、来源 gate、check id、源文档和验证命令输出当前 No-Go 阻塞项，供看板或团队 Agent 认领补证工作。
+
+生成或更新 V1 进度 TODO 看板时，执行：
+
+```bash
+node scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md
+```
+
+该看板从机器可读阻塞项 JSON 生成，必须作为后续任务切换时的统一进度展示依据；切换任务时展示上一任务验证证据、当前任务、完成标准和验证命令。
 
 生成聚合状态报告、UAT行动计划、逐项执行包或 Go/No-Go 会议包后，执行生成文档一致性检查：
 

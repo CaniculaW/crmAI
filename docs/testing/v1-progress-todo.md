@@ -1,17 +1,34 @@
-# CRM V1 Next Closure Phase Handoff
+# CRM V1 Progress TODO
 
-Generated at: 2026-06-21T15:00:49.593Z
+Generated at: 2026-06-21T15:00:59.954Z
 
-Overall: No-Go
+Overall status: `External UAT Evidence Required`
+Overall decision: `No-Go`
+Open blockers: 43
+Current task: `1-governance`
+Current owner side: 项目/产品
 
-Do not record plaintext passwords, bearer tokens, API keys, or unmasked account custody secrets in closure evidence.
+Do not record plaintext passwords, bearer tokens, API keys, or unmasked account custody secrets in progress evidence.
 
-Phase: `1-governance`
-Order: 10
+## TODOList
+
+| Status | Phase | Open blockers | Owner side | Completion standard |
+|---|---|---:|---|---|
+| In Progress | `1-governance` | 4 | 项目/产品 | Source validators PASS and final release gate returns Go |
+| Pending | `2-uat-launch` | 5 | 项目/产品 | Source validators PASS and final release gate returns Go |
+| Pending | `2-uat-environment` | 4 | 测试 | Source validators PASS and final release gate returns Go |
+| Pending | `3-uat-evidence` | 22 | 业务UAT, 测试, 项目/产品 | Source validators PASS and final release gate returns Go |
+| Pending | `4-defect-closure` | 4 | 测试 | Source validators PASS and final release gate returns Go |
+| Pending | `5-signoff` | 3 | 项目/产品 | Source validators PASS and final release gate returns Go |
+| Pending | `6-final-go-decision` | 1 | 项目/产品 | Source validators PASS and final release gate returns Go |
+
+## Current Task Progress
+
+Current task: `1-governance`
 Open blockers: 4
 Owner side: 项目/产品
-Blocker IDs: `Kickoff Governance/project-go-decision`, `Kickoff Governance/required-owners`, `Kickoff Governance/scope-freeze`, `Release Gate/kickoff-governance`
 Source documents: `docs/meeting-notes/crm-kickoff-minutes.md`
+
 Validation commands:
 - `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md`
 - `node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md`
@@ -23,6 +40,12 @@ Validation commands:
 | Open | Kickoff Governance/project-go-decision | Kickoff Governance | project-go-decision | 项目/产品 | docs/meeting-notes/crm-kickoff-minutes.md | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | Kickoff governance decision is No-Go; V1 validation requires Go. |
 | Open | Release Gate/kickoff-governance | Release Gate | kickoff-governance | 项目/产品 | docs/meeting-notes/crm-kickoff-minutes.md | `node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md` | Kickoff governance failed: required-owners, scope-freeze, project-go-decision |
 
-Do not mark this phase Closed until every listed source document validates PASS and the final release gate returns Go.
+## Task Switch Display Rule
 
-Note: This handoff is generated from validator output and only lists the earliest open closure phase. Update source evidence documents, then regenerate this file.
+每次切换任务时必须展示：
+- 上一任务：完成状态和验证证据。
+- 当前任务：TODOList 中的阶段、责任侧、阻塞数。
+- 完成标准：对应源文档 validator PASS，最终 release gate 返回 Go。
+- 验证命令：本节列出的命令或下一闭环阶段交接包中的命令。
+
+Note: This progress board is generated from machine-readable V1 blocker output. Update source evidence documents, regenerate blocker output, then regenerate this board.

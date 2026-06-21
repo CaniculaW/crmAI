@@ -15,6 +15,7 @@ const MARKDOWN_DOCS = [
   "docs/testing/v1-uat-execution-pack.md",
   "docs/testing/v1-go-no-go-meeting.md",
   "docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
+  "docs/testing/v1-progress-todo.md",
   "docs/testing/v1-external-uat-request.md",
   "docs/testing/v1-external-uat-closure-checklist.md",
   "docs/testing/v1-external-uat-evidence-intake.md",
@@ -57,6 +58,7 @@ test("fails when a generated document drifts from its generator", () => {
     "docs/testing/v1-uat-execution-pack.md": "# Generated\n\nCurrent content\n",
     "docs/testing/v1-go-no-go-meeting.md": "# Generated\n\nCurrent content\n",
     "docs/meeting-notes/crm-kickoff-governance-closure-intake.md": "# Generated\n\nCurrent content\n",
+    "docs/testing/v1-progress-todo.md": "# Generated\n\nCurrent content\n",
     "docs/testing/v1-external-uat-request.md": "# Generated\n\nStale external request\n",
     "docs/testing/v1-external-uat-closure-checklist.md": "# Generated\n\nCurrent content\n",
     "docs/testing/v1-external-uat-evidence-intake.md": "# Generated\n\nCurrent content\n",
@@ -73,6 +75,7 @@ test("fails when a generated document drifts from its generator", () => {
       "docs/testing/v1-uat-execution-pack.md": () => "# Generated\n\nCurrent content\n",
       "docs/testing/v1-go-no-go-meeting.md": () => "# Generated\n\nCurrent content\n",
       "docs/meeting-notes/crm-kickoff-governance-closure-intake.md": () => "# Generated\n\nCurrent content\n",
+      "docs/testing/v1-progress-todo.md": () => "# Generated\n\nCurrent content\n",
       "docs/testing/v1-external-uat-request.md": () => "# Generated\n\nCurrent content\n",
       "docs/testing/v1-external-uat-closure-checklist.md": () => "# Generated\n\nCurrent content\n",
       "docs/testing/v1-external-uat-evidence-intake.md": () => "# Generated\n\nCurrent content\n",
@@ -161,6 +164,25 @@ test("fails when the generated kickoff governance closure intake is missing", ()
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "docs/meeting-notes/crm-kickoff-governance-closure-intake.md"));
+});
+
+test("fails when the generated V1 progress TODO board is missing", () => {
+  const content = "# Generated\n\nCurrent content\n";
+  const rootDir = writeSnapshot({
+    ...Object.fromEntries(MARKDOWN_DOCS
+      .filter((docPath) => docPath !== "docs/testing/v1-progress-todo.md")
+      .map((docPath) => [docPath, content])),
+    "docs/testing/v1-external-uat-blockers.json": "{\"status\":\"External UAT Evidence Required\"}\n",
+    "docs/testing/v1-release-gate-status.json": "{\"result\":\"FAIL\"}\n"
+  });
+
+  const result = evaluateGeneratedDocsSnapshot({
+    rootDir,
+    generators: Object.fromEntries(DOCS.map((docPath) => [docPath, () => content]))
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "docs/testing/v1-progress-todo.md"));
 });
 
 test("fails when the generated external UAT evidence intake checklist is missing", () => {

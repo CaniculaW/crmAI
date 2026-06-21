@@ -34,6 +34,10 @@ test("tracks the kickoff governance closure intake as current V1 evidence", () =
   assert.ok(CURRENT_V1_EVIDENCE_DOCS.includes("docs/meeting-notes/crm-kickoff-governance-closure-intake.md"));
 });
 
+test("tracks the V1 progress TODO board as current V1 evidence", () => {
+  assert.ok(CURRENT_V1_EVIDENCE_DOCS.includes("docs/testing/v1-progress-todo.md"));
+});
+
 test("tracks the README final handoff entrypoint as current V1 evidence", () => {
   assert.ok(CURRENT_V1_EVIDENCE_DOCS.includes("README.md"));
 });
