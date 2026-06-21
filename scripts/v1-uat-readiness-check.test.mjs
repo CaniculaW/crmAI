@@ -9,9 +9,12 @@ jobs:
   deployment-config:
     steps:
       - run: docker compose -f compose.v1-test.yml config
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
       - run: node scripts/v1-deployment-config-check.mjs
       - run: node --test scripts/*.test.mjs
       - run: node --test scripts/v1-deployment-config-check.test.mjs
@@ -580,7 +583,21 @@ test("fails when V1 validation checkout cannot verify status commit freshness", 
   const snapshot = {
     ...completeSnapshot,
     ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
-      .replace("      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 2\n", "")
+      .replace("      - uses: actions/checkout@v7\n        with:\n          fetch-depth: 2\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "workflow-v1-validation"));
+});
+
+test("fails when V1 validation uses deprecated Node 20 based GitHub Actions", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
+      .replace("actions/checkout@v7", "actions/checkout@v4")
+      .replace("actions/setup-node@v6", "actions/setup-node@v4")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

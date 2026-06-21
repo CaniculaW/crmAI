@@ -636,7 +636,9 @@ export function evaluateReadinessSnapshot(snapshot) {
       "deployment-config",
       "backend:",
       "frontend:",
-      "actions/checkout@v4",
+      "actions/checkout@v7",
+      "actions/setup-node@v6",
+      'node-version: "22"',
       "fetch-depth: 2",
       "docker compose -f compose.v1-test.yml config",
       "node scripts/v1-deployment-config-check.mjs",
@@ -651,7 +653,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "npm test",
       "npm run build"
     ]),
-    "GitHub Actions V1 Validation covers deployment config, the complete scripts test suite, backend, PostgreSQL integration, frontend tests, build, and checkout history depth for validation status commit freshness."
+    "GitHub Actions V1 Validation covers current GitHub action runtime versions, deployment config, the complete scripts test suite, backend, PostgreSQL integration, frontend tests, build, and checkout history depth for validation status commit freshness."
   ));
 
   const compose = snapshot["compose.v1-test.yml"] ?? "";
