@@ -114,8 +114,8 @@ jobs:
   "scripts/v1-external-uat-request-coverage-check.test.mjs": "fails when the external UAT request packet omits a failed validator check\n",
   "scripts/v1-final-evidence-handoff-check.mjs": "evaluateV1FinalEvidenceHandoffSnapshot\nhandoff-materials-present\nrelease-gate-status-readable\nexternal-blockers-visible\nno-go-handoff-guardrail\nhandoff-command-coverage\nnode scripts/v1-evidence-reference-check.mjs docs/testing/v1-uat-evidence-manifest.md\nnode scripts/v1-acceptance-checklist-check.mjs\nnode scripts/v1-uat-coverage-check.mjs\nnode scripts/v1-traceability-check.mjs\nnode scripts/v1-final-evidence-handoff-check.mjs\n",
   "scripts/v1-final-evidence-handoff-check.test.mjs": "fails when final handoff materials claim V1 acceptance while release gate is No-Go\nfails when final handoff materials omit acceptance and traceability commands\nfails when No-Go final handoff materials hide external UAT blockers\nfails when generated UAT handoff packets are missing\n",
-  "scripts/v1-secret-scan-check.mjs": "evaluateV1SecretScanSnapshot\ncurrent-v1-evidence-no-secrets\n",
-  "scripts/v1-secret-scan-check.test.mjs": "fails when a current V1 evidence document contains a bearer token\n",
+  "scripts/v1-secret-scan-check.mjs": "evaluateV1SecretScanSnapshot\ncurrent-v1-evidence-no-secrets\nREADME.md\n",
+  "scripts/v1-secret-scan-check.test.mjs": "fails when a current V1 evidence document contains a bearer token\ntracks the README final handoff entrypoint as current V1 evidence\n",
   "scripts/v1-deployment-config-check.mjs": "evaluateDeploymentConfigSnapshot\nCRM_BACKEND_BUILD_IMAGE\nCRM_FRONTEND_RUNTIME_IMAGE\n",
   "scripts/v1-deployment-config-check.test.mjs": "configurable for mirrored registries\n",
   "docs/releases/v1.0.0-rc.8.md": "v1.0.0-rc.8\nGitHub Actions `V1 Validation`\nsuccess\nUAT\nGo/No-Go\nV1-local-uat-20260618\nCRM_BACKEND_BUILD_IMAGE\nv1-uat-evidence-pack-validate\nV1演示业务数据\n仍需在具名测试环境完成验收签署\n",
@@ -1360,6 +1360,21 @@ test("fails when the V1 secret scan checker is missing from readiness materials"
     ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
       .replace("      - run: node --test scripts/v1-secret-scan-check.test.mjs\n", "")
       .replace("      - run: node scripts/v1-secret-scan-check.mjs\n", "")
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-secret-scan-checker"));
+});
+
+test("fails when the V1 secret scan checker omits README handoff coverage", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-secret-scan-check.mjs": completeSnapshot["scripts/v1-secret-scan-check.mjs"]
+      .replace("README.md\n", ""),
+    "scripts/v1-secret-scan-check.test.mjs": completeSnapshot["scripts/v1-secret-scan-check.test.mjs"]
+      .replace("tracks the README final handoff entrypoint as current V1 evidence\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

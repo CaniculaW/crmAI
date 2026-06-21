@@ -853,9 +853,11 @@ export function evaluateReadinessSnapshot(snapshot) {
       "node scripts/v1-secret-scan-check.mjs",
       "evaluateV1SecretScanSnapshot",
       "current-v1-evidence-no-secrets",
+      "README.md",
+      "tracks the README final handoff entrypoint as current V1 evidence",
       "fails when a current V1 evidence document contains a bearer token"
     ]),
-    "V1 secret scan checker is tested and wired into CI to keep current V1 evidence documents free of obvious plaintext secrets."
+    "V1 secret scan checker is tested and wired into CI to keep current V1 evidence documents and final handoff entrypoints free of obvious plaintext secrets."
   ));
 
   const release = snapshot["docs/releases/v1.0.0-rc.8.md"] ?? "";
