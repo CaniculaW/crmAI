@@ -340,6 +340,41 @@ test("exports ordered blocker closure phase summaries", () => {
   );
 });
 
+test("exports next closure phase handoff metadata", () => {
+  const json = externalUatRequest.generateV1ExternalUatBlockersJson({
+    generatedAt: "2026-06-19T12:30:00+08:00",
+    readinessResult: passingReadiness,
+    kickoffResult: failingKickoff,
+    launchIntakeResult: failingLaunchIntake,
+    environmentResult: failingEnvironment,
+    evidenceResult: failingEvidence,
+    manifestResult: failingManifest,
+    trackerResult: failingTracker,
+    defectRegisterResult: failingDefects,
+    signoffRegisterResult: failingSignoffs,
+    releaseGateResult: failingReleaseGate
+  });
+
+  const payload = JSON.parse(json);
+  const nextPhase = payload.summary.nextClosurePhase;
+  const firstPhase = payload.summary.closurePhases[0];
+
+  assert.equal(nextPhase.phase, "1-governance");
+  assert.equal(nextPhase.order, 10);
+  assert.equal(nextPhase.totalBlockers, firstPhase.totalBlockers);
+  assert.deepEqual(nextPhase.byOwnerSide, firstPhase.byOwnerSide);
+  assert.deepEqual(nextPhase.blockerIds, [
+    "Kickoff Governance/required-owners",
+    "Kickoff Governance/scope-freeze",
+    "Release Gate/kickoff-governance"
+  ]);
+  assert.deepEqual(nextPhase.sourceDocuments, ["docs/meeting-notes/crm-kickoff-minutes.md"]);
+  assert.deepEqual(nextPhase.validationCommands, [
+    "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
+    "node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md"
+  ]);
+});
+
 test("deduplicates machine-readable blockers by gate and check id", () => {
   const duplicatedEvidence = {
     ok: false,

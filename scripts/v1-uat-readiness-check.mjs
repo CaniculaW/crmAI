@@ -322,6 +322,17 @@ function hasUatLaunchIntake(content) {
   ]);
 }
 
+function sortedUniqueValues(values) {
+  return Array.from(new Set(values)).sort();
+}
+
+function arraysEqual(left, right) {
+  return Array.isArray(left)
+    && Array.isArray(right)
+    && left.length === right.length
+    && left.every((value, index) => value === right[index]);
+}
+
 function hasExternalUatBlockersJson(content) {
   try {
     const payload = JSON.parse(content);
@@ -371,6 +382,27 @@ function hasExternalUatBlockersJson(content) {
         typeof blocker.blockerId === "string"
         && blocker.blockerId === `${blocker.gate}/${blocker.checkId}`
       ));
+    const nextClosurePhase = payload.summary?.nextClosurePhase;
+    const firstClosurePhase = closurePhaseDetails[0];
+    const nextPhaseBlockers = firstClosurePhase
+      ? (payload.blockers ?? []).filter((blocker) => blocker.closurePhase === firstClosurePhase.phase)
+      : [];
+    const nextPhaseOwnerCounts = nextPhaseBlockers.reduce((counts, blocker) => {
+      counts[blocker.ownerSide] = (counts[blocker.ownerSide] ?? 0) + 1;
+      return counts;
+    }, {});
+    const nextClosurePhaseMatches = typeof nextClosurePhase === "object"
+      && nextClosurePhase !== null
+      && typeof firstClosurePhase === "object"
+      && nextClosurePhase.phase === firstClosurePhase.phase
+      && nextClosurePhase.order === firstClosurePhase.order
+      && nextClosurePhase.totalBlockers === firstClosurePhase.totalBlockers
+      && typeof nextClosurePhase.byOwnerSide === "object"
+      && Object.keys(nextPhaseOwnerCounts).length === Object.keys(nextClosurePhase.byOwnerSide).length
+      && Object.entries(nextPhaseOwnerCounts).every(([ownerSide, count]) => nextClosurePhase.byOwnerSide[ownerSide] === count)
+      && arraysEqual(nextClosurePhase.blockerIds, nextPhaseBlockers.map((blocker) => blocker.blockerId).sort())
+      && arraysEqual(nextClosurePhase.sourceDocuments, sortedUniqueValues(nextPhaseBlockers.map((blocker) => blocker.sourceDocument)))
+      && arraysEqual(nextClosurePhase.validationCommands, sortedUniqueValues(nextPhaseBlockers.map((blocker) => blocker.validationCommand)));
 
     return payload.status === "External UAT Evidence Required"
       && payload.decision === "No-Go"
@@ -385,6 +417,7 @@ function hasExternalUatBlockersJson(content) {
       && ownerSummaryMatches
       && closurePhaseSummaryMatches
       && closurePhaseDetailsMatch
+      && nextClosurePhaseMatches
       && blockerIdsAreStable
       && payload.blockers.some((blocker) => (
         blocker.gate === "Release Gate"
@@ -869,6 +902,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "exports stable machine-readable blocker ids",
       "exports machine-readable blocker closure sequencing",
       "exports ordered blocker closure phase summaries",
+      "exports next closure phase handoff metadata",
       "keeps external UAT request open when validator blockers remain despite release gate Go",
       "keeps blockers JSON No-Go when validator blockers remain despite release gate Go",
       "generates an external UAT closure checklist grouped by owner side",
@@ -878,7 +912,7 @@ export function evaluateReadinessSnapshot(snapshot) {
       "keeps evidence intake manifest ids assigned to a single intake row",
       "generates a No-Go external UAT request packet with source documents and validation commands"
     ]),
-    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board, closure checklist, evidence intake checklist, and machine-readable blocker JSON with stable blocker IDs, closure sequencing, and ordered phase summaries for dashboards and validation bots."
+    "V1 external UAT request packet is tested and turns No-Go validators into a stakeholder-facing request board, closure checklist, evidence intake checklist, and machine-readable blocker JSON with stable blocker IDs, closure sequencing, ordered phase summaries, and next closure phase handoff metadata for dashboards and validation bots."
   ));
 
   const generatedDocsChecker = snapshot["scripts/v1-generated-docs-check.mjs"] ?? "";

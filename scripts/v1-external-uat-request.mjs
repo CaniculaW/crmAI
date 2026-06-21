@@ -84,6 +84,25 @@ function closurePhaseSummaries(blockers) {
   return Array.from(phaseMap.values()).sort((left, right) => left.order - right.order || left.phase.localeCompare(right.phase));
 }
 
+function uniqueSorted(values) {
+  return Array.from(new Set(values)).sort();
+}
+
+function nextClosurePhaseSummary(blockers, closurePhases) {
+  const nextPhase = closurePhases[0];
+  if (!nextPhase) {
+    return null;
+  }
+
+  const phaseBlockers = blockers.filter((blocker) => blocker.closurePhase === nextPhase.phase);
+  return {
+    ...nextPhase,
+    blockerIds: phaseBlockers.map((blocker) => blocker.blockerId).sort(),
+    sourceDocuments: uniqueSorted(phaseBlockers.map((blocker) => blocker.sourceDocument)),
+    validationCommands: uniqueSorted(phaseBlockers.map((blocker) => blocker.validationCommand))
+  };
+}
+
 function isExternalUatClosed(releaseGateResult, blockers) {
   return blockers.length === 0 && releaseGateResult.ok && releaseGateResult.decision === "Go";
 }
@@ -594,6 +613,7 @@ export function generateV1ExternalUatBlockersJson({
     automatedReportPath
   });
   const isGo = isExternalUatClosed(releaseGateResult, blockers);
+  const closurePhases = closurePhaseSummaries(blockers);
   const payload = {
     generatedAt,
     status: isGo ? "No External UAT Requests Open" : "External UAT Evidence Required",
@@ -603,7 +623,8 @@ export function generateV1ExternalUatBlockersJson({
       totalBlockers: blockers.length,
       byOwnerSide: countBy(blockers, "ownerSide"),
       byClosurePhase: countBy(blockers, "closurePhase"),
-      closurePhases: closurePhaseSummaries(blockers)
+      closurePhases,
+      nextClosurePhase: nextClosurePhaseSummary(blockers, closurePhases)
     },
     blockers
   };
