@@ -157,6 +157,20 @@ node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write
 
 该命令会在 `docs/meeting-notes/evidence/kickoff/` 下生成 14 个负责人/范围冻结补证模板；模板默认 `Pending`，不代表项目已批准或 V1 已 Go。
 
+V1 启动治理一次性补证收集表：
+
+```bash
+node scripts/v1-kickoff-governance-evidence-intake.mjs --template --output docs/meeting-notes/evidence/kickoff/intake.json
+```
+
+项目/产品侧把 `intake.json` 中 14 项全部补齐为真实姓名、闭环值、确认来源和 `docs/` 或 `http(s)` 留存证据引用后，再执行：
+
+```bash
+node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --write
+```
+
+该命令只有在 14 项全部为 `Ready` 且具名人员、闭环值和留存证据引用完整时，才会批量写入 14 个启动治理补证模板；任一项仍为 `Pending` 或使用角色标签时会拒绝写入。
+
 V1 启动治理补证应用器：
 
 ```bash

@@ -12,6 +12,8 @@ import {
 
 const DEFAULT_BLOCKERS_JSON_PATH = "docs/testing/v1-external-uat-blockers.json";
 const DEFAULT_OUTPUT_PATH = "docs/testing/v1-progress-todo.md";
+const KICKOFF_GOVERNANCE_INTAKE_TEMPLATE_COMMAND = "node scripts/v1-kickoff-governance-evidence-intake.mjs --template --output docs/meeting-notes/evidence/kickoff/intake.json";
+const KICKOFF_GOVERNANCE_INTAKE_WRITE_COMMAND = "node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --write";
 const KICKOFF_GOVERNANCE_APPLY_COMMAND = "node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write";
 const CLOSURE_PHASE_ORDER = [
   "1-governance",
@@ -103,6 +105,9 @@ function appendKickoffGovernanceEvidenceReadiness(lines, readiness) {
   lines.push("## Current Task Evidence Readiness");
   lines.push("");
   lines.push(`Evidence templates ready: \`${readyKickoffEvidenceCount(readiness)}/${rows.length}\``);
+  lines.push("Bulk intake commands before applying:");
+  lines.push(`- \`${KICKOFF_GOVERNANCE_INTAKE_TEMPLATE_COMMAND}\``);
+  lines.push(`- \`${KICKOFF_GOVERNANCE_INTAKE_WRITE_COMMAND}\``);
   lines.push("Apply command after all templates are Ready:");
   lines.push(`- \`${KICKOFF_GOVERNANCE_APPLY_COMMAND}\``);
   lines.push("");

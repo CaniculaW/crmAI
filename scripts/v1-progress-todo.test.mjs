@@ -117,6 +117,8 @@ test("generates a V1 progress TODO board from blockers", () => {
   assert.match(markdown, /## Current Task Progress/);
   assert.match(markdown, /## Current Task Evidence Readiness/);
   assert.match(markdown, /Evidence templates ready: `0\/14`/);
+  assert.match(markdown, /node scripts\/v1-kickoff-governance-evidence-intake\.mjs --template --output docs\/meeting-notes\/evidence\/kickoff\/intake\.json/);
+  assert.match(markdown, /node scripts\/v1-kickoff-governance-evidence-intake\.mjs --input docs\/meeting-notes\/evidence\/kickoff\/intake\.json --write/);
   assert.match(markdown, /node scripts\/v1-kickoff-governance-evidence-apply\.mjs --decision Go --write/);
   assert.match(markdown, /\| Pending \| docs\/meeting-notes\/evidence\/kickoff\/product-owner\.md \| owner \| 产品负责人 \| Evidence status must be `Ready` before applying\.; Closure value is incomplete\. \|/);
   assert.match(markdown, /\| Pending \| docs\/meeting-notes\/evidence\/kickoff\/v1-scope\.md \| scope \| V1 模块范围 \| Evidence status must be `Ready` before applying\.; Closure value is incomplete\. \|/);

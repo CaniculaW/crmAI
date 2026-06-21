@@ -159,6 +159,20 @@ node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write
 
 该命令会生成 7 个负责人确认模板和 7 个范围冻结模板；所有模板默认 `Pending`，只有补齐具名人员、确认来源、留存证据引用，并更新启动会纪要且 validator 返回 PASS 后，才能作为正式启动治理证据使用。
 
+生成启动治理一次性 JSON 补证收集表：
+
+```bash
+node scripts/v1-kickoff-governance-evidence-intake.mjs --template --output docs/meeting-notes/evidence/kickoff/intake.json
+```
+
+项目/产品侧把 14 项补齐为真实姓名、闭环值、确认来源和 `docs/` 或 `http(s)` 留存证据引用后，批量写入补证模板：
+
+```bash
+node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --write
+```
+
+要求：该命令只在 14 项全部为 `Ready`、具名人员不是角色标签、闭环值完整且留存证据引用合规时写入；任一项仍为 `Pending`、占位值或角色标签时会拒绝写入，避免把未签署证据误写为正式启动治理证据。
+
 模板全部补齐后应用到启动会纪要：
 
 ```bash

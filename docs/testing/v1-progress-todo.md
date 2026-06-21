@@ -1,6 +1,6 @@
 # CRM V1 Progress TODO
 
-Generated at: 2026-06-21T16:25:48.054Z
+Generated at: 2026-06-21T16:43:54.079Z
 
 Overall status: `External UAT Evidence Required`
 Overall decision: `No-Go`
@@ -36,6 +36,9 @@ Validation commands:
 ## Current Task Evidence Readiness
 
 Evidence templates ready: `0/14`
+Bulk intake commands before applying:
+- `node scripts/v1-kickoff-governance-evidence-intake.mjs --template --output docs/meeting-notes/evidence/kickoff/intake.json`
+- `node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --write`
 Apply command after all templates are Ready:
 - `node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write`
 

@@ -1,0 +1,242 @@
+#!/usr/bin/env node
+
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import {
+  DEFAULT_EVIDENCE_ROOT,
+  DEFAULT_KICKOFF_PATH,
+  KICKOFF_GOVERNANCE_TEMPLATE_REQUIREMENTS,
+  evaluateKickoffGovernanceEvidenceTemplates,
+  kickoffGovernanceEvidencePath
+} from "./v1-kickoff-governance-evidence-apply.mjs";
+
+function requiredClosureValue(filename, label) {
+  const values = {
+    "product-owner.md": "Named person, not a role label",
+    "sales-owner.md": "Named person, not a role label",
+    "manager-owner.md": "Named person, not a role label",
+    "dev-owner.md": "Named person, not a role label",
+    "frontend-owner.md": "Named person, not a role label",
+    "backend-owner.md": "Named person, not a role label",
+    "qa-owner.md": "Named person, not a role label",
+    "v1-scope.md": "Confirmed V1 sales foundation modules",
+    "v1-loop.md": "Confirmed end-to-end sales foundation flow",
+    "out-of-scope.md": "Confirmed later-version and out-of-scope items",
+    "schedule.md": "`YYYY-MM-DD 至 YYYY-MM-DD` with end after start",
+    "tech-stack.md": "Confirmed React + Ant Design, Java Spring Boot, PostgreSQL or approved change",
+    "acceptance-mode.md": "Confirmed sales-side and management-side acceptance mode",
+    "scope-freeze.md": "Confirm V1 only includes sales foundation loop and later-version items stay out"
+  };
+  return values[filename] ?? `Concrete closure value for ${label}`;
+}
+
+function targetRow(type, label) {
+  return `${type === "owner" ? "参会人" : "启动确认基线"}/${label}`;
+}
+
+function itemPath(evidenceRoot, filename) {
+  return kickoffGovernanceEvidencePath(evidenceRoot, filename);
+}
+
+function templateItem(requirement, evidenceRoot) {
+  const [filename, type, label, targetStatus] = requirement;
+  return {
+    filename,
+    type,
+    label,
+    evidenceStatus: "Pending",
+    targetStatus,
+    ownerOrApprover: "待填写",
+    closureValue: "待填写",
+    confirmationDate: "YYYY-MM-DD",
+    confirmationSource: "待填写，会议纪要、审批系统、邮件归档或外部系统 URL",
+    retainedEvidenceReference: itemPath(evidenceRoot, filename),
+    notes: "待填写",
+    requiredClosureValue: requiredClosureValue(filename, label)
+  };
+}
+
+export function generateKickoffGovernanceEvidenceIntakeTemplate({
+  generatedAt = new Date().toISOString(),
+  kickoffPath = DEFAULT_KICKOFF_PATH,
+  evidenceRoot = DEFAULT_EVIDENCE_ROOT
+} = {}) {
+  const payload = {
+    generatedAt,
+    decision: "Go",
+    kickoffPath,
+    evidenceRoot,
+    confirmationDate: "YYYY-MM-DD",
+    instructions: [
+      "Replace every 待填写 or placeholder value with real named owners, closure values, confirmation sources, and retained docs/ or http(s) evidence references.",
+      "Do not record plaintext passwords, bearer tokens, API keys, or unmasked account custody secrets.",
+      "Run this script with --input and --write only after every item is Ready."
+    ],
+    items: KICKOFF_GOVERNANCE_TEMPLATE_REQUIREMENTS.map((requirement) => templateItem(requirement, evidenceRoot))
+  };
+  return `${JSON.stringify(payload, null, 2)}\n`;
+}
+
+function intakeItemByFilename(intake) {
+  return new Map((intake.items ?? []).map((item) => [item.filename, item]));
+}
+
+function evidenceMarkdown({
+  item,
+  generatedAt,
+  kickoffPath,
+  evidenceRoot
+}) {
+  const evidencePath = itemPath(evidenceRoot, item.filename);
+  const confirmationDate = item.confirmationDate || "待填写";
+  const lines = [
+    `# CRM V1 Kickoff Governance Evidence - ${item.label}`,
+    "",
+    `Generated at: ${generatedAt}`,
+    "",
+    `Evidence type: \`${item.type}\``,
+    `Evidence status: \`${item.evidenceStatus}\``,
+    `Target status in kickoff minutes: \`${item.targetStatus}\``,
+    `Update target row: \`${kickoffPath}\` ${targetRow(item.type, item.label)}`,
+    "",
+    "Do not record plaintext passwords, bearer tokens, API keys, or unmasked account custody secrets in this evidence.",
+    "",
+    "## Evidence Intake",
+    "",
+    "| Field | Value |",
+    "|---|---|",
+    `| Named owner or approver | ${item.ownerOrApprover ?? ""} |`,
+    `| Closure value | ${item.closureValue ?? ""} |`,
+    `| Confirmation date | ${confirmationDate} |`,
+    `| Confirmation source | ${item.confirmationSource ?? ""} |`,
+    `| Retained evidence reference | ${item.retainedEvidenceReference ?? evidencePath} |`,
+    `| Notes | ${item.notes ?? ""} |`
+  ];
+  return `${lines.join("\n")}\n`;
+}
+
+export function buildKickoffGovernanceEvidenceTemplatesFromIntake(intake, {
+  generatedAt = intake?.generatedAt ?? new Date().toISOString(),
+  kickoffPath = intake?.kickoffPath ?? DEFAULT_KICKOFF_PATH,
+  evidenceRoot = intake?.evidenceRoot ?? DEFAULT_EVIDENCE_ROOT
+} = {}) {
+  const itemsByFilename = intakeItemByFilename(intake ?? {});
+  const templatesByPath = {};
+
+  for (const requirement of KICKOFF_GOVERNANCE_TEMPLATE_REQUIREMENTS) {
+    const [filename, type, label, targetStatus] = requirement;
+    const item = itemsByFilename.get(filename) ?? {};
+    const normalizedItem = {
+      ...item,
+      filename,
+      type,
+      label,
+      targetStatus
+    };
+    templatesByPath[itemPath(evidenceRoot, filename)] = evidenceMarkdown({
+      item: normalizedItem,
+      generatedAt,
+      kickoffPath,
+      evidenceRoot
+    });
+  }
+
+  const evaluation = evaluateKickoffGovernanceEvidenceTemplates(templatesByPath, { evidenceRoot });
+  if (!evaluation.ok) {
+    return {
+      ok: false,
+      failed: evaluation.failed
+    };
+  }
+
+  return {
+    ok: true,
+    failed: [],
+    templatesByPath
+  };
+}
+
+export function writeKickoffGovernanceEvidenceTemplatesFromIntake({
+  rootDir = process.cwd(),
+  intake
+} = {}) {
+  const result = buildKickoffGovernanceEvidenceTemplatesFromIntake(intake);
+  if (!result.ok) {
+    return result;
+  }
+
+  for (const [templatePath, content] of Object.entries(result.templatesByPath)) {
+    const absolutePath = path.resolve(rootDir, templatePath);
+    mkdirSync(path.dirname(absolutePath), { recursive: true });
+    writeFileSync(absolutePath, content);
+  }
+
+  return result;
+}
+
+function parseArgs(argv) {
+  const parsed = {
+    template: false,
+    inputPath: null,
+    outputPath: null,
+    write: false
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === "--template") {
+      parsed.template = true;
+    } else if (arg === "--input") {
+      parsed.inputPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--output") {
+      parsed.outputPath = argv[index + 1];
+      index += 1;
+    } else if (arg === "--write") {
+      parsed.write = true;
+    }
+  }
+
+  return parsed;
+}
+
+function printUsage() {
+  console.error("Usage: node scripts/v1-kickoff-governance-evidence-intake.mjs --template [--output intake.json]");
+  console.error("   or: node scripts/v1-kickoff-governance-evidence-intake.mjs --input intake.json --write");
+}
+
+const isCli = process.argv[1] === fileURLToPath(import.meta.url);
+
+if (isCli) {
+  const options = parseArgs(process.argv.slice(2));
+  if (options.template) {
+    const template = generateKickoffGovernanceEvidenceIntakeTemplate();
+    if (options.outputPath) {
+      writeFileSync(path.resolve(options.outputPath), template);
+      console.log(options.outputPath);
+    } else {
+      process.stdout.write(template);
+    }
+  } else if (options.inputPath) {
+    const intake = JSON.parse(readFileSync(path.resolve(options.inputPath), "utf8"));
+    const result = options.write
+      ? writeKickoffGovernanceEvidenceTemplatesFromIntake({ intake })
+      : buildKickoffGovernanceEvidenceTemplatesFromIntake(intake);
+    if (!result.ok) {
+      console.error("Kickoff governance intake is not ready:");
+      for (const failure of result.failed) {
+        console.error(`- ${failure.path}: ${failure.failures.join("; ")}`);
+      }
+      process.exitCode = 1;
+    } else {
+      for (const templatePath of Object.keys(result.templatesByPath)) {
+        console.log(templatePath);
+      }
+    }
+  } else {
+    printUsage();
+    process.exitCode = 1;
+  }
+}

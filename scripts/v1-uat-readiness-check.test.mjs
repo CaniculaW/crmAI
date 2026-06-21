@@ -39,6 +39,7 @@ jobs:
       - run: node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md
       - run: node --test scripts/v1-kickoff-governance-evidence-scaffold.test.mjs
       - run: node scripts/v1-kickoff-governance-evidence-scaffold.mjs --write
+      - run: node --test scripts/v1-kickoff-governance-evidence-intake.test.mjs
       - run: node --test scripts/v1-kickoff-governance-evidence-apply.test.mjs
       - run: node --test scripts/v1-external-uat-request.test.mjs
       - run: node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md
@@ -121,6 +122,8 @@ jobs:
   "scripts/v1-kickoff-governance-evidence-pack.test.mjs": "generates a kickoff governance evidence pack for the current 1-governance task\nuses custom target kickoff and evidence paths\n",
   "scripts/v1-kickoff-governance-evidence-scaffold.mjs": "generateKickoffGovernanceEvidenceScaffoldMarkdown\ngenerateKickoffGovernanceEvidenceScaffolds\nwriteKickoffGovernanceEvidenceScaffolds\nEvidence status: `Pending`\nThis scaffold is not approval evidence\n--write\n",
   "scripts/v1-kickoff-governance-evidence-scaffold.test.mjs": "generates pending kickoff owner evidence templates without approving governance\ngenerates every kickoff governance evidence scaffold path\n",
+  "scripts/v1-kickoff-governance-evidence-intake.mjs": "generateKickoffGovernanceEvidenceIntakeTemplate\nbuildKickoffGovernanceEvidenceTemplatesFromIntake\nwriteKickoffGovernanceEvidenceTemplatesFromIntake\n--template\n--input\n--write\nEvidence status: `Ready`\nKickoff governance intake is not ready\n",
+  "scripts/v1-kickoff-governance-evidence-intake.test.mjs": "generates a single JSON intake template covering every kickoff governance evidence item\nbuilds Ready kickoff governance evidence templates only from complete named intake\nrejects pending or role-label intake before writing Ready templates\n",
   "scripts/v1-kickoff-governance-evidence-apply.mjs": "applyKickoffGovernanceEvidenceToMarkdown\nevaluateKickoffGovernanceEvidenceTemplates\nEvidence status must be `Ready` before applying\n--decision\n--write\nKickoff governance evidence templates are not ready\n",
   "scripts/v1-kickoff-governance-evidence-apply.test.mjs": "applies complete Ready kickoff governance templates and produces validator-ready kickoff markdown\nkeeps kickoff markdown unchanged when any required evidence template is still Pending\n",
   "scripts/v1-progress-todo.mjs": "generateV1ProgressTodoMarkdown\ngenerateV1ProgressTodoFromFiles\nCRM V1 Progress TODO\nTODOList\nCurrent Task Progress\nCurrent Task Evidence Readiness\nEvidence templates ready:\nnode scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write\nTask Switch Snapshot\nSwitch readiness\nTask Switch Display Rule\nnode scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md\n",
@@ -851,6 +854,19 @@ test("fails when the kickoff governance evidence scaffold generator is missing",
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "kickoff-governance-evidence-scaffold-generator"));
+});
+
+test("fails when the kickoff governance evidence intake helper is missing", () => {
+  const result = evaluateReadinessSnapshot({
+    ...completeSnapshot,
+    ".github/workflows/v1-validation.yml": completeSnapshot[".github/workflows/v1-validation.yml"]
+      .replace("      - run: node --test scripts/v1-kickoff-governance-evidence-intake.test.mjs\n", ""),
+    "scripts/v1-kickoff-governance-evidence-intake.mjs": "",
+    "scripts/v1-kickoff-governance-evidence-intake.test.mjs": ""
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "kickoff-governance-evidence-intake-helper"));
 });
 
 test("fails when the kickoff governance evidence apply helper is missing", () => {

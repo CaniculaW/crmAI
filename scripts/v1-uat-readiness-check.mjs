@@ -66,6 +66,8 @@ const REQUIRED_ARTIFACTS = [
   "scripts/v1-kickoff-governance-evidence-pack.test.mjs",
   "scripts/v1-kickoff-governance-evidence-scaffold.mjs",
   "scripts/v1-kickoff-governance-evidence-scaffold.test.mjs",
+  "scripts/v1-kickoff-governance-evidence-intake.mjs",
+  "scripts/v1-kickoff-governance-evidence-intake.test.mjs",
   "scripts/v1-kickoff-governance-evidence-apply.mjs",
   "scripts/v1-kickoff-governance-evidence-apply.test.mjs",
   "scripts/v1-progress-todo.mjs",
@@ -1096,6 +1098,26 @@ export function evaluateReadinessSnapshot(snapshot) {
       "generates every kickoff governance evidence scaffold path"
     ]),
     "Kickoff governance evidence scaffold generator is tested and wired into CI to create Pending retained-evidence templates without claiming approval."
+  ));
+
+  const kickoffGovernanceEvidenceIntakeHelper = snapshot["scripts/v1-kickoff-governance-evidence-intake.mjs"] ?? "";
+  const kickoffGovernanceEvidenceIntakeHelperTest = snapshot["scripts/v1-kickoff-governance-evidence-intake.test.mjs"] ?? "";
+  checks.push(makeCheck(
+    "kickoff-governance-evidence-intake-helper",
+    includesAll(workflow + kickoffGovernanceEvidenceIntakeHelper + kickoffGovernanceEvidenceIntakeHelperTest, [
+      "node --test scripts/v1-kickoff-governance-evidence-intake.test.mjs",
+      "generateKickoffGovernanceEvidenceIntakeTemplate",
+      "buildKickoffGovernanceEvidenceTemplatesFromIntake",
+      "writeKickoffGovernanceEvidenceTemplatesFromIntake",
+      "--template",
+      "--input",
+      "--write",
+      "Kickoff governance intake is not ready",
+      "generates a single JSON intake template covering every kickoff governance evidence item",
+      "builds Ready kickoff governance evidence templates only from complete named intake",
+      "rejects pending or role-label intake before writing Ready templates"
+    ]),
+    "Kickoff governance evidence intake helper is tested and wired into CI to collect all 14 governance evidence rows as one JSON intake, while refusing Pending or role-label evidence before writing Ready templates."
   ));
 
   const kickoffGovernanceEvidenceApplyHelper = snapshot["scripts/v1-kickoff-governance-evidence-apply.mjs"] ?? "";
