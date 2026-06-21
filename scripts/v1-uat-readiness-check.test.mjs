@@ -86,8 +86,8 @@ jobs:
   "scripts/v1-uat-execution-tracker-validate.test.mjs": "fails the current rc8 tracker because external UAT remains pending\nfails when a signed tracker role owner is only a role label\nfails when a passed UAT case owner is only a role label\nfails when passed tracker evidence references are not retained\nfails when passed tracker evidence references point to missing docs artifacts\n",
   "scripts/v1-release-gate.mjs": "evaluateV1ReleaseGate\nevaluateV1ReleaseGateFromFiles\nV1 release gate requires Go\nkickoff-governance\nuat-launch-intake\nuat-environment\nuat-evidence-references\n",
   "scripts/v1-release-gate.test.mjs": "fails when kickoff governance remains incomplete\nfails when the UAT launch intake remains incomplete\nfails when PASS evidence references do not resolve to retained artifacts\nfails when the project decision is Conditional Go\n",
-  "scripts/v1-validation-status.mjs": "generateV1ValidationStatusMarkdown\nOverall: No-Go\nKickoff Governance\nUAT Environment Evidence\nUAT Execution Tracker\n",
-  "scripts/v1-validation-status.test.mjs": "summarizes a No-Go V1 status with concrete blocker commands\n",
+  "scripts/v1-validation-status.mjs": "generateV1ValidationStatusMarkdown\nOverall: No-Go\nKickoff Governance\nUAT Environment Evidence\nUAT Execution Tracker\nnode scripts/v1-release-gate.mjs --json\n",
+  "scripts/v1-validation-status.test.mjs": "summarizes a No-Go V1 status with concrete blocker commands\nnode scripts/v1-release-gate.mjs --json\n",
   "scripts/v1-uat-action-plan.mjs": "generateV1UatActionPlanMarkdown\nOverall: No-Go\nRole Workstreams\nKickoff Governance\nUAT Environment Evidence\n",
   "scripts/v1-uat-action-plan.test.mjs": "generates a No-Go UAT action plan grouped by project, test, business, and engineering workstreams\n",
   "scripts/v1-uat-execution-pack.mjs": "generateV1UatExecutionPackMarkdown\nOverall: No-Go\nExecution Items\nKICKOFF-OWNERS\nENV-001\nUAT-010\n",
@@ -1040,6 +1040,21 @@ test("fails when the V1 validation status report is missing from readiness mater
       "      - run: node --test scripts/v1-validation-status.test.mjs\n",
       ""
     )
+  };
+
+  const result = evaluateReadinessSnapshot(snapshot);
+
+  assert.equal(result.ok, false);
+  assert.ok(result.failed.some((check) => check.id === "v1-validation-status-report"));
+});
+
+test("fails when the V1 validation status report omits machine-readable release gate command coverage", () => {
+  const snapshot = {
+    ...completeSnapshot,
+    "scripts/v1-validation-status.mjs": completeSnapshot["scripts/v1-validation-status.mjs"]
+      .replace("node scripts/v1-release-gate.mjs --json\n", ""),
+    "scripts/v1-validation-status.test.mjs": completeSnapshot["scripts/v1-validation-status.test.mjs"]
+      .replace("node scripts/v1-release-gate.mjs --json\n", "")
   };
 
   const result = evaluateReadinessSnapshot(snapshot);

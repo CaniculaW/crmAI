@@ -633,9 +633,10 @@ export function evaluateReadinessSnapshot(snapshot) {
       "Overall: No-Go",
       "UAT Environment Evidence",
       "UAT Execution Tracker",
+      "node scripts/v1-release-gate.mjs --json",
       "summarizes a No-Go V1 status with concrete blocker commands"
     ]),
-    "V1 validation status report is tested and summarizes current Go/No-Go blockers from existing gates."
+    "V1 validation status report is tested and summarizes current Go/No-Go blockers from existing gates, including machine-readable release-gate output for dashboards and validation bots."
   ));
 
   const uatActionPlan = snapshot["scripts/v1-uat-action-plan.mjs"] ?? "";
