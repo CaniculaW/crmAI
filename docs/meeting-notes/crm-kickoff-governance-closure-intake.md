@@ -1,6 +1,6 @@
 # CRM V1 Kickoff Governance Closure Intake
 
-Generated at: 2026-06-22T02:04:48.421Z
+Generated at: 2026-06-22T02:54:05.627Z
 
 Target source document: docs/meeting-notes/crm-kickoff-minutes.md
 

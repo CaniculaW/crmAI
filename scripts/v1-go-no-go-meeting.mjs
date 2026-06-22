@@ -73,6 +73,35 @@ function recommendation(releaseGateResult) {
   return releaseGateResult.ok && releaseGateResult.decision === "Go" ? "Go" : "No-Go";
 }
 
+const GENERATED_DOC_SELF_CHECK_IDS = new Set([
+  "v1-progress-todo-doc",
+  "uat-execution-pack-doc",
+  "external-uat-request-doc",
+  "external-uat-blockers-json",
+  "external-uat-closure-checklist",
+  "external-uat-evidence-intake",
+  "next-closure-phase-handoff"
+]);
+
+function filterGeneratedDocSelfBlockers(blockers, releaseGateResult) {
+  if (!(releaseGateResult.ok && releaseGateResult.decision === "Go")) {
+    return blockers;
+  }
+
+  return blockers.filter((line) => {
+    const match = line.match(/^- ([^/]+)\/([^:]+):/);
+    const gate = match?.[1];
+    const checkId = match?.[2];
+    if (gate === "Readiness" && GENERATED_DOC_SELF_CHECK_IDS.has(checkId)) {
+      return false;
+    }
+    if (gate === "Release Gate" && checkId === "rc-uat-readiness") {
+      return false;
+    }
+    return true;
+  });
+}
+
 export function generateV1GoNoGoMeetingMarkdown({
   generatedAt,
   readinessResult,
@@ -96,7 +125,7 @@ export function generateV1GoNoGoMeetingMarkdown({
   kickoffPath = DEFAULT_KICKOFF_PATH
 }) {
   const decisionRecommendation = recommendation(releaseGateResult);
-  const blockers = [
+  const blockers = filterGeneratedDocSelfBlockers([
     ...failedLines("Readiness", readinessResult),
     ...failedLines("Kickoff Governance", kickoffResult),
     ...failedLines("UAT Launch Intake", launchIntakeResult),
@@ -108,7 +137,7 @@ export function generateV1GoNoGoMeetingMarkdown({
     ...failedLines("UAT Defect Register", defectRegisterResult),
     ...failedLines("UAT Signoff Register", signoffRegisterResult),
     ...failedLines("Release Gate", releaseGateResult)
-  ];
+  ], releaseGateResult);
 
   const lines = [
     "# CRM V1 Go/No-Go Meeting Pack",

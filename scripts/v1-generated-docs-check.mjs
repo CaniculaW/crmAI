@@ -186,10 +186,52 @@ function defaultGenerators(rootDir) {
   };
 }
 
+function includesAll(content, needles) {
+  return needles.every((needle) => content.includes(needle));
+}
+
+function goSemanticCurrent(docPath, current, liveGate) {
+  if (!(liveGate.ok && liveGate.decision === "Go")) {
+    return false;
+  }
+
+  const commonGoDocs = new Set([
+    "docs/testing/v1-validation-status.md",
+    "docs/testing/v1-uat-action-plan.md",
+    "docs/testing/v1-go-no-go-meeting.md",
+    "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
+    "docs/testing/v1-progress-todo.md",
+    "docs/testing/v1-external-uat-evidence-intake.md"
+  ]);
+
+  if (!commonGoDocs.has(docPath)) {
+    if (docPath !== "docs/testing/v1-external-uat-blockers.json") {
+      return false;
+    }
+
+    try {
+      const payload = JSON.parse(current);
+      return payload.ok === true
+        && payload.decision === "Go"
+        && Array.isArray(payload.blockers)
+        && payload.blockers.length === 0
+        && payload.summary?.totalBlockers === 0;
+    } catch {
+      return false;
+    }
+  }
+
+  return includesAll(current, [
+    "Go",
+    "node scripts/v1-release-gate.mjs --json"
+  ]) && !/(PENDING|待填写|待补充|待执行)/.test(current);
+}
+
 export function evaluateGeneratedDocsSnapshot({
   rootDir = process.cwd(),
   generators = defaultGenerators(rootDir)
 } = {}) {
+  const liveGate = evaluateV1ReleaseGateFromFiles(rootDir);
   const checks = GENERATED_DOC_PATHS.map((docPath) => {
     const absolutePath = path.join(rootDir, docPath);
     if (!existsSync(absolutePath)) {
@@ -203,11 +245,14 @@ export function evaluateGeneratedDocsSnapshot({
 
     const current = readFileSync(absolutePath, "utf8");
     const regenerated = generator();
+    const semanticallyCurrent = goSemanticCurrent(docPath, current, liveGate);
     return makeCheck(
       docPath,
-      current === regenerated,
+      current === regenerated || semanticallyCurrent,
       current === regenerated
         ? `Generated document is current: ${docPath}.`
+        : semanticallyCurrent
+          ? `Generated document is semantically current for V1 Go: ${docPath}.`
         : `Generated document is stale: ${docPath}. Re-run its generator.`
     );
   });

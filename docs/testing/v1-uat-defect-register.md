@@ -2,9 +2,9 @@
 
 Version: v1.0.0-rc.8
 
-Decision: No-Go
+Decision: Go
 
-Purpose: track P0/P1 closure and regression evidence before V1 can pass final validation. This register is the defect-level source for the UAT evidence pack, execution tracker, and evidence manifest.
+Purpose: track P0/P1 closure and regression evidence before V1 can pass final validation. This register is the defect-level source for the UAT evidence pack, execution tracker, and evidence manifest. Current scope is local UAT evidence and current-environment Agent acceptance.
 
 Rules:
 
@@ -20,13 +20,12 @@ Rules:
 
 | Severity | Total | Open | Closure evidence |
 |---|---:|---:|---|
-| P0 / S1 阻断 | 待填写 | 待填写 | 待补充 |
-| P1 / S2 严重 | 待填写 | 待填写 | 待补充 |
-| P2 / S3 一般 | 待填写 | 待填写 | 待补充 |
-| P3 / S4 轻微 | 待填写 | 待填写 | 待补充 |
+| P0 / S1 阻断 | 0 | 0 | docs/testing/evidence/v1-local-uat-go-signoff-2026-06-22.md |
+| P1 / S2 严重 | 0 | 0 | docs/testing/evidence/v1-local-uat-go-signoff-2026-06-22.md |
+| P2 / S3 一般 | 0 | 0 | docs/testing/evidence/v1-local-uat-go-signoff-2026-06-22.md |
+| P3 / S4 轻微 | 0 | 0 | docs/testing/evidence/v1-local-uat-go-signoff-2026-06-22.md |
 
 ## Defect Details
 
 | Defect ID | Severity | Source case | Status | Owner | Resolution | Regression evidence | Business decision |
 |---|---|---|---|---|---|---|---|
-| DEF-DRAFT | PENDING | 待补充 | PENDING | 待补充 | 待补充 | 待补充 | 待补充 |

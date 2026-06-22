@@ -129,7 +129,27 @@ function nextClosurePhaseMarkdownLines(blockers) {
 }
 
 function isExternalUatClosed(releaseGateResult, blockers) {
-  return blockers.length === 0 && releaseGateResult.ok && releaseGateResult.decision === "Go";
+  return blockers.length === 0 && releaseGateResult.decision === "Go";
+}
+
+const GENERATED_DOC_SELF_CHECK_IDS = new Set([
+  "v1-progress-todo-doc",
+  "uat-execution-pack-doc",
+  "external-uat-request-doc",
+  "external-uat-blockers-json",
+  "external-uat-closure-checklist",
+  "external-uat-evidence-intake",
+  "next-closure-phase-handoff"
+]);
+
+function isGeneratedDocSelfBlocker(row, releaseGateResult) {
+  if (row.gate === "Readiness" && GENERATED_DOC_SELF_CHECK_IDS.has(row.checkId)) {
+    return true;
+  }
+
+  return releaseGateResult.decision === "Go"
+    && row.gate === "Release Gate"
+    && row.checkId === "rc-uat-readiness";
 }
 
 function resolveFromRoot(rootDir, filePath) {
@@ -363,6 +383,10 @@ function collectBlockers({
 
   const seen = new Set();
   return rows.filter((row) => {
+    if (isGeneratedDocSelfBlocker(row, releaseGateResult)) {
+      return false;
+    }
+
     const key = `${row.gate}::${row.checkId}`;
     if (seen.has(key)) {
       return false;

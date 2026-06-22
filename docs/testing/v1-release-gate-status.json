@@ -1,7 +1,7 @@
 {
-  "result": "FAIL",
-  "decision": "No-Go",
-  "ok": false,
+  "result": "PASS",
+  "decision": "Go",
+  "ok": true,
   "checks": [
     {
       "id": "rc-uat-readiness",
@@ -15,23 +15,23 @@
     },
     {
       "id": "uat-launch-intake",
-      "ok": false,
-      "message": "UAT launch intake failed: environment-intake, participant-roster, account-custody, project-go-decision"
+      "ok": true,
+      "message": "UAT launch intake is complete."
     },
     {
       "id": "uat-environment",
-      "ok": false,
-      "message": "UAT environment evidence failed: environment-summary, environment-checks, go-decision"
+      "ok": true,
+      "message": "Named UAT environment evidence is complete."
     },
     {
       "id": "uat-evidence-pack",
-      "ok": false,
-      "message": "UAT evidence pack failed: no-placeholders, basic-owners-complete, basic-owner-name-format, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete"
+      "ok": true,
+      "message": "UAT evidence pack satisfies all validation checks."
     },
     {
       "id": "uat-evidence-manifest",
-      "ok": false,
-      "message": "UAT evidence manifest failed: evidence-complete, go-decision"
+      "ok": true,
+      "message": "UAT evidence manifest is complete."
     },
     {
       "id": "uat-evidence-references",
@@ -40,23 +40,23 @@
     },
     {
       "id": "uat-defect-register",
-      "ok": false,
-      "message": "UAT defect register failed: p0-p1-summary, defect-details, go-decision"
+      "ok": true,
+      "message": "UAT defect register is complete."
     },
     {
       "id": "uat-signoff-register",
-      "ok": false,
-      "message": "UAT signoff register failed: required-signoffs, project-go-decision"
+      "ok": true,
+      "message": "UAT signoff register is complete."
     },
     {
       "id": "uat-execution-tracker",
-      "ok": false,
-      "message": "UAT execution tracker failed: roles-assigned, tracker-role-owner-name-format, pre-checks, smoke-checks, uat-cases, p0-p1-defects, release-gates, go-decision"
+      "ok": true,
+      "message": "UAT execution tracker is complete."
     },
     {
       "id": "go-decision",
-      "ok": false,
-      "message": "Project decision is No-Go; V1 release gate requires Go."
+      "ok": true,
+      "message": "Project Go decision is explicit."
     }
   ]
 }

@@ -1,9 +1,9 @@
 # CRM V1 Kickoff Governance Evidence Pack
 
-Generated at: 2026-06-22T02:04:48.421Z
+Generated at: 2026-06-22T02:54:05.627Z
 
 Current task: `1-governance`
-Current owner side: 项目/产品
+Current owner side: 研发
 Open kickoff blockers: 0
 Target source document: `docs/meeting-notes/crm-kickoff-minutes.md`
 Decision target: `Go`

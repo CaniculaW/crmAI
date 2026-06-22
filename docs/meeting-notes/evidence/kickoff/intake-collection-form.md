@@ -1,6 +1,6 @@
 # CRM V1 Kickoff Governance Evidence Collection Form
 
-Generated at: 2026-06-22T02:04:48.421Z
+Generated at: 2026-06-22T02:54:05.628Z
 
 Decision target: `Go`
 Kickoff source: `docs/meeting-notes/crm-kickoff-minutes.md`
