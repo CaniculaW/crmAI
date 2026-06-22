@@ -8,6 +8,7 @@ import test from "node:test";
 import {
   buildKickoffGovernanceEvidenceTemplatesFromIntake,
   evaluateKickoffGovernanceEvidenceIntake,
+  generateKickoffGovernanceEvidenceCollectionForm,
   generateKickoffGovernanceEvidenceIntakeTemplate
 } from "./v1-kickoff-governance-evidence-intake.mjs";
 import { evaluateKickoffGovernanceEvidenceTemplates } from "./v1-kickoff-governance-evidence-apply.mjs";
@@ -167,4 +168,26 @@ test("prints a status summary for pending kickoff governance intake without writ
   assert.match(output, /Ready rows: `0\/14`/);
   assert.match(output, /Pending rows: `14`/);
   assert.match(output, /\| product-owner\.md \| owner \| 产品负责人 \| Evidence status must be `Ready` before writing templates\.; Owner or approver is incomplete\.; Closure value is incomplete\.; Confirmation date must use YYYY-MM-DD\.; Confirmation source is incomplete\. \|/);
+});
+
+test("generates a stakeholder kickoff governance evidence collection form from intake", () => {
+  const intake = JSON.parse(generateKickoffGovernanceEvidenceIntakeTemplate({
+    generatedAt: "2026-06-22T00:40:00.000Z"
+  }));
+
+  const markdown = generateKickoffGovernanceEvidenceCollectionForm({
+    intake,
+    generatedAt: "2026-06-22T01:10:00.000Z"
+  });
+
+  assert.match(markdown, /^# CRM V1 Kickoff Governance Evidence Collection Form/m);
+  assert.match(markdown, /Generated at: 2026-06-22T01:10:00.000Z/);
+  assert.match(markdown, /Ready rows: `0\/14`/);
+  assert.match(markdown, /Pending rows: `14`/);
+  assert.match(markdown, /node scripts\/v1-kickoff-governance-evidence-intake\.mjs --input docs\/meeting-notes\/evidence\/kickoff\/intake\.json --status/);
+  assert.match(markdown, /node scripts\/v1-kickoff-governance-evidence-intake\.mjs --input docs\/meeting-notes\/evidence\/kickoff\/intake\.json --write/);
+  assert.match(markdown, /\| product-owner\.md \| owner \| 产品负责人 \| Pending \| Named person, not a role label \| 待填写 \| 待填写 \| YYYY-MM-DD \|/);
+  assert.match(markdown, /\| scope-freeze\.md \| scope \| V1范围冻结 \| Pending \| Confirm V1 only includes sales foundation loop and later-version items stay out \| 待填写 \| 待填写 \| YYYY-MM-DD \|/);
+  assert.equal((markdown.match(/^\| [a-z0-9-]+\.md \|/gm) ?? []).length, 14);
+  assert.doesNotMatch(markdown, /password|bearer token|api key/i);
 });

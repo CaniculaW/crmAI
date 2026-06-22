@@ -199,6 +199,58 @@ export function renderKickoffGovernanceEvidenceIntakeStatus(readiness) {
   return `${lines.join("\n")}\n`;
 }
 
+export function generateKickoffGovernanceEvidenceCollectionForm({
+  intake,
+  generatedAt = new Date().toISOString()
+} = {}) {
+  const readiness = evaluateKickoffGovernanceEvidenceIntake(intake ?? {});
+  const itemsByFilename = intakeItemByFilename(intake ?? {});
+  const lines = [
+    "# CRM V1 Kickoff Governance Evidence Collection Form",
+    "",
+    `Generated at: ${generatedAt}`,
+    "",
+    `Decision target: \`${intake?.decision ?? "Go"}\``,
+    `Kickoff source: \`${intake?.kickoffPath ?? DEFAULT_KICKOFF_PATH}\``,
+    `Evidence root: \`${intake?.evidenceRoot ?? DEFAULT_EVIDENCE_ROOT}\``,
+    `Ready rows: \`${readiness.ready}/${readiness.total}\``,
+    `Pending rows: \`${readiness.pending}\``,
+    "",
+    "Use this form to collect named owner, closure value, confirmation date, source, and retained evidence reference for the current `1-governance` task.",
+    "Do not paste secret material or unmasked account custody data in this form.",
+    "",
+    "Validation commands:",
+    "- `node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --status`",
+    "- `node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --write`",
+    "",
+    "| Intake row | Type | Target | Status | Required closure value | Owner or approver | Closure value | Confirmation date | Confirmation source | Retained evidence reference | Notes |",
+    "|---|---|---|---|---|---|---|---|---|---|---|"
+  ];
+
+  for (const requirement of KICKOFF_GOVERNANCE_TEMPLATE_REQUIREMENTS) {
+    const [filename, type, label] = requirement;
+    const item = itemsByFilename.get(filename) ?? {};
+    lines.push([
+      filename,
+      type,
+      label,
+      item.evidenceStatus ?? "Missing",
+      requiredClosureValue(filename, label),
+      item.ownerOrApprover ?? "",
+      item.closureValue ?? "",
+      item.confirmationDate ?? "",
+      item.confirmationSource ?? "",
+      item.retainedEvidenceReference ?? itemPath(intake?.evidenceRoot ?? DEFAULT_EVIDENCE_ROOT, filename),
+      item.notes ?? ""
+    ].map((value) => String(value).replaceAll("|", "\\|")).join(" | ").replace(/^/, "| ").replace(/$/, " |"));
+  }
+
+  lines.push("");
+  lines.push("Completion standard: all 14 rows become `Ready`; then write evidence templates and run kickoff governance validation before moving to the next TODOList phase.");
+
+  return `${lines.join("\n")}\n`;
+}
+
 function evidenceMarkdown({
   item,
   generatedAt,
@@ -298,7 +350,8 @@ function parseArgs(argv) {
     inputPath: null,
     outputPath: null,
     write: false,
-    status: false
+    status: false,
+    collectionForm: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -315,6 +368,8 @@ function parseArgs(argv) {
       parsed.write = true;
     } else if (arg === "--status") {
       parsed.status = true;
+    } else if (arg === "--collection-form") {
+      parsed.collectionForm = true;
     }
   }
 
@@ -324,6 +379,7 @@ function parseArgs(argv) {
 function printUsage() {
   console.error("Usage: node scripts/v1-kickoff-governance-evidence-intake.mjs --template [--output intake.json]");
   console.error("   or: node scripts/v1-kickoff-governance-evidence-intake.mjs --input intake.json --status");
+  console.error("   or: node scripts/v1-kickoff-governance-evidence-intake.mjs --input intake.json --collection-form [--output form.md]");
   console.error("   or: node scripts/v1-kickoff-governance-evidence-intake.mjs --input intake.json --write");
 }
 
@@ -346,6 +402,16 @@ if (isCli) {
       process.stdout.write(renderKickoffGovernanceEvidenceIntakeStatus(readiness));
       if (!readiness.ok) {
         process.exitCode = 1;
+      }
+    } else if (options.collectionForm) {
+      const markdown = generateKickoffGovernanceEvidenceCollectionForm({ intake });
+      if (options.outputPath) {
+        const outputPath = path.resolve(options.outputPath);
+        mkdirSync(path.dirname(outputPath), { recursive: true });
+        writeFileSync(outputPath, markdown);
+        console.log(outputPath);
+      } else {
+        process.stdout.write(markdown);
       }
     } else {
       const result = options.write

@@ -1,6 +1,6 @@
 # CRM V1 Progress TODO
 
-Generated at: 2026-06-21T17:15:20.498Z
+Generated at: 2026-06-21T17:37:55.552Z
 
 Overall status: `External UAT Evidence Required`
 Overall decision: `No-Go`
@@ -39,6 +39,8 @@ Intake rows ready: `0/14`
 Intake rows pending: `14`
 Check this intake before writing evidence templates:
 - `node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --status`
+Generate stakeholder collection form for the current task:
+- `node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --collection-form --output docs/meeting-notes/evidence/kickoff/intake-collection-form.md`
 Write evidence templates after all intake rows are Ready:
 - `node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --write`
 

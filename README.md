@@ -169,7 +169,13 @@ node scripts/v1-kickoff-governance-evidence-intake.mjs --template --output docs/
 node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --status
 ```
 
-该状态检查会显示 `Ready/Pending` 行数；返回非 0 表示仍有未闭合行，需要继续补证。14 项全部 `Ready` 后，再执行：
+该状态检查会显示 `Ready/Pending` 行数；返回非 0 表示仍有未闭合行，需要继续补证。可随时生成项目/产品侧可填写的 Markdown 收集表：
+
+```bash
+node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --collection-form --output docs/meeting-notes/evidence/kickoff/intake-collection-form.md
+```
+
+该收集表用于把当前 `1-governance` 的 14 项补证要求转成项目/产品侧可填写的 Markdown 表单；它仍是收集入口，不代表正式验收通过。14 项全部 `Ready` 后，再执行：
 
 ```bash
 node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --write

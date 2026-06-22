@@ -111,6 +111,9 @@ jobs:
       - name: Run V1 kickoff governance evidence intake tests
         run: node --test scripts/v1-kickoff-governance-evidence-intake.test.mjs
 
+      - name: Generate V1 kickoff governance intake collection form
+        run: node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --collection-form --output docs/meeting-notes/evidence/kickoff/intake-collection-form.md
+
       - name: Run V1 kickoff governance evidence apply tests
         run: node --test scripts/v1-kickoff-governance-evidence-apply.test.mjs
 

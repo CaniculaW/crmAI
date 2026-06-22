@@ -19,6 +19,7 @@ export const CURRENT_V1_EVIDENCE_DOCS = [
   "docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
   "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
   "docs/meeting-notes/evidence/kickoff/intake.json",
+  "docs/meeting-notes/evidence/kickoff/intake-collection-form.md",
   "docs/testing/v1-progress-todo.md",
   "docs/testing/v1-external-uat-blockers.json",
   "docs/testing/v1-release-gate-status.json",

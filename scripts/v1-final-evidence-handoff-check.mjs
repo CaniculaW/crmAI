@@ -19,6 +19,7 @@ const HANDOFF_DOC_PATHS = [
   "docs/testing/v1-next-closure-phase.md",
   "docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
   "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
+  "docs/meeting-notes/evidence/kickoff/intake-collection-form.md",
   "docs/testing/v1-progress-todo.md",
   "docs/testing/v1-external-uat-blockers.json"
 ];
@@ -41,6 +42,7 @@ const REQUIRED_HANDOFF_COMMANDS = [
   "node scripts/v1-kickoff-governance-closure-intake.mjs --output docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
   "node scripts/v1-kickoff-governance-evidence-pack.mjs --output docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
   "node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --status",
+  "node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --collection-form --output docs/meeting-notes/evidence/kickoff/intake-collection-form.md",
   "node scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md",
   "node scripts/v1-external-uat-request.mjs --closure-checklist --output docs/testing/v1-external-uat-closure-checklist.md",
   "node scripts/v1-external-uat-request.mjs --evidence-intake --output docs/testing/v1-external-uat-evidence-intake.md",
