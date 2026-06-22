@@ -20,8 +20,7 @@ import { evaluateV1ReleaseGateFromFiles, renderResult } from "./v1-release-gate.
 import { generateKickoffGovernanceClosureIntakeMarkdown } from "./v1-kickoff-governance-closure-intake.mjs";
 import { generateKickoffGovernanceEvidencePackFromFiles } from "./v1-kickoff-governance-evidence-pack.mjs";
 import {
-  generateKickoffGovernanceEvidenceCollectionForm,
-  generateKickoffGovernanceEvidenceIntakeTemplate
+  generateKickoffGovernanceEvidenceCollectionForm
 } from "./v1-kickoff-governance-evidence-intake.mjs";
 import { generateV1ProgressTodoFromFiles } from "./v1-progress-todo.mjs";
 
@@ -32,7 +31,6 @@ const GENERATED_DOC_PATHS = [
   "docs/testing/v1-go-no-go-meeting.md",
   "docs/meeting-notes/crm-kickoff-governance-closure-intake.md",
   "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md",
-  "docs/meeting-notes/evidence/kickoff/intake.json",
   "docs/meeting-notes/evidence/kickoff/intake-collection-form.md",
   "docs/testing/v1-progress-todo.md",
   "docs/testing/v1-external-uat-request.md",
@@ -152,9 +150,6 @@ function defaultGenerators(rootDir) {
     "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md": () => generateKickoffGovernanceEvidencePackFromFiles({
       rootDir,
       generatedAt: generatedAtFrom(rootDir, "docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md")
-    }),
-    "docs/meeting-notes/evidence/kickoff/intake.json": () => generateKickoffGovernanceEvidenceIntakeTemplate({
-      generatedAt: generatedAtFromJson(rootDir, "docs/meeting-notes/evidence/kickoff/intake.json")
     }),
     "docs/meeting-notes/evidence/kickoff/intake-collection-form.md": () => generateKickoffGovernanceEvidenceCollectionForm({
       intake: JSON.parse(readFile(rootDir, "docs/meeting-notes/evidence/kickoff/intake.json")),

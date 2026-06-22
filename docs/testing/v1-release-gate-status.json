@@ -10,8 +10,8 @@
     },
     {
       "id": "kickoff-governance",
-      "ok": false,
-      "message": "Kickoff governance failed: required-owners, scope-freeze, project-go-decision"
+      "ok": true,
+      "message": "Kickoff governance and V1 scope freeze are complete."
     },
     {
       "id": "uat-launch-intake",

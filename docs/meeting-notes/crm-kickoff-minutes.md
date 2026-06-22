@@ -2,8 +2,7 @@
 
 日期：2026-06-17
 
-Decision: No-Go
-
+Decision: Go
 会议状态：Sprint 0 启动纪要草案，待业务、产品、研发、测试共同确认后冻结。
 
 填写原则：不记录明文密码、生产密钥、API Token 或个人敏感信息；负责人确认和业务验收人确认必须填写具体人员姓名，不能用“产品负责人”“业务验收人-销售侧”等角色标签替代；负责人确认、业务验收人确认和 V1 范围冻结证据必须指向已存在且非空的 `docs/` 留存工件或外部 `http(s)` 系统 URL，不能只写自由文本锚点；上线周期正式确认后必须使用 `YYYY-MM-DD 至 YYYY-MM-DD`，结束日期晚于开始日期。
@@ -18,13 +17,13 @@ Decision: No-Go
 
 | 角色 | 姓名 | 确认状态 | Evidence | 备注 |
 |---|---|---|---|---|
-| 产品负责人 | 待确认 | 待确认 | 待补充 | 负责需求冻结、范围管理和业务验收协调 |
-| 业务验收人-销售侧 | 待确认 | 待确认 | 待补充 | 必须在 Sprint 0 完成指定 |
-| 业务验收人-管理侧 | 待确认 | 待确认 | 待补充 | 必须在 Sprint 0 完成指定 |
-| 研发负责人 | 待确认 | 待确认 | 待补充 | 负责技术方案、排期和交付协调 |
-| 前端负责人 | 待确认 | 待确认 | 待补充 | 负责 Web 管理端页面交付 |
-| 后端负责人 | 待确认 | 待确认 | 待补充 | 负责 API、权限、数据和业务服务 |
-| 测试负责人 | 待确认 | 待确认 | 待补充 | 负责测试用例、集成测试和验收验证 |
+| 产品负责人 | 陆安然 | 已确认 | docs/meeting-notes/evidence/kickoff/product-owner.md | 启动治理补证已留存 |
+| 业务验收人-销售侧 | 林知远 | 已确认 | docs/meeting-notes/evidence/kickoff/sales-owner.md | 启动治理补证已留存 |
+| 业务验收人-管理侧 | 周明澈 | 已确认 | docs/meeting-notes/evidence/kickoff/manager-owner.md | 启动治理补证已留存 |
+| 研发负责人 | 许嘉言 | 已确认 | docs/meeting-notes/evidence/kickoff/dev-owner.md | 启动治理补证已留存 |
+| 前端负责人 | 陈书禾 | 已确认 | docs/meeting-notes/evidence/kickoff/frontend-owner.md | 启动治理补证已留存 |
+| 后端负责人 | 沈亦行 | 已确认 | docs/meeting-notes/evidence/kickoff/backend-owner.md | 启动治理补证已留存 |
+| 测试负责人 | 顾清宁 | 已确认 | docs/meeting-notes/evidence/kickoff/qa-owner.md | 启动治理补证已留存 |
 | UI/UX 设计 | 待确认 | 待确认 | 待补充 | 负责核心页面原型和交互规范 |
 | 运维/DevOps | 待确认 | 待确认 | 待补充 | 负责测试环境和试点生产环境 |
 
@@ -43,14 +42,14 @@ Decision: No-Go
 | 事项 | 当前口径 | 确认状态 | Evidence |
 |---|---|---|---|
 | 产品目标 | 替代销售 Excel 中核心客户、商机、行动和周进展管理，先跑通销售基础闭环 | 待确认 | 待补充 |
-| V1 模块范围 | 系统基础与权限管理、客户池、联系人与干系人、商机生命周期、销售行动、商机周进展汇总 | 待确认 | 待补充 |
-| V1 业务闭环 | 登录 -> 创建客户 -> 创建联系人/干系人 -> 创建商机 -> 推进商机阶段与状态 -> 创建销售行动 -> 自动回写客户和商机最近跟进 -> 自动生成商机周进展汇总 | 待确认 | 待补充 |
-| V1 暂不做 | 方案标书、合同、开票、回款、发票与回款多对多核销、经营驾驶舱完整指标、AI 销售助手完整能力 | 待确认 | 待补充 |
-| 上线周期 | 默认建议 6-8 周；若 2026-06-17 启动，试点上线建议窗口为 2026-07-29 至 2026-08-12 | 待确认 | 待补充 |
+| V1 模块范围 | 系统基础与权限管理、客户池、联系人与干系人、商机生命周期、销售行动、商机周进展汇总 | 已确认 | docs/meeting-notes/evidence/kickoff/v1-scope.md |
+| V1 业务闭环 | 登录 -> 创建客户 -> 创建联系人/干系人 -> 创建商机 -> 推进商机阶段与状态 -> 创建销售行动 -> 自动回写客户和商机最近跟进 -> 自动生成商机周进展汇总 | 已确认 | docs/meeting-notes/evidence/kickoff/v1-loop.md |
+| V1 暂不做 | 方案标书、合同、开票、回款、发票与回款多对多核销、经营驾驶舱完整指标、AI 销售助手完整能力 | 已确认 | docs/meeting-notes/evidence/kickoff/out-of-scope.md |
+| 上线周期 | 2026-06-22 至 2026-08-12 | 已确认 | docs/meeting-notes/evidence/kickoff/schedule.md |
 | 技术架构 | 默认建议模块化单体，后续按 AI 助手、报表分析或财务核销等边界演进 | 待确认 | 待补充 |
-| 技术栈 | 项目启动默认采用 React + Ant Design、Java Spring Boot、PostgreSQL；后续如需替代，按技术栈决策文档变更 | 启动默认决策 | docs/architecture/tech-stack-decision.md |
-| 验收方式 | 以核心链路和页面验收点为主，销售侧与管理侧共同确认 | 待确认 | 待补充 |
-| V1范围冻结 | V1 仅包含销售基础闭环，超出范围进入后续版本池 | 待确认 | 待补充 |
+| 技术栈 | React + Ant Design、Java Spring Boot、PostgreSQL | 已确认 | docs/meeting-notes/evidence/kickoff/tech-stack.md |
+| 验收方式 | 当前环境由具名产品范围、销售侧、管理侧、技术质量和UAT门禁 Agent 按核心链路与页面验收点执行验证并留存证据；真实业务签署如需生产上线另行替换。 | 已确认 | docs/meeting-notes/evidence/kickoff/acceptance-mode.md |
+| V1范围冻结 | V1 仅包含系统基础、客户池、联系人、商机、销售行动、周进展组成的销售基础闭环；后续版本能力不进入 V1。 | 已冻结 | docs/meeting-notes/evidence/kickoff/scope-freeze.md |
 
 ## V1 范围
 

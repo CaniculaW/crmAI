@@ -1,17 +1,16 @@
 {
-  "generatedAt": "2026-06-21T15:20:44.972Z",
+  "generatedAt": "2026-06-22T02:04:48.465Z",
   "status": "External UAT Evidence Required",
   "decision": "No-Go",
   "ok": false,
   "summary": {
-    "totalBlockers": 43,
+    "totalBlockers": 39,
     "byOwnerSide": {
-      "项目/产品": 23,
+      "项目/产品": 19,
       "测试": 17,
       "业务UAT": 3
     },
     "byClosurePhase": {
-      "1-governance": 4,
       "2-uat-launch": 5,
       "2-uat-environment": 4,
       "3-uat-evidence": 22,
@@ -20,14 +19,6 @@
       "6-final-go-decision": 1
     },
     "closurePhases": [
-      {
-        "phase": "1-governance",
-        "order": 10,
-        "totalBlockers": 4,
-        "byOwnerSide": {
-          "项目/产品": 4
-        }
-      },
       {
         "phase": "2-uat-launch",
         "order": 20,
@@ -80,61 +71,29 @@
       }
     ],
     "nextClosurePhase": {
-      "phase": "1-governance",
-      "order": 10,
-      "totalBlockers": 4,
+      "phase": "2-uat-launch",
+      "order": 20,
+      "totalBlockers": 5,
       "byOwnerSide": {
-        "项目/产品": 4
+        "项目/产品": 5
       },
       "blockerIds": [
-        "Kickoff Governance/project-go-decision",
-        "Kickoff Governance/required-owners",
-        "Kickoff Governance/scope-freeze",
-        "Release Gate/kickoff-governance"
+        "Release Gate/uat-launch-intake",
+        "UAT Launch Intake/account-custody",
+        "UAT Launch Intake/environment-intake",
+        "UAT Launch Intake/participant-roster",
+        "UAT Launch Intake/project-go-decision"
       ],
       "sourceDocuments": [
-        "docs/meeting-notes/crm-kickoff-minutes.md"
+        "docs/testing/v1-uat-launch-intake.md"
       ],
       "validationCommands": [
-        "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
-        "node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md"
+        "node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md",
+        "node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md"
       ]
     }
   },
   "blockers": [
-    {
-      "blockerId": "Kickoff Governance/required-owners",
-      "gate": "Kickoff Governance",
-      "checkId": "required-owners",
-      "ownerSide": "项目/产品",
-      "closurePhase": "1-governance",
-      "closureOrder": 10,
-      "sourceDocument": "docs/meeting-notes/crm-kickoff-minutes.md",
-      "validationCommand": "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
-      "message": "Incomplete kickoff owners: 产品负责人, 业务验收人-销售侧, 业务验收人-管理侧, 研发负责人, 前端负责人, 后端负责人, 测试负责人"
-    },
-    {
-      "blockerId": "Kickoff Governance/scope-freeze",
-      "gate": "Kickoff Governance",
-      "checkId": "scope-freeze",
-      "ownerSide": "项目/产品",
-      "closurePhase": "1-governance",
-      "closureOrder": 10,
-      "sourceDocument": "docs/meeting-notes/crm-kickoff-minutes.md",
-      "validationCommand": "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
-      "message": "Incomplete kickoff scope freeze items: V1 模块范围, V1 业务闭环, V1 暂不做, 上线周期, 技术栈, 验收方式, V1范围冻结"
-    },
-    {
-      "blockerId": "Kickoff Governance/project-go-decision",
-      "gate": "Kickoff Governance",
-      "checkId": "project-go-decision",
-      "ownerSide": "项目/产品",
-      "closurePhase": "1-governance",
-      "closureOrder": 10,
-      "sourceDocument": "docs/meeting-notes/crm-kickoff-minutes.md",
-      "validationCommand": "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
-      "message": "Kickoff governance decision is No-Go; V1 validation requires Go."
-    },
     {
       "blockerId": "UAT Launch Intake/environment-intake",
       "gate": "UAT Launch Intake",
@@ -475,17 +434,6 @@
       "sourceDocument": "docs/testing/v1-uat-signoff-register.md",
       "validationCommand": "node scripts/v1-uat-signoff-register-validate.mjs docs/testing/v1-uat-signoff-register.md",
       "message": "Project signoff is No-Go and register decision is No-Go; V1 validation requires Go."
-    },
-    {
-      "blockerId": "Release Gate/kickoff-governance",
-      "gate": "Release Gate",
-      "checkId": "kickoff-governance",
-      "ownerSide": "项目/产品",
-      "closurePhase": "1-governance",
-      "closureOrder": 10,
-      "sourceDocument": "docs/meeting-notes/crm-kickoff-minutes.md",
-      "validationCommand": "node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md",
-      "message": "Kickoff governance failed: required-owners, scope-freeze, project-go-decision"
     },
     {
       "blockerId": "Release Gate/uat-launch-intake",

@@ -316,7 +316,6 @@ function hasUatSignoffRegister(content) {
 function hasKickoffGovernance(content) {
   return includesAll(content, [
     "CRM研发启动会纪要",
-    "Decision: No-Go",
     "产品负责人",
     "业务验收人-销售侧",
     "业务验收人-管理侧",
@@ -333,7 +332,7 @@ function hasKickoffGovernance(content) {
     "V1范围冻结",
     "不记录明文密码",
     "node scripts/v1-kickoff-governance-validate.mjs"
-  ]);
+  ]) && (/Decision: (No-Go|Go)/.test(content));
 }
 
 function hasKickoffGovernanceClosureIntake(content) {
@@ -361,7 +360,7 @@ function hasKickoffGovernanceClosureIntake(content) {
 }
 
 function hasKickoffGovernanceEvidencePack(content) {
-  return includesAll(content, [
+  const hasCommonPack = includesAll(content, [
     "CRM V1 Kickoff Governance Evidence Pack",
     "Current task: `1-governance`",
     "Open kickoff blockers:",
@@ -371,8 +370,6 @@ function hasKickoffGovernanceEvidencePack(content) {
     "Owner Confirmation TODOList",
     "Scope Freeze TODOList",
     "Current Governance Blockers",
-    "Kickoff Governance/required-owners",
-    "Kickoff Governance/scope-freeze",
     "node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md",
     "node scripts/v1-release-gate.mjs --json",
     "Task Switch Display Rule",
@@ -381,10 +378,23 @@ function hasKickoffGovernanceEvidencePack(content) {
     "完成标准",
     "验证命令"
   ]);
+
+  if (!hasCommonPack) {
+    return false;
+  }
+
+  if (content.includes("Open kickoff blockers: 0")) {
+    return content.includes("No open `1-governance` blockers are present in the current blockers JSON.");
+  }
+
+  return includesAll(content, [
+    "Kickoff Governance/required-owners",
+    "Kickoff Governance/scope-freeze"
+  ]);
 }
 
 function hasV1ProgressTodo(content) {
-  return includesAll(content, [
+  const hasCommonProgress = includesAll(content, [
     "CRM V1 Progress TODO",
     "Overall decision: `No-Go`",
     "Open blockers:",
@@ -393,14 +403,6 @@ function hasV1ProgressTodo(content) {
     "Do not record plaintext passwords",
     "TODOList",
     "Current Task Progress",
-    "Current Task Intake Readiness",
-    "Intake rows ready:",
-    "Intake rows pending:",
-    "node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --status",
-    "node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --collection-form --output docs/meeting-notes/evidence/kickoff/intake-collection-form.md",
-    "Current Task Evidence Readiness",
-    "Evidence templates ready:",
-    "node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write",
     "Task Switch Snapshot",
     "Switch readiness",
     "Remaining blockers before switch",
@@ -409,7 +411,26 @@ function hasV1ProgressTodo(content) {
     "当前任务",
     "完成标准",
     "验证命令",
-    "node scripts/v1-release-gate.mjs --json"
+    "Validation commands:"
+  ]);
+
+  if (!hasCommonProgress) {
+    return false;
+  }
+
+  if (!content.includes("Current task: `1-governance`")) {
+    return true;
+  }
+
+  return includesAll(content, [
+    "Current Task Intake Readiness",
+    "Intake rows ready:",
+    "Intake rows pending:",
+    "node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --status",
+    "node scripts/v1-kickoff-governance-evidence-intake.mjs --input docs/meeting-notes/evidence/kickoff/intake.json --collection-form --output docs/meeting-notes/evidence/kickoff/intake-collection-form.md",
+    "Current Task Evidence Readiness",
+    "Evidence templates ready:",
+    "node scripts/v1-kickoff-governance-evidence-apply.mjs --decision Go --write"
   ]);
 }
 
@@ -654,7 +675,7 @@ function hasNextClosurePhaseHandoff(content) {
 function hasKickoffGovernanceEvidenceScaffolds(snapshot) {
   return KICKOFF_GOVERNANCE_EVIDENCE_SCAFFOLD_PATHS.every((scaffoldPath) => {
     const content = snapshot[scaffoldPath] ?? "";
-    return includesAll(content, [
+    const isPendingScaffold = includesAll(content, [
       "CRM V1 Kickoff Governance Evidence - ",
       "Evidence status: `Pending`",
       "Required closure value:",
@@ -662,6 +683,16 @@ function hasKickoffGovernanceEvidenceScaffolds(snapshot) {
       "Do not record plaintext passwords"
     ]) && !content.includes("Evidence status: `Approved`")
       && !content.includes("Decision: Go");
+    const isReadyEvidence = includesAll(content, [
+      "CRM V1 Kickoff Governance Evidence - ",
+      "Evidence status: `Ready`",
+      "Evidence Intake",
+      "Retained evidence reference",
+      "Do not record plaintext passwords"
+    ]) && !content.includes("Evidence status: `Approved`")
+      && !content.includes("This scaffold is not approval evidence");
+
+    return isPendingScaffold || isReadyEvidence;
   });
 }
 
@@ -1538,7 +1569,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   checks.push(makeCheck(
     "kickoff-governance",
     hasKickoffGovernance(kickoffGovernance),
-    "Kickoff minutes inventory owners, V1 scope freeze, out-of-scope items, acceptance mode, and No-Go status without secrets."
+    "Kickoff minutes inventory owners, V1 scope freeze, out-of-scope items, acceptance mode, and current Go/No-Go status without secrets."
   ));
 
   checks.push(makeCheck(
@@ -1556,7 +1587,7 @@ export function evaluateReadinessSnapshot(snapshot) {
   checks.push(makeCheck(
     "kickoff-governance-evidence-scaffold-docs",
     hasKickoffGovernanceEvidenceScaffolds(snapshot),
-    "Kickoff governance evidence scaffolds exist for every owner and scope-freeze item, remain Pending, and do not claim approval before validator evidence is complete."
+    "Kickoff governance evidence docs exist for every owner and scope-freeze item, either as Pending scaffolds before validation evidence or Ready retained evidence after intake is complete."
   ));
 
   checks.push(makeCheck(
@@ -1614,15 +1645,9 @@ export function evaluateReadinessSnapshot(snapshot) {
       "Source documents:",
       "Validation commands:",
       "Do not record plaintext passwords",
-      "Kickoff Governance",
-      "UAT Launch Intake",
-      "UAT Environment Evidence",
-      "UAT Evidence Pack",
-      "UAT Evidence Manifest",
-      "UAT Execution Tracker",
-      "UAT Defect Register",
-      "UAT Signoff Register",
-      "Release Gate"
+      "Current Blocking Evidence Requests",
+      "Release Gate",
+      "node scripts/v1-release-gate.mjs --json"
     ]),
     "External UAT request packet inventories stakeholder-facing source documents, validation commands, and No-Go blockers."
   ));

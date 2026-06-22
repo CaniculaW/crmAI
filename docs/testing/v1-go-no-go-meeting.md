@@ -1,6 +1,6 @@
 # CRM V1 Go/No-Go Meeting Pack
 
-Generated at: 2026-06-21T15:20:25.291Z
+Generated at: 2026-06-22T02:04:48.413Z
 
 Decision Recommendation: No-Go
 
@@ -37,9 +37,6 @@ Decision Recommendation: No-Go
 
 ## Open Approval Blockers
 
-- Kickoff Governance/required-owners: Incomplete kickoff owners: 产品负责人, 业务验收人-销售侧, 业务验收人-管理侧, 研发负责人, 前端负责人, 后端负责人, 测试负责人
-- Kickoff Governance/scope-freeze: Incomplete kickoff scope freeze items: V1 模块范围, V1 业务闭环, V1 暂不做, 上线周期, 技术栈, 验收方式, V1范围冻结
-- Kickoff Governance/project-go-decision: Kickoff governance decision is No-Go; V1 validation requires Go.
 - UAT Launch Intake/environment-intake: Incomplete launch environment fields: 测试环境名称, 前端访问地址, 后端 API 地址, Git 提交号, UAT窗口, 证据归档位置
 - UAT Launch Intake/participant-roster: Incomplete UAT participants: UAT-SALES, UAT-MANAGER, UAT-PRODUCT, UAT-TEST, UAT-DEV, UAT-PM
 - UAT Launch Intake/account-custody: Incomplete account custody items: 管理员账号, 销售个人账号, 销售负责人账号, 权限样本账号
@@ -71,7 +68,6 @@ Decision Recommendation: No-Go
 - UAT Defect Register/go-decision: Defect register decision is No-Go; V1 validation requires Go.
 - UAT Signoff Register/required-signoffs: Incomplete signoffs: SIGNOFF-SALES, SIGNOFF-MANAGER, SIGNOFF-PRODUCT, SIGNOFF-TEST, SIGNOFF-DEV, SIGNOFF-PM
 - UAT Signoff Register/project-go-decision: Project signoff is No-Go and register decision is No-Go; V1 validation requires Go.
-- Release Gate/kickoff-governance: Kickoff governance failed: required-owners, scope-freeze, project-go-decision
 - Release Gate/uat-launch-intake: UAT launch intake failed: environment-intake, participant-roster, account-custody, project-go-decision
 - Release Gate/uat-environment: UAT environment evidence failed: environment-summary, environment-checks, go-decision
 - Release Gate/uat-evidence-pack: UAT evidence pack failed: no-placeholders, basic-owners-complete, basic-owner-name-format, environment-results, uat-business-cases, p0-defects, p1-defects, go-criteria, signoff-complete

@@ -26,7 +26,6 @@ const MARKDOWN_DOCS = [
 
 const DOCS = [
   ...MARKDOWN_DOCS,
-  "docs/meeting-notes/evidence/kickoff/intake.json",
   "docs/testing/v1-external-uat-blockers.json",
   "docs/testing/v1-release-gate-status.json"
 ];
@@ -68,7 +67,6 @@ test("fails when a generated document drifts from its generator", () => {
     "docs/testing/v1-external-uat-closure-checklist.md": "# Generated\n\nCurrent content\n",
     "docs/testing/v1-external-uat-evidence-intake.md": "# Generated\n\nCurrent content\n",
     "docs/testing/v1-next-closure-phase.md": "# Generated\n\nCurrent content\n",
-    "docs/meeting-notes/evidence/kickoff/intake.json": "{\"generatedAt\":\"2026-06-22T00:50:00.000Z\"}\n",
     "docs/testing/v1-external-uat-blockers.json": "{\"status\":\"External UAT Evidence Required\"}\n",
     "docs/testing/v1-release-gate-status.json": "{\"result\":\"FAIL\"}\n"
   });
@@ -88,7 +86,6 @@ test("fails when a generated document drifts from its generator", () => {
       "docs/testing/v1-external-uat-closure-checklist.md": () => "# Generated\n\nCurrent content\n",
       "docs/testing/v1-external-uat-evidence-intake.md": () => "# Generated\n\nCurrent content\n",
       "docs/testing/v1-next-closure-phase.md": () => "# Generated\n\nCurrent content\n",
-      "docs/meeting-notes/evidence/kickoff/intake.json": () => "{\"generatedAt\":\"2026-06-22T00:50:00.000Z\"}\n",
       "docs/testing/v1-external-uat-blockers.json": () => "{\"status\":\"External UAT Evidence Required\"}\n",
       "docs/testing/v1-release-gate-status.json": () => "{\"result\":\"FAIL\"}\n"
     }
@@ -211,23 +208,6 @@ test("fails when the generated V1 progress TODO board is missing", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.failed.some((check) => check.id === "docs/testing/v1-progress-todo.md"));
-});
-
-test("fails when the generated kickoff governance evidence intake JSON is missing", () => {
-  const content = "# Generated\n\nCurrent content\n";
-  const rootDir = writeSnapshot({
-    ...Object.fromEntries(MARKDOWN_DOCS.map((docPath) => [docPath, content])),
-    "docs/testing/v1-external-uat-blockers.json": "{\"status\":\"External UAT Evidence Required\"}\n",
-    "docs/testing/v1-release-gate-status.json": "{\"result\":\"FAIL\"}\n"
-  });
-
-  const result = evaluateGeneratedDocsSnapshot({
-    rootDir,
-    generators: Object.fromEntries(DOCS.map((docPath) => [docPath, () => content]))
-  });
-
-  assert.equal(result.ok, false);
-  assert.ok(result.failed.some((check) => check.id === "docs/meeting-notes/evidence/kickoff/intake.json"));
 });
 
 test("fails when the generated kickoff governance intake collection form is missing", () => {

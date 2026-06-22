@@ -1,27 +1,28 @@
 # CRM V1 Next Closure Phase Handoff
 
-Generated at: 2026-06-21T15:20:44.965Z
+Generated at: 2026-06-22T02:04:48.456Z
 
 Overall: No-Go
 
 Do not record plaintext passwords, bearer tokens, API keys, or unmasked account custody secrets in closure evidence.
 
-Phase: `1-governance`
-Order: 10
-Open blockers: 4
+Phase: `2-uat-launch`
+Order: 20
+Open blockers: 5
 Owner side: 项目/产品
-Blocker IDs: `Kickoff Governance/project-go-decision`, `Kickoff Governance/required-owners`, `Kickoff Governance/scope-freeze`, `Release Gate/kickoff-governance`
-Source documents: `docs/meeting-notes/crm-kickoff-minutes.md`
+Blocker IDs: `Release Gate/uat-launch-intake`, `UAT Launch Intake/account-custody`, `UAT Launch Intake/environment-intake`, `UAT Launch Intake/participant-roster`, `UAT Launch Intake/project-go-decision`
+Source documents: `docs/testing/v1-uat-launch-intake.md`
 Validation commands:
-- `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md`
 - `node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md`
+- `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md`
 
 | Status | Blocker ID | Gate | Check ID | Owner side | Source document | Validation command | Closure evidence needed |
 |---|---|---|---|---|---|---|---|
-| Open | Kickoff Governance/required-owners | Kickoff Governance | required-owners | 项目/产品 | docs/meeting-notes/crm-kickoff-minutes.md | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | Incomplete kickoff owners: 产品负责人, 业务验收人-销售侧, 业务验收人-管理侧, 研发负责人, 前端负责人, 后端负责人, 测试负责人 |
-| Open | Kickoff Governance/scope-freeze | Kickoff Governance | scope-freeze | 项目/产品 | docs/meeting-notes/crm-kickoff-minutes.md | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | Incomplete kickoff scope freeze items: V1 模块范围, V1 业务闭环, V1 暂不做, 上线周期, 技术栈, 验收方式, V1范围冻结 |
-| Open | Kickoff Governance/project-go-decision | Kickoff Governance | project-go-decision | 项目/产品 | docs/meeting-notes/crm-kickoff-minutes.md | `node scripts/v1-kickoff-governance-validate.mjs docs/meeting-notes/crm-kickoff-minutes.md` | Kickoff governance decision is No-Go; V1 validation requires Go. |
-| Open | Release Gate/kickoff-governance | Release Gate | kickoff-governance | 项目/产品 | docs/meeting-notes/crm-kickoff-minutes.md | `node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md` | Kickoff governance failed: required-owners, scope-freeze, project-go-decision |
+| Open | UAT Launch Intake/environment-intake | UAT Launch Intake | environment-intake | 项目/产品 | docs/testing/v1-uat-launch-intake.md | `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md` | Incomplete launch environment fields: 测试环境名称, 前端访问地址, 后端 API 地址, Git 提交号, UAT窗口, 证据归档位置 |
+| Open | UAT Launch Intake/participant-roster | UAT Launch Intake | participant-roster | 项目/产品 | docs/testing/v1-uat-launch-intake.md | `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md` | Incomplete UAT participants: UAT-SALES, UAT-MANAGER, UAT-PRODUCT, UAT-TEST, UAT-DEV, UAT-PM |
+| Open | UAT Launch Intake/account-custody | UAT Launch Intake | account-custody | 项目/产品 | docs/testing/v1-uat-launch-intake.md | `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md` | Incomplete account custody items: 管理员账号, 销售个人账号, 销售负责人账号, 权限样本账号 |
+| Open | UAT Launch Intake/project-go-decision | UAT Launch Intake | project-go-decision | 项目/产品 | docs/testing/v1-uat-launch-intake.md | `node scripts/v1-uat-launch-intake-validate.mjs docs/testing/v1-uat-launch-intake.md` | Launch intake decision is No-Go; UAT launch requires Go. |
+| Open | Release Gate/uat-launch-intake | Release Gate | uat-launch-intake | 项目/产品 | docs/testing/v1-uat-launch-intake.md | `node scripts/v1-release-gate.mjs --json . docs/testing/evidence/crm-v1-uat-evidence-pack-rc8-draft.md docs/testing/crm-v1-uat-execution-tracker.md docs/testing/v1-uat-evidence-manifest.md docs/testing/v1-uat-defect-register.md docs/testing/v1-uat-environment-evidence.md docs/testing/v1-uat-signoff-register.md docs/testing/v1-uat-launch-intake.md docs/meeting-notes/crm-kickoff-minutes.md` | UAT launch intake failed: environment-intake, participant-roster, account-custody, project-go-decision |
 
 Do not mark this phase Closed until every listed source document validates PASS and the final release gate returns Go.
 
