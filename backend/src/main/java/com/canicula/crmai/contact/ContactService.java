@@ -340,11 +340,29 @@ public class ContactService {
     }
 
     private static LocalDate nullableLocalDate(Object value) {
-        return value == null ? null : ((java.sql.Date) value).toLocalDate();
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof LocalDate localDate) {
+            return localDate;
+        }
+        if (value instanceof java.sql.Date date) {
+            return date.toLocalDate();
+        }
+        return null;
     }
 
     private static OffsetDateTime nullableOffsetDateTime(Object value) {
-        return value == null ? null : (OffsetDateTime) value;
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof OffsetDateTime offsetDateTime) {
+            return offsetDateTime;
+        }
+        if (value instanceof java.sql.Timestamp timestamp) {
+            return timestamp.toInstant().atOffset(OffsetDateTime.now().getOffset());
+        }
+        return null;
     }
 
     private static boolean hasText(String value) {

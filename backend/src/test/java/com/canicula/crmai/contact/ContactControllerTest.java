@@ -10,10 +10,14 @@ import com.canicula.crmai.identity.RoleCreateRequest;
 import com.canicula.crmai.identity.UserCreateRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -208,6 +212,25 @@ class ContactControllerTest {
         assertThat(updated.path("project_roles")).anySatisfy(role ->
                 assertThat(role.asText()).isEqualTo("procurement_executor"));
         assertThat(auditCount).isEqualTo(1);
+    }
+
+    @Test
+    void mapsJdbcTimestampContactCommunicationTime() {
+        Timestamp jdbcTimestamp = Timestamp.from(Instant.parse("2026-06-22T09:30:00Z"));
+
+        assertThat(invokeNullableOffsetDateTime(jdbcTimestamp))
+                .isNotNull()
+                .satisfies(value -> assertThat(value.toInstant()).isEqualTo(jdbcTimestamp.toInstant()));
+    }
+
+    private static OffsetDateTime invokeNullableOffsetDateTime(Object value) {
+        try {
+            Method method = ContactService.class.getDeclaredMethod("nullableOffsetDateTime", Object.class);
+            method.setAccessible(true);
+            return (OffsetDateTime) method.invoke(null, value);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Contact timestamp mapper invocation failed", exception);
+        }
     }
 
     private Long createAccount(String accessToken, String accountName, Long departmentId, Long ownerUserId) {

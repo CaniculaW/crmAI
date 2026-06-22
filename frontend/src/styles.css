@@ -82,17 +82,26 @@ body {
   font-weight: 700;
 }
 
-.app-header {
+.app-header,
+.app-header.ant-layout-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 64px;
+  min-height: 64px;
+  height: auto;
+  gap: 16px;
+  flex-wrap: wrap;
+  line-height: 1.4;
   padding: 0 24px;
   background: #ffffff;
   border-bottom: 1px solid #e6eaf2;
 }
 
-.app-header span {
+.app-header > div:first-child {
+  min-width: 0;
+}
+
+.app-header > div:first-child span {
   display: block;
   color: #667085;
   font-size: 13px;
@@ -101,6 +110,8 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -325,6 +336,7 @@ body {
   }
 
   .app-header,
+  .app-header.ant-layout-header,
   .workspace-header {
     align-items: stretch;
     flex-direction: column;
