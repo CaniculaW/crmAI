@@ -102,7 +102,7 @@
 | 模块 | 状态 | 完成日期 | 提交号 | 验证命令 | 浏览器验收 | 遗留问题 |
 |---|---|---|---|---|---|---|
 | 全局框架与页面规则 | Done | 2026-06-22 | 41068e4 | `npm test`; `npm run build`; Browser `/accounts`, `/activities`, `/system` | 通过；活动页指引和筛选空状态通过；截图 `/private/tmp/v1-page-framework-activities.png` | 无 |
-| 工作台 | Done | 2026-06-22 | 待提交 | `npm test`; `npm run build`; Browser `/` | 通过；今日优先处理、快捷入口、工作台空状态指引通过；截图 `/private/tmp/v1-dashboard-command-center.png` | 无 |
+| 工作台 | Done | 2026-06-22 | 573ee1a | `npm test`; `npm run build`; Browser `/` | 通过；今日优先处理、快捷入口、工作台空状态指引通过；截图 `/private/tmp/v1-dashboard-command-center.png` | 无 |
 | 客户链路 | Current | - | - | - | - | - |
 | 联系人与关系链路 | Pending | - | - | - | - | - |
 | 商机推进链路 | Pending | - | - | - | - | - |
