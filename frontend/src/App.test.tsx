@@ -188,6 +188,21 @@ describe("CRM frontend V1 workflow", () => {
     expect(localStorage.getItem("crm.access_token")).toBe("token-001");
   });
 
+  it("shows a dashboard command center with priority and quick entries", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "今日优先处理" })).toBeInTheDocument();
+    expect(screen.getByText("先查看 1 个在办商机，确认阶段、风险和下一步计划。")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "新建客户" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "新建商机" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "新建行动" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看周进展" })).toBeInTheDocument();
+  });
+
   it("shows login errors from the unified API layer", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       jsonResponse({ code: "UNAUTHORIZED", message: "用户名或密码错误" }, 401)

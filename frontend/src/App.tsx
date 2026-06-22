@@ -285,14 +285,32 @@ function Dashboard() {
   const pendingReminders = reminders.filter((reminder) => reminder.status === "pending" || reminder.status === "overdue");
   const activeOpportunities = opportunities.filter((opportunity) => opportunity.status === "following");
   const plannedActivities = activities.filter((activity) => activity.activity_status !== "completed");
+  const priorityMessage = getDashboardPriorityMessage(
+    pendingReminders.length,
+    plannedActivities.length,
+    activeOpportunities.length,
+    activities.length
+  );
 
   return (
     <section className="workspace">
       <PageTitle
         title="工作台"
-        description="聚合我的待办、我的商机、今日行动和本周行动。"
+        description="从待办、商机和行动中判断今天先处理什么。"
         action={<RefreshButton onClick={refreshReminders} />}
       />
+      <section className="dashboard-command-center">
+        <div>
+          <Typography.Title level={3}>今日优先处理</Typography.Title>
+          <p>{priorityMessage}</p>
+        </div>
+        <div className="quick-entry-grid">
+          <Link to="/accounts">新建客户</Link>
+          <Link to="/opportunities">新建商机</Link>
+          <Link to="/activities">新建行动</Link>
+          <Link to="/weekly-progress">查看周进展</Link>
+        </div>
+      </section>
       <div className="summary-grid">
         <SummaryPanel title="我的待办" value={pendingReminders.length} loading={reminderLoading} />
         <SummaryPanel title="我的商机" value={activeOpportunities.length} loading={opportunityLoading} />
@@ -304,19 +322,40 @@ function Dashboard() {
           <SimpleList
             items={pendingReminders.slice(0, 5)}
             render={(reminder) => `${reminder.title} · ${statusText(reminder.status)}`}
-            empty="暂无待办"
+            empty="暂无待办，可从销售行动创建下次跟进"
           />
         </Card>
         <Card title="活跃商机" size="small">
           <SimpleList
             items={activeOpportunities.slice(0, 5)}
             render={(opportunity) => `${opportunity.opportunity_name} · ${opportunity.stage}`}
-            empty="暂无活跃商机"
+            empty="暂无活跃商机，可新建商机或查看客户池"
           />
         </Card>
       </div>
     </section>
   );
+}
+
+function getDashboardPriorityMessage(
+  pendingReminderCount: number,
+  plannedActivityCount: number,
+  activeOpportunityCount: number,
+  weeklyActivityCount: number
+) {
+  if (pendingReminderCount > 0) {
+    return `先处理 ${pendingReminderCount} 条待办，避免客户跟进遗漏。`;
+  }
+  if (plannedActivityCount > 0) {
+    return `先推进 ${plannedActivityCount} 条待完成行动，完成后会回写最近跟进和周进展。`;
+  }
+  if (activeOpportunityCount > 0) {
+    return `先查看 ${activeOpportunityCount} 个在办商机，确认阶段、风险和下一步计划。`;
+  }
+  if (weeklyActivityCount > 0) {
+    return `本周已有 ${weeklyActivityCount} 条行动记录，可进入销售行动查看完成情况。`;
+  }
+  return "当前没有待办和在办事项，可先新建客户、商机或行动。";
 }
 
 function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
