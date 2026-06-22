@@ -344,7 +344,7 @@ describe("CRM frontend V1 workflow", () => {
 
     await user.click(screen.getByRole("link", { name: "系统管理" }));
     expect(await screen.findByText("客户等级 (account_level)")).toBeInTheDocument();
-    expect(await screen.findByText("account.create")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "角色权限" }).length).toBeGreaterThan(0);
     await user.click(screen.getByRole("button", { name: "新建字典" }));
     await user.type(screen.getByLabelText("字典编码"), "risk_level");
     await user.type(screen.getByLabelText("字典名称"), "风险等级");
@@ -361,7 +361,39 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
-  it("shows system users and updates role permissions", async () => {
+  it("renders system management as independent professional modules", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "系统管理" }));
+
+    expect(await screen.findByRole("heading", { name: "系统管理" })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "组织管理" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "用户管理" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "角色权限" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "审计日志" }).length).toBeGreaterThan(0);
+
+    await user.click(screen.getAllByRole("link", { name: "组织管理" })[0]);
+    expect(await screen.findByRole("heading", { name: "组织管理" })).toBeInTheDocument();
+    expect(screen.getByText("华东销售部")).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("link", { name: "用户管理" })[0]);
+    expect(await screen.findByRole("heading", { name: "用户管理" })).toBeInTheDocument();
+    expect((await screen.findAllByText("销售一号")).length).toBeGreaterThan(0);
+
+    await user.click(screen.getAllByRole("link", { name: "角色权限" })[0]);
+    expect(await screen.findByRole("heading", { name: "角色权限" })).toBeInTheDocument();
+    expect((await screen.findAllByText("销售管理员")).length).toBeGreaterThan(0);
+
+    await user.click(screen.getAllByRole("link", { name: "审计日志" })[0]);
+    expect(await screen.findByRole("heading", { name: "审计日志" })).toBeInTheDocument();
+    expect(await screen.findByText("account.create")).toBeInTheDocument();
+  });
+
+  it("updates role permissions from the dedicated roles page", async () => {
     const fetchMock = mockCrmFetch();
     const user = userEvent.setup();
 
@@ -369,7 +401,7 @@ describe("CRM frontend V1 workflow", () => {
     await loginThroughUi(user);
 
     await user.click(screen.getByRole("link", { name: "系统管理" }));
-    expect((await screen.findAllByText("销售一号")).length).toBeGreaterThan(0);
+    await user.click(screen.getAllByRole("link", { name: "角色权限" })[0]);
     expect((await screen.findAllByText("销售管理员")).length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: "授权" }));
@@ -388,7 +420,7 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
-  it("creates departments and maintains users from system management", async () => {
+  it("creates departments and maintains users from dedicated system pages", async () => {
     const fetchMock = mockCrmFetch();
     const user = userEvent.setup();
 
@@ -396,6 +428,7 @@ describe("CRM frontend V1 workflow", () => {
     await loginThroughUi(user);
 
     await user.click(screen.getByRole("link", { name: "系统管理" }));
+    await user.click(screen.getAllByRole("link", { name: "组织管理" })[0]);
     expect(await screen.findByText("华东销售部")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "新建组织" }));
@@ -405,6 +438,7 @@ describe("CRM frontend V1 workflow", () => {
     await user.type(departmentDialog.getByLabelText("区域编码"), "CN-44");
     await user.click(departmentDialog.getByRole("button", { name: "保存组织" }));
 
+    await user.click(screen.getAllByRole("link", { name: "用户管理" })[0]);
     await user.click(screen.getByRole("button", { name: "新增用户" }));
     const userCreateDialog = latestDialog();
     await user.type(userCreateDialog.getByLabelText("部门ID"), "1");

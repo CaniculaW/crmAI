@@ -197,6 +197,29 @@ body {
   margin-bottom: 16px;
 }
 
+.system-module-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.system-module-card a {
+  color: #172033;
+  font-weight: 700;
+}
+
+.system-module-card p {
+  margin: 8px 0 14px;
+  color: #667085;
+  font-size: 13px;
+}
+
+.system-module-card strong {
+  color: #1f5eff;
+  font-size: 22px;
+}
+
 .section-card {
   margin-top: 16px;
 }
@@ -364,6 +387,7 @@ body {
   .dashboard-grid,
   .dictionary-grid,
   .relationship-grid,
+  .system-module-grid,
   .system-grid {
     grid-template-columns: 1fr;
   }

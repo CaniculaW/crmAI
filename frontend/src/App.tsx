@@ -20,12 +20,16 @@ import type { ColumnsType } from "antd/es/table";
 import {
   BarChart3,
   BriefcaseBusiness,
+  Building2,
   CalendarCheck,
   Contact,
+  History,
+  KeyRound,
   LayoutDashboard,
   Plus,
   RefreshCw,
   ShieldCheck,
+  UserCog,
   Users
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -61,6 +65,7 @@ type NavItem = {
   label: string;
   icon: React.ReactNode;
   permission?: string;
+  permissions?: string[];
 };
 
 const navItems: NavItem[] = [
@@ -70,7 +75,11 @@ const navItems: NavItem[] = [
   { key: "/opportunities", label: "商机", icon: <BriefcaseBusiness size={18} />, permission: "opportunity.read" },
   { key: "/activities", label: "销售行动", icon: <CalendarCheck size={18} />, permission: "activity.read" },
   { key: "/weekly-progress", label: "周进展", icon: <BarChart3 size={18} />, permission: "weekly_progress.read" },
-  { key: "/system", label: "系统管理", icon: <ShieldCheck size={18} />, permission: "system.dict.manage" }
+  { key: "/system", label: "系统管理", icon: <ShieldCheck size={18} />, permissions: ["system.dict.manage", "system.user.manage", "system.role.manage", "system.audit.read"] },
+  { key: "/system/departments", label: "组织管理", icon: <Building2 size={18} />, permission: "system.user.manage" },
+  { key: "/system/users", label: "用户管理", icon: <UserCog size={18} />, permission: "system.user.manage" },
+  { key: "/system/roles", label: "角色权限", icon: <KeyRound size={18} />, permission: "system.role.manage" },
+  { key: "/system/audit-logs", label: "审计日志", icon: <History size={18} />, permission: "system.audit.read" }
 ];
 
 type SelectOption = {
@@ -82,6 +91,8 @@ type RelationshipBucket = {
   key: string;
   contacts: CrmContact[];
 };
+
+type SystemSection = "overview" | "departments" | "users" | "roles" | "auditLogs";
 
 export function App() {
   return (
@@ -149,7 +160,11 @@ function CrmShell() {
     );
   }
 
-  const allowedNav = navItems.filter((item) => !item.permission || user.permissions.includes(item.permission));
+  const allowedNav = navItems.filter(
+    (item) =>
+      (!item.permission || user.permissions.includes(item.permission)) &&
+      (!item.permissions || item.permissions.some((permission) => user.permissions.includes(permission)))
+  );
 
   return (
     <Layout className="app-shell">
@@ -196,7 +211,11 @@ function CrmShell() {
             <Route path="/opportunities" element={<OpportunitiesPage currentUser={user} />} />
             <Route path="/activities" element={<ActivitiesPage currentUser={user} />} />
             <Route path="/weekly-progress" element={<WeeklyProgressPage />} />
-            <Route path="/system" element={<SystemPage />} />
+            <Route path="/system" element={<SystemPage section="overview" />} />
+            <Route path="/system/departments" element={<SystemPage section="departments" />} />
+            <Route path="/system/users" element={<SystemPage section="users" />} />
+            <Route path="/system/roles" element={<SystemPage section="roles" />} />
+            <Route path="/system/audit-logs" element={<SystemPage section="auditLogs" />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Content>
@@ -1192,7 +1211,7 @@ function WeeklyProgressPage() {
   );
 }
 
-function SystemPage() {
+function SystemPage({ section }: { section: SystemSection }) {
   const dictionaries = useResource(crmApi.dictionaries.list, []);
   const auditLogs = useResource(() => crmApi.auditLogs.list({ limit: 20 }), []);
   const users = useResource(crmApi.users.list, []);
@@ -1289,17 +1308,6 @@ function SystemPage() {
     await auditLogs.refresh();
   };
 
-  const refreshSystem = async () => {
-    await Promise.all([
-      dictionaries.refresh(),
-      users.refresh(),
-      departments.refresh(),
-      roles.refresh(),
-      permissions.refresh(),
-      auditLogs.refresh()
-    ]);
-  };
-
   const editRolePermissions = (role: SystemRole) => {
     setEditingRole(role);
     permissionForm.setFieldsValue({ permission_codes: role.permission_codes });
@@ -1376,29 +1384,131 @@ function SystemPage() {
     { title: "Trace", dataIndex: "trace_id", render: textOrDash }
   ];
 
+  const sectionMeta: Record<SystemSection, { title: string; description: string }> = {
+    overview: {
+      title: "系统管理",
+      description: "按组织、用户、角色权限和审计日志拆分系统治理入口，保留 V1 字典配置。"
+    },
+    departments: {
+      title: "组织管理",
+      description: "维护部门组织、区域归属和启停状态。"
+    },
+    users: {
+      title: "用户管理",
+      description: "维护人员账号、角色分配、状态和管理员密码重置。"
+    },
+    roles: {
+      title: "角色权限",
+      description: "按角色配置权限点，支撑系统与业务操作授权。"
+    },
+    auditLogs: {
+      title: "审计日志",
+      description: "查看系统关键操作记录、Trace 和结果。"
+    }
+  };
+
+  const sectionLoading: Record<SystemSection, boolean> = {
+    overview: dictionaries.loading || departments.loading || users.loading || roles.loading || auditLogs.loading,
+    departments: departments.loading,
+    users: users.loading || roles.loading,
+    roles: roles.loading || permissions.loading,
+    auditLogs: auditLogs.loading
+  };
+
+  const sectionError: Record<SystemSection, string> = {
+    overview: dictionaries.error || departments.error || users.error || roles.error || auditLogs.error,
+    departments: departments.error,
+    users: users.error || roles.error,
+    roles: roles.error || permissions.error,
+    auditLogs: auditLogs.error
+  };
+
+  const sectionRefresh: Record<SystemSection, () => Promise<void>> = {
+    overview: async () => {
+      await Promise.all([dictionaries.refresh(), users.refresh(), departments.refresh(), roles.refresh(), auditLogs.refresh()]);
+    },
+    departments: departments.refresh,
+    users: async () => {
+      await Promise.all([users.refresh(), roles.refresh()]);
+    },
+    roles: async () => {
+      await Promise.all([roles.refresh(), permissions.refresh()]);
+    },
+    auditLogs: auditLogs.refresh
+  };
+
+  const sectionAction: Record<SystemSection, React.ReactNode> = {
+    overview: (
+      <Button icon={<Plus size={16} />} onClick={() => setTypeOpen(true)}>
+        新建字典
+      </Button>
+    ),
+    departments: (
+      <Button icon={<Plus size={16} />} type="primary" onClick={() => setDepartmentOpen(true)}>
+        新建组织
+      </Button>
+    ),
+    users: (
+      <Space>
+        <Button icon={<Plus size={16} />} type="primary" onClick={() => setUserOpen(true)}>
+          新增用户
+        </Button>
+        <Button onClick={() => setResetOpen(true)}>重置密码</Button>
+      </Space>
+    ),
+    roles: null,
+    auditLogs: null
+  };
+
   return (
     <DataWorkspace
-      title="系统管理"
-      description="V1 当前接入组织、用户、角色权限、字典配置、密码重置和审计日志基础维护。"
-      loading={dictionaries.loading || users.loading || departments.loading || roles.loading || permissions.loading}
-      error={dictionaries.error || users.error || departments.error || roles.error || permissions.error}
-      refresh={refreshSystem}
-      action={
-        <Space>
-          <Button icon={<Plus size={16} />} onClick={() => setDepartmentOpen(true)}>
-            新建组织
-          </Button>
-          <Button icon={<Plus size={16} />} onClick={() => setUserOpen(true)}>
-            新增用户
-          </Button>
-          <Button icon={<Plus size={16} />} onClick={() => setTypeOpen(true)}>
-            新建字典
-          </Button>
-          <Button onClick={() => setResetOpen(true)}>重置密码</Button>
-        </Space>
-      }
+      title={sectionMeta[section].title}
+      description={sectionMeta[section].description}
+      loading={sectionLoading[section]}
+      error={sectionError[section]}
+      refresh={sectionRefresh[section]}
+      action={sectionAction[section]}
     >
-      <div className="system-grid">
+      {section === "overview" ? (
+        <>
+          <div className="system-module-grid">
+            <SystemModuleCard title="组织管理" description="部门、区域和组织状态维护" path="/system/departments" value={departments.data.length} />
+            <SystemModuleCard title="用户管理" description="账号、角色和状态维护" path="/system/users" value={users.data.length} />
+            <SystemModuleCard title="角色权限" description="角色授权和权限点配置" path="/system/roles" value={roles.data.length} />
+            <SystemModuleCard title="审计日志" description="操作轨迹、对象和结果追溯" path="/system/audit-logs" value={auditLogs.data.length} />
+          </div>
+          <div className="dictionary-grid">
+            {dictionaries.data.map((dict) => (
+              <Card
+                key={dict.id}
+                size="small"
+                title={`${dict.dict_name} (${dict.dict_code})`}
+                extra={
+                  <Button size="small" onClick={() => setItemTarget(dict)}>
+                    新增项
+                  </Button>
+                }
+              >
+                <Space wrap>
+                  {dict.items.map((item) => (
+                    <Tag
+                      key={item.id}
+                      color={item.is_active ? "blue" : "default"}
+                      onClick={() => {
+                        setEditingItem(item);
+                        itemEditForm.setFieldsValue(item);
+                      }}
+                    >
+                      {item.item_name}
+                    </Tag>
+                  ))}
+                </Space>
+              </Card>
+            ))}
+          </div>
+        </>
+      ) : null}
+      {section === "departments" ? (
         <Card size="small" title="组织列表">
           <Table
             rowKey="id"
@@ -1410,6 +1520,8 @@ function SystemPage() {
             scroll={{ x: 640 }}
           />
         </Card>
+      ) : null}
+      {section === "users" ? (
         <Card size="small" title="用户列表">
           <Table
             rowKey="id"
@@ -1421,6 +1533,8 @@ function SystemPage() {
             scroll={{ x: 806 }}
           />
         </Card>
+      ) : null}
+      {section === "roles" ? (
         <Card size="small" title="角色权限">
           <Table
             rowKey="id"
@@ -1432,38 +1546,9 @@ function SystemPage() {
             scroll={{ x: 536 }}
           />
         </Card>
-      </div>
-      <div className="dictionary-grid">
-        {dictionaries.data.map((dict) => (
-          <Card
-            key={dict.id}
-            size="small"
-            title={`${dict.dict_name} (${dict.dict_code})`}
-            extra={
-              <Button size="small" onClick={() => setItemTarget(dict)}>
-                新增项
-              </Button>
-            }
-          >
-            <Space wrap>
-              {dict.items.map((item) => (
-                <Tag
-                  key={item.id}
-                  color={item.is_active ? "blue" : "default"}
-                  onClick={() => {
-                    setEditingItem(item);
-                    itemEditForm.setFieldsValue(item);
-                  }}
-                >
-                  {item.item_name}
-                </Tag>
-              ))}
-            </Space>
-          </Card>
-        ))}
-      </div>
-      <Card className="section-card" size="small" title="最近审计日志">
-        {auditLogs.error ? <div className="error-banner">{auditLogs.error}</div> : null}
+      ) : null}
+      {section === "auditLogs" ? (
+        <Card size="small" title="最近审计日志">
         <Table
           rowKey="id"
           size="small"
@@ -1473,6 +1558,7 @@ function SystemPage() {
           pagination={{ pageSize: 8 }}
         />
       </Card>
+      ) : null}
       <Modal title="新建组织" open={departmentOpen} onCancel={() => setDepartmentOpen(false)} footer={null} destroyOnHidden>
         <Form name="departmentForm" form={departmentForm} layout="vertical" onFinish={createDepartment} initialValues={{ status: "active" }}>
           <Form.Item name="parent_id" label="上级组织ID">
@@ -1647,6 +1733,26 @@ function SystemPage() {
         </Form>
       </Modal>
     </DataWorkspace>
+  );
+}
+
+function SystemModuleCard({
+  title,
+  description,
+  path,
+  value
+}: {
+  title: string;
+  description: string;
+  path: string;
+  value: number;
+}) {
+  return (
+    <Card size="small" className="system-module-card">
+      <Link to={path}>{title}</Link>
+      <p>{description}</p>
+      <strong>{value}</strong>
+    </Card>
   );
 }
 
