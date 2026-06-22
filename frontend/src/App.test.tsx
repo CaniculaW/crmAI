@@ -312,6 +312,23 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
+  it("shows business guidance and Chinese empty state on empty business lists", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "销售行动" }));
+
+    expect(await screen.findByRole("heading", { name: "销售行动" })).toBeInTheDocument();
+    expect(screen.getByText("当前页面怎么用")).toBeInTheDocument();
+    expect(screen.getByText("先新建行动，或调整筛选条件查看计划、完成和逾期行动。")).toBeInTheDocument();
+    expect(screen.getByText("暂无销售行动")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "刷新" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "新建行动" })).toBeInTheDocument();
+  });
+
   it("changes the current user's password", async () => {
     const fetchMock = mockCrmFetch();
     const user = userEvent.setup();

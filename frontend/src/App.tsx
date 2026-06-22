@@ -389,7 +389,8 @@ function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
   return (
     <DataWorkspace
       title="客户池"
-      description="客户新增、列表查询、最近跟进和客户状态维护入口。"
+      description="从客户池进入客户经营，查看客户状态、最近跟进和后续业务入口。"
+      guide="先用关键词、等级、状态或行业定位客户；打开详情查看客户主数据和最近跟进，必要时新建客户。"
       loading={resource.loading}
       error={resource.error}
       action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建客户</Button>}
@@ -413,7 +414,7 @@ function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
           <Input allowClear />
         </Form.Item>
       </FilterBar>
-      <Table rowKey="id" size="middle" dataSource={resource.data} columns={columns} pagination={{ pageSize: 8 }} />
+      <Table rowKey="id" size="middle" dataSource={resource.data} columns={columns} pagination={{ pageSize: 8 }} locale={{ emptyText: "暂无客户" }} />
       <Drawer title="新建客户" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
         <Form form={form} layout="vertical" onFinish={createAccount} initialValues={{ owner_department_id: 1 }}>
           <Form.Item name="account_name" label="客户名称" rules={[{ required: true }]}>
@@ -550,7 +551,8 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
   return (
     <DataWorkspace
       title="联系人"
-      description="维护客户干系人、态度、影响力和项目角色。"
+      description="维护客户干系人关系，识别关键角色、态度和经营动作。"
+      guide="先按客户、态度或关系热度查看关键联系人；通过关系视图判断角色覆盖，再进入详情或新建联系人。"
       loading={contacts.loading}
       error={contacts.error}
       action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建联系人</Button>}
@@ -581,7 +583,7 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
           <RelationshipGroup title="按态度" groups={attitudeGroups} />
         </div>
       </section>
-      <Table rowKey="id" dataSource={contacts.data} columns={columns} pagination={{ pageSize: 8 }} />
+      <Table rowKey="id" dataSource={contacts.data} columns={columns} pagination={{ pageSize: 8 }} locale={{ emptyText: "暂无联系人" }} />
       <Drawer title="新建联系人" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
         <Form form={form} layout="vertical" onFinish={createContact}>
           <Form.Item name="account_id" label="所属客户" rules={[{ required: true }]}>
@@ -812,7 +814,8 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
   return (
     <DataWorkspace
       title="商机"
-      description="商机阶段、状态、风险和关闭/取消跟进管理。"
+      description="围绕在办商机推进阶段、状态、风险和关闭/取消跟进。"
+      guide="先查看默认在办商机；按阶段、状态或风险筛选，再进入详情推进阶段、编辑进展或关闭/取消跟进。"
       loading={opportunities.loading}
       error={opportunities.error}
       action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建商机</Button>}
@@ -839,7 +842,7 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
           <Select allowClear options={["normal", "risk"].map(option)} />
         </Form.Item>
       </FilterBar>
-      <Table rowKey="id" dataSource={opportunities.data} columns={columns} pagination={{ pageSize: 8 }} />
+      <Table rowKey="id" dataSource={opportunities.data} columns={columns} pagination={{ pageSize: 8 }} locale={{ emptyText: "暂无商机" }} />
       <Drawer title="新建商机" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
         <Form form={form} layout="vertical" onFinish={createOpportunity} initialValues={{ owner_department_id: 1 }}>
           <Form.Item name="account_id" label="所属客户" rules={[{ required: true }]}>
@@ -1025,7 +1028,8 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
   return (
     <DataWorkspace
       title="销售行动"
-      description="记录客户经营行动和项目推进行动，完成后回写客户与商机最近跟进。"
+      description="记录客户经营和商机推进动作，完成后回写最近跟进与周进展。"
+      guide="先新建行动，或调整筛选条件查看计划、完成和逾期行动。"
       loading={activities.loading}
       error={activities.error}
       action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建行动</Button>}
@@ -1052,7 +1056,7 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
           <Select allowClear options={[{ label: "是", value: true }, { label: "否", value: false }]} />
         </Form.Item>
       </FilterBar>
-      <Table rowKey="id" dataSource={activities.data} columns={columns} pagination={{ pageSize: 8 }} />
+      <Table rowKey="id" dataSource={activities.data} columns={columns} pagination={{ pageSize: 8 }} locale={{ emptyText: "暂无销售行动" }} />
       <Drawer title="新建行动" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
         <Form form={form} layout="vertical" onFinish={createActivity} initialValues={{ owner_department_id: 1 }}>
           <Form.Item name="account_id" label="客户" rules={[{ required: true }]}>
@@ -1157,7 +1161,8 @@ function WeeklyProgressPage() {
   return (
     <DataWorkspace
       title="周进展"
-      description="按商机、负责人和自然周展示已完成销售行动形成的周进展。"
+      description="按商机、负责人和自然周汇总已完成销售行动。"
+      guide="先选择自然周和负责人，再查看商机推进明细；周进展来源于已完成且进入周进展的销售行动。"
       loading={progress.loading}
       error={progress.error}
       refresh={progress.refresh}
@@ -1197,6 +1202,7 @@ function WeeklyProgressPage() {
         rowKey={(row) => `${row.opportunity_id}-${row.week_start_date}`}
         dataSource={progress.data}
         columns={columns}
+        locale={{ emptyText: "暂无周进展" }}
         expandable={{
           expandedRowRender: (row) => (
             <SimpleList
@@ -1384,26 +1390,31 @@ function SystemPage({ section }: { section: SystemSection }) {
     { title: "Trace", dataIndex: "trace_id", render: textOrDash }
   ];
 
-  const sectionMeta: Record<SystemSection, { title: string; description: string }> = {
+  const sectionMeta: Record<SystemSection, { title: string; description: string; guide: string }> = {
     overview: {
       title: "系统管理",
-      description: "按组织、用户、角色权限和审计日志拆分系统治理入口，保留 V1 字典配置。"
+      description: "按组织、用户、角色权限和审计日志拆分系统治理入口，保留 V1 字典配置。",
+      guide: "先进入对应管理模块处理组织、账号、授权或审计；字典配置保留在概览页统一维护。"
     },
     departments: {
       title: "组织管理",
-      description: "维护部门组织、区域归属和启停状态。"
+      description: "维护部门组织、区域归属和启停状态。",
+      guide: "先确认组织编码和区域归属，再新建或停用组织；组织是用户归属和数据权限的基础。"
     },
     users: {
       title: "用户管理",
-      description: "维护人员账号、角色分配、状态和管理员密码重置。"
+      description: "维护人员账号、角色分配、状态和管理员密码重置。",
+      guide: "先确认用户所属组织和角色，再新增、编辑或重置密码；停用用户会影响登录和数据访问。"
     },
     roles: {
       title: "角色权限",
-      description: "按角色配置权限点，支撑系统与业务操作授权。"
+      description: "按角色配置权限点，支撑系统与业务操作授权。",
+      guide: "先选择角色，再进入授权弹窗配置权限点；角色权限会影响菜单、按钮和接口访问。"
     },
     auditLogs: {
       title: "审计日志",
-      description: "查看系统关键操作记录、Trace 和结果。"
+      description: "查看系统关键操作记录、Trace 和结果。",
+      guide: "用于追溯关键操作的时间、对象、结果和 Trace；优先按异常或变更时间定位记录。"
     }
   };
 
@@ -1464,6 +1475,7 @@ function SystemPage({ section }: { section: SystemSection }) {
     <DataWorkspace
       title={sectionMeta[section].title}
       description={sectionMeta[section].description}
+      guide={sectionMeta[section].guide}
       loading={sectionLoading[section]}
       error={sectionError[section]}
       refresh={sectionRefresh[section]}
@@ -1518,6 +1530,7 @@ function SystemPage({ section }: { section: SystemSection }) {
             columns={departmentColumns}
             pagination={{ pageSize: 5 }}
             scroll={{ x: 640 }}
+            locale={{ emptyText: "暂无组织" }}
           />
         </Card>
       ) : null}
@@ -1531,6 +1544,7 @@ function SystemPage({ section }: { section: SystemSection }) {
             columns={userColumns}
             pagination={{ pageSize: 5 }}
             scroll={{ x: 806 }}
+            locale={{ emptyText: "暂无用户" }}
           />
         </Card>
       ) : null}
@@ -1544,6 +1558,7 @@ function SystemPage({ section }: { section: SystemSection }) {
             columns={roleColumns}
             pagination={{ pageSize: 5 }}
             scroll={{ x: 536 }}
+            locale={{ emptyText: "暂无角色" }}
           />
         </Card>
       ) : null}
@@ -1556,6 +1571,7 @@ function SystemPage({ section }: { section: SystemSection }) {
           dataSource={auditLogs.data}
           columns={auditColumns}
           pagination={{ pageSize: 8 }}
+          locale={{ emptyText: "暂无审计日志" }}
         />
       </Card>
       ) : null}
@@ -1759,6 +1775,7 @@ function SystemModuleCard({
 function DataWorkspace({
   title,
   description,
+  guide,
   loading,
   error,
   action,
@@ -1767,6 +1784,7 @@ function DataWorkspace({
 }: {
   title: string;
   description: string;
+  guide?: string;
   loading: boolean;
   error: string;
   action?: React.ReactNode;
@@ -1785,9 +1803,19 @@ function DataWorkspace({
           </Space>
         }
       />
+      {guide ? <PageGuide text={guide} /> : null}
       {error ? <div className="error-banner">{error}</div> : null}
       {children}
     </section>
+  );
+}
+
+function PageGuide({ text }: { text: string }) {
+  return (
+    <div className="page-guide" aria-label="当前页面怎么用">
+      <strong>当前页面怎么用</strong>
+      <span>{text}</span>
+    </div>
   );
 }
 

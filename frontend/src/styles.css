@@ -141,6 +141,28 @@ body {
   color: #667085;
 }
 
+.page-guide {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: -4px 0 16px;
+  padding: 10px 12px;
+  border: 1px solid #d8e7ff;
+  border-radius: 8px;
+  background: #f4f8ff;
+  color: #31415f;
+  font-size: 13px;
+}
+
+.page-guide strong {
+  flex: 0 0 auto;
+  color: #1f5eff;
+}
+
+.page-guide span {
+  min-width: 0;
+}
+
 .health-chip,
 .error-banner,
 .summary-panel {
@@ -394,6 +416,12 @@ body {
 
   .filter-bar {
     display: block;
+  }
+
+  .page-guide {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .filter-bar .ant-form-item {
