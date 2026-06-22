@@ -101,7 +101,7 @@
 
 | 模块 | 状态 | 完成日期 | 提交号 | 验证命令 | 浏览器验收 | 遗留问题 |
 |---|---|---|---|---|---|---|
-| 全局框架与页面规则 | Done | 2026-06-22 | 2e5267e | `npm test`; `npm run build`; Browser `/accounts`, `/activities`, `/system` | 通过；活动页指引和筛选空状态通过；截图 `/private/tmp/v1-page-framework-activities.png` | 无 |
+| 全局框架与页面规则 | Done | 2026-06-22 | 41068e4 | `npm test`; `npm run build`; Browser `/accounts`, `/activities`, `/system` | 通过；活动页指引和筛选空状态通过；截图 `/private/tmp/v1-page-framework-activities.png` | 无 |
 | 工作台 | Current | - | - | - | - | - |
 | 客户链路 | Pending | - | - | - | - | - |
 | 联系人与关系链路 | Pending | - | - | - | - | - |
