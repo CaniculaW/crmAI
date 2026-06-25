@@ -377,7 +377,7 @@ function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
         </Button>
       )
     },
-    { title: "类型", dataIndex: "account_type" },
+    { title: "类型", dataIndex: "account_type", render: accountTypeText },
     { title: "等级", dataIndex: "account_level", render: textOrDash },
     { title: "状态", dataIndex: "account_status", render: statusTag },
     { title: "最近跟进", dataIndex: "last_activity_summary", render: textOrDash },
@@ -386,7 +386,7 @@ function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
       render: (_, record) => (
         <Space>
           <Button size="small" onClick={() => setSelected(record)}>
-            详情
+            查看经营
           </Button>
           <Button
             size="small"
@@ -429,7 +429,7 @@ function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
     <DataWorkspace
       title="客户池"
       description="从客户池进入客户经营，查看客户状态、最近跟进和后续业务入口。"
-      guide="先用关键词、等级、状态或行业定位客户；打开详情查看客户主数据和最近跟进，必要时新建客户。"
+      guide="先用关键词、等级、状态或行业定位客户；打开客户经营查看摘要、最近跟进和后续业务入口，必要时新建客户。"
       loading={resource.loading}
       error={resource.error}
       action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建客户</Button>}
@@ -474,21 +474,8 @@ function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
           <Button type="primary" htmlType="submit" block>保存客户</Button>
         </Form>
       </Drawer>
-      <Drawer title="客户详情" open={!!selected} onClose={() => setSelected(null)} size="large">
-        <RecordDetails
-          record={selected}
-          fields={[
-            ["客户名称", "account_name"],
-            ["类型", "account_type"],
-            ["等级", "account_level"],
-            ["状态", "account_status"],
-            ["行业", "industry"],
-            ["省份", "region_province"],
-            ["城市", "region_city"],
-            ["最近跟进", "last_activity_summary"],
-            ["最近跟进时间", "last_activity_at"]
-          ]}
-        />
+      <Drawer title="客户经营" open={!!selected} onClose={() => setSelected(null)} size="large">
+        <AccountOperationDrawer account={selected} />
       </Drawer>
       <Modal title="编辑客户" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
         <Form form={editForm} layout="vertical" onFinish={updateAccount}>
@@ -505,6 +492,93 @@ function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
         </Form>
       </Modal>
     </DataWorkspace>
+  );
+}
+
+function AccountOperationDrawer({ account }: { account: Account | null }) {
+  if (!account) {
+    return null;
+  }
+  const location = [account.region_province, account.region_city].filter(Boolean).join(" / ") || "-";
+  const lastActivityAt = dateText(account.last_activity_at);
+  const entries = [
+    {
+      icon: <Contact size={18} />,
+      title: "维护联系人",
+      description: "补全决策人、采购和影响者，沉淀客户关系。",
+      to: "/contacts"
+    },
+    {
+      icon: <BriefcaseBusiness size={18} />,
+      title: "推进商机",
+      description: "进入商机阶段、风险和状态推进。",
+      to: "/opportunities"
+    },
+    {
+      icon: <CalendarCheck size={18} />,
+      title: "记录销售行动",
+      description: "记录拜访、会议和下一步计划，回写最近跟进。",
+      to: "/activities"
+    }
+  ];
+
+  return (
+    <div className="account-operation">
+      <section className="account-operation-hero">
+        <div>
+          <Typography.Title level={3}>客户经营入口</Typography.Title>
+          <p>{account.account_name}</p>
+        </div>
+        <Tag color="blue">{statusText(account.account_status)}</Tag>
+      </section>
+
+      <section>
+        <Typography.Title level={4}>客户摘要</Typography.Title>
+        <div className="account-summary-grid">
+          <AccountSummaryItem label="客户类型" value={accountTypeText(account.account_type)} />
+          <AccountSummaryItem label="客户等级" value={textOrDash(account.account_level)} />
+          <AccountSummaryItem label="经营状态" value={statusText(account.account_status)} />
+          <AccountSummaryItem label="行业" value={textOrDash(account.industry)} />
+          <AccountSummaryItem label="区域" value={location} />
+          <AccountSummaryItem label="归属销售" value={`用户 ${account.owner_user_id}`} />
+        </div>
+      </section>
+
+      <section className="account-follow-up-panel">
+        <div>
+          <span>最近跟进</span>
+          <strong>{textOrDash(account.last_activity_summary)}</strong>
+        </div>
+        <small>{lastActivityAt === "-" ? "暂无跟进时间" : lastActivityAt}</small>
+      </section>
+
+      <section>
+        <Typography.Title level={4}>关联业务入口</Typography.Title>
+        <div className="account-entry-grid">
+          {entries.map((entry) => (
+            <Link key={entry.to} className="account-entry-link" to={entry.to} aria-label={entry.title}>
+              {entry.icon}
+              <strong>{entry.title}</strong>
+              <span>{entry.description}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="account-next-step">
+        <Typography.Title level={4}>下一步建议</Typography.Title>
+        <p>先确认联系人角色和态度，再推进商机阶段；所有拜访、会议和风险变化统一沉淀到销售行动。</p>
+      </section>
+    </div>
+  );
+}
+
+function AccountSummaryItem({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="account-summary-item">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 
@@ -1997,11 +2071,25 @@ function option(value: string) {
   return { label: value, value };
 }
 
+function accountTypeText(type?: string) {
+  if (!type) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    enterprise: "企业客户",
+    government: "政企客户",
+    channel: "渠道客户",
+    individual: "个人客户"
+  };
+  return labels[type] ?? type;
+}
+
 function statusText(status?: string) {
   if (!status) {
     return "-";
   }
   const labels: Record<string, string> = {
+    active: "跟进中",
     following: "跟进中",
     planned: "计划中",
     pending: "待处理",

@@ -32,6 +32,11 @@ const apiData = {
       account_type: "enterprise",
       account_level: "A",
       account_status: "following",
+      industry: "智能制造",
+      region_province: "上海",
+      region_city: "上海",
+      last_activity_summary: "完成CRM V1试点需求确认会",
+      last_activity_at: "2026-06-22T03:58:00+08:00",
       owner_department_id: 1,
       owner_user_id: 1001
     }
@@ -258,6 +263,29 @@ describe("CRM frontend V1 workflow", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/accounts?keyword="), expect.anything());
     });
+  });
+
+  it("shows the customer operation entry from the account list", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "客户池" }));
+    await screen.findByText("测试客户A");
+    await user.click(screen.getByRole("button", { name: /查看经营/ }));
+
+    expect(await screen.findByRole("heading", { name: "客户经营入口" })).toBeInTheDocument();
+    expect(screen.getByText("客户摘要")).toBeInTheDocument();
+    expect(screen.getAllByText("企业客户").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("跟进中").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("最近跟进").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("完成CRM V1试点需求确认会").length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "维护联系人" })).toHaveAttribute("href", "/contacts");
+    expect(screen.getByRole("link", { name: "推进商机" })).toHaveAttribute("href", "/opportunities");
+    expect(screen.getByRole("link", { name: "记录销售行动" })).toHaveAttribute("href", "/activities");
+    expect(screen.getByText("下一步建议")).toBeInTheDocument();
   });
 
   it("updates an account from the customer list page", async () => {
