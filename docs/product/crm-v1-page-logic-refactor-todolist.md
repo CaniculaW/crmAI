@@ -103,7 +103,7 @@
 |---|---|---|---|---|---|---|
 | 全局框架与页面规则 | Done | 2026-06-22 | 41068e4 | `npm test`; `npm run build`; Browser `/accounts`, `/activities`, `/system` | 通过；活动页指引和筛选空状态通过；截图 `/private/tmp/v1-page-framework-activities.png` | 无 |
 | 工作台 | Done | 2026-06-22 | 573ee1a | `npm test`; `npm run build`; Browser `/` | 通过；今日优先处理、快捷入口、工作台空状态指引通过；截图 `/private/tmp/v1-dashboard-command-center.png` | 无 |
-| 客户链路 | Done | 2026-06-25 | 待提交 | `npm test`; `npm run build`; Browser `/accounts` DOM 验收 | 通过；客户经营入口、摘要、最近跟进、联系人/商机/行动入口、下一步建议通过；无服务端异常；控制台错误 0；截图捕获接口超时，已用 DOM 验收结果记录 | 无 |
+| 客户链路 | Done | 2026-06-25 | efe3bd8 | `npm test`; `npm run build`; Browser `/accounts` DOM 验收 | 通过；客户经营入口、摘要、最近跟进、联系人/商机/行动入口、下一步建议通过；无服务端异常；控制台错误 0；截图捕获接口超时，已用 DOM 验收结果记录 | 无 |
 | 联系人与关系链路 | Current | - | - | - | - | - |
 | 商机推进链路 | Pending | - | - | - | - | - |
 | 销售行动链路 | Pending | - | - | - | - | - |
