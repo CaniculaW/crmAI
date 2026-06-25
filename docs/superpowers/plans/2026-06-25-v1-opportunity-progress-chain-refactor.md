@@ -17,7 +17,7 @@
 | 3 | 实现商机推进工作台 | Done | 列表中文化，详情抽屉展示推进判断和关联入口 |
 | 4 | 自动化验证 | Done | 前端定向测试、全量测试、构建通过；后端商机默认在办筛选测试通过 |
 | 5 | 本地 UAT | Done | `/opportunities` 无服务端异常，核心 DOM 验收通过 |
-| 6 | 更新项目 TODOList 并提交 | In Progress | 模块 5 Done，模块 6 Current，提交号记录 |
+| 6 | 更新项目 TODOList 并提交 | Done | 模块 5 Done，模块 6 Current，提交号 f464e78 已记录 |
 
 ## 修改范围
 
