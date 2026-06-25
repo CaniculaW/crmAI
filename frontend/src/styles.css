@@ -701,6 +701,114 @@ body {
   line-height: 1.55;
 }
 
+.activity-execution {
+  display: grid;
+  gap: 18px;
+}
+
+.activity-execution h3.ant-typography,
+.activity-execution h4.ant-typography {
+  margin: 0 0 10px;
+}
+
+.activity-execution-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #cfdff9;
+  border-radius: 8px;
+  background: #f6f9ff;
+}
+
+.activity-execution-hero p {
+  margin: 4px 0 0;
+  color: #667085;
+}
+
+.activity-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.activity-summary-item {
+  display: grid;
+  gap: 4px;
+  min-height: 68px;
+  padding: 12px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.activity-summary-item span,
+.activity-process-panel span {
+  color: #667085;
+  font-size: 13px;
+}
+
+.activity-summary-item strong,
+.activity-process-panel strong {
+  color: #172033;
+  font-size: 15px;
+  word-break: break-word;
+}
+
+.activity-process-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.activity-process-panel div {
+  display: grid;
+  gap: 6px;
+}
+
+.activity-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.activity-entry-link {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 4px 8px;
+  min-height: 110px;
+  padding: 14px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  color: #172033;
+  background: #ffffff;
+}
+
+.activity-entry-link:hover {
+  border-color: #1f5eff;
+  color: #1f5eff;
+}
+
+.activity-entry-link svg {
+  grid-row: span 2;
+  margin-top: 2px;
+  color: #1f5eff;
+}
+
+.activity-entry-link strong {
+  font-size: 15px;
+}
+
+.activity-entry-link span {
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .record-details {
   display: grid;
   gap: 12px;
@@ -798,6 +906,8 @@ body {
 
   .account-entry-grid,
   .account-summary-grid,
+  .activity-entry-grid,
+  .activity-summary-grid,
   .contact-entry-grid,
   .contact-summary-grid,
   .dashboard-grid,
@@ -843,6 +953,10 @@ body {
   }
 
   .opportunity-progress-hero {
+    flex-direction: column;
+  }
+
+  .activity-execution-hero {
     flex-direction: column;
   }
 

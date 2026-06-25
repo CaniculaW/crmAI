@@ -86,7 +86,30 @@ const apiData = {
       owner_user_id: 1001
     }
   ],
-  activities: [],
+  activities: [
+    {
+      id: 88,
+      account_id: 1,
+      opportunity_id: 10,
+      subject: "完成CRM V1试点需求确认会",
+      activity_type: "meeting",
+      activity_status: "completed",
+      activity_result: "aligned",
+      activity_time: "2026-06-22T03:58:00+08:00",
+      next_follow_up_at: "2026-06-25T10:00:00+08:00",
+      owner_department_id: 1,
+      owner_user_id: 1001,
+      communication_content: "围绕CRM V1试点目标、角色权限、客户档案和商机推进节奏完成确认。",
+      customer_feedback: "客户希望先以重点客户团队试点，验证周进展和提醒机制。",
+      conclusion: "双方确认进入试点方案细化阶段。",
+      next_plan: "三日内提交试点方案和演示账号。",
+      risk_description: "需在方案中明确历史数据导入范围。",
+      include_in_weekly_progress: true,
+      weekly_period: "current_week",
+      contact_ids: [21],
+      risk_types: ["data_migration"]
+    }
+  ],
   reminders: [],
   weeklyProgress: [
     {
@@ -395,6 +418,33 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("link", { name: "查看周进展" })).toHaveAttribute("href", "/weekly-progress");
   });
 
+  it("shows the sales activity execution entry from the activity list", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "销售行动" }));
+    await screen.findByRole("button", { name: "完成CRM V1试点需求确认会" });
+    await user.click(screen.getByRole("button", { name: "完成CRM V1试点需求确认会" }));
+
+    expect(await screen.findByRole("heading", { name: "行动执行入口" })).toBeInTheDocument();
+    expect(screen.getByText("执行判断")).toBeInTheDocument();
+    expect(screen.getAllByText("测试客户A").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("测试商机A").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("已完成").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("会议沟通").length).toBeGreaterThan(0);
+    expect(screen.getByText("围绕CRM V1试点目标、角色权限、客户档案和商机推进节奏完成确认。")).toBeInTheDocument();
+    expect(screen.getByText("客户希望先以重点客户团队试点，验证周进展和提醒机制。")).toBeInTheDocument();
+    expect(screen.getByText("双方确认进入试点方案细化阶段。")).toBeInTheDocument();
+    expect(screen.getByText("三日内提交试点方案和演示账号。")).toBeInTheDocument();
+    expect(screen.getByText("需在方案中明确历史数据导入范围。")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看客户" })).toHaveAttribute("href", "/accounts");
+    expect(screen.getByRole("link", { name: "推进商机" })).toHaveAttribute("href", "/opportunities");
+    expect(screen.getByRole("link", { name: "查看周进展" })).toHaveAttribute("href", "/weekly-progress");
+  });
+
   it("filters weekly progress by owner and natural week", async () => {
     const fetchMock = mockCrmFetch();
     const user = userEvent.setup();
@@ -422,7 +472,7 @@ describe("CRM frontend V1 workflow", () => {
 
   it("shows business guidance and Chinese empty state on empty business lists", async () => {
     const user = userEvent.setup();
-    mockCrmFetch();
+    mockCrmFetch({ activities: [] });
 
     render(<App />);
     await loginThroughUi(user);
@@ -431,7 +481,7 @@ describe("CRM frontend V1 workflow", () => {
 
     expect(await screen.findByRole("heading", { name: "销售行动" })).toBeInTheDocument();
     expect(screen.getByText("当前页面怎么用")).toBeInTheDocument();
-    expect(screen.getByText("先新建行动，或调整筛选条件查看计划、完成和逾期行动。")).toBeInTheDocument();
+    expect(screen.getByText("先看计划、逾期和风险行动；进入行动执行入口确认沟通内容、客户反馈、结论和下一步计划。")).toBeInTheDocument();
     expect(screen.getByText("暂无销售行动")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "刷新" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "新建行动" })).toBeInTheDocument();
@@ -619,19 +669,20 @@ async function loginThroughUi(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByRole("link", { name: "工作台" });
 }
 
-function mockCrmFetch() {
+function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
+  const data = { ...apiData, ...overrides };
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
     const path = url.split("?")[0];
     const method = init?.method ?? "GET";
     if (path.endsWith("/api/auth/login")) {
-      return jsonResponse({ code: "OK", data: { access_token: "token-001", token_type: "Bearer", user: apiData.user } });
+      return jsonResponse({ code: "OK", data: { access_token: "token-001", token_type: "Bearer", user: data.user } });
     }
     if (path.endsWith("/api/auth/logout")) {
       return jsonResponse({ code: "OK", data: { logged_out: true } });
     }
     if (path.endsWith("/api/auth/me")) {
-      return jsonResponse({ code: "OK", data: apiData.user });
+      return jsonResponse({ code: "OK", data: data.user });
     }
     if (path.endsWith("/api/auth/change-password")) {
       return jsonResponse({ code: "OK", data: { password_changed: true } });
@@ -640,61 +691,61 @@ function mockCrmFetch() {
       return jsonResponse({ code: "OK", data: { force_password_change: true } });
     }
     if (path.endsWith("/api/accounts/1") && method === "PATCH") {
-      return jsonResponse({ code: "OK", data: { ...apiData.accounts[0], remark: "重点推进" } });
+      return jsonResponse({ code: "OK", data: { ...data.accounts[0], remark: "重点推进" } });
     }
     if (path.endsWith("/api/accounts") && method === "POST") {
-      return jsonResponse({ code: "OK", data: { ...apiData.accounts[0], id: 2, account_name: "新增客户B" } });
+      return jsonResponse({ code: "OK", data: { ...data.accounts[0], id: 2, account_name: "新增客户B" } });
     }
     if (path.endsWith("/api/accounts")) {
-      return jsonResponse({ code: "OK", data: apiData.accounts });
+      return jsonResponse({ code: "OK", data: data.accounts });
     }
     if (path.endsWith("/api/contacts")) {
-      return jsonResponse({ code: "OK", data: apiData.contacts });
+      return jsonResponse({ code: "OK", data: data.contacts });
     }
     if (path.endsWith("/api/opportunities")) {
-      return jsonResponse({ code: "OK", data: apiData.opportunities });
+      return jsonResponse({ code: "OK", data: data.opportunities });
     }
     if (path.endsWith("/api/activities")) {
-      return jsonResponse({ code: "OK", data: apiData.activities });
+      return jsonResponse({ code: "OK", data: data.activities });
     }
     if (path.endsWith("/api/reminders")) {
-      return jsonResponse({ code: "OK", data: apiData.reminders });
+      return jsonResponse({ code: "OK", data: data.reminders });
     }
     if (path.endsWith("/api/weekly-progress/opportunities")) {
-      return jsonResponse({ code: "OK", data: apiData.weeklyProgress });
+      return jsonResponse({ code: "OK", data: data.weeklyProgress });
     }
     if (path.endsWith("/api/system/dicts")) {
-      return jsonResponse({ code: "OK", data: apiData.dictionaries });
+      return jsonResponse({ code: "OK", data: data.dictionaries });
     }
     if (path.endsWith("/api/system/audit-logs")) {
-      return jsonResponse({ code: "OK", data: apiData.auditLogs });
+      return jsonResponse({ code: "OK", data: data.auditLogs });
     }
     if (path.endsWith("/api/system/departments") && method === "POST") {
-      return jsonResponse({ code: "OK", data: { ...apiData.departments[0], id: 2, code: "sales-south", name: "华南销售部" } });
+      return jsonResponse({ code: "OK", data: { ...data.departments[0], id: 2, code: "sales-south", name: "华南销售部" } });
     }
     if (path.endsWith("/api/system/departments")) {
-      return jsonResponse({ code: "OK", data: apiData.departments });
+      return jsonResponse({ code: "OK", data: data.departments });
     }
     if (path.endsWith("/api/system/users") && method === "POST") {
-      return jsonResponse({ code: "OK", data: { ...apiData.users[0], id: 1002, name: "新增销售" } });
+      return jsonResponse({ code: "OK", data: { ...data.users[0], id: 1002, name: "新增销售" } });
     }
     if (path.endsWith("/api/system/users")) {
-      return jsonResponse({ code: "OK", data: apiData.users });
+      return jsonResponse({ code: "OK", data: data.users });
     }
     if (path.endsWith("/api/system/users/1001") && method === "PUT") {
-      return jsonResponse({ code: "OK", data: { ...apiData.users[0], name: "销售一号更新" } });
+      return jsonResponse({ code: "OK", data: { ...data.users[0], name: "销售一号更新" } });
     }
     if (path.endsWith("/api/system/roles")) {
-      return jsonResponse({ code: "OK", data: apiData.roles });
+      return jsonResponse({ code: "OK", data: data.roles });
     }
     if (path.endsWith("/api/system/permissions")) {
-      return jsonResponse({ code: "OK", data: apiData.permissions });
+      return jsonResponse({ code: "OK", data: data.permissions });
     }
     if (path.endsWith("/api/system/roles/3001/permissions") && method === "PUT") {
       return jsonResponse({
         code: "OK",
         data: {
-          ...apiData.roles[0],
+          ...data.roles[0],
           permission_codes: ["account.read", "account.create", "system.audit.read"]
         }
       });
@@ -703,10 +754,10 @@ function mockCrmFetch() {
       return jsonResponse({ code: "OK", data: { id: 502, dict_code: "risk_level", dict_name: "风险等级", items: [] } });
     }
     if (path.includes("/api/system/dicts/types/") && path.endsWith("/items") && method === "POST") {
-      return jsonResponse({ code: "OK", data: apiData.dictionaries[0] });
+      return jsonResponse({ code: "OK", data: data.dictionaries[0] });
     }
     if (path.includes("/api/system/dicts/items/") && method === "PATCH") {
-      return jsonResponse({ code: "OK", data: apiData.dictionaries[0] });
+      return jsonResponse({ code: "OK", data: data.dictionaries[0] });
     }
     return jsonResponse({ code: "NOT_FOUND", message: "not found" }, 404);
   });

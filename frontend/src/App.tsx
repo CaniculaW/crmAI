@@ -1214,6 +1214,13 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
   const [completeForm] = Form.useForm();
+  const accountOptions = toAccountOptions(accounts.data);
+  const opportunityOptions = toOpportunityOptions(opportunities.data);
+  const accountById = useMemo(() => new Map(accounts.data.map((account) => [account.id, account])), [accounts.data]);
+  const opportunityById = useMemo(
+    () => new Map(opportunities.data.map((opportunity) => [opportunity.id, opportunity])),
+    [opportunities.data]
+  );
 
   const columns: ColumnsType<Activity> = [
     {
@@ -1225,16 +1232,18 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
         </Button>
       )
     },
-    { title: "客户ID", dataIndex: "account_id" },
-    { title: "商机ID", dataIndex: "opportunity_id", render: textOrDash },
-    { title: "状态", dataIndex: "activity_status", render: statusTag },
+    { title: "所属客户", dataIndex: "account_id", render: (value) => accountById.get(Number(value))?.account_name ?? value },
+    { title: "关联商机", dataIndex: "opportunity_id", render: (value) => value ? opportunityById.get(Number(value))?.opportunity_name ?? value : "-" },
+    { title: "状态", dataIndex: "activity_status", render: activityStatusTag },
+    { title: "类型", dataIndex: "activity_type", render: activityTypeText },
     { title: "下次跟进", dataIndex: "next_follow_up_at", render: dateText },
+    { title: "风险", dataIndex: "risk_description", render: activityRiskTag },
     {
       title: "操作",
       render: (_, record) => (
         <Space>
           <Button size="small" onClick={() => setSelected(record)}>
-            详情
+            查看执行
           </Button>
           <Button
             size="small"
@@ -1295,8 +1304,9 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
       return;
     }
     await crmApi.activities.complete(completing.id, {
-      activity_result: "milestone_completed",
-      ...values
+      activity_result: values.risk_description ? "risk_found" : "milestone_completed",
+      ...withoutEmpty(values, ["risk_types"]),
+      risk_types: splitCsv(values.risk_types)
     });
     setCompleting(null);
     completeForm.resetFields();
@@ -1307,7 +1317,7 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
     <DataWorkspace
       title="销售行动"
       description="记录客户经营和商机推进动作，完成后回写最近跟进与周进展。"
-      guide="先新建行动，或调整筛选条件查看计划、完成和逾期行动。"
+      guide="先看计划、逾期和风险行动；进入行动执行入口确认沟通内容、客户反馈、结论和下一步计划。"
       loading={activities.loading}
       error={activities.error}
       action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建行动</Button>}
@@ -1322,13 +1332,13 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
           <Input allowClear placeholder="行动主题" />
         </Form.Item>
         <Form.Item name="account_id" label="客户">
-          <Select allowClear options={toAccountOptions(accounts.data)} loading={accounts.loading} />
+          <Select allowClear options={accountOptions} loading={accounts.loading} />
         </Form.Item>
         <Form.Item name="opportunity_id" label="商机">
-          <Select allowClear options={toOpportunityOptions(opportunities.data)} loading={opportunities.loading} />
+          <Select allowClear options={opportunityOptions} loading={opportunities.loading} />
         </Form.Item>
         <Form.Item name="activity_status" label="状态">
-          <Select allowClear options={["planned", "completed", "cancelled"].map(option)} />
+          <Select allowClear options={activityStatusOptions()} />
         </Form.Item>
         <Form.Item name="overdue" label="逾期">
           <Select allowClear options={[{ label: "是", value: true }, { label: "否", value: false }]} />
@@ -1338,10 +1348,10 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
       <Drawer title="新建行动" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
         <Form form={form} layout="vertical" onFinish={createActivity} initialValues={{ owner_department_id: 1 }}>
           <Form.Item name="account_id" label="客户" rules={[{ required: true }]}>
-            <Select options={toAccountOptions(accounts.data)} loading={accounts.loading} />
+            <Select options={accountOptions} loading={accounts.loading} />
           </Form.Item>
           <Form.Item name="opportunity_id" label="商机">
-            <Select allowClear options={toOpportunityOptions(opportunities.data)} loading={opportunities.loading} />
+            <Select allowClear options={opportunityOptions} loading={opportunities.loading} />
           </Form.Item>
           <Form.Item name="subject" label="行动主题" rules={[{ required: true }]}>
             <Input />
@@ -1361,24 +1371,11 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
           <Button type="primary" htmlType="submit" block>保存行动</Button>
         </Form>
       </Drawer>
-      <Drawer title="行动详情" open={!!selected} onClose={() => setSelected(null)} size="large">
-        <RecordDetails
-          record={selected}
-          fields={[
-            ["行动主题", "subject"],
-            ["客户ID", "account_id"],
-            ["商机ID", "opportunity_id"],
-            ["类型", "activity_type"],
-            ["状态", "activity_status"],
-            ["结果", "activity_result"],
-            ["行动时间", "activity_time"],
-            ["下次跟进", "next_follow_up_at"],
-            ["沟通内容", "communication_content"],
-            ["客户反馈", "customer_feedback"],
-            ["形成结论", "conclusion"],
-            ["下一步计划", "next_plan"],
-            ["风险说明", "risk_description"]
-          ]}
+      <Drawer title="行动执行" open={!!selected} onClose={() => setSelected(null)} size="large">
+        <ActivityExecutionDrawer
+          activity={selected}
+          account={selected ? accountById.get(selected.account_id) : undefined}
+          opportunity={selected?.opportunity_id ? opportunityById.get(selected.opportunity_id) : undefined}
         />
       </Drawer>
       <Modal title="编辑行动" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
@@ -1387,7 +1384,7 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
             <Input />
           </Form.Item>
           <Form.Item name="activity_status" label="状态">
-            <Select allowClear options={["planned", "completed", "cancelled"].map(option)} />
+            <Select allowClear options={activityStatusOptions()} />
           </Form.Item>
           <Form.Item name="activity_time" label="行动时间">
             <Input type="datetime-local" />
@@ -1418,10 +1415,121 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
           <Form.Item name="next_plan" label="下一步计划" rules={[{ required: true }]}>
             <Input.TextArea rows={3} />
           </Form.Item>
+          <Form.Item name="risk_description" label="风险说明">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Form.Item name="risk_types" label="风险类型">
+            <Input placeholder="多个风险类型用英文逗号分隔" />
+          </Form.Item>
           <Button type="primary" htmlType="submit" block>完成行动</Button>
         </Form>
       </Modal>
     </DataWorkspace>
+  );
+}
+
+function ActivityExecutionDrawer({
+  activity,
+  account,
+  opportunity
+}: {
+  activity: Activity | null;
+  account?: Account;
+  opportunity?: Opportunity;
+}) {
+  if (!activity) {
+    return null;
+  }
+  const entries = [
+    {
+      icon: <Users size={18} />,
+      title: "查看客户",
+      description: "回到客户经营入口，确认客户状态和最近跟进。",
+      to: "/accounts"
+    },
+    {
+      icon: <BriefcaseBusiness size={18} />,
+      title: "推进商机",
+      description: "回到商机推进入口，确认阶段、风险和下一步计划。",
+      to: "/opportunities"
+    },
+    {
+      icon: <BarChart3 size={18} />,
+      title: "查看周进展",
+      description: "回看该行动是否进入自然周进展汇总。",
+      to: "/weekly-progress"
+    }
+  ];
+
+  return (
+    <div className="activity-execution">
+      <section className="activity-execution-hero">
+        <div>
+          <Typography.Title level={3}>行动执行入口</Typography.Title>
+          <p>{activity.subject}</p>
+        </div>
+        {activityStatusTag(activity.activity_status)}
+      </section>
+
+      <section>
+        <Typography.Title level={4}>执行判断</Typography.Title>
+        <div className="activity-summary-grid">
+          <ActivitySummaryItem label="所属客户" value={account?.account_name ?? `客户 ${activity.account_id}`} />
+          <ActivitySummaryItem label="关联商机" value={opportunity?.opportunity_name ?? textOrDash(activity.opportunity_id)} />
+          <ActivitySummaryItem label="行动类型" value={activityTypeText(activity.activity_type)} />
+          <ActivitySummaryItem label="行动状态" value={activityStatusText(activity.activity_status)} />
+          <ActivitySummaryItem label="行动结果" value={activityResultText(activity.activity_result)} />
+          <ActivitySummaryItem label="进入周进展" value={weeklyProgressText(activity.include_in_weekly_progress)} />
+          <ActivitySummaryItem label="关联联系人" value={contactCountText(activity.contact_ids)} />
+          <ActivitySummaryItem label="风险类型" value={riskTypesText(activity.risk_types)} />
+        </div>
+      </section>
+
+      <section className="activity-process-panel">
+        <div>
+          <span>沟通内容</span>
+          <strong>{textOrDash(activity.communication_content)}</strong>
+        </div>
+        <div>
+          <span>客户反馈</span>
+          <strong>{textOrDash(activity.customer_feedback)}</strong>
+        </div>
+        <div>
+          <span>形成结论</span>
+          <strong>{textOrDash(activity.conclusion)}</strong>
+        </div>
+        <div>
+          <span>下一步计划</span>
+          <strong>{textOrDash(activity.next_plan)}</strong>
+        </div>
+        <div>
+          <span>风险说明</span>
+          <strong>{textOrDash(activity.risk_description)}</strong>
+        </div>
+      </section>
+
+      <section>
+        <Typography.Title level={4}>关联业务入口</Typography.Title>
+        <div className="activity-entry-grid">
+          {entries.map((entry) => (
+            <Link key={entry.to} className="activity-entry-link" to={entry.to} aria-label={entry.title}>
+              {entry.icon}
+              <strong>{entry.title}</strong>
+              <span>{entry.description}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ActivitySummaryItem({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="activity-summary-item">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 
@@ -2441,6 +2549,96 @@ function opportunityRiskTag(risk?: string) {
 
 function isOpportunityOpen(status?: string) {
   return status === "following" || status === "active";
+}
+
+function activityStatusOptions() {
+  return ["planned", "completed", "cancelled"].map((value) => ({
+    label: activityStatusText(value),
+    value
+  }));
+}
+
+function activityTypeText(type?: string) {
+  if (!type) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    meeting: "会议沟通",
+    customer_visit: "客户拜访",
+    phone_call: "电话沟通",
+    online_meeting: "线上会议",
+    demo: "产品演示",
+    follow_up: "跟进沟通",
+    internal_sync: "内部协同"
+  };
+  return labels[type] ?? type;
+}
+
+function activityStatusText(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    planned: "计划中",
+    completed: "已完成",
+    cancelled: "已取消",
+    overdue: "已逾期"
+  };
+  return labels[status] ?? status;
+}
+
+function activityResultText(result?: string) {
+  if (!result) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    pending: "待确认",
+    aligned: "已达成共识",
+    milestone_completed: "完成阶段动作",
+    risk_found: "发现风险",
+    no_progress: "暂无进展"
+  };
+  return labels[result] ?? result;
+}
+
+function activityStatusTag(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const color = status === "completed" ? "green" : status === "cancelled" ? "default" : "blue";
+  return <Tag color={color}>{activityStatusText(status)}</Tag>;
+}
+
+function activityRiskTag(riskDescription?: string | null) {
+  return riskDescription ? <Tag color="red">有风险</Tag> : <Tag color="green">无风险</Tag>;
+}
+
+function weeklyProgressText(value?: boolean) {
+  if (value === undefined) {
+    return "-";
+  }
+  return value ? "是" : "否";
+}
+
+function contactCountText(contactIds?: number[]) {
+  if (!contactIds?.length) {
+    return "未关联";
+  }
+  return `${contactIds.length} 个联系人`;
+}
+
+function riskTypesText(types?: string[]) {
+  if (!types?.length) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    budget: "预算风险",
+    data_migration: "数据迁移",
+    stakeholder: "干系人风险",
+    schedule: "进度风险",
+    technical: "技术风险"
+  };
+  return types.map((type) => labels[type] ?? type).join(" / ");
 }
 
 function statusText(status?: string) {

@@ -101,7 +101,12 @@ export type Activity = {
   include_in_weekly_progress?: boolean;
   weekly_period?: string;
   source_type?: string;
+  completed_at?: string;
+  completed_by?: number;
   remark?: string;
+  contact_ids?: number[];
+  participants?: Array<{ user_id: number; participant_role?: string }>;
+  risk_types?: string[];
 };
 
 export type Reminder = {
