@@ -592,8 +592,10 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
   const accountOptions = toAccountOptions(accounts.data);
+  const accountById = useMemo(() => new Map(accounts.data.map((account) => [account.id, account])), [accounts.data]);
   const roleGroups = useMemo(() => groupContactsByRoles(contacts.data), [contacts.data]);
   const attitudeGroups = useMemo(() => groupContactsByField(contacts.data, "attitude"), [contacts.data]);
+  const heatGroups = useMemo(() => groupContactsByField(contacts.data, "relationship_heat"), [contacts.data]);
 
   const columns: ColumnsType<CrmContact> = [
     {
@@ -605,17 +607,17 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
         </Button>
       )
     },
-    { title: "客户ID", dataIndex: "account_id" },
+    { title: "所属客户", dataIndex: "account_id", render: (value) => accountById.get(Number(value))?.account_name ?? value },
     { title: "职务", dataIndex: "title", render: textOrDash },
-    { title: "类型", dataIndex: "contact_type", render: textOrDash },
-    { title: "态度", dataIndex: "attitude", render: textOrDash },
-    { title: "关系热度", dataIndex: "relationship_heat", render: textOrDash },
+    { title: "类型", dataIndex: "contact_type", render: contactTypeText },
+    { title: "态度", dataIndex: "attitude", render: contactAttitudeTag },
+    { title: "关系热度", dataIndex: "relationship_heat", render: contactHeatTag },
     {
       title: "操作",
       render: (_, record) => (
         <Space>
           <Button size="small" onClick={() => setSelected(record)}>
-            详情
+            查看关系
           </Button>
           <Button
             size="small"
@@ -665,7 +667,7 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
     <DataWorkspace
       title="联系人"
       description="维护客户干系人关系，识别关键角色、态度和经营动作。"
-      guide="先按客户、态度或关系热度查看关键联系人；通过关系视图判断角色覆盖，再进入详情或新建联系人。"
+      guide="先按客户、态度或关系热度定位关键人；通过关系判断查看角色覆盖，再进入联系人经营补动作。"
       loading={contacts.loading}
       error={contacts.error}
       action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建联系人</Button>}
@@ -690,10 +692,11 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
         </Form.Item>
       </FilterBar>
       <section className="relationship-view">
-        <Typography.Title level={3}>关系视图</Typography.Title>
+        <Typography.Title level={3}>关键关系判断</Typography.Title>
         <div className="relationship-grid">
-          <RelationshipGroup title="按项目角色" groups={roleGroups} />
-          <RelationshipGroup title="按态度" groups={attitudeGroups} />
+          <RelationshipGroup title="项目角色覆盖" groups={roleGroups} formatKey={contactRoleText} />
+          <RelationshipGroup title="态度判断" groups={attitudeGroups} formatKey={contactAttitudeText} />
+          <RelationshipGroup title="关系热度" groups={heatGroups} formatKey={contactHeatText} />
         </div>
       </section>
       <Table rowKey="id" dataSource={contacts.data} columns={columns} pagination={{ pageSize: 8 }} locale={{ emptyText: "暂无联系人" }} />
@@ -714,22 +717,8 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
           <Button type="primary" htmlType="submit" block>保存联系人</Button>
         </Form>
       </Drawer>
-      <Drawer title="联系人详情" open={!!selected} onClose={() => setSelected(null)} size="large">
-        <RecordDetails
-          record={selected}
-          fields={[
-            ["姓名", "name"],
-            ["客户ID", "account_id"],
-            ["部门", "department"],
-            ["职务", "title"],
-            ["手机", "mobile"],
-            ["邮箱", "email"],
-            ["类型", "contact_type"],
-            ["态度", "attitude"],
-            ["关系热度", "relationship_heat"],
-            ["项目角色", "project_roles"]
-          ]}
-        />
+      <Drawer title="联系人经营" open={!!selected} onClose={() => setSelected(null)} size="large">
+        <ContactOperationDrawer contact={selected} account={selected ? accountById.get(selected.account_id) : undefined} />
       </Drawer>
       <Modal title="编辑联系人" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
         <Form form={editForm} layout="vertical" onFinish={updateContact}>
@@ -761,7 +750,99 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
   );
 }
 
-function RelationshipGroup({ title, groups }: { title: string; groups: RelationshipBucket[] }) {
+function ContactOperationDrawer({ contact, account }: { contact: CrmContact | null; account?: Account }) {
+  if (!contact) {
+    return null;
+  }
+  const roleLabels = contact.project_roles?.length ? contact.project_roles.map(contactRoleText) : ["未标记角色"];
+  const entries = [
+    {
+      icon: <Users size={18} />,
+      title: "查看客户",
+      description: "回到客户经营入口，确认客户状态和最近跟进。",
+      to: "/accounts"
+    },
+    {
+      icon: <BriefcaseBusiness size={18} />,
+      title: "推进商机",
+      description: "结合联系人态度和角色推进商机阶段。",
+      to: "/opportunities"
+    },
+    {
+      icon: <CalendarCheck size={18} />,
+      title: "记录销售行动",
+      description: "记录沟通结果、关系变化和下一步动作。",
+      to: "/activities"
+    }
+  ];
+
+  return (
+    <div className="contact-operation">
+      <section className="contact-operation-hero">
+        <div>
+          <Typography.Title level={3}>联系人经营入口</Typography.Title>
+          <p>{contact.name} · {textOrDash(contact.title)}</p>
+        </div>
+        {contactAttitudeTag(contact.attitude)}
+      </section>
+
+      <section>
+        <Typography.Title level={4}>关系判断</Typography.Title>
+        <div className="contact-summary-grid">
+          <ContactSummaryItem label="所属客户" value={account?.account_name ?? `客户 ${contact.account_id}`} />
+          <ContactSummaryItem label="联系人类型" value={contactTypeText(contact.contact_type)} />
+          <ContactSummaryItem label="项目角色" value={roleLabels.join(" / ")} />
+          <ContactSummaryItem label="态度" value={contactAttitudeText(contact.attitude)} />
+          <ContactSummaryItem label="关系热度" value={contactHeatText(contact.relationship_heat)} />
+          <ContactSummaryItem label="部门" value={textOrDash(contact.department)} />
+        </div>
+      </section>
+
+      <section className="contact-communication-panel">
+        <div>
+          <span>最近沟通</span>
+          <strong>{textOrDash(contact.last_communication_summary)}</strong>
+        </div>
+        <div>
+          <span>下一步动作</span>
+          <strong>{textOrDash(contact.next_action)}</strong>
+        </div>
+      </section>
+
+      <section>
+        <Typography.Title level={4}>关联业务入口</Typography.Title>
+        <div className="contact-entry-grid">
+          {entries.map((entry) => (
+            <Link key={entry.to} className="contact-entry-link" to={entry.to} aria-label={entry.title}>
+              {entry.icon}
+              <strong>{entry.title}</strong>
+              <span>{entry.description}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ContactSummaryItem({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="contact-summary-item">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function RelationshipGroup({
+  title,
+  groups,
+  formatKey = (value) => value
+}: {
+  title: string;
+  groups: RelationshipBucket[];
+  formatKey?: (value: string) => string;
+}) {
   return (
     <Card size="small" title={title}>
       {groups.length === 0 ? (
@@ -771,7 +852,7 @@ function RelationshipGroup({ title, groups }: { title: string; groups: Relations
           {groups.map((group) => (
             <div key={group.key} className="relationship-bucket">
               <div>
-                <strong>{group.key}</strong>
+                <strong>{formatKey(group.key)}</strong>
                 <Tag>{group.contacts.length} 人</Tag>
               </div>
               <Space wrap>
@@ -2082,6 +2163,94 @@ function accountTypeText(type?: string) {
     individual: "个人客户"
   };
   return labels[type] ?? type;
+}
+
+function contactTypeText(type?: string) {
+  if (!type) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    decision_maker: "决策人",
+    influencer: "影响者",
+    user: "使用代表",
+    technical: "技术负责人",
+    procurement: "采购执行人",
+    finance: "财务负责人",
+    partner: "合作伙伴",
+    user_representative: "使用代表",
+    technical_owner: "技术负责人"
+  };
+  return labels[type] ?? type;
+}
+
+function contactRoleText(role?: string) {
+  if (!role) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    decision_maker: "决策人",
+    budget_promoter: "预算推动人",
+    procurement_executor: "采购执行人",
+    user: "使用代表",
+    technical: "技术评审人",
+    procurement: "采购执行人",
+    finance: "财务负责人",
+    influencer: "影响者",
+    partner: "合作伙伴",
+    technical_reviewer: "技术评审人",
+    business_owner: "业务负责人",
+    未标记角色: "未标记角色"
+  };
+  return labels[role] ?? role;
+}
+
+function contactAttitudeText(attitude?: string) {
+  if (!attitude) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    supporter: "支持者",
+    supportive: "支持者",
+    neutral: "中立",
+    opponent: "反对者",
+    negative: "反对者",
+    未标记: "未标记"
+  };
+  return labels[attitude] ?? attitude;
+}
+
+function contactHeatText(heat?: string) {
+  if (!heat) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    stranger: "陌生",
+    contacted: "已接触",
+    cold: "陌生",
+    warm: "已接触",
+    familiar: "熟悉",
+    trusted: "可信赖",
+    key: "关键关系",
+    hot: "高热度",
+    未标记: "未标记"
+  };
+  return labels[heat] ?? heat;
+}
+
+function contactAttitudeTag(attitude?: string) {
+  if (!attitude) {
+    return "-";
+  }
+  const color = attitude === "supporter" || attitude === "supportive" ? "green" : attitude === "opponent" || attitude === "negative" ? "red" : "blue";
+  return <Tag color={color}>{contactAttitudeText(attitude)}</Tag>;
+}
+
+function contactHeatTag(heat?: string) {
+  if (!heat) {
+    return "-";
+  }
+  const color = heat === "trusted" || heat === "key" || heat === "hot" ? "green" : heat === "cold" || heat === "stranger" ? "default" : "blue";
+  return <Tag color={color}>{contactHeatText(heat)}</Tag>;
 }
 
 function statusText(status?: string) {

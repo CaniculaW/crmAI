@@ -46,9 +46,15 @@ const apiData = {
       id: 21,
       account_id: 1,
       name: "张决策",
+      department: "信息化中心",
       title: "CIO",
+      mobile: "13800000001",
+      email: "cio@example.com",
+      contact_type: "decision_maker",
       attitude: "supporter",
       relationship_heat: "trusted",
+      last_communication_summary: "完成高层访谈，确认项目预算窗口",
+      next_action: "跟进预算确认和试点范围",
       project_roles: ["decision_maker", "budget_promoter"]
     },
     {
@@ -321,13 +327,39 @@ describe("CRM frontend V1 workflow", () => {
 
     await user.click(screen.getByRole("link", { name: "联系人" }));
 
-    expect(await screen.findByText("关系视图")).toBeInTheDocument();
-    expect(screen.getByText("按项目角色")).toBeInTheDocument();
-    expect(screen.getByText("按态度")).toBeInTheDocument();
-    expect(screen.getByText("decision_maker")).toBeInTheDocument();
-    expect(screen.getByText("budget_promoter")).toBeInTheDocument();
-    expect(screen.getAllByText("supporter").length).toBeGreaterThan(1);
+    expect(await screen.findByText("关键关系判断")).toBeInTheDocument();
+    expect(screen.getByText("项目角色覆盖")).toBeInTheDocument();
+    expect(screen.getByText("态度判断")).toBeInTheDocument();
+    expect(screen.getAllByText("关系热度").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("决策人").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("预算推动人").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("支持者").length).toBeGreaterThan(1);
     expect(screen.getAllByText("张决策").length).toBeGreaterThan(1);
+  });
+
+  it("shows the contact relationship operation entry from the contact list", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "联系人" }));
+    await screen.findByRole("button", { name: "张决策" });
+    await user.click(screen.getByRole("button", { name: "张决策" }));
+
+    expect(await screen.findByRole("heading", { name: "联系人经营入口" })).toBeInTheDocument();
+    expect(screen.getByText("关系判断")).toBeInTheDocument();
+    expect(screen.getAllByText("测试客户A").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("决策人").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("支持者").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("可信赖").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("预算推动人").length).toBeGreaterThan(0);
+    expect(screen.getByText("完成高层访谈，确认项目预算窗口")).toBeInTheDocument();
+    expect(screen.getByText("跟进预算确认和试点范围")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看客户" })).toHaveAttribute("href", "/accounts");
+    expect(screen.getByRole("link", { name: "推进商机" })).toHaveAttribute("href", "/opportunities");
+    expect(screen.getByRole("link", { name: "记录销售行动" })).toHaveAttribute("href", "/activities");
   });
 
   it("filters weekly progress by owner and natural week", async () => {
