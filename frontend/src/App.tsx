@@ -920,6 +920,8 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
   const [closeForm] = Form.useForm();
+  const accountOptions = toAccountOptions(accounts.data);
+  const accountById = useMemo(() => new Map(accounts.data.map((account) => [account.id, account])), [accounts.data]);
 
   const columns: ColumnsType<Opportunity> = [
     {
@@ -931,17 +933,17 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
         </Button>
       )
     },
-    { title: "客户ID", dataIndex: "account_id" },
-    { title: "阶段", dataIndex: "stage" },
-    { title: "状态", dataIndex: "status", render: statusTag },
-    { title: "风险", dataIndex: "risk_status", render: statusTag },
+    { title: "所属客户", dataIndex: "account_id", render: (value) => accountById.get(Number(value))?.account_name ?? value },
+    { title: "阶段", dataIndex: "stage", render: opportunityStageText },
+    { title: "状态", dataIndex: "status", render: opportunityStatusTag },
+    { title: "风险", dataIndex: "risk_status", render: opportunityRiskTag },
     { title: "最近跟进", dataIndex: "last_activity_summary", render: textOrDash },
     {
       title: "操作",
       render: (_, record) => (
         <Space>
           <Button size="small" onClick={() => setSelected(record)}>
-            详情
+            查看推进
           </Button>
           <Button
             size="small"
@@ -952,10 +954,10 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
           >
             编辑
           </Button>
-          <Button size="small" disabled={record.status !== "following"} onClick={() => setClosing(record)}>
+          <Button size="small" disabled={!isOpportunityOpen(record.status)} onClick={() => setClosing(record)}>
             关闭/取消
           </Button>
-          <Button size="small" disabled={record.status === "following"} onClick={() => void reopenOpportunity(record)}>
+          <Button size="small" disabled={isOpportunityOpen(record.status)} onClick={() => void reopenOpportunity(record)}>
             重启
           </Button>
         </Space>
@@ -1009,7 +1011,7 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
     <DataWorkspace
       title="商机"
       description="围绕在办商机推进阶段、状态、风险和关闭/取消跟进。"
-      guide="先查看默认在办商机；按阶段、状态或风险筛选，再进入详情推进阶段、编辑进展或关闭/取消跟进。"
+      guide="先看默认在办商机；按阶段、状态或风险筛选，再进入商机推进入口确认进展、下一步和关联动作。"
       loading={opportunities.loading}
       error={opportunities.error}
       action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建商机</Button>}
@@ -1024,23 +1026,23 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
           <Input allowClear placeholder="商机名称" />
         </Form.Item>
         <Form.Item name="account_id" label="客户">
-          <Select allowClear options={toAccountOptions(accounts.data)} loading={accounts.loading} />
+          <Select allowClear options={accountOptions} loading={accounts.loading} />
         </Form.Item>
         <Form.Item name="stage" label="阶段">
-          <Select allowClear options={["lead", "proposal", "negotiation", "contract"].map(option)} />
+          <Select allowClear options={opportunityStageOptions()} />
         </Form.Item>
         <Form.Item name="status" label="状态">
-          <Select allowClear options={["following", "won", "lost", "cancelled"].map(option)} />
+          <Select allowClear options={opportunityStatusOptions()} />
         </Form.Item>
         <Form.Item name="risk_status" label="风险">
-          <Select allowClear options={["normal", "risk"].map(option)} />
+          <Select allowClear options={opportunityRiskOptions()} />
         </Form.Item>
       </FilterBar>
       <Table rowKey="id" dataSource={opportunities.data} columns={columns} pagination={{ pageSize: 8 }} locale={{ emptyText: "暂无商机" }} />
       <Drawer title="新建商机" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
         <Form form={form} layout="vertical" onFinish={createOpportunity} initialValues={{ owner_department_id: 1 }}>
           <Form.Item name="account_id" label="所属客户" rules={[{ required: true }]}>
-            <Select options={toAccountOptions(accounts.data)} loading={accounts.loading} />
+            <Select options={accountOptions} loading={accounts.loading} />
           </Form.Item>
           <Form.Item name="opportunity_name" label="商机名称" rules={[{ required: true }]}>
             <Input />
@@ -1057,36 +1059,25 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
           <Button type="primary" htmlType="submit" block>保存商机</Button>
         </Form>
       </Drawer>
-      <Drawer title="商机详情" open={!!selected} onClose={() => setSelected(null)} size="large">
-        <RecordDetails
-          record={selected}
-          fields={[
-            ["商机名称", "opportunity_name"],
-            ["客户ID", "account_id"],
-            ["阶段", "stage"],
-            ["状态", "status"],
-            ["等级", "level"],
-            ["风险", "risk_status"],
-            ["预计合同金额", "estimated_contract_amount"],
-            ["当前进展", "current_progress"],
-            ["下一步计划", "next_plan"],
-            ["最近跟进", "last_activity_summary"]
-          ]}
+      <Drawer title="商机推进" open={!!selected} onClose={() => setSelected(null)} size="large">
+        <OpportunityProgressDrawer
+          opportunity={selected}
+          account={selected ? accountById.get(selected.account_id) : undefined}
         />
       </Drawer>
       <Modal title="编辑商机" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
         <Form form={editForm} layout="vertical" onFinish={updateOpportunity}>
           <Form.Item name="stage" label="阶段">
-            <Select allowClear options={["lead", "proposal", "negotiation", "contract"].map(option)} />
+            <Select allowClear options={opportunityStageOptions()} />
           </Form.Item>
           <Form.Item name="status" label="状态">
-            <Select allowClear options={["following", "won", "lost", "cancelled"].map(option)} />
+            <Select allowClear options={opportunityStatusOptions()} />
           </Form.Item>
           <Form.Item name="level" label="等级">
-            <Select allowClear options={["A", "B", "C"].map(option)} />
+            <Select allowClear options={opportunityLevelOptions()} />
           </Form.Item>
           <Form.Item name="risk_status" label="风险状态">
-            <Select allowClear options={["normal", "risk"].map(option)} />
+            <Select allowClear options={opportunityRiskOptions()} />
           </Form.Item>
           <Form.Item name="estimated_contract_amount" label="预计合同金额">
             <InputNumber min={0} className="full-width" />
@@ -1115,6 +1106,99 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
         </Form>
       </Modal>
     </DataWorkspace>
+  );
+}
+
+function OpportunityProgressDrawer({ opportunity, account }: { opportunity: Opportunity | null; account?: Account }) {
+  if (!opportunity) {
+    return null;
+  }
+  const entries = [
+    {
+      icon: <Users size={18} />,
+      title: "查看客户",
+      description: "回到客户经营入口，确认客户状态、最近跟进和经营建议。",
+      to: "/accounts"
+    },
+    {
+      icon: <Contact size={18} />,
+      title: "经营联系人",
+      description: "确认决策人、预算推动人和采购执行人的关系状态。",
+      to: "/contacts"
+    },
+    {
+      icon: <CalendarCheck size={18} />,
+      title: "记录销售行动",
+      description: "记录会议、拜访、风险和下一步计划，沉淀推进过程。",
+      to: "/activities"
+    },
+    {
+      icon: <BarChart3 size={18} />,
+      title: "查看周进展",
+      description: "按自然周回看行动明细和商机推进变化。",
+      to: "/weekly-progress"
+    }
+  ];
+
+  return (
+    <div className="opportunity-progress">
+      <section className="opportunity-progress-hero">
+        <div>
+          <Typography.Title level={3}>商机推进入口</Typography.Title>
+          <p>{opportunity.opportunity_name}</p>
+        </div>
+        {opportunityStatusTag(opportunity.status)}
+      </section>
+
+      <section>
+        <Typography.Title level={4}>推进判断</Typography.Title>
+        <div className="opportunity-summary-grid">
+          <OpportunitySummaryItem label="所属客户" value={account?.account_name ?? `客户 ${opportunity.account_id}`} />
+          <OpportunitySummaryItem label="阶段" value={opportunityStageText(opportunity.stage)} />
+          <OpportunitySummaryItem label="状态" value={opportunityStatusText(opportunity.status)} />
+          <OpportunitySummaryItem label="风险" value={opportunityRiskText(opportunity.risk_status)} />
+          <OpportunitySummaryItem label="等级" value={opportunityLevelText(opportunity.level)} />
+          <OpportunitySummaryItem label="预计合同金额" value={moneyText(opportunity.estimated_contract_amount)} />
+        </div>
+      </section>
+
+      <section className="opportunity-progress-panel">
+        <div>
+          <span>当前进展</span>
+          <strong>{textOrDash(opportunity.current_progress)}</strong>
+        </div>
+        <div>
+          <span>下一步计划</span>
+          <strong>{textOrDash(opportunity.next_plan)}</strong>
+        </div>
+        <div>
+          <span>最近行动</span>
+          <strong>{textOrDash(opportunity.last_activity_summary)}</strong>
+        </div>
+      </section>
+
+      <section>
+        <Typography.Title level={4}>关联业务入口</Typography.Title>
+        <div className="opportunity-entry-grid">
+          {entries.map((entry) => (
+            <Link key={entry.to} className="opportunity-entry-link" to={entry.to} aria-label={entry.title}>
+              {entry.icon}
+              <strong>{entry.title}</strong>
+              <span>{entry.description}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function OpportunitySummaryItem({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="opportunity-summary-item">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 
@@ -2253,6 +2337,112 @@ function contactHeatTag(heat?: string) {
   return <Tag color={color}>{contactHeatText(heat)}</Tag>;
 }
 
+function opportunityStageOptions() {
+  return ["lead", "validation", "proposal", "solution", "negotiation", "contract", "won"].map((value) => ({
+    label: opportunityStageText(value),
+    value
+  }));
+}
+
+function opportunityStatusOptions() {
+  return ["following", "active", "paused", "won", "lost", "closed", "cancelled"].map((value) => ({
+    label: opportunityStatusText(value),
+    value
+  }));
+}
+
+function opportunityRiskOptions() {
+  return ["low", "normal", "attention", "risk", "high_risk"].map((value) => ({
+    label: opportunityRiskText(value),
+    value
+  }));
+}
+
+function opportunityLevelOptions() {
+  return ["A", "B", "C"].map((value) => ({
+    label: opportunityLevelText(value),
+    value
+  }));
+}
+
+function opportunityStageText(stage?: string) {
+  if (!stage) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    lead: "商业线索",
+    validation: "商业验证",
+    proposal: "商业方案",
+    solution: "商业方案",
+    negotiation: "商业谈判",
+    contract: "合同推进",
+    won: "商业成交"
+  };
+  return labels[stage] ?? stage;
+}
+
+function opportunityStatusText(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    active: "跟进中",
+    following: "跟进中",
+    paused: "暂停",
+    won: "赢单",
+    lost: "输单",
+    closed: "已关闭",
+    cancelled: "已取消"
+  };
+  return labels[status] ?? status;
+}
+
+function opportunityRiskText(risk?: string) {
+  if (!risk) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    low: "低风险",
+    normal: "正常",
+    attention: "关注",
+    risk: "风险",
+    high_risk: "高风险"
+  };
+  return labels[risk] ?? risk;
+}
+
+function opportunityLevelText(level?: string) {
+  if (!level) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    A: "A级",
+    B: "B级",
+    C: "C级"
+  };
+  return labels[level] ?? level;
+}
+
+function opportunityStatusTag(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const color = status === "won" ? "green" : status === "lost" || status === "closed" || status === "cancelled" ? "default" : "blue";
+  return <Tag color={color}>{opportunityStatusText(status)}</Tag>;
+}
+
+function opportunityRiskTag(risk?: string) {
+  if (!risk) {
+    return "-";
+  }
+  const color = risk === "risk" || risk === "high_risk" ? "red" : risk === "attention" ? "gold" : "green";
+  return <Tag color={color}>{opportunityRiskText(risk)}</Tag>;
+}
+
+function isOpportunityOpen(status?: string) {
+  return status === "following" || status === "active";
+}
+
 function statusText(status?: string) {
   if (!status) {
     return "-";
@@ -2281,6 +2471,13 @@ function statusTag(status?: string) {
 
 function textOrDash(value?: string | number | null) {
   return value ?? "-";
+}
+
+function moneyText(value?: number | null) {
+  if (value === undefined || value === null) {
+    return "-";
+  }
+  return `${value.toLocaleString("zh-CN")} 元`;
 }
 
 function dateText(value?: string | null) {

@@ -74,7 +74,14 @@ const apiData = {
       opportunity_name: "测试商机A",
       stage: "lead",
       status: "following",
+      level: "A",
+      source: "customer",
       risk_status: "normal",
+      estimated_contract_amount: 620000,
+      expected_close_date: "2026-07-31",
+      current_progress: "已完成需求确认，进入试点方案细化。",
+      next_plan: "提交V1试点方案和实施排期。",
+      last_activity_summary: "完成CRM V1试点需求确认会",
       owner_department_id: 1,
       owner_user_id: 1001
     }
@@ -360,6 +367,32 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("link", { name: "查看客户" })).toHaveAttribute("href", "/accounts");
     expect(screen.getByRole("link", { name: "推进商机" })).toHaveAttribute("href", "/opportunities");
     expect(screen.getByRole("link", { name: "记录销售行动" })).toHaveAttribute("href", "/activities");
+  });
+
+  it("shows the opportunity progress operation entry from the opportunity list", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "商机" }));
+    await screen.findByRole("button", { name: "测试商机A" });
+    await user.click(screen.getByRole("button", { name: "测试商机A" }));
+
+    expect(await screen.findByRole("heading", { name: "商机推进入口" })).toBeInTheDocument();
+    expect(screen.getByText("推进判断")).toBeInTheDocument();
+    expect(screen.getAllByText("测试客户A").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("商业线索").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("跟进中").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("正常").length).toBeGreaterThan(0);
+    expect(screen.getByText("已完成需求确认，进入试点方案细化。")).toBeInTheDocument();
+    expect(screen.getByText("提交V1试点方案和实施排期。")).toBeInTheDocument();
+    expect(screen.getAllByText("完成CRM V1试点需求确认会").length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "查看客户" })).toHaveAttribute("href", "/accounts");
+    expect(screen.getByRole("link", { name: "经营联系人" })).toHaveAttribute("href", "/contacts");
+    expect(screen.getByRole("link", { name: "记录销售行动" })).toHaveAttribute("href", "/activities");
+    expect(screen.getByRole("link", { name: "查看周进展" })).toHaveAttribute("href", "/weekly-progress");
   });
 
   it("filters weekly progress by owner and natural week", async () => {

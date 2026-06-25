@@ -205,6 +205,64 @@ class OpportunityControllerTest {
     }
 
     @Test
+    void defaultFollowingFilterIncludesActiveAndFollowingOpportunities() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("opportunity-default-following-dept-" + suffix);
+        Long ownerUserId = createLoginReadyUser(
+                "opportunity_default_following_" + suffix,
+                departmentId,
+                List.of("account.create", "opportunity.create", "opportunity.read"),
+                List.of("global"));
+        String token = login("opportunity_default_following_" + suffix);
+        Long accountId = createAccount(token, "默认在办客户-" + suffix, departmentId, ownerUserId);
+
+        createOpportunity(
+                token,
+                accountId,
+                "active在办商机-" + suffix,
+                "proposal",
+                "active",
+                departmentId,
+                ownerUserId,
+                List.of(),
+                List.of());
+        createOpportunity(
+                token,
+                accountId,
+                "following在办商机-" + suffix,
+                "lead",
+                "following",
+                departmentId,
+                ownerUserId,
+                List.of(),
+                List.of());
+        createOpportunity(
+                token,
+                accountId,
+                "paused暂停商机-" + suffix,
+                "lead",
+                "paused",
+                departmentId,
+                ownerUserId,
+                List.of(),
+                List.of());
+
+        ResponseEntity<JsonNode> listResponse = restTemplate.exchange(
+                "/api/opportunities?default_following=true",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "opportunity-default-following-trace-001")),
+                JsonNode.class);
+
+        assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(listResponse.getBody().path("data")).anySatisfy(opportunity ->
+                assertThat(opportunity.path("opportunity_name").asText()).isEqualTo("active在办商机-" + suffix));
+        assertThat(listResponse.getBody().path("data")).anySatisfy(opportunity ->
+                assertThat(opportunity.path("opportunity_name").asText()).isEqualTo("following在办商机-" + suffix));
+        assertThat(listResponse.getBody().path("data")).noneSatisfy(opportunity ->
+                assertThat(opportunity.path("opportunity_name").asText()).isEqualTo("paused暂停商机-" + suffix));
+    }
+
+    @Test
     void updatesOpportunityStageAndStatusAndRecordsAuditLog() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         Long departmentId = createDepartment("opportunity-update-dept-" + suffix);

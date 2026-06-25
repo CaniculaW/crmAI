@@ -94,7 +94,7 @@ public class OpportunityService {
         appendRangeFilter(filters, parameters, "o.expected_close_date", ">=", filter.expected_close_from());
         appendRangeFilter(filters, parameters, "o.expected_close_date", "<=", filter.expected_close_to());
         if (filter.default_following()) {
-            filters.append("  and o.status = 'following'\n");
+            filters.append("  and o.status in ('following', 'active')\n");
         }
         List<Long> opportunityIds = jdbcTemplate.query(
                 """

@@ -593,6 +593,114 @@ body {
   justify-content: space-between;
 }
 
+.opportunity-progress {
+  display: grid;
+  gap: 18px;
+}
+
+.opportunity-progress h3.ant-typography,
+.opportunity-progress h4.ant-typography {
+  margin: 0 0 10px;
+}
+
+.opportunity-progress-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #f1d7a8;
+  border-radius: 8px;
+  background: #fffaf1;
+}
+
+.opportunity-progress-hero p {
+  margin: 4px 0 0;
+  color: #667085;
+}
+
+.opportunity-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.opportunity-summary-item {
+  display: grid;
+  gap: 4px;
+  min-height: 68px;
+  padding: 12px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.opportunity-summary-item span,
+.opportunity-progress-panel span {
+  color: #667085;
+  font-size: 13px;
+}
+
+.opportunity-summary-item strong,
+.opportunity-progress-panel strong {
+  color: #172033;
+  font-size: 15px;
+  word-break: break-word;
+}
+
+.opportunity-progress-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.opportunity-progress-panel div {
+  display: grid;
+  gap: 6px;
+}
+
+.opportunity-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.opportunity-entry-link {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 4px 8px;
+  min-height: 110px;
+  padding: 14px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  color: #172033;
+  background: #ffffff;
+}
+
+.opportunity-entry-link:hover {
+  border-color: #b7791f;
+  color: #b7791f;
+}
+
+.opportunity-entry-link svg {
+  grid-row: span 2;
+  margin-top: 2px;
+  color: #b7791f;
+}
+
+.opportunity-entry-link strong {
+  font-size: 15px;
+}
+
+.opportunity-entry-link span {
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .record-details {
   display: grid;
   gap: 12px;
@@ -694,6 +802,8 @@ body {
   .contact-summary-grid,
   .dashboard-grid,
   .dictionary-grid,
+  .opportunity-entry-grid,
+  .opportunity-summary-grid,
   .relationship-grid,
   .system-module-grid,
   .system-grid {
@@ -729,6 +839,10 @@ body {
   }
 
   .contact-operation-hero {
+    flex-direction: column;
+  }
+
+  .opportunity-progress-hero {
     flex-direction: column;
   }
 
