@@ -28,7 +28,7 @@
 | 4 | 强化完成行动弹窗 | Done | 完成行动可填写风险说明和风险类型 |
 | 5 | 自动化验证 | Done | 前端定向测试、全量测试、构建通过 |
 | 6 | 本地 UAT | Done | `/activities` 无服务端异常，核心 DOM 验收通过 |
-| 7 | 更新项目 TODOList 并提交 | In Progress | 模块 6 Done，模块 7 Current，提交号记录 |
+| 7 | 更新项目 TODOList 并提交 | Done | 模块 6 Done，模块 7 Current，提交号 a2e10af 已记录 |
 
 ## Task 1: Failing Frontend Test
 

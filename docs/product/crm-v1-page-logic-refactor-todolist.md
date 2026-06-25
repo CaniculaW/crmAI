@@ -107,7 +107,7 @@
 | 客户链路 | Done | 2026-06-25 | efe3bd8 | `npm test`; `npm run build`; Browser `/accounts` DOM 验收 | 通过；客户经营入口、摘要、最近跟进、联系人/商机/行动入口、下一步建议通过；无服务端异常；控制台错误 0；截图捕获接口超时，已用 DOM 验收结果记录 | 无 |
 | 联系人与关系链路 | Done | 2026-06-25 | 31bf31a | `npm test`; `npm run build`; Browser `/contacts` DOM 验收 | 通过；关键关系判断、联系人经营入口、客户/商机/行动入口、真实枚举中文化通过；无服务端异常；控制台错误 0 | 无 |
 | 商机推进链路 | Done | 2026-06-25 | f464e78 | `npm test`; `npm run build`; `mvn -Dtest=OpportunityControllerTest test` | 通过；`/opportunities` 浏览器验收通过，商机推进入口、推进判断、中文阶段/状态/风险、进展、下一步、最近行动、客户/联系人/行动/周进展入口通过；API `default_following=true` 返回 active 演示商机；截图 `/private/tmp/v1-opportunity-progress-smoke.png` | 无 |
-| 销售行动链路 | Done | 2026-06-25 | 待提交 | `npm test`; `npm run build` | 通过；`/activities` 浏览器验收通过，行动执行入口、执行判断、客户/商机名称、中文状态/类型、沟通内容、客户反馈、结论、下一步、风险说明、客户/商机/周进展入口通过；截图 `/private/tmp/v1-sales-activity-execution-smoke.png` | 无 |
+| 销售行动链路 | Done | 2026-06-25 | a2e10af | `npm test`; `npm run build` | 通过；`/activities` 浏览器验收通过，行动执行入口、执行判断、客户/商机名称、中文状态/类型、沟通内容、客户反馈、结论、下一步、风险说明、客户/商机/周进展入口通过；截图 `/private/tmp/v1-sales-activity-execution-smoke.png` | 无 |
 | 周进展链路 | Current | - | - | - | - | - |
 | 系统管理复核 | Pending | - | - | - | - | - |
 | V1 全链路回归 | Pending | - | - | - | - | - |
