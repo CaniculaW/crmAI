@@ -119,7 +119,18 @@ const apiData = {
       week_start_date: "2026-06-15",
       week_end_date: "2026-06-21",
       activity_count: 1,
-      progress_items: [{ activity_id: 88, subject: "方案沟通", conclusion: "客户认可", next_plan: "推进预算" }]
+      latest_activity_at: "2026-06-22T03:58:00+08:00",
+      progress_items: [
+        {
+          activity_id: 88,
+          subject: "完成CRM V1试点需求确认会",
+          activity_time: "2026-06-22T03:58:00+08:00",
+          conclusion: "双方确认进入试点方案细化阶段。",
+          next_plan: "三日内提交试点方案和演示账号。",
+          risk_description: "需在方案中明确历史数据导入范围。",
+          activity_result: "aligned"
+        }
+      ]
     }
   ],
   dictionaries: [
@@ -453,7 +464,7 @@ describe("CRM frontend V1 workflow", () => {
     await loginThroughUi(user);
 
     await user.click(screen.getByRole("link", { name: "周进展" }));
-    expect(await screen.findByText("2026-06-15")).toBeInTheDocument();
+    expect(await screen.findByText("2026-06-15 至 2026-06-21")).toBeInTheDocument();
     await user.type(screen.getByLabelText("负责人ID"), "1001");
     await user.type(screen.getByLabelText("周开始"), "2026-06-15");
     await user.type(screen.getByLabelText("周结束"), "2026-06-21");
@@ -468,6 +479,32 @@ describe("CRM frontend V1 workflow", () => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("week_start=2026-06-15"), expect.anything());
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("week_end=2026-06-21"), expect.anything());
     });
+  });
+
+  it("shows the weekly progress review entry from the weekly progress list", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "周进展" }));
+    await screen.findByRole("button", { name: "测试商机A" });
+    await user.click(screen.getByRole("button", { name: "测试商机A" }));
+
+    expect(await screen.findByRole("heading", { name: "周进展复盘入口" })).toBeInTheDocument();
+    expect(screen.getByText("复盘摘要")).toBeInTheDocument();
+    expect(screen.getAllByText("测试客户A").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("测试商机A").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("2026-06-15 至 2026-06-21").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("1 次行动").length).toBeGreaterThan(0);
+    expect(screen.getByText("完成CRM V1试点需求确认会")).toBeInTheDocument();
+    expect(screen.getByText("双方确认进入试点方案细化阶段。")).toBeInTheDocument();
+    expect(screen.getByText("三日内提交试点方案和演示账号。")).toBeInTheDocument();
+    expect(screen.getByText("需在方案中明确历史数据导入范围。")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看客户" })).toHaveAttribute("href", "/accounts");
+    expect(screen.getByRole("link", { name: "推进商机" })).toHaveAttribute("href", "/opportunities");
+    expect(screen.getByRole("link", { name: "查看销售行动" })).toHaveAttribute("href", "/activities");
   });
 
   it("shows business guidance and Chinese empty state on empty business lists", async () => {

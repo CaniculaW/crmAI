@@ -126,6 +126,7 @@ export type WeeklyProgressItem = {
   conclusion?: string;
   next_plan?: string;
   risk_description?: string;
+  activity_result?: string;
 };
 
 export type WeeklyProgress = {
@@ -135,6 +136,7 @@ export type WeeklyProgress = {
   week_start_date: string;
   week_end_date: string;
   activity_count: number;
+  latest_activity_at?: string;
   progress_items: WeeklyProgressItem[];
 };
 

@@ -809,6 +809,147 @@ body {
   line-height: 1.55;
 }
 
+.weekly-review {
+  display: grid;
+  gap: 18px;
+}
+
+.weekly-review h3.ant-typography,
+.weekly-review h4.ant-typography {
+  margin: 0 0 10px;
+}
+
+.weekly-review-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #d7eadf;
+  border-radius: 8px;
+  background: #f7fcf9;
+}
+
+.weekly-review-hero p {
+  margin: 4px 0 0;
+  color: #667085;
+}
+
+.weekly-review-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.weekly-review-summary-item {
+  display: grid;
+  gap: 4px;
+  min-height: 68px;
+  padding: 12px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.weekly-review-summary-item span {
+  color: #667085;
+  font-size: 13px;
+}
+
+.weekly-review-summary-item strong {
+  color: #172033;
+  font-size: 15px;
+  word-break: break-word;
+}
+
+.weekly-review-item-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.weekly-review-item {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.weekly-review-item > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.weekly-review-item > div strong {
+  color: #172033;
+  font-size: 15px;
+  word-break: break-word;
+}
+
+.weekly-review-item dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.weekly-review-item dl div {
+  display: grid;
+  gap: 4px;
+}
+
+.weekly-review-item dt {
+  color: #667085;
+  font-size: 13px;
+}
+
+.weekly-review-item dd {
+  margin: 0;
+  color: #172033;
+  word-break: break-word;
+}
+
+.weekly-review-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.weekly-review-entry-link {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 4px 8px;
+  min-height: 110px;
+  padding: 14px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  color: #172033;
+  background: #ffffff;
+}
+
+.weekly-review-entry-link:hover {
+  border-color: #15803d;
+  color: #15803d;
+}
+
+.weekly-review-entry-link svg {
+  grid-row: span 2;
+  margin-top: 2px;
+  color: #15803d;
+}
+
+.weekly-review-entry-link strong {
+  font-size: 15px;
+}
+
+.weekly-review-entry-link span {
+  color: #667085;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .record-details {
   display: grid;
   gap: 12px;
@@ -916,7 +1057,9 @@ body {
   .opportunity-summary-grid,
   .relationship-grid,
   .system-module-grid,
-  .system-grid {
+  .system-grid,
+  .weekly-review-entry-grid,
+  .weekly-review-summary-grid {
     grid-template-columns: 1fr;
   }
 
@@ -957,6 +1100,10 @@ body {
   }
 
   .activity-execution-hero {
+    flex-direction: column;
+  }
+
+  .weekly-review-hero {
     flex-direction: column;
   }
 

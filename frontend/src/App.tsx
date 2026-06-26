@@ -1536,19 +1536,39 @@ function ActivitySummaryItem({ label, value }: { label: string; value: React.Rea
 function WeeklyProgressPage() {
   const [filters, setFilters] = useState<Record<string, unknown>>({});
   const progress = useResource(() => crmApi.weeklyProgress.list(filters), [filters]);
+  const accounts = useResource(crmApi.accounts.list, []);
+  const opportunities = useResource(crmApi.opportunities.list, []);
+  const [selected, setSelected] = useState<WeeklyProgress | null>(null);
+  const accountOptions = toAccountOptions(accounts.data);
+  const opportunityOptions = toOpportunityOptions(opportunities.data);
+  const accountById = useMemo(() => new Map(accounts.data.map((account) => [account.id, account])), [accounts.data]);
+  const opportunityById = useMemo(
+    () => new Map(opportunities.data.map((opportunity) => [opportunity.id, opportunity])),
+    [opportunities.data]
+  );
   const columns: ColumnsType<WeeklyProgress> = [
-    { title: "商机ID", dataIndex: "opportunity_id" },
-    { title: "负责人ID", dataIndex: "owner_user_id" },
-    { title: "周开始", dataIndex: "week_start_date", render: dateText },
-    { title: "周结束", dataIndex: "week_end_date", render: dateText },
-    { title: "行动数", dataIndex: "activity_count" }
+    { title: "所属客户", dataIndex: "account_id", render: (value) => accountById.get(Number(value))?.account_name ?? value },
+    {
+      title: "商机",
+      dataIndex: "opportunity_id",
+      render: (value, record) => (
+        <Button type="link" className="inline-action" onClick={() => setSelected(record)}>
+          {opportunityById.get(Number(value))?.opportunity_name ?? value}
+        </Button>
+      )
+    },
+    { title: "负责人", dataIndex: "owner_user_id", render: (value) => `用户 ${value}` },
+    { title: "自然周", render: (_, record) => weekRangeText(record) },
+    { title: "行动数", dataIndex: "activity_count", render: actionCountText },
+    { title: "最近行动", dataIndex: "latest_activity_at", render: dateText },
+    { title: "风险", render: (_, record) => weeklyRiskTag(record) }
   ];
 
   return (
     <DataWorkspace
       title="周进展"
       description="按商机、负责人和自然周汇总已完成销售行动。"
-      guide="先选择自然周和负责人，再查看商机推进明细；周进展来源于已完成且进入周进展的销售行动。"
+      guide="先按自然周、负责人、客户或商机筛选，再进入周进展复盘查看行动结论、下一步和风险。"
       loading={progress.loading}
       error={progress.error}
       refresh={progress.refresh}
@@ -1562,10 +1582,10 @@ function WeeklyProgressPage() {
           <InputNumber className="filter-number" min={1} />
         </Form.Item>
         <Form.Item name="opportunity_id" label="商机ID">
-          <InputNumber className="filter-number" min={1} />
+          <Select allowClear options={opportunityOptions} loading={opportunities.loading} className="filter-select" />
         </Form.Item>
-        <Form.Item name="account_id" label="客户ID">
-          <InputNumber className="filter-number" min={1} />
+        <Form.Item name="account_id" label="客户">
+          <Select allowClear options={accountOptions} loading={accounts.loading} className="filter-select" />
         </Form.Item>
         <Form.Item name="week_start" label="周开始">
           <Input allowClear placeholder="YYYY-MM-DD" />
@@ -1591,15 +1611,139 @@ function WeeklyProgressPage() {
         locale={{ emptyText: "暂无周进展" }}
         expandable={{
           expandedRowRender: (row) => (
-            <SimpleList
-              items={row.progress_items}
-              render={(item) => `${item.subject} · ${item.conclusion ?? "暂无结论"} · ${item.next_plan ?? "暂无下一步"}`}
-              empty="暂无周进展明细"
-            />
+            <WeeklyProgressItems items={row.progress_items} />
           )
         }}
       />
+      <Drawer title="周进展复盘" open={!!selected} onClose={() => setSelected(null)} size="large">
+        <WeeklyProgressReviewDrawer
+          progress={selected}
+          account={selected ? accountById.get(selected.account_id) : undefined}
+          opportunity={selected ? opportunityById.get(selected.opportunity_id) : undefined}
+        />
+      </Drawer>
     </DataWorkspace>
+  );
+}
+
+function WeeklyProgressReviewDrawer({
+  progress,
+  account,
+  opportunity
+}: {
+  progress: WeeklyProgress | null;
+  account?: Account;
+  opportunity?: Opportunity;
+}) {
+  if (!progress) {
+    return null;
+  }
+  const entries = [
+    {
+      icon: <Users size={18} />,
+      title: "查看客户",
+      description: "回到客户经营入口，确认客户状态和最近跟进。",
+      to: "/accounts"
+    },
+    {
+      icon: <BriefcaseBusiness size={18} />,
+      title: "推进商机",
+      description: "回到商机推进入口，确认阶段、风险和下一步计划。",
+      to: "/opportunities"
+    },
+    {
+      icon: <CalendarCheck size={18} />,
+      title: "查看销售行动",
+      description: "查看本周进展来源行动和后续动作。",
+      to: "/activities"
+    }
+  ];
+
+  return (
+    <div className="weekly-review">
+      <section className="weekly-review-hero">
+        <div>
+          <Typography.Title level={3}>周进展复盘入口</Typography.Title>
+          <p>{opportunity?.opportunity_name ?? `商机 ${progress.opportunity_id}`}</p>
+        </div>
+        {weeklyRiskTag(progress)}
+      </section>
+
+      <section>
+        <Typography.Title level={4}>复盘摘要</Typography.Title>
+        <div className="weekly-review-summary-grid">
+          <WeeklyReviewSummaryItem label="所属客户" value={account?.account_name ?? `客户 ${progress.account_id}`} />
+          <WeeklyReviewSummaryItem label="商机" value={opportunity?.opportunity_name ?? `商机 ${progress.opportunity_id}`} />
+          <WeeklyReviewSummaryItem label="负责人" value={`用户 ${progress.owner_user_id}`} />
+          <WeeklyReviewSummaryItem label="自然周" value={weekRangeText(progress)} />
+          <WeeklyReviewSummaryItem label="行动数量" value={actionCountText(progress.activity_count)} />
+          <WeeklyReviewSummaryItem label="最近行动" value={dateText(progress.latest_activity_at)} />
+        </div>
+      </section>
+
+      <section>
+        <Typography.Title level={4}>行动明细</Typography.Title>
+        <WeeklyProgressItems items={progress.progress_items} />
+      </section>
+
+      <section>
+        <Typography.Title level={4}>关联业务入口</Typography.Title>
+        <div className="weekly-review-entry-grid">
+          {entries.map((entry) => (
+            <Link key={entry.to} className="weekly-review-entry-link" to={entry.to} aria-label={entry.title}>
+              {entry.icon}
+              <strong>{entry.title}</strong>
+              <span>{entry.description}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function WeeklyReviewSummaryItem({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="weekly-review-summary-item">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function WeeklyProgressItems({ items }: { items: WeeklyProgress["progress_items"] }) {
+  if (items.length === 0) {
+    return <span className="muted">暂无周进展明细</span>;
+  }
+  return (
+    <div className="weekly-review-item-grid">
+      {items.map((item) => (
+        <article key={item.activity_id} className="weekly-review-item">
+          <div>
+            <strong>{item.subject}</strong>
+            <Tag color={item.risk_description ? "red" : "blue"}>{activityResultText(item.activity_result)}</Tag>
+          </div>
+          <dl>
+            <div>
+              <dt>行动时间</dt>
+              <dd>{dateText(item.activity_time)}</dd>
+            </div>
+            <div>
+              <dt>形成结论</dt>
+              <dd>{textOrDash(item.conclusion)}</dd>
+            </div>
+            <div>
+              <dt>下一步计划</dt>
+              <dd>{textOrDash(item.next_plan)}</dd>
+            </div>
+            <div>
+              <dt>风险说明</dt>
+              <dd>{textOrDash(item.risk_description)}</dd>
+            </div>
+          </dl>
+        </article>
+      ))}
+    </div>
   );
 }
 
@@ -2618,6 +2762,25 @@ function weeklyProgressText(value?: boolean) {
     return "-";
   }
   return value ? "是" : "否";
+}
+
+function weekRangeText(progress: Pick<WeeklyProgress, "week_start_date" | "week_end_date">) {
+  return `${progress.week_start_date} 至 ${progress.week_end_date}`;
+}
+
+function actionCountText(count?: number | null) {
+  if (count === undefined || count === null) {
+    return "-";
+  }
+  return `${count} 次行动`;
+}
+
+function weeklyRiskTag(progress: WeeklyProgress) {
+  return progress.progress_items.some((item) => Boolean(item.risk_description)) ? (
+    <Tag color="red">存在风险</Tag>
+  ) : (
+    <Tag color="green">无风险</Tag>
+  );
 }
 
 function contactCountText(contactIds?: number[]) {
