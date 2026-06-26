@@ -27,7 +27,7 @@
 | 3 | 实现周进展复盘入口 | Done | 列表中文化，详情抽屉展示复盘摘要和行动明细卡片 |
 | 4 | 自动化验证 | Done | 前端定向测试、全量测试、构建通过 |
 | 5 | 本地 UAT | Done | `/weekly-progress` 无服务端异常，核心 DOM 验收通过 |
-| 6 | 更新项目 TODOList 并提交 | In Progress | 模块 7 Done，模块 8 Current，提交号记录 |
+| 6 | 更新项目 TODOList 并提交 | Done | 模块 7 Done，模块 8 Current，提交号 be31747 已记录 |
 
 ## Task 1: Failing Frontend Test
 
@@ -156,6 +156,6 @@ Expected: both commands exit 0.
 
 Copy `frontend/dist` into the running frontend container and run browser smoke on `/weekly-progress`.
 
-- [ ] **Step 3: Update TODOList**
+- [x] **Step 3: Update TODOList**
 
 Mark module 7 Done and module 8 Current. Record test commands, browser evidence, commit hash, and any residual risk.
