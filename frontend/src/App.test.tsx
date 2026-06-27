@@ -534,6 +534,7 @@ describe("CRM frontend V1 workflow", () => {
     await user.click(screen.getByRole("button", { name: "修改密码" }));
     await user.type(screen.getByLabelText("原密码"), "Old!23456");
     await user.type(screen.getByLabelText("新密码"), "New!23456");
+    await user.type(screen.getByLabelText("确认新密码"), "New!23456");
     await user.click(screen.getByRole("button", { name: "保存密码" }));
 
     await waitFor(() => {
@@ -541,7 +542,7 @@ describe("CRM frontend V1 workflow", () => {
         "/api/auth/change-password",
         expect.objectContaining({
           method: "POST",
-          body: expect.stringContaining("New!23456")
+          body: JSON.stringify({ old_password: "Old!23456", new_password: "New!23456" })
         })
       );
     });

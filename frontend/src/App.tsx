@@ -169,7 +169,10 @@ function CrmShell() {
   };
 
   const handleChangePassword = async (values: Record<string, unknown>) => {
-    await changePassword(values);
+    await changePassword({
+      old_password: values.old_password,
+      new_password: values.new_password
+    });
     passwordForm.resetFields();
     setPasswordOpen(false);
     messageApi.success("密码已修改");
@@ -257,6 +260,24 @@ function CrmShell() {
             <Input.Password autoComplete="current-password" />
           </Form.Item>
           <Form.Item name="new_password" label="新密码" rules={[{ required: true }]}>
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+          <Form.Item
+            name="confirm_password"
+            label="确认新密码"
+            dependencies={["new_password"]}
+            rules={[
+              { required: true },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue("new_password") === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error("两次输入的新密码不一致"));
+                }
+              })
+            ]}
+          >
             <Input.Password autoComplete="new-password" />
           </Form.Item>
           <Button type="primary" htmlType="submit" block>
