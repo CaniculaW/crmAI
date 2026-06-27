@@ -36,7 +36,7 @@
 | 2 | 后端自动化门禁 | Done | `cd backend && mvn test` exits 0 |
 | 3 | UAT 环境同步 | Done | Docker UAT frontend serves current `frontend/dist` build |
 | 4 | 浏览器全链路 Smoke | Done | Login and all V1 pages pass required text, no `服务端异常`, no console failures |
-| 5 | 记录与提交 | In Progress | Module 9 marked Done, plan checked, commit pushed |
+| 5 | 记录与提交 | Done | Module 9 marked Done, plan checked, commit pushed |
 
 ## Task 1: Frontend Gates
 
@@ -162,7 +162,7 @@ Residual issues: 无, unless a verification step records a concrete remaining is
 
 Change each completed `- [ ]` line in this plan to `- [x]` and update the TODOList table from `Pending` to `Done`.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 Run:
 
