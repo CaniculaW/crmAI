@@ -107,5 +107,5 @@
 | 商机推进链路 | Done | 2026-06-25 | f464e78 | `npm test`; `npm run build`; `mvn -Dtest=OpportunityControllerTest test` | 通过；`/opportunities` 浏览器验收通过，商机推进入口、推进判断、中文阶段/状态/风险、进展、下一步、最近行动、客户/联系人/行动/周进展入口通过；API `default_following=true` 返回 active 演示商机；截图 `/private/tmp/v1-opportunity-progress-smoke.png` | 无 |
 | 销售行动链路 | Done | 2026-06-25 | a2e10af | `npm test`; `npm run build` | 通过；`/activities` 浏览器验收通过，行动执行入口、执行判断、客户/商机名称、中文状态/类型、沟通内容、客户反馈、结论、下一步、风险说明、客户/商机/周进展入口通过；截图 `/private/tmp/v1-sales-activity-execution-smoke.png` | 无 |
 | 周进展链路 | Done | 2026-06-26 | be31747 | `npm test`; `npm run build` | 通过；`/weekly-progress` 浏览器验收通过，周进展复盘入口、复盘摘要、客户/商机名称、行动数、行动主题、结论、下一步、风险说明、客户/商机/行动入口通过；截图 `/private/tmp/v1-weekly-progress-review-smoke.png` | 无 |
-| 系统管理复核 | Done | 2026-06-28 | 待提交 | `npm test`; `npm run build` | 通过；`/system` 和 `/system/dictionaries` 浏览器验收通过，系统一级菜单、系统概览、组织管理、用户管理、角色权限、审计日志、字典管理、真实字典数据和新建字典入口通过；截图 `/private/tmp/v1-system-management-review-smoke.png` | 无 |
+| 系统管理复核 | Done | 2026-06-28 | aa734d2 | `npm test`; `npm run build` | 通过；`/system` 和 `/system/dictionaries` 浏览器验收通过，系统一级菜单、系统概览、组织管理、用户管理、角色权限、审计日志、字典管理、真实字典数据和新建字典入口通过；截图 `/private/tmp/v1-system-management-review-smoke.png` | 无 |
 | V1 全链路回归 | Current | - | - | - | - | - |

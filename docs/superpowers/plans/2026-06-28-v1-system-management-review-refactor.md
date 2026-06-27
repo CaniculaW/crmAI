@@ -36,7 +36,7 @@
 | 4 | 拆出字典管理页面 | Done | `/system/dictionaries` 可新建字典、新增项、编辑项，`/system` 只保留入口和摘要 |
 | 5 | 自动化验证 | Done | 前端定向测试、全量测试、构建通过 |
 | 6 | 本地 UAT | Done | `/system` 和 `/system/dictionaries` 无服务端异常，核心 DOM 验收通过 |
-| 7 | 更新项目 TODOList 并提交 | In Progress | 模块 8 Done，模块 9 Current，提交号记录 |
+| 7 | 更新项目 TODOList 并提交 | Done | 模块 8 Done，模块 9 Current，提交号 aa734d2 已记录 |
 
 ## Task 1: Failing Frontend Tests
 
@@ -503,7 +503,7 @@ Update `docs/product/crm-v1-page-logic-refactor-todolist.md`:
 - Record verification commands and screenshot path.
 - Temporarily record commit hash as `待提交`; replace with the actual hash after commit.
 
-- [ ] **Step 5: Commit implementation**
+- [x] **Step 5: Commit implementation**
 
 Run:
 
@@ -514,7 +514,7 @@ git commit -m "feat: refine v1 system management navigation"
 
 Expected: commit succeeds.
 
-- [ ] **Step 6: Record final commit hash**
+- [x] **Step 6: Record final commit hash**
 
 Run:
 
