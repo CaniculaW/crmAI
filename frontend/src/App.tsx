@@ -20,16 +20,12 @@ import type { ColumnsType } from "antd/es/table";
 import {
   BarChart3,
   BriefcaseBusiness,
-  Building2,
   CalendarCheck,
   Contact,
-  History,
-  KeyRound,
   LayoutDashboard,
   Plus,
   RefreshCw,
   ShieldCheck,
-  UserCog,
   Users
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -60,12 +56,16 @@ import "./styles.css";
 
 const { Header, Sider, Content } = Layout;
 
-type NavItem = {
+type BaseNavItem = {
   key: string;
   label: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   permission?: string;
   permissions?: string[];
+};
+
+type NavItem = BaseNavItem & {
+  children?: BaseNavItem[];
 };
 
 const navItems: NavItem[] = [
@@ -75,11 +75,20 @@ const navItems: NavItem[] = [
   { key: "/opportunities", label: "商机", icon: <BriefcaseBusiness size={18} />, permission: "opportunity.read" },
   { key: "/activities", label: "销售行动", icon: <CalendarCheck size={18} />, permission: "activity.read" },
   { key: "/weekly-progress", label: "周进展", icon: <BarChart3 size={18} />, permission: "weekly_progress.read" },
-  { key: "/system", label: "系统管理", icon: <ShieldCheck size={18} />, permissions: ["system.dict.manage", "system.user.manage", "system.role.manage", "system.audit.read"] },
-  { key: "/system/departments", label: "组织管理", icon: <Building2 size={18} />, permission: "system.user.manage" },
-  { key: "/system/users", label: "用户管理", icon: <UserCog size={18} />, permission: "system.user.manage" },
-  { key: "/system/roles", label: "角色权限", icon: <KeyRound size={18} />, permission: "system.role.manage" },
-  { key: "/system/audit-logs", label: "审计日志", icon: <History size={18} />, permission: "system.audit.read" }
+  {
+    key: "/system",
+    label: "系统",
+    icon: <ShieldCheck size={18} />,
+    permissions: ["system.dict.manage", "system.user.manage", "system.role.manage", "system.audit.read"],
+    children: [
+      { key: "/system", label: "系统概览", permissions: ["system.dict.manage", "system.user.manage", "system.role.manage", "system.audit.read"] },
+      { key: "/system/departments", label: "组织管理", permission: "system.user.manage" },
+      { key: "/system/users", label: "用户管理", permission: "system.user.manage" },
+      { key: "/system/roles", label: "角色权限", permission: "system.role.manage" },
+      { key: "/system/audit-logs", label: "审计日志", permission: "system.audit.read" },
+      { key: "/system/dictionaries", label: "字典管理", permission: "system.dict.manage" }
+    ]
+  }
 ];
 
 type SelectOption = {
@@ -92,7 +101,26 @@ type RelationshipBucket = {
   contacts: CrmContact[];
 };
 
-type SystemSection = "overview" | "departments" | "users" | "roles" | "auditLogs";
+type SystemSection = "overview" | "departments" | "users" | "roles" | "auditLogs" | "dictionaries";
+
+function canAccessNavItem(item: Pick<NavItem, "permission" | "permissions">, permissions: string[]) {
+  return (
+    (!item.permission || permissions.includes(item.permission)) &&
+    (!item.permissions || item.permissions.some((permission) => permissions.includes(permission)))
+  );
+}
+
+function allowedNavItems(items: NavItem[], permissions: string[]): NavItem[] {
+  return items
+    .map((item) => {
+      const children = item.children?.filter((child) => canAccessNavItem(child, permissions));
+      if (item.children) {
+        return canAccessNavItem(item, permissions) && children?.length ? { ...item, children } : null;
+      }
+      return canAccessNavItem(item, permissions) ? item : null;
+    })
+    .filter((item): item is NavItem => Boolean(item));
+}
 
 export function App() {
   return (
@@ -160,11 +188,8 @@ function CrmShell() {
     );
   }
 
-  const allowedNav = navItems.filter(
-    (item) =>
-      (!item.permission || user.permissions.includes(item.permission)) &&
-      (!item.permissions || item.permissions.some((permission) => user.permissions.includes(permission)))
-  );
+  const allowedNav = allowedNavItems(navItems, user.permissions);
+  const selectedMenuKey = location.pathname;
 
   return (
     <Layout className="app-shell">
@@ -179,11 +204,16 @@ function CrmShell() {
         </div>
         <Menu
           mode="inline"
-          selectedKeys={[location.pathname]}
+          selectedKeys={[selectedMenuKey]}
+          defaultOpenKeys={["/system-root"]}
           items={allowedNav.map((item) => ({
-            key: item.key,
+            key: item.children ? `${item.key}-root` : item.key,
             icon: item.icon,
-            label: <Link to={item.key}>{item.label}</Link>
+            label: item.children ? item.label : <Link to={item.key}>{item.label}</Link>,
+            children: item.children?.map((child) => ({
+              key: child.key,
+              label: <Link to={child.key}>{child.label}</Link>
+            }))
           }))}
         />
       </Sider>
@@ -216,6 +246,7 @@ function CrmShell() {
             <Route path="/system/users" element={<SystemPage section="users" />} />
             <Route path="/system/roles" element={<SystemPage section="roles" />} />
             <Route path="/system/audit-logs" element={<SystemPage section="auditLogs" />} />
+            <Route path="/system/dictionaries" element={<SystemPage section="dictionaries" />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Content>
@@ -1922,9 +1953,9 @@ function SystemPage({ section }: { section: SystemSection }) {
 
   const sectionMeta: Record<SystemSection, { title: string; description: string; guide: string }> = {
     overview: {
-      title: "系统管理",
-      description: "按组织、用户、角色权限和审计日志拆分系统治理入口，保留 V1 字典配置。",
-      guide: "先进入对应管理模块处理组织、账号、授权或审计；字典配置保留在概览页统一维护。"
+      title: "系统概览",
+      description: "集中查看系统治理入口、基础配置数量和最近审计动态。",
+      guide: "先从系统概览判断要维护的对象，再进入组织、用户、角色权限、审计日志或字典管理页面处理具体动作。"
     },
     departments: {
       title: "组织管理",
@@ -1945,6 +1976,11 @@ function SystemPage({ section }: { section: SystemSection }) {
       title: "审计日志",
       description: "查看系统关键操作记录、Trace 和结果。",
       guide: "用于追溯关键操作的时间、对象、结果和 Trace；优先按异常或变更时间定位记录。"
+    },
+    dictionaries: {
+      title: "字典管理",
+      description: "维护客户、商机、行动、风险等 V1 基础选项。",
+      guide: "先确认字典类型，再维护字典项；停用项不再作为新建业务数据的推荐选项。"
     }
   };
 
@@ -1953,7 +1989,8 @@ function SystemPage({ section }: { section: SystemSection }) {
     departments: departments.loading,
     users: users.loading || roles.loading,
     roles: roles.loading || permissions.loading,
-    auditLogs: auditLogs.loading
+    auditLogs: auditLogs.loading,
+    dictionaries: dictionaries.loading
   };
 
   const sectionError: Record<SystemSection, string> = {
@@ -1961,7 +1998,8 @@ function SystemPage({ section }: { section: SystemSection }) {
     departments: departments.error,
     users: users.error || roles.error,
     roles: roles.error || permissions.error,
-    auditLogs: auditLogs.error
+    auditLogs: auditLogs.error,
+    dictionaries: dictionaries.error
   };
 
   const sectionRefresh: Record<SystemSection, () => Promise<void>> = {
@@ -1975,15 +2013,12 @@ function SystemPage({ section }: { section: SystemSection }) {
     roles: async () => {
       await Promise.all([roles.refresh(), permissions.refresh()]);
     },
-    auditLogs: auditLogs.refresh
+    auditLogs: auditLogs.refresh,
+    dictionaries: dictionaries.refresh
   };
 
   const sectionAction: Record<SystemSection, React.ReactNode> = {
-    overview: (
-      <Button icon={<Plus size={16} />} onClick={() => setTypeOpen(true)}>
-        新建字典
-      </Button>
-    ),
+    overview: null,
     departments: (
       <Button icon={<Plus size={16} />} type="primary" onClick={() => setDepartmentOpen(true)}>
         新建组织
@@ -1998,7 +2033,12 @@ function SystemPage({ section }: { section: SystemSection }) {
       </Space>
     ),
     roles: null,
-    auditLogs: null
+    auditLogs: null,
+    dictionaries: (
+      <Button icon={<Plus size={16} />} type="primary" onClick={() => setTypeOpen(true)}>
+        新建字典
+      </Button>
+    )
   };
 
   return (
@@ -2018,37 +2058,40 @@ function SystemPage({ section }: { section: SystemSection }) {
             <SystemModuleCard title="用户管理" description="账号、角色和状态维护" path="/system/users" value={users.data.length} />
             <SystemModuleCard title="角色权限" description="角色授权和权限点配置" path="/system/roles" value={roles.data.length} />
             <SystemModuleCard title="审计日志" description="操作轨迹、对象和结果追溯" path="/system/audit-logs" value={auditLogs.data.length} />
-          </div>
-          <div className="dictionary-grid">
-            {dictionaries.data.map((dict) => (
-              <Card
-                key={dict.id}
-                size="small"
-                title={`${dict.dict_name} (${dict.dict_code})`}
-                extra={
-                  <Button size="small" onClick={() => setItemTarget(dict)}>
-                    新增项
-                  </Button>
-                }
-              >
-                <Space wrap>
-                  {dict.items.map((item) => (
-                    <Tag
-                      key={item.id}
-                      color={item.is_active ? "blue" : "default"}
-                      onClick={() => {
-                        setEditingItem(item);
-                        itemEditForm.setFieldsValue(item);
-                      }}
-                    >
-                      {item.item_name}
-                    </Tag>
-                  ))}
-                </Space>
-              </Card>
-            ))}
+            <SystemModuleCard title="字典管理" description="基础选项、启停和排序维护" path="/system/dictionaries" value={dictionaries.data.length} />
           </div>
         </>
+      ) : null}
+      {section === "dictionaries" ? (
+        <div className="dictionary-grid">
+          {dictionaries.data.map((dict) => (
+            <Card
+              key={dict.id}
+              size="small"
+              title={`${dict.dict_name} (${dict.dict_code})`}
+              extra={
+                <Button size="small" onClick={() => setItemTarget(dict)}>
+                  新增项
+                </Button>
+              }
+            >
+              <Space wrap>
+                {dict.items.map((item) => (
+                  <Tag
+                    key={item.id}
+                    color={item.is_active ? "blue" : "default"}
+                    onClick={() => {
+                      setEditingItem(item);
+                      itemEditForm.setFieldsValue(item);
+                    }}
+                  >
+                    {item.item_name}
+                  </Tag>
+                ))}
+              </Space>
+            </Card>
+          ))}
+        </div>
       ) : null}
       {section === "departments" ? (
         <Card size="small" title="组织列表">

@@ -547,16 +547,68 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
-  it("creates a dictionary type from system management", async () => {
+  it("creates a dictionary type from dictionary management", async () => {
     const fetchMock = mockCrmFetch();
     const user = userEvent.setup();
 
     render(<App />);
     await loginThroughUi(user);
 
-    await user.click(screen.getByRole("link", { name: "系统管理" }));
+    await user.click(screen.getByRole("link", { name: "字典管理" }));
+    expect(await screen.findByRole("heading", { name: "字典管理" })).toBeInTheDocument();
     expect(await screen.findByText("客户等级 (account_level)")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "新建字典" }));
+    await user.type(screen.getByLabelText("字典编码"), "risk_level");
+    await user.type(screen.getByLabelText("字典名称"), "风险等级");
+    await user.click(screen.getByRole("button", { name: "保存字典" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/system/dicts/types",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("risk_level")
+        })
+      );
+    });
+  });
+
+  it("renders system as one top-level menu with professional child modules", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(screen.getByRole("menuitem", { name: "系统" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /系统管理/ })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("link", { name: "系统概览" }));
+    expect(await screen.findByRole("heading", { name: "系统概览" })).toBeInTheDocument();
+
+    expect(screen.getAllByRole("link", { name: "组织管理" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "用户管理" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "角色权限" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "审计日志" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "字典管理" }).length).toBeGreaterThan(0);
+  });
+
+  it("maintains dictionaries from an independent dictionary management page", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "系统概览" }));
+    expect(await screen.findByRole("heading", { name: "系统概览" })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "字典管理" }).length).toBeGreaterThan(0);
+    expect(screen.queryByText("客户等级 (account_level)")).not.toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("link", { name: "字典管理" })[0]);
+    expect(await screen.findByRole("heading", { name: "字典管理" })).toBeInTheDocument();
+    expect(screen.getByText("客户等级 (account_level)")).toBeInTheDocument();
+
     await user.click(screen.getByRole("button", { name: "新建字典" }));
     await user.type(screen.getByLabelText("字典编码"), "risk_level");
     await user.type(screen.getByLabelText("字典名称"), "风险等级");
@@ -580,9 +632,9 @@ describe("CRM frontend V1 workflow", () => {
     render(<App />);
     await loginThroughUi(user);
 
-    await user.click(screen.getByRole("link", { name: "系统管理" }));
+    await user.click(screen.getByRole("link", { name: "系统概览" }));
 
-    expect(await screen.findByRole("heading", { name: "系统管理" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "系统概览" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "组织管理" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "用户管理" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "角色权限" }).length).toBeGreaterThan(0);
@@ -612,7 +664,7 @@ describe("CRM frontend V1 workflow", () => {
     render(<App />);
     await loginThroughUi(user);
 
-    await user.click(screen.getByRole("link", { name: "系统管理" }));
+    await user.click(screen.getByRole("link", { name: "系统概览" }));
     await user.click(screen.getAllByRole("link", { name: "角色权限" })[0]);
     expect((await screen.findAllByText("销售管理员")).length).toBeGreaterThan(0);
 
@@ -639,7 +691,7 @@ describe("CRM frontend V1 workflow", () => {
     render(<App />);
     await loginThroughUi(user);
 
-    await user.click(screen.getByRole("link", { name: "系统管理" }));
+    await user.click(screen.getByRole("link", { name: "系统概览" }));
     await user.click(screen.getAllByRole("link", { name: "组织管理" })[0]);
     expect(await screen.findByText("华东销售部")).toBeInTheDocument();
 

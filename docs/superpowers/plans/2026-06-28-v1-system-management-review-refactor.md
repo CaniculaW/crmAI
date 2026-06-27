@@ -30,20 +30,20 @@
 
 | 顺序 | 事项 | 状态 | 完成标准 |
 |---:|---|---|---|
-| 1 | 补齐系统一级菜单和字典独立页测试 | Pending | 测试覆盖系统父菜单、六个子入口、字典独立页和概览不直接铺开字典项 |
-| 2 | 确认测试红灯 | Pending | 定向测试因当前仍是扁平系统菜单、无 `/system/dictionaries` 而失败 |
-| 3 | 实现系统菜单层级和路由 | Pending | 左侧只保留系统父菜单，子菜单可进入六个系统页面 |
-| 4 | 拆出字典管理页面 | Pending | `/system/dictionaries` 可新建字典、新增项、编辑项，`/system` 只保留入口和摘要 |
-| 5 | 自动化验证 | Pending | 前端定向测试、全量测试、构建通过 |
-| 6 | 本地 UAT | Pending | `/system` 和 `/system/dictionaries` 无服务端异常，核心 DOM 验收通过 |
-| 7 | 更新项目 TODOList 并提交 | Pending | 模块 8 Done，模块 9 Current，提交号记录 |
+| 1 | 补齐系统一级菜单和字典独立页测试 | Done | 测试覆盖系统父菜单、六个子入口、字典独立页和概览不直接铺开字典项 |
+| 2 | 确认测试红灯 | Done | 定向测试因当前仍是扁平系统菜单、无 `/system/dictionaries` 而失败 |
+| 3 | 实现系统菜单层级和路由 | Done | 左侧只保留系统父菜单，子菜单可进入六个系统页面 |
+| 4 | 拆出字典管理页面 | Done | `/system/dictionaries` 可新建字典、新增项、编辑项，`/system` 只保留入口和摘要 |
+| 5 | 自动化验证 | Done | 前端定向测试、全量测试、构建通过 |
+| 6 | 本地 UAT | Done | `/system` 和 `/system/dictionaries` 无服务端异常，核心 DOM 验收通过 |
+| 7 | 更新项目 TODOList 并提交 | In Progress | 模块 8 Done，模块 9 Current，提交号记录 |
 
 ## Task 1: Failing Frontend Tests
 
 **Files:**
 - Modify: `frontend/src/App.test.tsx`
 
-- [ ] **Step 1: Add grouped system menu test**
+- [x] **Step 1: Add grouped system menu test**
 
 Add this test inside `describe("CRM frontend V1 workflow", () => { ... })`, near the existing system management tests:
 
@@ -69,7 +69,7 @@ Add this test inside `describe("CRM frontend V1 workflow", () => { ... })`, near
   });
 ```
 
-- [ ] **Step 2: Add dictionary independent page test**
+- [x] **Step 2: Add dictionary independent page test**
 
 Add this test after the grouped menu test:
 
@@ -107,7 +107,7 @@ Add this test after the grouped menu test:
   });
 ```
 
-- [ ] **Step 3: Update existing system test navigation expectations**
+- [x] **Step 3: Update existing system test navigation expectations**
 
 Update system tests that currently start with:
 
@@ -141,7 +141,7 @@ Then replace its navigation and heading assertions with:
     expect(screen.getByText("客户等级 (account_level)")).toBeInTheDocument();
 ```
 
-- [ ] **Step 4: Run RED**
+- [x] **Step 4: Run RED**
 
 Run:
 
@@ -156,7 +156,7 @@ Expected: FAIL because the current menu still contains `系统管理`, no groupe
 **Files:**
 - Modify: `frontend/src/App.tsx`
 
-- [ ] **Step 1: Update navigation types**
+- [x] **Step 1: Update navigation types**
 
 Replace the current `NavItem` shape with this discriminated structure near the top of `frontend/src/App.tsx`:
 
@@ -174,7 +174,7 @@ type NavItem = BaseNavItem & {
 };
 ```
 
-- [ ] **Step 2: Replace flat system nav entries**
+- [x] **Step 2: Replace flat system nav entries**
 
 Replace the existing `navItems` system entries with a single parent and children:
 
@@ -197,7 +197,7 @@ Replace the existing `navItems` system entries with a single parent and children
 
 Keep all non-system entries unchanged.
 
-- [ ] **Step 3: Add nav filtering helpers**
+- [x] **Step 3: Add nav filtering helpers**
 
 Add these helpers above `CrmShell`:
 
@@ -222,7 +222,7 @@ function allowedNavItems(items: NavItem[], permissions: string[]): NavItem[] {
 }
 ```
 
-- [ ] **Step 4: Render nested Ant Design menu items**
+- [x] **Step 4: Render nested Ant Design menu items**
 
 In `CrmShell`, replace the current `allowedNav` assignment with:
 
@@ -250,7 +250,7 @@ When rendering `<Menu>`, replace `items={allowedNav.map(...)}` with:
 
 Remove the old `selectedKeys={[location.pathname]}` prop.
 
-- [ ] **Step 5: Add dictionary route**
+- [x] **Step 5: Add dictionary route**
 
 Add this route beside the other `/system` routes:
 
@@ -258,7 +258,7 @@ Add this route beside the other `/system` routes:
             <Route path="/system/dictionaries" element={<SystemPage section="dictionaries" />} />
 ```
 
-- [ ] **Step 6: Run navigation test**
+- [x] **Step 6: Run navigation test**
 
 Run:
 
@@ -273,7 +273,7 @@ Expected: PASS after Task 2.
 **Files:**
 - Modify: `frontend/src/App.tsx`
 
-- [ ] **Step 1: Extend section type**
+- [x] **Step 1: Extend section type**
 
 Change:
 
@@ -287,7 +287,7 @@ to:
 type SystemSection = "overview" | "departments" | "users" | "roles" | "auditLogs" | "dictionaries";
 ```
 
-- [ ] **Step 2: Update section metadata**
+- [x] **Step 2: Update section metadata**
 
 Change the `overview` metadata:
 
@@ -309,7 +309,7 @@ Add a `dictionaries` metadata item:
     }
 ```
 
-- [ ] **Step 3: Update loading, error, refresh, action maps**
+- [x] **Step 3: Update loading, error, refresh, action maps**
 
 Add `dictionaries` to the maps:
 
@@ -380,7 +380,7 @@ Move the existing `新建字典` action from `overview` to `dictionaries`:
   };
 ```
 
-- [ ] **Step 4: Keep overview as entry summary only**
+- [x] **Step 4: Keep overview as entry summary only**
 
 In the `section === "overview"` block, keep `system-module-grid`, add a dictionary card, and remove the dictionary cards grid from overview:
 
@@ -394,7 +394,7 @@ In the `section === "overview"` block, keep `system-module-grid`, add a dictiona
           </div>
 ```
 
-- [ ] **Step 5: Add dictionary section render block**
+- [x] **Step 5: Add dictionary section render block**
 
 Add this block after the overview block:
 
@@ -432,7 +432,7 @@ Add this block after the overview block:
       ) : null}
 ```
 
-- [ ] **Step 6: Run dictionary page test**
+- [x] **Step 6: Run dictionary page test**
 
 Run:
 
@@ -448,7 +448,7 @@ Expected: PASS after Task 3.
 - Modify: `docs/product/crm-v1-page-logic-refactor-todolist.md`
 - Create: `/private/tmp/crm-system-management-browser-smoke.mjs` during execution only, not committed
 
-- [ ] **Step 1: Run full frontend verification**
+- [x] **Step 1: Run full frontend verification**
 
 Run:
 
@@ -462,7 +462,7 @@ Expected:
 - `npm test`: all tests pass.
 - `npm run build`: TypeScript and Vite build pass.
 
-- [ ] **Step 2: Deploy current frontend build to UAT container**
+- [x] **Step 2: Deploy current frontend build to UAT container**
 
 Run:
 
@@ -473,7 +473,7 @@ docker cp frontend/dist/. crm-ai-v1-test-frontend-1:/usr/share/nginx/html/
 
 Expected: both commands exit 0.
 
-- [ ] **Step 3: Run browser UAT smoke**
+- [x] **Step 3: Run browser UAT smoke**
 
 Create `/private/tmp/crm-system-management-browser-smoke.mjs` following the existing CDP smoke pattern used for previous modules. The smoke must:
 
@@ -493,7 +493,7 @@ node /private/tmp/crm-system-management-browser-smoke.mjs
 
 Expected: JSON output with `"status": "passed"` and screenshot path.
 
-- [ ] **Step 4: Update module TODOList**
+- [x] **Step 4: Update module TODOList**
 
 Update `docs/product/crm-v1-page-logic-refactor-todolist.md`:
 
