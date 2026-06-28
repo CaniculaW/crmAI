@@ -322,7 +322,29 @@ OpenAPI契约文件：`docs/openapi/crm-v1-openapi.yaml`。当前已建立 `Open
 
 当前周进展基线已落地：`v_opportunity_weekly_progress` 从已完成、已关联商机且进入周进展的销售行动按自然周聚合；`GET /api/weekly-progress/opportunities` 支持按商机、负责人、客户、自然周/月度和风险过滤；`GET /api/opportunities/{id}/weekly-progress` 返回单商机周进展，响应保留同周多条行动明细。周进展不写入商机主表。
 
-## 9. 附件与提醒API
+## 9. 方案标书API
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| GET | /api/solutions | 查询方案标书列表 | solution.read + 关联商机数据权限 |
+| GET | /api/solutions/{id} | 查看方案标书详情 | solution.read + 关联商机数据权限 |
+| POST | /api/solutions | 创建方案标书 | solution.create + 关联商机数据权限 |
+| PATCH | /api/solutions/{id} | 编辑方案标书 | solution.update + 关联商机数据权限 |
+| POST | /api/solutions/{id}/void | 作废方案标书 | solution.void + 关联商机数据权限 |
+
+过滤参数：
+
+- `keyword`
+- `account_id`
+- `opportunity_id`
+- `document_type`
+- `status`
+- `bid_self_check_result`
+- `owner_user_id`
+
+当前 V2 方案标书基线已落地：`crm_solution_documents` 关联客户和商机，支持方案/投标文件状态、版本、报价、成本、预计毛利、投标自检、客户反馈和作废原因；数据访问复用关联商机的数据权限。附件沿用通用附件 API，使用 `object_type=solution_document`。
+
+## 10. 附件与提醒API
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
@@ -332,11 +354,11 @@ OpenAPI契约文件：`docs/openapi/crm-v1-openapi.yaml`。当前已建立 `Open
 | GET | /api/reminders | 我的提醒 |
 | PATCH | /api/reminders/{id} | 完成或取消提醒 |
 
-当前附件元数据基线已落地：`crm_attachments` 统一保存 `object_type + object_id`、文件名、文件地址/对象Key、类型、大小、MIME、上传人和上传时间；支持 account、contact、opportunity、activity 四类 V1 对象；写入、查询、删除均先校验业务对象访问权限。
+当前附件元数据基线已落地：`crm_attachments` 统一保存 `object_type + object_id`、文件名、文件地址/对象Key、类型、大小、MIME、上传人和上传时间；支持 account、contact、opportunity、activity 四类 V1 对象，并在 V2 扩展支持 solution_document；写入、查询、删除均先校验业务对象访问权限。
 
 当前提醒基线已落地：`crm_reminders` 支持销售行动下次跟进自动生成 `activity/follow_up` 提醒；`GET /api/reminders` 返回当前用户待办，支持 `status`、`overdue`、`object_type`、`object_id` 筛选，逾期待办在响应中标识为 `overdue`；`PATCH /api/reminders/{id}` 支持将本人提醒更新为 `completed` 或 `cancelled` 并记录 `reminder.update` 审计；完成销售行动会自动完成该行动待处理跟进提醒。真实文件上传链路、下载审计和提醒通知方式待后续确认。
 
-## 10. 待确认项
+## 11. 待确认项
 
 - 登录态采用JWT、服务端Session还是企业统一认证。
 - 列表 `page_size` 最大值。

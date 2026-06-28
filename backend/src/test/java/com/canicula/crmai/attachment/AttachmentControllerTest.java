@@ -163,6 +163,64 @@ class AttachmentControllerTest {
         assertThat(auditCount).isEqualTo(1);
     }
 
+    @Test
+    void createsListsAndDeletesSolutionDocumentAttachmentMetadata() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("attachment-solution-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "attachment_solution_" + suffix,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "solution.create",
+                        "solution.read",
+                        "attachment.create",
+                        "attachment.read",
+                        "attachment.delete"),
+                List.of("global"));
+        String token = login("attachment_solution_" + suffix);
+        Long accountId = createAccount(token, "方案附件客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(token, accountId, "方案附件商机-" + suffix, departmentId, userId);
+        Long solutionId = createSolutionDocument(token, accountId, opportunityId, userId, "投标文件-" + suffix);
+
+        ResponseEntity<JsonNode> createResponse = restTemplate.exchange(
+                "/api/attachments",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "object_type", "solution_document",
+                        "object_id", solutionId,
+                        "file_name", "投标报价-" + suffix + ".xlsx",
+                        "file_url", "oss://crm/solution/" + suffix + "/quotation.xlsx",
+                        "file_type", "quotation",
+                        "file_size", 8192,
+                        "mime_type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+                        authHeaders(token, "attachment-solution-create-trace-001")),
+                JsonNode.class);
+        Long attachmentId = createResponse.getBody().path("data").path("id").asLong();
+        ResponseEntity<JsonNode> listResponse = restTemplate.exchange(
+                "/api/attachments?object_type=solution_document&object_id=" + solutionId,
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "attachment-solution-list-trace-001")),
+                JsonNode.class);
+        ResponseEntity<JsonNode> deleteResponse = restTemplate.exchange(
+                "/api/attachments/" + attachmentId,
+                HttpMethod.DELETE,
+                new HttpEntity<>(authHeaders(token, "attachment-solution-delete-trace-001")),
+                JsonNode.class);
+
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(createResponse.getBody().path("data").path("object_type").asText()).isEqualTo("solution_document");
+        assertThat(createResponse.getBody().path("data").path("file_url").asText())
+                .isEqualTo("oss://crm/solution/" + suffix + "/quotation.xlsx");
+        assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(listResponse.getBody().path("data")).anySatisfy(attachment ->
+                assertThat(attachment.path("id").asLong()).isEqualTo(attachmentId));
+        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(deleteResponse.getBody().path("data").path("deleted").asBoolean()).isTrue();
+    }
+
     private Long createAttachment(String accessToken, Long accountId, String fileName) {
         ResponseEntity<JsonNode> response = restTemplate.exchange(
                 "/api/attachments",
@@ -191,6 +249,60 @@ class AttachmentControllerTest {
                 "/api/accounts",
                 HttpMethod.POST,
                 new HttpEntity<>(request, authHeaders(accessToken, "attachment-helper-account-trace-001")),
+                JsonNode.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return response.getBody().path("data").path("id").asLong();
+    }
+
+    private Long createOpportunity(
+            String accessToken,
+            Long accountId,
+            String opportunityName,
+            Long departmentId,
+            Long ownerUserId) {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("account_id", accountId);
+        request.put("opportunity_name", opportunityName);
+        request.put("stage", "proposal");
+        request.put("status", "following");
+        request.put("level", "A");
+        request.put("source", "customer");
+        request.put("potential_point", "年度数字化项目");
+        request.put("estimated_budget_amount", 1000000);
+        request.put("estimated_contract_amount", 800000);
+        request.put("owner_department_id", departmentId);
+        request.put("owner_user_id", ownerUserId);
+        request.put("risk_status", "normal");
+        request.put("collaborators", List.of());
+        request.put("contact_relations", List.of());
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/opportunities",
+                HttpMethod.POST,
+                new HttpEntity<>(request, authHeaders(accessToken, "attachment-helper-opportunity-trace-001")),
+                JsonNode.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return response.getBody().path("data").path("id").asLong();
+    }
+
+    private Long createSolutionDocument(
+            String accessToken,
+            Long accountId,
+            Long opportunityId,
+            Long ownerUserId,
+            String documentName) {
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/solutions",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "account_id", accountId,
+                        "opportunity_id", opportunityId,
+                        "document_name", documentName,
+                        "document_type", "bid_document",
+                        "version_no", "V1.0",
+                        "status", "drafting",
+                        "owner_user_id", ownerUserId),
+                        authHeaders(accessToken, "attachment-helper-solution-trace-001")),
                 JsonNode.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         return response.getBody().path("data").path("id").asLong();
@@ -235,6 +347,7 @@ class AttachmentControllerTest {
             grantDataScope(roleId, "contact", scope);
             grantDataScope(roleId, "opportunity", scope);
             grantDataScope(roleId, "activity", scope);
+            grantDataScope(roleId, "solution", scope);
         });
         passwordCredentialService.createPasswordCredential(userId, "S3cure!123");
         return userId;

@@ -22,7 +22,9 @@ import {
   BriefcaseBusiness,
   CalendarCheck,
   Contact,
+  FileText,
   LayoutDashboard,
+  Paperclip,
   Plus,
   RefreshCw,
   ShieldCheck,
@@ -33,12 +35,14 @@ import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from "react
 import {
   type Account,
   type Activity,
+  type Attachment,
   type AuditLog,
   type Contact as CrmContact,
   type CurrentUser,
   type DictionaryType,
   type Opportunity,
   type Reminder,
+  type SolutionDocument,
   type SystemDepartment,
   type SystemPermission,
   type SystemRole,
@@ -73,6 +77,7 @@ const navItems: NavItem[] = [
   { key: "/accounts", label: "客户池", icon: <Users size={18} />, permission: "account.read" },
   { key: "/contacts", label: "联系人", icon: <Contact size={18} />, permission: "contact.read" },
   { key: "/opportunities", label: "商机", icon: <BriefcaseBusiness size={18} />, permission: "opportunity.read" },
+  { key: "/solutions", label: "方案标书", icon: <FileText size={18} />, permission: "solution.read" },
   { key: "/activities", label: "销售行动", icon: <CalendarCheck size={18} />, permission: "activity.read" },
   { key: "/weekly-progress", label: "周进展", icon: <BarChart3 size={18} />, permission: "weekly_progress.read" },
   {
@@ -242,6 +247,7 @@ function CrmShell() {
             <Route path="/accounts" element={<AccountsPage currentUser={user} />} />
             <Route path="/contacts" element={<ContactsPage currentUser={user} />} />
             <Route path="/opportunities" element={<OpportunitiesPage currentUser={user} />} />
+            <Route path="/solutions" element={<SolutionDocumentsPage currentUser={user} />} />
             <Route path="/activities" element={<ActivitiesPage currentUser={user} />} />
             <Route path="/weekly-progress" element={<WeeklyProgressPage />} />
             <Route path="/system" element={<SystemPage section="overview" />} />
@@ -1250,6 +1256,370 @@ function OpportunitySummaryItem({ label, value }: { label: string; value: React.
     <div className="opportunity-summary-item">
       <span>{label}</span>
       <strong>{value}</strong>
+    </div>
+  );
+}
+
+function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const solutions = useResource(() => crmApi.solutions.list(filters), [filters]);
+  const accounts = useResource(crmApi.accounts.list, []);
+  const opportunities = useResource(crmApi.opportunities.list, []);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selected, setSelected] = useState<SolutionDocument | null>(null);
+  const [editing, setEditing] = useState<SolutionDocument | null>(null);
+  const [voiding, setVoiding] = useState<SolutionDocument | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachmentLoading, setAttachmentLoading] = useState(false);
+  const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
+  const [voidForm] = Form.useForm();
+  const [attachmentForm] = Form.useForm();
+  const accountOptions = toAccountOptions(accounts.data);
+  const opportunityOptions = toOpportunityOptions(opportunities.data);
+  const accountById = useMemo(() => new Map(accounts.data.map((account) => [account.id, account])), [accounts.data]);
+  const opportunityById = useMemo(
+    () => new Map(opportunities.data.map((opportunity) => [opportunity.id, opportunity])),
+    [opportunities.data]
+  );
+
+  const loadAttachments = useCallback(async (solutionId: number) => {
+    setAttachmentLoading(true);
+    try {
+      setAttachments(await crmApi.attachments.list({ object_type: "solution_document", object_id: solutionId }));
+    } finally {
+      setAttachmentLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selected) {
+      setAttachments([]);
+      return;
+    }
+    void loadAttachments(selected.id);
+  }, [loadAttachments, selected]);
+
+  const columns: ColumnsType<SolutionDocument> = [
+    {
+      title: "方案名称",
+      dataIndex: "document_name",
+      render: (value, record) => (
+        <Button type="link" className="inline-action" onClick={() => setSelected(record)}>
+          {value}
+        </Button>
+      )
+    },
+    { title: "客户", dataIndex: "account_id", render: (value) => accountById.get(Number(value))?.account_name ?? value },
+    { title: "商机", dataIndex: "opportunity_id", render: (value) => opportunityById.get(Number(value))?.opportunity_name ?? value },
+    { title: "类型", dataIndex: "document_type", render: solutionDocumentTypeText },
+    { title: "版本", dataIndex: "version_no", render: textOrDash },
+    { title: "状态", dataIndex: "status", render: solutionStatusTag },
+    { title: "报价", dataIndex: "quotation_amount", render: moneyText },
+    { title: "自检", dataIndex: "bid_self_check_result", render: bidSelfCheckTag },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Space>
+          <Button size="small" onClick={() => setSelected(record)}>
+            查看
+          </Button>
+          <Button
+            size="small"
+            onClick={() => {
+              setEditing(record);
+              editForm.setFieldsValue(record);
+            }}
+          >
+            编辑
+          </Button>
+          <Button size="small" danger disabled={record.status === "voided"} onClick={() => setVoiding(record)}>
+            作废
+          </Button>
+        </Space>
+      )
+    }
+  ];
+
+  const attachmentColumns: ColumnsType<Attachment> = [
+    { title: "附件名称", dataIndex: "file_name" },
+    { title: "类型", dataIndex: "file_type", render: textOrDash },
+    { title: "大小", dataIndex: "file_size", render: fileSizeText },
+    { title: "上传时间", dataIndex: "uploaded_at", render: dateText },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Space>
+          <Button size="small" href={record.file_url} target="_blank" rel="noreferrer">
+            下载
+          </Button>
+          <Button size="small" danger onClick={() => void deleteAttachment(record.id)}>
+            删除
+          </Button>
+        </Space>
+      )
+    }
+  ];
+
+  const createSolution = async (values: Record<string, unknown>) => {
+    await crmApi.solutions.create({
+      document_type: "technical_solution",
+      version_no: "V1.0",
+      status: "drafting",
+      owner_user_id: currentUser.id,
+      ...withoutEmpty(values, [])
+    });
+    setDrawerOpen(false);
+    form.resetFields();
+    await solutions.refresh();
+  };
+
+  const updateSolution = async (values: Record<string, unknown>) => {
+    if (!editing) {
+      return;
+    }
+    await crmApi.solutions.update(editing.id, withoutEmpty(values, []));
+    setEditing(null);
+    editForm.resetFields();
+    await solutions.refresh();
+  };
+
+  const voidSolution = async (values: Record<string, unknown>) => {
+    if (!voiding) {
+      return;
+    }
+    await crmApi.solutions.void(voiding.id, values);
+    setVoiding(null);
+    voidForm.resetFields();
+    await solutions.refresh();
+  };
+
+  const createAttachment = async (values: Record<string, unknown>) => {
+    if (!selected) {
+      return;
+    }
+    await crmApi.attachments.create({
+      object_type: "solution_document",
+      object_id: selected.id,
+      ...withoutEmpty(values, [])
+    });
+    attachmentForm.resetFields();
+    await loadAttachments(selected.id);
+  };
+
+  const deleteAttachment = async (attachmentId: number) => {
+    if (!selected) {
+      return;
+    }
+    await crmApi.attachments.delete(attachmentId);
+    await loadAttachments(selected.id);
+  };
+
+  return (
+    <DataWorkspace
+      title="方案标书"
+      description="管理商机关联的技术方案、投标文件、报价和客户反馈。"
+      guide="先按客户、商机、状态筛选方案；进入详情维护方案摘要、投标自检和附件，作废时保留原因用于审计。"
+      loading={solutions.loading}
+      error={solutions.error}
+      action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建方案</Button>}
+      refresh={solutions.refresh}
+    >
+      <FilterBar
+        initialValues={filters}
+        onSearch={(values) => setFilters(withoutEmpty(values, []))}
+        onReset={() => setFilters({})}
+      >
+        <Form.Item name="keyword" label="关键词">
+          <Input allowClear placeholder="方案名称" />
+        </Form.Item>
+        <Form.Item name="account_id" label="客户">
+          <Select allowClear options={accountOptions} loading={accounts.loading} className="filter-select" />
+        </Form.Item>
+        <Form.Item name="opportunity_id" label="商机">
+          <Select allowClear options={opportunityOptions} loading={opportunities.loading} className="filter-select" />
+        </Form.Item>
+        <Form.Item name="document_type" label="类型">
+          <Select allowClear options={solutionDocumentTypeOptions()} />
+        </Form.Item>
+        <Form.Item name="status" label="状态">
+          <Select allowClear options={solutionStatusOptions()} />
+        </Form.Item>
+      </FilterBar>
+      <Table rowKey="id" dataSource={solutions.data} columns={columns} pagination={{ pageSize: 8 }} locale={{ emptyText: "暂无方案标书" }} />
+
+      <Drawer title="新建方案" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
+        <Form form={form} layout="vertical" onFinish={createSolution}>
+          <SolutionDocumentFormFields accountOptions={accountOptions} opportunityOptions={opportunityOptions} />
+          <Button type="primary" htmlType="submit" block>保存方案</Button>
+        </Form>
+      </Drawer>
+
+      <Drawer title="方案详情" open={!!selected} onClose={() => setSelected(null)} size="large">
+        <SolutionDocumentDetail
+          solution={selected}
+          account={selected ? accountById.get(selected.account_id) : undefined}
+          opportunity={selected ? opportunityById.get(selected.opportunity_id) : undefined}
+        />
+        <section className="drawer-section">
+          <div className="section-title-row">
+            <Typography.Title level={4}>附件</Typography.Title>
+            <Button icon={<Paperclip size={16} />} onClick={() => selected ? void loadAttachments(selected.id) : undefined}>
+              刷新附件
+            </Button>
+          </div>
+          <Table
+            rowKey="id"
+            size="small"
+            loading={attachmentLoading}
+            dataSource={attachments}
+            columns={attachmentColumns}
+            pagination={false}
+            locale={{ emptyText: "暂无附件" }}
+          />
+          <Form form={attachmentForm} layout="vertical" className="inline-create-form" onFinish={createAttachment}>
+            <Form.Item name="file_name" label="附件名称" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="file_url" label="附件地址" rules={[{ required: true }]}>
+              <Input placeholder="https:// 或 oss:// 地址" />
+            </Form.Item>
+            <Form.Item name="file_type" label="附件类型">
+              <Select allowClear options={attachmentFileTypeOptions()} />
+            </Form.Item>
+            <Form.Item name="file_size" label="文件大小">
+              <InputNumber min={0} className="full-width" />
+            </Form.Item>
+            <Button type="primary" htmlType="submit">新增附件</Button>
+          </Form>
+        </section>
+      </Drawer>
+
+      <Modal title="编辑方案" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
+        <Form form={editForm} layout="vertical" onFinish={updateSolution}>
+          <SolutionDocumentFormFields accountOptions={accountOptions} opportunityOptions={opportunityOptions} editing />
+          <Button type="primary" htmlType="submit" block>保存修改</Button>
+        </Form>
+      </Modal>
+
+      <Modal title="作废方案" open={!!voiding} onCancel={() => setVoiding(null)} footer={null}>
+        <Form form={voidForm} layout="vertical" onFinish={voidSolution}>
+          <Form.Item name="void_reason" label="作废原因" rules={[{ required: true }]}>
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Button type="primary" danger htmlType="submit" block>确认作废</Button>
+        </Form>
+      </Modal>
+    </DataWorkspace>
+  );
+}
+
+function SolutionDocumentFormFields({
+  accountOptions,
+  opportunityOptions,
+  editing = false
+}: {
+  accountOptions: SelectOption[];
+  opportunityOptions: SelectOption[];
+  editing?: boolean;
+}) {
+  return (
+    <>
+      {!editing ? (
+        <>
+          <Form.Item name="account_id" label="所属客户" rules={[{ required: true }]}>
+            <Select options={accountOptions} />
+          </Form.Item>
+          <Form.Item name="opportunity_id" label="关联商机" rules={[{ required: true }]}>
+            <Select options={opportunityOptions} />
+          </Form.Item>
+        </>
+      ) : null}
+      <Form.Item name="document_name" label="方案名称" rules={[{ required: !editing }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item name="document_type" label="方案类型">
+        <Select allowClear options={solutionDocumentTypeOptions()} />
+      </Form.Item>
+      <Form.Item name="version_no" label="版本号">
+        <Input />
+      </Form.Item>
+      <Form.Item name="status" label="状态">
+        <Select allowClear options={solutionStatusOptions()} />
+      </Form.Item>
+      <Form.Item name="customer_requirement_summary" label="客户需求摘要">
+        <Input.TextArea rows={3} />
+      </Form.Item>
+      <Form.Item name="technical_solution_summary" label="技术方案摘要">
+        <Input.TextArea rows={3} />
+      </Form.Item>
+      <Form.Item name="quotation_amount" label="报价金额">
+        <InputNumber min={0} className="full-width" />
+      </Form.Item>
+      <Form.Item name="cost_amount" label="成本金额">
+        <InputNumber min={0} className="full-width" />
+      </Form.Item>
+      <Form.Item name="estimated_gross_margin_rate" label="预计毛利率">
+        <InputNumber min={0} max={1} step={0.01} className="full-width" />
+      </Form.Item>
+      <Form.Item name="bid_self_check_result" label="投标自检">
+        <Select allowClear options={bidSelfCheckOptions()} />
+      </Form.Item>
+      <Form.Item name="bid_risk_description" label="投标风险说明">
+        <Input.TextArea rows={3} />
+      </Form.Item>
+      <Form.Item name="customer_feedback" label="客户反馈">
+        <Input.TextArea rows={3} />
+      </Form.Item>
+      <Form.Item name="remark" label="备注">
+        <Input.TextArea rows={3} />
+      </Form.Item>
+    </>
+  );
+}
+
+function SolutionDocumentDetail({
+  solution,
+  account,
+  opportunity
+}: {
+  solution: SolutionDocument | null;
+  account?: Account;
+  opportunity?: Opportunity;
+}) {
+  if (!solution) {
+    return null;
+  }
+  return (
+    <div className="solution-detail">
+      <section className="opportunity-progress-hero">
+        <div>
+          <Typography.Title level={3}>方案标书详情</Typography.Title>
+          <p>{solution.document_name}</p>
+        </div>
+        {solutionStatusTag(solution.status)}
+      </section>
+      <div className="opportunity-summary-grid">
+        <OpportunitySummaryItem label="客户" value={account?.account_name ?? `客户 ${solution.account_id}`} />
+        <OpportunitySummaryItem label="商机" value={opportunity?.opportunity_name ?? `商机 ${solution.opportunity_id}`} />
+        <OpportunitySummaryItem label="类型" value={solutionDocumentTypeText(solution.document_type)} />
+        <OpportunitySummaryItem label="版本" value={solution.version_no} />
+        <OpportunitySummaryItem label="报价" value={moneyText(solution.quotation_amount)} />
+        <OpportunitySummaryItem label="毛利率" value={percentText(solution.estimated_gross_margin_rate)} />
+      </div>
+      <RecordDetails
+        record={solution as unknown as Record<string, unknown>}
+        fields={[
+          ["客户需求摘要", "customer_requirement_summary"],
+          ["技术方案摘要", "technical_solution_summary"],
+          ["干系人策略", "stakeholder_strategy"],
+          ["投标自检", "bid_self_check_result"],
+          ["风险说明", "bid_risk_description"],
+          ["客户反馈", "customer_feedback"],
+          ["作废原因", "void_reason"],
+          ["备注", "remark"]
+        ]}
+      />
     </div>
   );
 }
@@ -2757,6 +3127,111 @@ function opportunityRiskTag(risk?: string) {
 
 function isOpportunityOpen(status?: string) {
   return status === "following" || status === "active";
+}
+
+function solutionDocumentTypeOptions() {
+  return ["technical_solution", "bid_document", "quotation", "implementation_plan"].map((value) => ({
+    label: solutionDocumentTypeText(value),
+    value
+  }));
+}
+
+function solutionDocumentTypeText(type?: string) {
+  if (!type) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    technical_solution: "技术方案",
+    bid_document: "投标文件",
+    quotation: "报价单",
+    implementation_plan: "实施计划"
+  };
+  return labels[type] ?? type;
+}
+
+function solutionStatusOptions() {
+  return ["drafting", "internal_review", "submitted", "feedback", "won", "lost", "voided"].map((value) => ({
+    label: solutionStatusText(value),
+    value
+  }));
+}
+
+function solutionStatusText(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    drafting: "编制中",
+    internal_review: "内部评审",
+    submitted: "已提交客户",
+    feedback: "客户反馈",
+    won: "已中标",
+    lost: "未中标",
+    voided: "已作废"
+  };
+  return labels[status] ?? status;
+}
+
+function solutionStatusTag(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const color = status === "won" ? "green" : status === "lost" || status === "voided" ? "default" : status === "feedback" ? "gold" : "blue";
+  return <Tag color={color}>{solutionStatusText(status)}</Tag>;
+}
+
+function bidSelfCheckOptions() {
+  return ["pass", "risk", "blocked"].map((value) => ({
+    label: bidSelfCheckText(value),
+    value
+  }));
+}
+
+function bidSelfCheckText(result?: string) {
+  if (!result) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    pass: "通过",
+    risk: "有风险",
+    blocked: "阻塞"
+  };
+  return labels[result] ?? result;
+}
+
+function bidSelfCheckTag(result?: string) {
+  if (!result) {
+    return "-";
+  }
+  const color = result === "pass" ? "green" : result === "blocked" ? "red" : "gold";
+  return <Tag color={color}>{bidSelfCheckText(result)}</Tag>;
+}
+
+function attachmentFileTypeOptions() {
+  return ["technical_solution", "bid_document", "quotation", "customer_feedback", "contract_draft"].map((value) => ({
+    label: solutionDocumentTypeText(value),
+    value
+  }));
+}
+
+function percentText(value?: number | null) {
+  if (value === undefined || value === null) {
+    return "-";
+  }
+  return `${(value * 100).toFixed(1)}%`;
+}
+
+function fileSizeText(value?: number | null) {
+  if (value === undefined || value === null) {
+    return "-";
+  }
+  if (value < 1024) {
+    return `${value} B`;
+  }
+  if (value < 1024 * 1024) {
+    return `${(value / 1024).toFixed(1)} KB`;
+  }
+  return `${(value / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function activityStatusOptions() {

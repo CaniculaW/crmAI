@@ -14,6 +14,13 @@ const apiData = {
       "contact.create",
       "opportunity.read",
       "opportunity.create",
+      "solution.read",
+      "solution.create",
+      "solution.update",
+      "solution.void",
+      "attachment.create",
+      "attachment.read",
+      "attachment.delete",
       "activity.read",
       "activity.create",
       "activity.complete",
@@ -84,6 +91,25 @@ const apiData = {
       last_activity_summary: "完成CRM V1试点需求确认会",
       owner_department_id: 1,
       owner_user_id: 1001
+    }
+  ],
+  solutions: [
+    {
+      id: 91,
+      account_id: 1,
+      opportunity_id: 10,
+      document_name: "V2试点技术方案",
+      document_type: "technical_solution",
+      version_no: "V1.0",
+      status: "drafting",
+      owner_user_id: 1001,
+      customer_requirement_summary: "客户关注权限、附件和验收闭环",
+      technical_solution_summary: "CRM V2 模块化业务链路方案",
+      quotation_amount: 880000,
+      cost_amount: 620000,
+      estimated_gross_margin_rate: 0.2955,
+      bid_self_check_result: "risk",
+      bid_risk_description: "附件材料待补齐"
     }
   ],
   activities: [
@@ -427,6 +453,23 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("link", { name: "经营联系人" })).toHaveAttribute("href", "/contacts");
     expect(screen.getByRole("link", { name: "记录销售行动" })).toHaveAttribute("href", "/activities");
     expect(screen.getByRole("link", { name: "查看周进展" })).toHaveAttribute("href", "/weekly-progress");
+  });
+
+  it("renders the solution document module and loads the V2 solution list", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "方案标书" }));
+
+    expect(await screen.findByRole("heading", { name: "方案标书" })).toBeInTheDocument();
+    expect(screen.getByText("V2试点技术方案")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "新建方案" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/solutions"), expect.anything());
+    });
   });
 
   it("shows the sales activity execution entry from the activity list", async () => {
@@ -794,6 +837,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/opportunities")) {
       return jsonResponse({ code: "OK", data: data.opportunities });
+    }
+    if (path.endsWith("/api/solutions")) {
+      return jsonResponse({ code: "OK", data: data.solutions });
     }
     if (path.endsWith("/api/activities")) {
       return jsonResponse({ code: "OK", data: data.activities });

@@ -316,6 +316,32 @@ body {
   width: 130px;
 }
 
+.drawer-section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #e6eaf2;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.section-title-row h4.ant-typography {
+  margin: 0;
+}
+
+.inline-create-form {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
 .inline-action {
   height: auto;
   padding: 0;
@@ -594,6 +620,11 @@ body {
 }
 
 .opportunity-progress {
+  display: grid;
+  gap: 18px;
+}
+
+.solution-detail {
   display: grid;
   gap: 18px;
 }

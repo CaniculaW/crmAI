@@ -6,6 +6,7 @@ import com.canicula.crmai.api.BusinessRuleException;
 import com.canicula.crmai.auth.ForbiddenException;
 import com.canicula.crmai.contact.ContactService;
 import com.canicula.crmai.opportunity.OpportunityService;
+import com.canicula.crmai.solution.SolutionDocumentService;
 import java.sql.PreparedStatement;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -26,18 +27,21 @@ public class AttachmentService {
     private final ContactService contactService;
     private final OpportunityService opportunityService;
     private final ActivityService activityService;
+    private final SolutionDocumentService solutionDocumentService;
 
     AttachmentService(
             JdbcTemplate jdbcTemplate,
             AccountService accountService,
             ContactService contactService,
             OpportunityService opportunityService,
-            ActivityService activityService) {
+            ActivityService activityService,
+            SolutionDocumentService solutionDocumentService) {
         this.jdbcTemplate = jdbcTemplate;
         this.accountService = accountService;
         this.contactService = contactService;
         this.opportunityService = opportunityService;
         this.activityService = activityService;
+        this.solutionDocumentService = solutionDocumentService;
     }
 
     @Transactional
@@ -158,6 +162,7 @@ public class AttachmentService {
                 case "contact" -> contactService.readableDetail(objectId, actorUserId);
                 case "opportunity" -> opportunityService.readableDetail(objectId, actorUserId);
                 case "activity" -> activityService.readableDetail(objectId, actorUserId);
+                case "solution_document" -> solutionDocumentService.readableDetail(objectId, actorUserId);
                 default -> throw new BusinessRuleException("不支持的附件对象类型");
             }
         } catch (IllegalArgumentException exception) {

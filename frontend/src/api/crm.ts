@@ -81,6 +81,32 @@ export type Opportunity = {
   last_activity_summary?: string;
 };
 
+export type SolutionDocument = {
+  id: number;
+  tenant_id?: number;
+  account_id: number;
+  opportunity_id: number;
+  document_name: string;
+  document_type: string;
+  version_no: string;
+  status: string;
+  owner_user_id: number;
+  customer_requirement_summary?: string;
+  technical_solution_summary?: string;
+  stakeholder_strategy?: string;
+  quotation_amount?: number;
+  cost_amount?: number;
+  estimated_gross_margin_rate?: number;
+  bid_self_check_result?: string;
+  bid_risk_description?: string;
+  submitted_to_customer_at?: string;
+  customer_feedback?: string;
+  void_reason?: string;
+  voided_at?: string;
+  voided_by?: number;
+  remark?: string;
+};
+
 export type Activity = {
   id: number;
   account_id: number;
@@ -117,6 +143,20 @@ export type Reminder = {
   title: string;
   due_at: string;
   status: string;
+};
+
+export type Attachment = {
+  id: number;
+  object_type: string;
+  object_id: number;
+  file_name: string;
+  file_url: string;
+  file_type?: string;
+  file_size?: number;
+  mime_type?: string;
+  uploaded_by?: number;
+  uploaded_at?: string;
+  remark?: string;
 };
 
 export type WeeklyProgressItem = {
@@ -280,6 +320,16 @@ export const crmApi = {
     reopen: (id: number, body: Record<string, unknown>) =>
       requestJson<Opportunity>(`/api/opportunities/${id}/reopen`, { method: "POST", body: JSON.stringify(body) })
   },
+  solutions: {
+    list: (query?: QueryParams) => requestJson<SolutionDocument[]>(withQuery("/api/solutions", query)),
+    detail: (id: number) => requestJson<SolutionDocument>(`/api/solutions/${id}`),
+    create: (body: Record<string, unknown>) =>
+      requestJson<SolutionDocument>("/api/solutions", { method: "POST", body: JSON.stringify(body) }),
+    update: (id: number, body: Record<string, unknown>) =>
+      requestJson<SolutionDocument>(`/api/solutions/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+    void: (id: number, body: Record<string, unknown>) =>
+      requestJson<SolutionDocument>(`/api/solutions/${id}/void`, { method: "POST", body: JSON.stringify(body) })
+  },
   activities: {
     list: (query?: QueryParams) => requestJson<Activity[]>(withQuery("/api/activities", query)),
     detail: (id: number) => requestJson<Activity>(`/api/activities/${id}`),
@@ -294,6 +344,12 @@ export const crmApi = {
     list: (query?: QueryParams) => requestJson<Reminder[]>(withQuery("/api/reminders", query)),
     update: (id: number, body: Record<string, unknown>) =>
       requestJson<Reminder>(`/api/reminders/${id}`, { method: "PATCH", body: JSON.stringify(body) })
+  },
+  attachments: {
+    list: (query: QueryParams) => requestJson<Attachment[]>(withQuery("/api/attachments", query)),
+    create: (body: Record<string, unknown>) =>
+      requestJson<Attachment>("/api/attachments", { method: "POST", body: JSON.stringify(body) }),
+    delete: (id: number) => requestJson<{ deleted: boolean }>(`/api/attachments/${id}`, { method: "DELETE" })
   },
   weeklyProgress: {
     list: (query?: QueryParams) => requestJson<WeeklyProgress[]>(withQuery("/api/weekly-progress/opportunities", query))
