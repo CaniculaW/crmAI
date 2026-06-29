@@ -91,8 +91,10 @@ V2 当前进度：
 - [x] Step 3：启动模块 4 开票管理，输出模块 TODO、页面逻辑、业务边界和验收标准。
 - [x] Step 4：确认采用方案 B：开票计划 + 开票申请 + 发票登记一体化。
 - [x] Step 5：完成开票管理设计说明，明确数据模型、API 契约、权限、附件、金额校验和验收标准。
-- [ ] Step 6：创建模块 4 TDD 实施计划。
+- [x] Step 6：创建模块 4 TDD 实施计划。
 - [ ] Step 7：按实施计划进入后端数据模型与 API 实现。
+- [ ] Step 8：按实施计划进入前端开票页面、OpenAPI 和附件扩展。
+- [ ] Step 9：自动化验证、浏览器 UAT、提交并切换到模块 5。
 
 当前模块不做：
 
@@ -117,7 +119,7 @@ V2 当前进度：
 | V2 启动与 UI/范围对齐 | Done | 2026-06-28 | 0d48a79 | 文档评审 | 不适用 | 无 |
 | 方案与标书链路 | Done | 2026-06-29 | eaf7515 | `mvn test`；`mvn -Dtest=OpenApiContractCoverageTest test`；`npm test`；`npm run build` | 127.0.0.1:5175 `/solutions` 已通过页面、详情、附件下载/删除入口验证 | 风险回写商机未做，保留到 V2 入口联动模块 |
 | 合同管理链路 | Done | 2026-06-29 | 本次提交 | `mvn test`；`mvn -Dtest=OpenApiContractCoverageTest test`；`npm test`；`npm run build` | 127.0.0.1:5175 `/contracts` 已通过列表、详情、变更记录、节点、附件下载/删除入口验证；浏览器控制台无 error | 开票/回款/核销入口占位保留到后续模块 |
-| 开票管理链路 | Current | - | - | 设计评审 | - | 设计说明已完成，当前准备 TDD 实施计划 |
+| 开票管理链路 | Current | - | - | 设计评审 | - | 设计说明与 TDD 实施计划已完成，当前进入后端实现 |
 | 回款管理链路 | Pending | - | - | - | - | - |
 | 发票回款核销链路 | Pending | - | - | - | - | - |
 | 客户/商机 V2 入口联动 | Pending | - | - | - | - | - |
@@ -131,9 +133,9 @@ V2 当前进度：
 - 总模块：9
 - 已完成：3
 - 当前模块：4. 开票管理链路
-- 当前步骤：Step 6. 创建 TDD 实施计划
-- 当前 TODO：基于 `docs/superpowers/specs/2026-06-29-v2-invoice-management-design.md` 输出后端、前端、OpenAPI、UAT 的实施计划
-- 完成标准：开票管理实施计划完成，进入后端数据模型实现
+- 当前步骤：Step 7. 后端数据模型与 API 实现
+- 当前 TODO：执行 `docs/superpowers/plans/2026-06-29-v2-invoice-management.md` 的 Task 1-4
+- 完成标准：`crm_invoices`、开票 API、状态动作、金额校验和 `invoice` 附件后端测试通过
 ```
 
 ## 6. V2 总体页面逻辑与导航方案
