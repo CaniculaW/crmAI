@@ -221,6 +221,64 @@ class AttachmentControllerTest {
         assertThat(deleteResponse.getBody().path("data").path("deleted").asBoolean()).isTrue();
     }
 
+    @Test
+    void createsListsAndDeletesContractAttachmentMetadata() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("attachment-contract-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "attachment_contract_" + suffix,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "contract.create",
+                        "contract.read",
+                        "attachment.create",
+                        "attachment.read",
+                        "attachment.delete"),
+                List.of("global"));
+        String token = login("attachment_contract_" + suffix);
+        Long accountId = createAccount(token, "合同附件客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(token, accountId, "合同附件商机-" + suffix, departmentId, userId);
+        Long contractId = createContract(token, accountId, opportunityId, userId, suffix);
+
+        ResponseEntity<JsonNode> createResponse = restTemplate.exchange(
+                "/api/attachments",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "object_type", "contract",
+                        "object_id", contractId,
+                        "file_name", "盖章合同-" + suffix + ".pdf",
+                        "file_url", "oss://crm/contract/" + suffix + "/stamped.pdf",
+                        "file_type", "stamped_contract",
+                        "file_size", 16384,
+                        "mime_type", "application/pdf"),
+                        authHeaders(token, "attachment-contract-create-trace-001")),
+                JsonNode.class);
+        Long attachmentId = createResponse.getBody().path("data").path("id").asLong();
+        ResponseEntity<JsonNode> listResponse = restTemplate.exchange(
+                "/api/attachments?object_type=contract&object_id=" + contractId,
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "attachment-contract-list-trace-001")),
+                JsonNode.class);
+        ResponseEntity<JsonNode> deleteResponse = restTemplate.exchange(
+                "/api/attachments/" + attachmentId,
+                HttpMethod.DELETE,
+                new HttpEntity<>(authHeaders(token, "attachment-contract-delete-trace-001")),
+                JsonNode.class);
+
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(createResponse.getBody().path("data").path("object_type").asText()).isEqualTo("contract");
+        assertThat(createResponse.getBody().path("data").path("file_url").asText())
+                .isEqualTo("oss://crm/contract/" + suffix + "/stamped.pdf");
+        assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(listResponse.getBody().path("data")).anySatisfy(attachment ->
+                assertThat(attachment.path("id").asLong()).isEqualTo(attachmentId));
+        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(deleteResponse.getBody().path("data").path("deleted").asBoolean()).isTrue();
+    }
+
     private Long createAttachment(String accessToken, Long accountId, String fileName) {
         ResponseEntity<JsonNode> response = restTemplate.exchange(
                 "/api/attachments",
@@ -308,6 +366,32 @@ class AttachmentControllerTest {
         return response.getBody().path("data").path("id").asLong();
     }
 
+    private Long createContract(
+            String accessToken,
+            Long accountId,
+            Long opportunityId,
+            Long ownerUserId,
+            String suffix) {
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/contracts",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "account_id", accountId,
+                        "opportunity_id", opportunityId,
+                        "contract_name", "附件测试合同-" + suffix,
+                        "contract_no", "ATT-CON-" + suffix,
+                        "contract_type", "project",
+                        "contract_status", "performing",
+                        "contract_amount", 900000,
+                        "tax_rate", 0.13,
+                        "owner_user_id", ownerUserId,
+                        "business_owner_id", ownerUserId),
+                        authHeaders(accessToken, "attachment-helper-contract-trace-001")),
+                JsonNode.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return response.getBody().path("data").path("id").asLong();
+    }
+
     private Long createDepartment(String code) {
         return identityService.createDepartment(new DepartmentCreateRequest(
                 null,
@@ -348,6 +432,7 @@ class AttachmentControllerTest {
             grantDataScope(roleId, "opportunity", scope);
             grantDataScope(roleId, "activity", scope);
             grantDataScope(roleId, "solution", scope);
+            grantDataScope(roleId, "contract", scope);
         });
         passwordCredentialService.createPasswordCredential(userId, "S3cure!123");
         return userId;

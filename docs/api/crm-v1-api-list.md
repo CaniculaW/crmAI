@@ -344,7 +344,34 @@ OpenAPI契约文件：`docs/openapi/crm-v1-openapi.yaml`。当前已建立 `Open
 
 当前 V2 方案标书基线已落地：`crm_solution_documents` 关联客户和商机，支持方案/投标文件状态、版本、报价、成本、预计毛利、投标自检、客户反馈和作废原因；数据访问复用关联商机的数据权限。附件沿用通用附件 API，使用 `object_type=solution_document`。
 
-## 10. 附件与提醒API
+## 10. 合同管理API
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| GET | /api/contracts | 查询合同列表 | contract.read + 关联商机/客户数据权限 |
+| GET | /api/contracts/{id} | 查看合同详情 | contract.read + 关联商机/客户数据权限 |
+| POST | /api/contracts | 创建合同 | contract.create + 关联商机/客户数据权限 |
+| PATCH | /api/contracts/{id} | 编辑合同 | contract.update + 关联商机/客户数据权限 |
+| POST | /api/contracts/{id}/terminate | 终止合同 | contract.terminate + 关联商机/客户数据权限 |
+| GET | /api/contracts/{id}/changes | 查询合同变更记录 | contract.read + 关联商机/客户数据权限 |
+| GET | /api/contracts/{id}/milestones | 查询合同节点 | contract.read + 关联商机/客户数据权限 |
+| POST | /api/contracts/{id}/milestones | 新增合同节点 | contract.milestone.manage + 关联商机/客户数据权限 |
+| PATCH | /api/contracts/{id}/milestones/{milestoneId} | 编辑合同节点 | contract.milestone.manage + 关联商机/客户数据权限 |
+
+过滤参数：
+
+- `keyword`
+- `account_id`
+- `opportunity_id`
+- `contract_type`
+- `contract_status`
+- `risk_level`
+- `owner_user_id`
+- `business_owner_id`
+
+当前 V2 合同管理基线已落地：`crm_contracts` 关联客户和可选来源商机，支持合同编号、类型、状态、含税金额、税率、不含税金额、付款条件、开票条件、交付范围、验收标准、风险、终止原因；关键字段变更写入 `crm_contract_changes`，合同履约节点写入 `crm_contract_milestones`。附件沿用通用附件 API，使用 `object_type=contract`。
+
+## 11. 附件与提醒API
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
@@ -354,11 +381,11 @@ OpenAPI契约文件：`docs/openapi/crm-v1-openapi.yaml`。当前已建立 `Open
 | GET | /api/reminders | 我的提醒 |
 | PATCH | /api/reminders/{id} | 完成或取消提醒 |
 
-当前附件元数据基线已落地：`crm_attachments` 统一保存 `object_type + object_id`、文件名、文件地址/对象Key、类型、大小、MIME、上传人和上传时间；支持 account、contact、opportunity、activity 四类 V1 对象，并在 V2 扩展支持 solution_document；写入、查询、删除均先校验业务对象访问权限。
+当前附件元数据基线已落地：`crm_attachments` 统一保存 `object_type + object_id`、文件名、文件地址/对象Key、类型、大小、MIME、上传人和上传时间；支持 account、contact、opportunity、activity 四类 V1 对象，并在 V2 扩展支持 solution_document、contract；写入、查询、删除均先校验业务对象访问权限。
 
 当前提醒基线已落地：`crm_reminders` 支持销售行动下次跟进自动生成 `activity/follow_up` 提醒；`GET /api/reminders` 返回当前用户待办，支持 `status`、`overdue`、`object_type`、`object_id` 筛选，逾期待办在响应中标识为 `overdue`；`PATCH /api/reminders/{id}` 支持将本人提醒更新为 `completed` 或 `cancelled` 并记录 `reminder.update` 审计；完成销售行动会自动完成该行动待处理跟进提醒。真实文件上传链路、下载审计和提醒通知方式待后续确认。
 
-## 11. 待确认项
+## 12. 待确认项
 
 - 登录态采用JWT、服务端Session还是企业统一认证。
 - 列表 `page_size` 最大值。

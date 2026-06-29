@@ -180,8 +180,26 @@ class PostgresMigrationIT {
                 where permission_code in ('solution.read', 'solution.create', 'solution.update', 'solution.void')
                 """,
                 Integer.class);
+        Integer contractTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name in ('crm_contracts', 'crm_contract_changes', 'crm_contract_milestones')
+                """,
+                Integer.class);
+        Integer contractPermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'contract.read', 'contract.create', 'contract.update',
+                  'contract.terminate', 'contract.milestone.manage'
+                )
+                """,
+                Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("15");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("16");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -201,6 +219,8 @@ class PostgresMigrationIT {
         assertThat(reminderPermissionCount).isEqualTo(2);
         assertThat(solutionTableCount).isEqualTo(1);
         assertThat(solutionPermissionCount).isEqualTo(4);
+        assertThat(contractTableCount).isEqualTo(3);
+        assertThat(contractPermissionCount).isEqualTo(5);
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type

@@ -143,9 +143,26 @@ class DatabaseMigrationTest {
                 where permission_code in ('solution.read', 'solution.create', 'solution.update', 'solution.void')
                 """,
                 Integer.class);
+        Integer contractTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name in ('crm_contracts', 'crm_contract_changes', 'crm_contract_milestones')
+                """,
+                Integer.class);
+        Integer contractPermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'contract.read', 'contract.create', 'contract.update',
+                  'contract.terminate', 'contract.milestone.manage'
+                )
+                """,
+                Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(15);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(16);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -163,5 +180,7 @@ class DatabaseMigrationTest {
         assertThat(reminderPermissionCount).isEqualTo(2);
         assertThat(solutionTableCount).isEqualTo(1);
         assertThat(solutionPermissionCount).isEqualTo(4);
+        assertThat(contractTableCount).isEqualTo(3);
+        assertThat(contractPermissionCount).isEqualTo(5);
     }
 }

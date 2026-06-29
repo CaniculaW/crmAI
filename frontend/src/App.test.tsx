@@ -18,6 +18,11 @@ const apiData = {
       "solution.create",
       "solution.update",
       "solution.void",
+      "contract.read",
+      "contract.create",
+      "contract.update",
+      "contract.terminate",
+      "contract.milestone.manage",
       "attachment.create",
       "attachment.read",
       "attachment.delete",
@@ -110,6 +115,50 @@ const apiData = {
       estimated_gross_margin_rate: 0.2955,
       bid_self_check_result: "risk",
       bid_risk_description: "附件材料待补齐"
+    }
+  ],
+  contracts: [
+    {
+      id: 301,
+      account_id: 1,
+      opportunity_id: 10,
+      contract_name: "V2试点项目合同",
+      contract_no: "CRM-V2-20260629",
+      contract_type: "project",
+      contract_status: "performing",
+      contract_amount: 1200000,
+      tax_rate: 0.13,
+      net_amount: 1061946.9,
+      owner_user_id: 1001,
+      business_owner_id: 1001,
+      payment_terms: "30%预付款，40%上线，30%终验",
+      invoice_terms: "按回款节点开票",
+      delivery_scope: "CRM V2 销售到财务闭环",
+      acceptance_criteria: "UAT 通过并完成上线交付",
+      risk_level: "low",
+      risk_description: "客户侧流程待最终确认"
+    }
+  ],
+  contractChanges: [
+    {
+      id: 401,
+      contract_id: 301,
+      change_type: "amount",
+      before_value: "1000000.00",
+      after_value: "1200000.00",
+      change_reason: "客户增加实施范围",
+      changed_by: 1001,
+      changed_at: "2026-06-29T10:00:00+08:00"
+    }
+  ],
+  contractMilestones: [
+    {
+      id: 501,
+      contract_id: 301,
+      milestone_name: "项目启动会",
+      milestone_type: "kickoff",
+      status: "pending",
+      remark: "合同签署后启动"
     }
   ],
   activities: [
@@ -470,6 +519,42 @@ describe("CRM frontend V1 workflow", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/solutions"), expect.anything());
     });
+  });
+
+  it("renders the contract module and loads the V2 contract list", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "合同" }));
+
+    expect(await screen.findByRole("heading", { name: "合同" })).toBeInTheDocument();
+    expect(screen.getByText("V2试点项目合同")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "新建合同" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/contracts"), expect.anything());
+    });
+  });
+
+  it("opens the contract execution drawer with changes milestones and attachments", async () => {
+    mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "合同" }));
+    await screen.findByRole("button", { name: "V2试点项目合同" });
+    await user.click(screen.getByRole("button", { name: "V2试点项目合同" }));
+
+    expect(await screen.findByRole("heading", { name: "合同执行台" })).toBeInTheDocument();
+    expect(screen.getAllByText("CRM-V2-20260629").length).toBeGreaterThan(0);
+    expect(screen.getByText("客户增加实施范围")).toBeInTheDocument();
+    expect(screen.getByText("项目启动会")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "添加附件" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "新增节点" })).toBeInTheDocument();
   });
 
   it("shows the sales activity execution entry from the activity list", async () => {
@@ -840,6 +925,18 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/solutions")) {
       return jsonResponse({ code: "OK", data: data.solutions });
+    }
+    if (path.endsWith("/api/contracts/301/changes")) {
+      return jsonResponse({ code: "OK", data: data.contractChanges });
+    }
+    if (path.endsWith("/api/contracts/301/milestones")) {
+      return jsonResponse({ code: "OK", data: data.contractMilestones });
+    }
+    if (path.endsWith("/api/contracts")) {
+      return jsonResponse({ code: "OK", data: data.contracts });
+    }
+    if (path.includes("/api/attachments")) {
+      return jsonResponse({ code: "OK", data: [] });
     }
     if (path.endsWith("/api/activities")) {
       return jsonResponse({ code: "OK", data: data.activities });

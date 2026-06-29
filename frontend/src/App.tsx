@@ -22,6 +22,7 @@ import {
   BriefcaseBusiness,
   CalendarCheck,
   Contact,
+  FileSignature,
   FileText,
   LayoutDashboard,
   Paperclip,
@@ -37,6 +38,9 @@ import {
   type Activity,
   type Attachment,
   type AuditLog,
+  type Contract as CrmContract,
+  type ContractChange,
+  type ContractMilestone,
   type Contact as CrmContact,
   type CurrentUser,
   type DictionaryType,
@@ -78,6 +82,7 @@ const navItems: NavItem[] = [
   { key: "/contacts", label: "联系人", icon: <Contact size={18} />, permission: "contact.read" },
   { key: "/opportunities", label: "商机", icon: <BriefcaseBusiness size={18} />, permission: "opportunity.read" },
   { key: "/solutions", label: "方案标书", icon: <FileText size={18} />, permission: "solution.read" },
+  { key: "/contracts", label: "合同", icon: <FileSignature size={18} />, permission: "contract.read" },
   { key: "/activities", label: "销售行动", icon: <CalendarCheck size={18} />, permission: "activity.read" },
   { key: "/weekly-progress", label: "周进展", icon: <BarChart3 size={18} />, permission: "weekly_progress.read" },
   {
@@ -248,6 +253,7 @@ function CrmShell() {
             <Route path="/contacts" element={<ContactsPage currentUser={user} />} />
             <Route path="/opportunities" element={<OpportunitiesPage currentUser={user} />} />
             <Route path="/solutions" element={<SolutionDocumentsPage currentUser={user} />} />
+            <Route path="/contracts" element={<ContractsPage currentUser={user} />} />
             <Route path="/activities" element={<ActivitiesPage currentUser={user} />} />
             <Route path="/weekly-progress" element={<WeeklyProgressPage />} />
             <Route path="/system" element={<SystemPage section="overview" />} />
@@ -1511,6 +1517,414 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
         </Form>
       </Modal>
     </DataWorkspace>
+  );
+}
+
+function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const contracts = useResource(() => crmApi.contracts.list(filters), [filters]);
+  const accounts = useResource(crmApi.accounts.list, []);
+  const opportunities = useResource(crmApi.opportunities.list, []);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selected, setSelected] = useState<CrmContract | null>(null);
+  const [editing, setEditing] = useState<CrmContract | null>(null);
+  const [terminating, setTerminating] = useState<CrmContract | null>(null);
+  const [changes, setChanges] = useState<ContractChange[]>([]);
+  const [milestones, setMilestones] = useState<ContractMilestone[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
+  const [terminateForm] = Form.useForm();
+  const [attachmentForm] = Form.useForm();
+  const [milestoneForm] = Form.useForm();
+  const accountOptions = toAccountOptions(accounts.data);
+  const opportunityOptions = toOpportunityOptions(opportunities.data);
+  const accountById = useMemo(() => new Map(accounts.data.map((account) => [account.id, account])), [accounts.data]);
+  const opportunityById = useMemo(
+    () => new Map(opportunities.data.map((opportunity) => [opportunity.id, opportunity])),
+    [opportunities.data]
+  );
+
+  const loadContractDetail = useCallback(async (contractId: number) => {
+    setDetailLoading(true);
+    try {
+      const [nextChanges, nextMilestones, nextAttachments] = await Promise.all([
+        crmApi.contracts.changes(contractId),
+        crmApi.contracts.milestones(contractId),
+        crmApi.attachments.list({ object_type: "contract", object_id: contractId })
+      ]);
+      setChanges(nextChanges);
+      setMilestones(nextMilestones);
+      setAttachments(nextAttachments);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selected) {
+      setChanges([]);
+      setMilestones([]);
+      setAttachments([]);
+      return;
+    }
+    void loadContractDetail(selected.id);
+  }, [loadContractDetail, selected]);
+
+  const columns: ColumnsType<CrmContract> = [
+    {
+      title: "合同名称",
+      dataIndex: "contract_name",
+      render: (value, record) => (
+        <Button type="link" className="inline-action" onClick={() => setSelected(record)}>
+          {value}
+        </Button>
+      )
+    },
+    { title: "编号", dataIndex: "contract_no", render: textOrDash },
+    { title: "客户", dataIndex: "account_id", render: (value) => accountById.get(Number(value))?.account_name ?? value },
+    { title: "商机", dataIndex: "opportunity_id", render: (value) => opportunityById.get(Number(value))?.opportunity_name ?? textOrDash(value) },
+    { title: "类型", dataIndex: "contract_type", render: contractTypeText },
+    { title: "状态", dataIndex: "contract_status", render: contractStatusTag },
+    { title: "金额", dataIndex: "contract_amount", render: moneyText },
+    { title: "风险", dataIndex: "risk_level", render: contractRiskTag },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Space>
+          <Button size="small" onClick={() => setSelected(record)}>
+            查看
+          </Button>
+          <Button
+            size="small"
+            onClick={() => {
+              setEditing(record);
+              editForm.setFieldsValue(record);
+            }}
+          >
+            编辑
+          </Button>
+          <Button size="small" danger disabled={record.contract_status === "terminated"} onClick={() => setTerminating(record)}>
+            终止
+          </Button>
+        </Space>
+      )
+    }
+  ];
+
+  const createContract = async (values: Record<string, unknown>) => {
+    await crmApi.contracts.create({
+      contract_type: "project",
+      contract_status: "drafting",
+      owner_user_id: currentUser.id,
+      ...withoutEmpty(values, [])
+    });
+    setDrawerOpen(false);
+    form.resetFields();
+    await contracts.refresh();
+  };
+
+  const updateContract = async (values: Record<string, unknown>) => {
+    if (!editing) {
+      return;
+    }
+    await crmApi.contracts.update(editing.id, withoutEmpty(values, []));
+    setEditing(null);
+    editForm.resetFields();
+    await contracts.refresh();
+  };
+
+  const terminateContract = async (values: Record<string, unknown>) => {
+    if (!terminating) {
+      return;
+    }
+    await crmApi.contracts.terminate(terminating.id, values);
+    setTerminating(null);
+    terminateForm.resetFields();
+    await contracts.refresh();
+  };
+
+  const createAttachment = async (values: Record<string, unknown>) => {
+    if (!selected) {
+      return;
+    }
+    await crmApi.attachments.create({ object_type: "contract", object_id: selected.id, ...withoutEmpty(values, []) });
+    attachmentForm.resetFields();
+    await loadContractDetail(selected.id);
+  };
+
+  const deleteAttachment = async (attachmentId: number) => {
+    if (!selected) {
+      return;
+    }
+    await crmApi.attachments.delete(attachmentId);
+    await loadContractDetail(selected.id);
+  };
+
+  const createMilestone = async (values: Record<string, unknown>) => {
+    if (!selected) {
+      return;
+    }
+    await crmApi.contracts.createMilestone(selected.id, {
+      milestone_type: "kickoff",
+      status: "pending",
+      ...withoutEmpty(values, ["planned_at", "actual_at"])
+    });
+    milestoneForm.resetFields();
+    await loadContractDetail(selected.id);
+  };
+
+  const attachmentColumns: ColumnsType<Attachment> = [
+    { title: "附件名称", dataIndex: "file_name" },
+    { title: "类型", dataIndex: "file_type", render: textOrDash },
+    { title: "大小", dataIndex: "file_size", render: fileSizeText },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Space>
+          <Button size="small" href={record.file_url} target="_blank" rel="noreferrer">
+            下载
+          </Button>
+          <Button size="small" danger onClick={() => void deleteAttachment(record.id)}>
+            删除
+          </Button>
+        </Space>
+      )
+    }
+  ];
+
+  return (
+    <DataWorkspace
+      title="合同"
+      description="维护成交后的合同台账、状态、金额、条款、变更、节点和附件。"
+      guide="先按客户、商机、状态和风险筛选合同；进入执行台查看变更、节点和附件，为后续开票与回款提供来源。"
+      loading={contracts.loading}
+      error={contracts.error}
+      action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建合同</Button>}
+      refresh={contracts.refresh}
+    >
+      <FilterBar
+        initialValues={filters}
+        onSearch={(values) => setFilters(withoutEmpty(values, []))}
+        onReset={() => setFilters({})}
+      >
+        <Form.Item name="keyword" label="关键词">
+          <Input allowClear placeholder="合同名称/编号" />
+        </Form.Item>
+        <Form.Item name="account_id" label="客户">
+          <Select allowClear options={accountOptions} loading={accounts.loading} className="filter-select" />
+        </Form.Item>
+        <Form.Item name="opportunity_id" label="商机">
+          <Select allowClear options={opportunityOptions} loading={opportunities.loading} className="filter-select" />
+        </Form.Item>
+        <Form.Item name="contract_status" label="状态">
+          <Select allowClear options={contractStatusOptions()} />
+        </Form.Item>
+        <Form.Item name="risk_level" label="风险">
+          <Select allowClear options={contractRiskOptions()} />
+        </Form.Item>
+      </FilterBar>
+
+      <Table rowKey="id" dataSource={contracts.data} columns={columns} pagination={{ pageSize: 8 }} locale={{ emptyText: "暂无合同" }} />
+
+      <Drawer title="新建合同" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
+        <Form form={form} layout="vertical" onFinish={createContract}>
+          <ContractFormFields accountOptions={accountOptions} opportunityOptions={opportunityOptions} />
+          <Button type="primary" htmlType="submit" block>保存合同</Button>
+        </Form>
+      </Drawer>
+
+      <Drawer title="合同详情" open={!!selected} onClose={() => setSelected(null)} size="large">
+        {selected && (
+          <>
+            <section className="drawer-section">
+              <Typography.Title level={3}>合同执行台</Typography.Title>
+              <div className="opportunity-summary-grid">
+                <OpportunitySummaryItem label="合同编号" value={selected.contract_no ?? "-"} />
+                <OpportunitySummaryItem label="客户" value={accountById.get(selected.account_id)?.account_name ?? `客户 ${selected.account_id}`} />
+                <OpportunitySummaryItem label="商机" value={selected.opportunity_id ? opportunityById.get(selected.opportunity_id)?.opportunity_name ?? `商机 ${selected.opportunity_id}` : "-"} />
+                <OpportunitySummaryItem label="状态" value={contractStatusText(selected.contract_status)} />
+                <OpportunitySummaryItem label="含税金额" value={moneyText(selected.contract_amount)} />
+                <OpportunitySummaryItem label="不含税金额" value={moneyText(selected.net_amount)} />
+                <OpportunitySummaryItem label="风险" value={contractRiskText(selected.risk_level)} />
+                <OpportunitySummaryItem label="付款条件" value={selected.payment_terms ?? "-"} />
+              </div>
+            </section>
+            <section className="drawer-section">
+              <Typography.Title level={4}>合同条款</Typography.Title>
+              <RecordDetails
+                record={selected as unknown as Record<string, unknown>}
+                fields={[
+                  ["开票条件", "invoice_terms"],
+                  ["交付范围", "delivery_scope"],
+                  ["验收标准", "acceptance_criteria"],
+                  ["风险说明", "risk_description"],
+                  ["终止原因", "termination_reason"]
+                ]}
+              />
+            </section>
+            <section className="drawer-section">
+              <Typography.Title level={4}>变更记录</Typography.Title>
+              <Table
+                rowKey="id"
+                size="small"
+                loading={detailLoading}
+                dataSource={changes}
+                pagination={false}
+                columns={[
+                  { title: "类型", dataIndex: "change_type", render: contractChangeTypeText },
+                  { title: "变更前", dataIndex: "before_value", render: textOrDash },
+                  { title: "变更后", dataIndex: "after_value", render: textOrDash },
+                  { title: "原因", dataIndex: "change_reason" },
+                  { title: "时间", dataIndex: "changed_at", render: dateText }
+                ]}
+                locale={{ emptyText: "暂无变更记录" }}
+              />
+            </section>
+            <section className="drawer-section">
+              <div className="section-title-row">
+                <Typography.Title level={4}>合同节点</Typography.Title>
+                <Button icon={<Plus size={16} />} onClick={() => milestoneForm.submit()}>新增节点</Button>
+              </div>
+              <Table
+                rowKey="id"
+                size="small"
+                loading={detailLoading}
+                dataSource={milestones}
+                pagination={false}
+                columns={[
+                  { title: "节点", dataIndex: "milestone_name" },
+                  { title: "类型", dataIndex: "milestone_type", render: milestoneTypeText },
+                  { title: "状态", dataIndex: "status", render: milestoneStatusTag },
+                  { title: "备注", dataIndex: "remark", render: textOrDash }
+                ]}
+                locale={{ emptyText: "暂无合同节点" }}
+              />
+              <Form form={milestoneForm} layout="vertical" className="inline-create-form" onFinish={createMilestone}>
+                <Form.Item name="milestone_name" label="节点名称" rules={[{ required: true }]}>
+                  <Input placeholder="如项目启动会、初验、终验" />
+                </Form.Item>
+                <Form.Item name="milestone_type" label="节点类型">
+                  <Select allowClear options={milestoneTypeOptions()} />
+                </Form.Item>
+                <Form.Item name="status" label="状态">
+                  <Select allowClear options={milestoneStatusOptions()} />
+                </Form.Item>
+                <Form.Item name="remark" label="备注">
+                  <Input.TextArea rows={2} />
+                </Form.Item>
+              </Form>
+            </section>
+            <section className="drawer-section">
+              <div className="section-title-row">
+                <Typography.Title level={4}>附件</Typography.Title>
+                <Button icon={<Paperclip size={16} />} onClick={() => attachmentForm.submit()}>添加附件</Button>
+              </div>
+              <Table
+                rowKey="id"
+                size="small"
+                loading={detailLoading}
+                dataSource={attachments}
+                columns={attachmentColumns}
+                pagination={false}
+                locale={{ emptyText: "暂无附件" }}
+              />
+              <Form form={attachmentForm} layout="vertical" className="inline-create-form" onFinish={createAttachment}>
+                <Form.Item name="file_name" label="附件名称" rules={[{ required: true }]}>
+                  <Input />
+                </Form.Item>
+                <Form.Item name="file_url" label="附件地址" rules={[{ required: true }]}>
+                  <Input placeholder="https:// 或 oss:// 地址" />
+                </Form.Item>
+                <Form.Item name="file_type" label="附件类型">
+                  <Select allowClear options={contractAttachmentFileTypeOptions()} />
+                </Form.Item>
+                <Form.Item name="file_size" label="文件大小">
+                  <InputNumber min={0} className="full-width" />
+                </Form.Item>
+              </Form>
+            </section>
+          </>
+        )}
+      </Drawer>
+
+      <Modal title="编辑合同" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
+        <Form form={editForm} layout="vertical" onFinish={updateContract}>
+          <ContractFormFields accountOptions={accountOptions} opportunityOptions={opportunityOptions} editing />
+          <Form.Item name="change_reason" label="变更原因">
+            <Input.TextArea rows={2} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>保存修改</Button>
+        </Form>
+      </Modal>
+
+      <Modal title="终止合同" open={!!terminating} onCancel={() => setTerminating(null)} footer={null}>
+        <Form form={terminateForm} layout="vertical" onFinish={terminateContract}>
+          <Form.Item name="termination_reason" label="终止原因" rules={[{ required: true }]}>
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Button type="primary" danger htmlType="submit" block>确认终止</Button>
+        </Form>
+      </Modal>
+    </DataWorkspace>
+  );
+}
+
+function ContractFormFields({
+  accountOptions,
+  opportunityOptions,
+  editing = false
+}: {
+  accountOptions: SelectOption[];
+  opportunityOptions: SelectOption[];
+  editing?: boolean;
+}) {
+  return (
+    <>
+      <Form.Item name="account_id" label="客户" rules={editing ? [] : [{ required: true }]}>
+        <Select options={accountOptions} disabled={editing} className="full-width" />
+      </Form.Item>
+      <Form.Item name="opportunity_id" label="来源商机">
+        <Select allowClear options={opportunityOptions} disabled={editing} className="full-width" />
+      </Form.Item>
+      <Form.Item name="contract_name" label="合同名称" rules={editing ? [] : [{ required: true }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item name="contract_no" label="合同编号">
+        <Input />
+      </Form.Item>
+      <Form.Item name="contract_type" label="合同类型" rules={editing ? [] : [{ required: true }]}>
+        <Select options={contractTypeOptions()} />
+      </Form.Item>
+      <Form.Item name="contract_status" label="合同状态" rules={editing ? [] : [{ required: true }]}>
+        <Select options={contractStatusOptions()} />
+      </Form.Item>
+      <Form.Item name="contract_amount" label="合同金额" rules={editing ? [] : [{ required: true }]}>
+        <InputNumber min={0} className="full-width" />
+      </Form.Item>
+      <Form.Item name="tax_rate" label="税率">
+        <InputNumber min={0} max={1} step={0.01} className="full-width" />
+      </Form.Item>
+      <Form.Item name="payment_terms" label="付款条件">
+        <Input.TextArea rows={2} />
+      </Form.Item>
+      <Form.Item name="invoice_terms" label="开票条件">
+        <Input.TextArea rows={2} />
+      </Form.Item>
+      <Form.Item name="delivery_scope" label="交付范围">
+        <Input.TextArea rows={2} />
+      </Form.Item>
+      <Form.Item name="acceptance_criteria" label="验收标准">
+        <Input.TextArea rows={2} />
+      </Form.Item>
+      <Form.Item name="risk_level" label="风险等级">
+        <Select allowClear options={contractRiskOptions()} />
+      </Form.Item>
+      <Form.Item name="risk_description" label="风险说明">
+        <Input.TextArea rows={2} />
+      </Form.Item>
+    </>
   );
 }
 
@@ -3129,6 +3543,149 @@ function isOpportunityOpen(status?: string) {
   return status === "following" || status === "active";
 }
 
+function contractTypeOptions() {
+  return ["project", "framework", "procurement", "service", "supplement"].map((value) => ({
+    label: contractTypeText(value),
+    value
+  }));
+}
+
+function contractTypeText(type?: string) {
+  if (!type) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    project: "项目合同",
+    framework: "框架合同",
+    procurement: "采购合同",
+    service: "服务合同",
+    supplement: "补充协议"
+  };
+  return labels[type] ?? type;
+}
+
+function contractStatusOptions() {
+  return ["drafting", "approving", "pending_signature", "performing", "paused", "completed", "terminated"].map((value) => ({
+    label: contractStatusText(value),
+    value
+  }));
+}
+
+function contractStatusText(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    drafting: "拟定中",
+    approving: "审批中",
+    pending_signature: "待签署",
+    performing: "履约中",
+    paused: "暂停",
+    completed: "已完成",
+    terminated: "已终止"
+  };
+  return labels[status] ?? status;
+}
+
+function contractStatusTag(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const color = status === "performing" ? "green" : status === "terminated" || status === "completed" ? "default" : status === "paused" ? "gold" : "blue";
+  return <Tag color={color}>{contractStatusText(status)}</Tag>;
+}
+
+function contractRiskOptions() {
+  return ["low", "medium", "high"].map((value) => ({
+    label: contractRiskText(value),
+    value
+  }));
+}
+
+function contractRiskText(risk?: string) {
+  if (!risk) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    low: "低风险",
+    medium: "中风险",
+    high: "高风险"
+  };
+  return labels[risk] ?? risk;
+}
+
+function contractRiskTag(risk?: string) {
+  if (!risk) {
+    return "-";
+  }
+  const color = risk === "high" ? "red" : risk === "medium" ? "gold" : "green";
+  return <Tag color={color}>{contractRiskText(risk)}</Tag>;
+}
+
+function contractChangeTypeText(type?: string) {
+  if (!type) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    amount: "金额",
+    scope: "范围",
+    payment_terms: "付款条件",
+    invoice_terms: "开票条件",
+    risk: "风险",
+    other: "其他"
+  };
+  return labels[type] ?? type;
+}
+
+function milestoneTypeOptions() {
+  return ["kickoff", "delivery", "initial_acceptance", "final_acceptance", "warranty"].map((value) => ({
+    label: milestoneTypeText(value),
+    value
+  }));
+}
+
+function milestoneTypeText(type?: string) {
+  if (!type) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    kickoff: "项目启动",
+    delivery: "交付",
+    initial_acceptance: "初验",
+    final_acceptance: "终验",
+    warranty: "质保"
+  };
+  return labels[type] ?? type;
+}
+
+function milestoneStatusOptions() {
+  return ["pending", "completed", "delayed", "cancelled"].map((value) => ({
+    label: milestoneStatusText(value),
+    value
+  }));
+}
+
+function milestoneStatusText(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    pending: "待处理",
+    completed: "已完成",
+    delayed: "延期",
+    cancelled: "取消"
+  };
+  return labels[status] ?? status;
+}
+
+function milestoneStatusTag(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const color = status === "completed" ? "green" : status === "delayed" ? "red" : status === "cancelled" ? "default" : "blue";
+  return <Tag color={color}>{milestoneStatusText(status)}</Tag>;
+}
+
 function solutionDocumentTypeOptions() {
   return ["technical_solution", "bid_document", "quotation", "implementation_plan"].map((value) => ({
     label: solutionDocumentTypeText(value),
@@ -3212,6 +3769,28 @@ function attachmentFileTypeOptions() {
     label: solutionDocumentTypeText(value),
     value
   }));
+}
+
+function contractAttachmentFileTypeOptions() {
+  return ["contract_draft", "stamped_contract", "supplement", "approval_material", "delivery_material", "acceptance_material"].map((value) => ({
+    label: contractAttachmentFileTypeText(value),
+    value
+  }));
+}
+
+function contractAttachmentFileTypeText(type?: string) {
+  if (!type) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    contract_draft: "合同草稿",
+    stamped_contract: "盖章版合同",
+    supplement: "补充协议",
+    approval_material: "审批材料",
+    delivery_material: "交付材料",
+    acceptance_material: "验收材料"
+  };
+  return labels[type] ?? type;
 }
 
 function percentText(value?: number | null) {

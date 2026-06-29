@@ -107,6 +107,63 @@ export type SolutionDocument = {
   remark?: string;
 };
 
+export type Contract = {
+  id: number;
+  tenant_id?: number;
+  account_id: number;
+  opportunity_id?: number;
+  contract_name: string;
+  contract_no?: string;
+  contract_type: string;
+  contract_status: string;
+  contract_amount: number;
+  tax_rate?: number;
+  net_amount?: number;
+  our_signing_entity?: string;
+  customer_signing_entity?: string;
+  owner_user_id: number;
+  business_owner_id?: number;
+  signed_at?: string;
+  effective_at?: string;
+  ended_at?: string;
+  payment_terms?: string;
+  invoice_terms?: string;
+  delivery_scope?: string;
+  acceptance_criteria?: string;
+  risk_level?: string;
+  risk_description?: string;
+  termination_reason?: string;
+  terminated_at?: string;
+  terminated_by?: number;
+  remark?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ContractChange = {
+  id: number;
+  contract_id: number;
+  change_type: string;
+  before_value?: string;
+  after_value?: string;
+  change_reason: string;
+  changed_by?: number;
+  changed_at?: string;
+};
+
+export type ContractMilestone = {
+  id: number;
+  contract_id: number;
+  milestone_name: string;
+  milestone_type: string;
+  planned_at?: string;
+  actual_at?: string;
+  status: string;
+  remark?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type Activity = {
   id: number;
   account_id: number;
@@ -329,6 +386,25 @@ export const crmApi = {
       requestJson<SolutionDocument>(`/api/solutions/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
     void: (id: number, body: Record<string, unknown>) =>
       requestJson<SolutionDocument>(`/api/solutions/${id}/void`, { method: "POST", body: JSON.stringify(body) })
+  },
+  contracts: {
+    list: (query?: QueryParams) => requestJson<Contract[]>(withQuery("/api/contracts", query)),
+    detail: (id: number) => requestJson<Contract>(`/api/contracts/${id}`),
+    create: (body: Record<string, unknown>) =>
+      requestJson<Contract>("/api/contracts", { method: "POST", body: JSON.stringify(body) }),
+    update: (id: number, body: Record<string, unknown>) =>
+      requestJson<Contract>(`/api/contracts/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+    terminate: (id: number, body: Record<string, unknown>) =>
+      requestJson<Contract>(`/api/contracts/${id}/terminate`, { method: "POST", body: JSON.stringify(body) }),
+    changes: (id: number) => requestJson<ContractChange[]>(`/api/contracts/${id}/changes`),
+    milestones: (id: number) => requestJson<ContractMilestone[]>(`/api/contracts/${id}/milestones`),
+    createMilestone: (id: number, body: Record<string, unknown>) =>
+      requestJson<ContractMilestone>(`/api/contracts/${id}/milestones`, { method: "POST", body: JSON.stringify(body) }),
+    updateMilestone: (id: number, milestoneId: number, body: Record<string, unknown>) =>
+      requestJson<ContractMilestone>(`/api/contracts/${id}/milestones/${milestoneId}`, {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      })
   },
   activities: {
     list: (query?: QueryParams) => requestJson<Activity[]>(withQuery("/api/activities", query)),
