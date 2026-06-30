@@ -206,6 +206,81 @@ export type Invoice = {
   updated_at?: string;
 };
 
+export type ReceivablePlan = {
+  id: number;
+  account_id: number;
+  opportunity_id?: number;
+  contract_id: number;
+  plan_name: string;
+  plan_stage?: string;
+  receivable_status: string;
+  planned_receivable_date?: string;
+  planned_amount: number;
+  owner_user_id: number;
+  payment_terms_snapshot?: string;
+  overdue_reason?: string;
+  termination_reason?: string;
+  terminated_at?: string;
+  terminated_by?: number;
+  contract_amount?: number;
+  effective_invoiced_amount?: number;
+  confirmed_received_amount?: number;
+  unreceived_amount?: number;
+  unreconciled_payment_amount?: number;
+  overdue_days?: number;
+  remark?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ReceivableFollowUp = {
+  id: number;
+  account_id: number;
+  opportunity_id?: number;
+  contract_id: number;
+  receivable_plan_id: number;
+  follow_up_at?: string;
+  follow_up_by?: number;
+  follow_up_content: string;
+  customer_feedback?: string;
+  next_action?: string;
+  next_follow_up_at?: string;
+  remark?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type Payment = {
+  id: number;
+  account_id: number;
+  opportunity_id?: number;
+  contract_id: number;
+  receivable_plan_id?: number;
+  payment_name: string;
+  payment_status: string;
+  received_at?: string;
+  received_amount: number;
+  confirmed_amount?: number;
+  confirmed_at?: string;
+  confirmed_by?: number;
+  payment_method: string;
+  payer_name?: string;
+  receiving_account?: string;
+  bank_flow_no?: string;
+  reconciled_amount?: number;
+  unreconciled_amount?: number;
+  exception_type?: string;
+  exception_reason?: string;
+  exception_resolution?: string;
+  refund_reason?: string;
+  refunded_at?: string;
+  refunded_by?: number;
+  owner_user_id: number;
+  remark?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type Activity = {
   id: number;
   account_id: number;
@@ -465,6 +540,33 @@ export const crmApi = {
       requestJson<Invoice>(`/api/invoices/${id}/exception`, { method: "POST", body: JSON.stringify(body) }),
     void: (id: number, body: Record<string, unknown>) =>
       requestJson<Invoice>(`/api/invoices/${id}/void`, { method: "POST", body: JSON.stringify(body) })
+  },
+  receivablePlans: {
+    list: (query?: QueryParams) => requestJson<ReceivablePlan[]>(withQuery("/api/receivable-plans", query)),
+    detail: (id: number) => requestJson<ReceivablePlan>(`/api/receivable-plans/${id}`),
+    create: (body: Record<string, unknown>) =>
+      requestJson<ReceivablePlan>("/api/receivable-plans", { method: "POST", body: JSON.stringify(body) }),
+    update: (id: number, body: Record<string, unknown>) =>
+      requestJson<ReceivablePlan>(`/api/receivable-plans/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+    terminate: (id: number, body: Record<string, unknown>) =>
+      requestJson<ReceivablePlan>(`/api/receivable-plans/${id}/terminate`, { method: "POST", body: JSON.stringify(body) }),
+    followUps: (id: number) => requestJson<ReceivableFollowUp[]>(`/api/receivable-plans/${id}/follow-ups`),
+    createFollowUp: (id: number, body: Record<string, unknown>) =>
+      requestJson<ReceivableFollowUp>(`/api/receivable-plans/${id}/follow-ups`, { method: "POST", body: JSON.stringify(body) })
+  },
+  payments: {
+    list: (query?: QueryParams) => requestJson<Payment[]>(withQuery("/api/payments", query)),
+    detail: (id: number) => requestJson<Payment>(`/api/payments/${id}`),
+    create: (body: Record<string, unknown>) =>
+      requestJson<Payment>("/api/payments", { method: "POST", body: JSON.stringify(body) }),
+    update: (id: number, body: Record<string, unknown>) =>
+      requestJson<Payment>(`/api/payments/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+    confirm: (id: number, body: Record<string, unknown>) =>
+      requestJson<Payment>(`/api/payments/${id}/confirm`, { method: "POST", body: JSON.stringify(body) }),
+    exception: (id: number, body: Record<string, unknown>) =>
+      requestJson<Payment>(`/api/payments/${id}/exception`, { method: "POST", body: JSON.stringify(body) }),
+    refund: (id: number, body: Record<string, unknown>) =>
+      requestJson<Payment>(`/api/payments/${id}/refund`, { method: "POST", body: JSON.stringify(body) })
   },
   activities: {
     list: (query?: QueryParams) => requestJson<Activity[]>(withQuery("/api/activities", query)),

@@ -177,9 +177,42 @@ class DatabaseMigrationTest {
                 )
                 """,
                 Integer.class);
+        Integer receivablePlanTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name = 'crm_receivable_plans'
+                """,
+                Integer.class);
+        Integer paymentTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name = 'crm_payments'
+                """,
+                Integer.class);
+        Integer followUpTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name = 'crm_receivable_follow_ups'
+                """,
+                Integer.class);
+        Integer receivablePermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'receivable.read', 'receivable.create', 'receivable.update',
+                  'receivable.terminate', 'receivable.follow_up',
+                  'payment.read', 'payment.create', 'payment.update',
+                  'payment.confirm', 'payment.exception', 'payment.refund'
+                )
+                """,
+                Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(17);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(18);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -201,5 +234,9 @@ class DatabaseMigrationTest {
         assertThat(contractPermissionCount).isEqualTo(5);
         assertThat(invoiceTableCount).isEqualTo(1);
         assertThat(invoicePermissionCount).isEqualTo(8);
+        assertThat(receivablePlanTableCount).isEqualTo(1);
+        assertThat(paymentTableCount).isEqualTo(1);
+        assertThat(followUpTableCount).isEqualTo(1);
+        assertThat(receivablePermissionCount).isEqualTo(11);
     }
 }

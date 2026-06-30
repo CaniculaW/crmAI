@@ -31,6 +31,17 @@ const apiData = {
       "invoice.sign",
       "invoice.exception",
       "invoice.void",
+      "receivable.read",
+      "receivable.create",
+      "receivable.update",
+      "receivable.terminate",
+      "receivable.follow_up",
+      "payment.read",
+      "payment.create",
+      "payment.update",
+      "payment.confirm",
+      "payment.exception",
+      "payment.refund",
       "attachment.create",
       "attachment.read",
       "attachment.delete",
@@ -201,6 +212,78 @@ const apiData = {
       file_name: "发票扫描件.pdf",
       file_url: "oss://crm/invoice/401/scan.pdf",
       file_type: "invoice_scan",
+      file_size: 16384,
+      mime_type: "application/pdf"
+    }
+  ],
+  receivablePlans: [
+    {
+      id: 601,
+      account_id: 1,
+      opportunity_id: 10,
+      contract_id: 301,
+      plan_name: "V2 UAT 首付款回款",
+      plan_stage: "首付款",
+      receivable_status: "planned",
+      planned_receivable_date: "2026-07-20T10:00:00+08:00",
+      planned_amount: 360000,
+      owner_user_id: 1001,
+      payment_terms_snapshot: "30%预付款",
+      overdue_reason: "客户审批中",
+      contract_amount: 1200000,
+      effective_invoiced_amount: 360000,
+      confirmed_received_amount: 120000,
+      unreceived_amount: 240000,
+      unreconciled_payment_amount: 120000,
+      overdue_days: 0,
+      remark: "首期回款计划"
+    }
+  ],
+  payments: [
+    {
+      id: 701,
+      account_id: 1,
+      opportunity_id: 10,
+      contract_id: 301,
+      receivable_plan_id: 601,
+      payment_name: "首付款到账",
+      payment_status: "confirmed",
+      received_at: "2026-07-22T10:00:00+08:00",
+      received_amount: 120000,
+      confirmed_amount: 120000,
+      confirmed_at: "2026-07-22T11:00:00+08:00",
+      confirmed_by: 1001,
+      payment_method: "bank_transfer",
+      payer_name: "测试客户A",
+      bank_flow_no: "FLOW-701",
+      reconciled_amount: 0,
+      unreconciled_amount: 120000,
+      owner_user_id: 1001,
+      remark: "首笔到账"
+    }
+  ],
+  receivableFollowUps: [
+    {
+      id: 901,
+      account_id: 1,
+      opportunity_id: 10,
+      contract_id: 301,
+      receivable_plan_id: 601,
+      follow_up_at: "2026-07-21T10:00:00+08:00",
+      follow_up_by: 1001,
+      follow_up_content: "客户财务流程已提交",
+      customer_feedback: "预计三日内付款",
+      next_action: "跟进客户付款审批"
+    }
+  ],
+  receivableAttachments: [
+    {
+      id: 802,
+      object_type: "receivable_plan",
+      object_id: 601,
+      file_name: "银行回单.pdf",
+      file_url: "oss://crm/receivable/601/receipt.pdf",
+      file_type: "bank_receipt",
       file_size: 16384,
       mime_type: "application/pdf"
     }
@@ -636,6 +719,44 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByText("发票扫描件.pdf")).toBeInTheDocument();
   });
 
+  it("renders the receivable module and loads the V2 receivable list", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "回款管理" }));
+
+    expect(await screen.findByRole("heading", { name: "回款管理" })).toBeInTheDocument();
+    expect(screen.getByText("V2 UAT 首付款回款")).toBeInTheDocument();
+    expect(screen.getByText("已收 ¥120,000.00")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "新建计划" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/receivable-plans"), expect.anything());
+    });
+  });
+
+  it("opens the receivable detail drawer with payments follow-ups and attachments", async () => {
+    mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "回款管理" }));
+    await screen.findByRole("button", { name: "V2 UAT 首付款回款" });
+    await user.click(screen.getByRole("button", { name: "V2 UAT 首付款回款" }));
+
+    expect(await screen.findByRole("heading", { name: "回款详情" })).toBeInTheDocument();
+    expect(screen.getByText("到账流水")).toBeInTheDocument();
+    expect(screen.getByText("首付款到账")).toBeInTheDocument();
+    expect(screen.getByText("客户财务流程已提交")).toBeInTheDocument();
+    expect(screen.getByText("银行回单.pdf")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "登记到账" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "添加附件" })).toBeInTheDocument();
+  });
+
   it("shows the sales activity execution entry from the activity list", async () => {
     const user = userEvent.setup();
     mockCrmFetch();
@@ -1035,7 +1156,31 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     if (path.endsWith("/api/invoices")) {
       return jsonResponse({ code: "OK", data: data.invoices });
     }
+    if (path.endsWith("/api/receivable-plans/601/follow-ups")) {
+      return jsonResponse({ code: "OK", data: data.receivableFollowUps });
+    }
+    if (path.endsWith("/api/receivable-plans/601")) {
+      return jsonResponse({ code: "OK", data: data.receivablePlans[0] });
+    }
+    if (path.endsWith("/api/receivable-plans")) {
+      return jsonResponse({ code: "OK", data: data.receivablePlans });
+    }
+    if (path.endsWith("/api/payments/701/confirm") && method === "POST") {
+      return jsonResponse({ code: "OK", data: { ...data.payments[0], payment_status: "confirmed" } });
+    }
+    if (path.endsWith("/api/payments/701/exception") && method === "POST") {
+      return jsonResponse({ code: "OK", data: { ...data.payments[0], payment_status: "exception" } });
+    }
+    if (path.endsWith("/api/payments/701/refund") && method === "POST") {
+      return jsonResponse({ code: "OK", data: { ...data.payments[0], payment_status: "refunded", confirmed_amount: 0 } });
+    }
+    if (path.endsWith("/api/payments")) {
+      return jsonResponse({ code: "OK", data: data.payments });
+    }
     if (path.includes("/api/attachments")) {
+      if (url.includes("object_type=receivable_plan")) {
+        return jsonResponse({ code: "OK", data: data.receivableAttachments });
+      }
       if (url.includes("object_type=invoice")) {
         return jsonResponse({ code: "OK", data: data.invoiceAttachments });
       }

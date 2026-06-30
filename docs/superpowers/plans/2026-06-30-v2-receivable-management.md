@@ -1,6 +1,6 @@
 # V2 Receivable Management Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Build V2 receivable management so contract execution can produce receivable plans, register customer payments, confirm received money, track overdue follow-up, handle payment exceptions, and provide confirmed payments for the later reconciliation module.
 
@@ -64,7 +64,7 @@
 - Modify: `backend/src/test/java/com/canicula/crmai/database/DatabaseMigrationTest.java`
 - Modify: `backend/src/test/java/com/canicula/crmai/database/PostgresMigrationIT.java`
 
-- [ ] **Step 1: Write migration assertions first**
+- [x] **Step 1: Write migration assertions first**
 
 Add H2 assertions in `DatabaseMigrationTest`:
 
@@ -135,7 +135,7 @@ assertThat(receivablePlanTableCount).isEqualTo(1);
 assertThat(paymentTableCount).isEqualTo(1);
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -145,7 +145,7 @@ cd backend && mvn -Dtest=DatabaseMigrationTest test
 
 Expected: FAIL because the V18 receivable migration does not exist.
 
-- [ ] **Step 3: Add migration**
+- [x] **Step 3: Add migration**
 
 Create `backend/src/main/resources/db/migration/V18__create_receivables.sql`:
 
@@ -290,7 +290,7 @@ select 'payment.refund', '标记退款', 'operation', 'payment', 1100
 where not exists (select 1 from sys_permissions where permission_code = 'payment.refund');
 ```
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run:
 
@@ -314,7 +314,7 @@ Expected: PASS and Flyway current version is `18`.
 - Create: `backend/src/test/java/com/canicula/crmai/receivable/ReceivablePlanControllerTest.java`
 - Create: `backend/src/main/java/com/canicula/crmai/receivable/*`
 
-- [ ] **Step 1: Write failing controller tests**
+- [x] **Step 1: Write failing controller tests**
 
 Create `ReceivablePlanControllerTest` using the helper style from `InvoiceControllerTest`. Include these test methods:
 
@@ -381,7 +381,7 @@ void createsListsUpdatesTerminatesAndFollowsUpReceivablePlan() {
 
 Also add a test `unreadablePlanIsHiddenFromListAndForbiddenInDetail()` mirroring `InvoiceControllerTest.unreadableInvoiceHiddenInListAndDetailForbidden`.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -391,7 +391,7 @@ cd backend && mvn -Dtest=ReceivablePlanControllerTest test
 
 Expected: FAIL with 404 or 500 because `/api/receivable-plans` does not exist.
 
-- [ ] **Step 3: Add request/response/filter records**
+- [x] **Step 3: Add request/response/filter records**
 
 Create:
 
@@ -496,7 +496,7 @@ public record ReceivableFollowUpResponse(
 }
 ```
 
-- [ ] **Step 4: Implement `ReceivablePlanService`**
+- [x] **Step 4: Implement `ReceivablePlanService`**
 
 Follow the `InvoiceService` pattern:
 
@@ -534,7 +534,7 @@ if (request.planned_receivable_date() == null) throw new BusinessRuleException("
 if (request.owner_user_id() == null) throw new BusinessRuleException("负责人不能为空");
 ```
 
-- [ ] **Step 5: Implement `ReceivablePlanController`**
+- [x] **Step 5: Implement `ReceivablePlanController`**
 
 Add endpoints:
 
@@ -574,7 +574,7 @@ ReceivableFollowUpResponse addFollowUp(...)
 
 Record audit actions for create/update/terminate/follow-up with module `receivable`.
 
-- [ ] **Step 6: Run GREEN**
+- [x] **Step 6: Run GREEN**
 
 Run:
 
@@ -590,7 +590,7 @@ Expected: PASS.
 - Create: `backend/src/test/java/com/canicula/crmai/payment/PaymentControllerTest.java`
 - Create: `backend/src/main/java/com/canicula/crmai/payment/*`
 
-- [ ] **Step 1: Write failing payment tests**
+- [x] **Step 1: Write failing payment tests**
 
 Create `PaymentControllerTest` with these tests:
 
@@ -644,7 +644,7 @@ Add:
 - `unreadablePaymentIsHiddenFromListAndForbiddenInDetail()`
 - `confirmRejectsAmountGreaterThanReceivedAmount()`
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -654,7 +654,7 @@ cd backend && mvn -Dtest=PaymentControllerTest test
 
 Expected: FAIL because `/api/payments` does not exist.
 
-- [ ] **Step 3: Add payment request/response/filter records**
+- [x] **Step 3: Add payment request/response/filter records**
 
 Create:
 
@@ -751,7 +751,7 @@ public record PaymentResponse(
 }
 ```
 
-- [ ] **Step 4: Implement `PaymentService`**
+- [x] **Step 4: Implement `PaymentService`**
 
 Follow `InvoiceService` patterns:
 
@@ -786,7 +786,7 @@ Effective confirmed statuses for amount calculations:
 List.of("confirmed", "partially_reconciled", "reconciled")
 ```
 
-- [ ] **Step 5: Implement `PaymentController`**
+- [x] **Step 5: Implement `PaymentController`**
 
 Add endpoints:
 
@@ -822,7 +822,7 @@ PaymentResponse refund(...)
 
 Record audit actions with module `payment`.
 
-- [ ] **Step 6: Run GREEN**
+- [x] **Step 6: Run GREEN**
 
 Run:
 
@@ -846,7 +846,7 @@ Expected: PASS.
 - Modify: `backend/src/main/java/com/canicula/crmai/attachment/AttachmentService.java`
 - Modify: `backend/src/test/java/com/canicula/crmai/attachment/AttachmentControllerTest.java`
 
-- [ ] **Step 1: Write failing attachment tests**
+- [x] **Step 1: Write failing attachment tests**
 
 Add tests:
 
@@ -884,7 +884,7 @@ void createsListsAndDeletesPaymentAttachmentMetadata() {
 }
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -894,7 +894,7 @@ cd backend && mvn -Dtest=AttachmentControllerTest test
 
 Expected: FAIL with unsupported `receivable_plan` or `payment`.
 
-- [ ] **Step 3: Extend attachment scope checks**
+- [x] **Step 3: Extend attachment scope checks**
 
 Inject `ReceivablePlanService` and `PaymentService` in `AttachmentService`.
 
@@ -905,7 +905,7 @@ case "receivable_plan" -> receivablePlanService.readableDetail(objectId, actorUs
 case "payment" -> paymentService.readableDetail(objectId, actorUserId);
 ```
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run:
 
@@ -922,7 +922,7 @@ Expected: PASS.
 - Modify: `frontend/src/App.tsx`
 - Modify: `frontend/src/App.test.tsx`
 
-- [ ] **Step 1: Write failing frontend tests**
+- [x] **Step 1: Write failing frontend tests**
 
 In `frontend/src/App.test.tsx`, add permissions:
 
@@ -1054,7 +1054,7 @@ Add mock routes for:
 - `/api/attachments?object_type=receivable_plan`
 - `/api/attachments?object_type=payment`
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -1064,7 +1064,7 @@ cd frontend && npm test -- --run
 
 Expected: FAIL because the `回款管理` page and client APIs do not exist.
 
-- [ ] **Step 3: Add frontend API types and client methods**
+- [x] **Step 3: Add frontend API types and client methods**
 
 In `frontend/src/api/crm.ts`, add:
 
@@ -1120,7 +1120,7 @@ export type Payment = {
 
 Add `ReceivableFollowUp` and `crmApi.receivables` / `crmApi.payments` methods matching backend endpoints.
 
-- [ ] **Step 4: Add menu, route, and `ReceivablesPage`**
+- [x] **Step 4: Add menu, route, and `ReceivablesPage`**
 
 In `frontend/src/App.tsx`:
 
@@ -1155,7 +1155,7 @@ Buttons:
 - `终止计划`
 - `添加附件`
 
-- [ ] **Step 5: Add helper functions**
+- [x] **Step 5: Add helper functions**
 
 Add helpers near existing status helpers:
 
@@ -1173,7 +1173,7 @@ function receivableAttachmentFileTypeOptions() { ... }
 
 Use labels from the design spec.
 
-- [ ] **Step 6: Run GREEN**
+- [x] **Step 6: Run GREEN**
 
 Run:
 
@@ -1197,7 +1197,7 @@ Expected: PASS.
 - Modify: `docs/openapi/crm-v1-openapi.yaml`
 - Modify: `docs/api/crm-v1-api-list.md`
 
-- [ ] **Step 1: Add failing OpenAPI coverage through runtime endpoints**
+- [x] **Step 1: Add failing OpenAPI coverage through runtime endpoints**
 
 Run:
 
@@ -1207,7 +1207,7 @@ cd backend && mvn -Dtest=OpenApiContractCoverageTest test
 
 Expected after backend endpoints exist but before docs update: FAIL listing receivable/payment paths.
 
-- [ ] **Step 2: Add OpenAPI paths**
+- [x] **Step 2: Add OpenAPI paths**
 
 Add tag:
 
@@ -1231,7 +1231,7 @@ Add paths:
 
 Use the existing contract/invoice path style: object request bodies are acceptable for V2 first pass, but every runtime method/path must be represented.
 
-- [ ] **Step 3: Update API list**
+- [x] **Step 3: Update API list**
 
 In `docs/api/crm-v1-api-list.md`, add a new section after 开票管理:
 
@@ -1259,7 +1259,7 @@ In `docs/api/crm-v1-api-list.md`, add a new section after 开票管理:
 
 Update the attachment section to include `receivable_plan` and `payment`.
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run:
 
@@ -1275,7 +1275,7 @@ Expected: PASS.
 - Modify: `docs/product/crm-v2-development-todolist.md`
 - Modify: `docs/superpowers/plans/2026-06-30-v2-receivable-management.md`
 
-- [ ] **Step 1: Run backend targeted regression**
+- [x] **Step 1: Run backend targeted regression**
 
 Run:
 
@@ -1293,7 +1293,7 @@ cd backend && mvn -Dtest=PostgresMigrationIT test
 
 Expected: PASS.
 
-- [ ] **Step 2: Run frontend verification**
+- [x] **Step 2: Run frontend verification**
 
 Run:
 
@@ -1304,7 +1304,7 @@ cd frontend && npm run build
 
 Expected: PASS.
 
-- [ ] **Step 3: Browser UAT**
+- [x] **Step 3: Browser UAT**
 
 Start current backend and frontend if needed:
 
@@ -1327,7 +1327,7 @@ Verify in browser:
 - Buttons `登记到账`, `确认到账`, `登记异常`, `添加跟进`, `添加附件` are visible.
 - Console has no application errors.
 
-- [ ] **Step 4: Update module record**
+- [x] **Step 4: Update module record**
 
 Update `docs/product/crm-v2-development-todolist.md`:
 
@@ -1340,7 +1340,7 @@ Update this plan's task list:
 
 - Mark tasks 1-7 Done after verification.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 Run:
 

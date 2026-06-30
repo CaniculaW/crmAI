@@ -8,6 +8,8 @@ import com.canicula.crmai.contact.ContactService;
 import com.canicula.crmai.contract.ContractService;
 import com.canicula.crmai.invoice.InvoiceService;
 import com.canicula.crmai.opportunity.OpportunityService;
+import com.canicula.crmai.payment.PaymentService;
+import com.canicula.crmai.receivable.ReceivablePlanService;
 import com.canicula.crmai.solution.SolutionDocumentService;
 import java.sql.PreparedStatement;
 import java.time.OffsetDateTime;
@@ -32,6 +34,8 @@ public class AttachmentService {
     private final SolutionDocumentService solutionDocumentService;
     private final ContractService contractService;
     private final InvoiceService invoiceService;
+    private final ReceivablePlanService receivablePlanService;
+    private final PaymentService paymentService;
 
     AttachmentService(
             JdbcTemplate jdbcTemplate,
@@ -41,7 +45,9 @@ public class AttachmentService {
             ActivityService activityService,
             SolutionDocumentService solutionDocumentService,
             ContractService contractService,
-            InvoiceService invoiceService) {
+            InvoiceService invoiceService,
+            ReceivablePlanService receivablePlanService,
+            PaymentService paymentService) {
         this.jdbcTemplate = jdbcTemplate;
         this.accountService = accountService;
         this.contactService = contactService;
@@ -50,6 +56,8 @@ public class AttachmentService {
         this.solutionDocumentService = solutionDocumentService;
         this.contractService = contractService;
         this.invoiceService = invoiceService;
+        this.receivablePlanService = receivablePlanService;
+        this.paymentService = paymentService;
     }
 
     @Transactional
@@ -173,6 +181,8 @@ public class AttachmentService {
                 case "solution_document" -> solutionDocumentService.readableDetail(objectId, actorUserId);
                 case "contract" -> contractService.readableDetail(objectId, actorUserId);
                 case "invoice" -> invoiceService.readableDetail(objectId, actorUserId);
+                case "receivable_plan" -> receivablePlanService.readableDetail(objectId, actorUserId);
+                case "payment" -> paymentService.readableDetail(objectId, actorUserId);
                 default -> throw new BusinessRuleException("不支持的附件对象类型");
             }
         } catch (IllegalArgumentException exception) {

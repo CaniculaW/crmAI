@@ -16,6 +16,8 @@ tags:
   - name: SolutionDocuments
   - name: Contracts
   - name: Invoices
+  - name: Receivables
+  - name: Payments
   - name: Activities
   - name: WeeklyProgress
   - name: Attachments
@@ -1229,6 +1231,308 @@ paths:
       responses:
         '200':
           description: Invoice detail.
+  /api/receivable-plans:
+    get:
+      tags: [Receivables]
+      summary: List receivable plans
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: receivable_status
+          in: query
+          schema:
+            type: string
+        - name: plan_stage
+          in: query
+          schema:
+            type: string
+        - name: owner_user_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Receivable plan list.
+    post:
+      tags: [Receivables]
+      summary: Create receivable plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Receivable plan detail.
+  /api/receivable-plans/{planId}:
+    get:
+      tags: [Receivables]
+      summary: Get receivable plan detail
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Receivable plan detail.
+    patch:
+      tags: [Receivables]
+      summary: Update receivable plan
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Receivable plan detail.
+  /api/receivable-plans/{planId}/terminate:
+    post:
+      tags: [Receivables]
+      summary: Terminate receivable plan
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Receivable plan detail.
+  /api/receivable-plans/{planId}/payments:
+    get:
+      tags: [Receivables]
+      summary: List payments under a receivable plan
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Payment list under the receivable plan.
+  /api/receivable-plans/{planId}/follow-ups:
+    get:
+      tags: [Receivables]
+      summary: List receivable follow-ups
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Receivable follow-up list.
+    post:
+      tags: [Receivables]
+      summary: Create receivable follow-up
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Receivable follow-up detail.
+  /api/payments:
+    get:
+      tags: [Payments]
+      summary: List payments
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: receivable_plan_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: payment_status
+          in: query
+          schema:
+            type: string
+        - name: payment_method
+          in: query
+          schema:
+            type: string
+        - name: owner_user_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Payment list.
+    post:
+      tags: [Payments]
+      summary: Create payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Payment detail.
+  /api/payments/{paymentId}:
+    get:
+      tags: [Payments]
+      summary: Get payment detail
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Payment detail.
+    patch:
+      tags: [Payments]
+      summary: Update payment
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Payment detail.
+  /api/payments/{paymentId}/confirm:
+    post:
+      tags: [Payments]
+      summary: Confirm payment amount
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Payment detail.
+  /api/payments/{paymentId}/exception:
+    post:
+      tags: [Payments]
+      summary: Register payment exception
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Payment detail.
+  /api/payments/{paymentId}/refund:
+    post:
+      tags: [Payments]
+      summary: Mark payment as refunded
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Payment detail.
   /api/attachments:
     get:
       tags: [Attachments]

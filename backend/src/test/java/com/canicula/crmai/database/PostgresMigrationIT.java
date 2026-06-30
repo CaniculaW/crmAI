@@ -216,8 +216,44 @@ class PostgresMigrationIT {
                 )
                 """,
                 Integer.class);
+        Integer receivablePlanTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name = 'crm_receivable_plans'
+                """,
+                Integer.class);
+        Integer paymentTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name = 'crm_payments'
+                """,
+                Integer.class);
+        Integer followUpTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name = 'crm_receivable_follow_ups'
+                """,
+                Integer.class);
+        Integer receivablePermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'receivable.read', 'receivable.create', 'receivable.update',
+                  'receivable.terminate', 'receivable.follow_up',
+                  'payment.read', 'payment.create', 'payment.update',
+                  'payment.confirm', 'payment.exception', 'payment.refund'
+                )
+                """,
+                Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("17");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("18");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -241,6 +277,10 @@ class PostgresMigrationIT {
         assertThat(contractPermissionCount).isEqualTo(5);
         assertThat(invoiceTableCount).isEqualTo(1);
         assertThat(invoicePermissionCount).isEqualTo(8);
+        assertThat(receivablePlanTableCount).isEqualTo(1);
+        assertThat(paymentTableCount).isEqualTo(1);
+        assertThat(followUpTableCount).isEqualTo(1);
+        assertThat(receivablePermissionCount).isEqualTo(11);
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type

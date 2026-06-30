@@ -21,6 +21,7 @@ import {
   BarChart3,
   BriefcaseBusiness,
   CalendarCheck,
+  CircleDollarSign,
   Contact,
   FileSignature,
   FileText,
@@ -47,6 +48,9 @@ import {
   type DictionaryType,
   type Invoice,
   type Opportunity,
+  type Payment,
+  type ReceivableFollowUp,
+  type ReceivablePlan,
   type Reminder,
   type SolutionDocument,
   type SystemDepartment,
@@ -86,6 +90,7 @@ const navItems: NavItem[] = [
   { key: "/solutions", label: "方案标书", icon: <FileText size={18} />, permission: "solution.read" },
   { key: "/contracts", label: "合同", icon: <FileSignature size={18} />, permission: "contract.read" },
   { key: "/invoices", label: "开票管理", icon: <ReceiptText size={18} />, permission: "invoice.read" },
+  { key: "/receivables", label: "回款管理", icon: <CircleDollarSign size={18} />, permission: "receivable.read" },
   { key: "/activities", label: "销售行动", icon: <CalendarCheck size={18} />, permission: "activity.read" },
   { key: "/weekly-progress", label: "周进展", icon: <BarChart3 size={18} />, permission: "weekly_progress.read" },
   {
@@ -258,6 +263,7 @@ function CrmShell() {
             <Route path="/solutions" element={<SolutionDocumentsPage currentUser={user} />} />
             <Route path="/contracts" element={<ContractsPage currentUser={user} />} />
             <Route path="/invoices" element={<InvoicesPage currentUser={user} />} />
+            <Route path="/receivables" element={<ReceivablesPage currentUser={user} />} />
             <Route path="/activities" element={<ActivitiesPage currentUser={user} />} />
             <Route path="/weekly-progress" element={<WeeklyProgressPage />} />
             <Route path="/system" element={<SystemPage section="overview" />} />
@@ -2364,6 +2370,459 @@ function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
   );
 }
 
+function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const receivables = useResource(() => crmApi.receivablePlans.list(filters), [filters]);
+  const accounts = useResource(crmApi.accounts.list, []);
+  const contracts = useResource(crmApi.contracts.list, []);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selected, setSelected] = useState<ReceivablePlan | null>(null);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [followUps, setFollowUps] = useState<ReceivableFollowUp[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [form] = Form.useForm();
+  const [paymentForm] = Form.useForm();
+  const [followUpForm] = Form.useForm();
+  const [attachmentForm] = Form.useForm();
+  const accountOptions = toAccountOptions(accounts.data);
+  const contractOptions = contracts.data.map((contract) => ({ label: contract.contract_name, value: contract.id }));
+  const accountById = useMemo(() => new Map(accounts.data.map((account) => [account.id, account])), [accounts.data]);
+  const contractById = useMemo(() => new Map(contracts.data.map((contract) => [contract.id, contract])), [contracts.data]);
+
+  const loadReceivableDetail = useCallback(async (planId: number) => {
+    setDetailLoading(true);
+    try {
+      const [nextPlan, nextPayments, nextFollowUps, nextAttachments] = await Promise.all([
+        crmApi.receivablePlans.detail(planId),
+        crmApi.payments.list({ receivable_plan_id: planId }),
+        crmApi.receivablePlans.followUps(planId),
+        crmApi.attachments.list({ object_type: "receivable_plan", object_id: planId })
+      ]);
+      setSelected(nextPlan);
+      setPayments(nextPayments);
+      setFollowUps(nextFollowUps);
+      setAttachments(nextAttachments);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selected) {
+      setPayments([]);
+      setFollowUps([]);
+      setAttachments([]);
+      return;
+    }
+    void loadReceivableDetail(selected.id);
+  }, [loadReceivableDetail, selected?.id]);
+
+  const reloadSelectedReceivable = async () => {
+    if (!selected) {
+      return;
+    }
+    await receivables.refresh();
+    await loadReceivableDetail(selected.id);
+  };
+
+  const confirmPayment = async (payment: Payment) => {
+    await crmApi.payments.confirm(payment.id, {
+      confirmed_amount: payment.received_amount,
+      confirmed_at: new Date().toISOString()
+    });
+    await reloadSelectedReceivable();
+  };
+
+  const markPaymentException = async (payment: Payment) => {
+    await crmApi.payments.exception(payment.id, {
+      exception_type: "manual_review",
+      exception_reason: "前端登记异常"
+    });
+    await reloadSelectedReceivable();
+  };
+
+  const refundPayment = async (payment: Payment) => {
+    await crmApi.payments.refund(payment.id, {
+      refund_reason: "前端标记退款"
+    });
+    await reloadSelectedReceivable();
+  };
+
+  const columns: ColumnsType<ReceivablePlan> = [
+    {
+      title: "回款计划",
+      dataIndex: "plan_name",
+      render: (value, record) => (
+        <Button type="link" className="inline-action" onClick={() => setSelected(record)}>
+          {value}
+        </Button>
+      )
+    },
+    { title: "客户", dataIndex: "account_id", render: (value) => accountById.get(Number(value))?.account_name ?? value },
+    { title: "合同", dataIndex: "contract_id", render: (value) => contractById.get(Number(value))?.contract_name ?? `合同 ${value}` },
+    { title: "阶段", dataIndex: "plan_stage", render: receivableStageText },
+    { title: "状态", dataIndex: "receivable_status", render: receivableStatusTag },
+    { title: "计划回款日", dataIndex: "planned_receivable_date", render: dateText },
+    { title: "计划金额", dataIndex: "planned_amount", render: moneyText },
+    {
+      title: "已收/未收",
+      render: (_, record) => (
+        <Space orientation="vertical" size={0}>
+          <span>已收 {currencyText(record.confirmed_received_amount)}</span>
+          <span>未收 {currencyText(record.unreceived_amount)}</span>
+        </Space>
+      )
+    },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Space>
+          <Button size="small" onClick={() => setSelected(record)}>
+            查看
+          </Button>
+        </Space>
+      )
+    }
+  ];
+
+  const paymentColumns: ColumnsType<Payment> = [
+    { title: "到账名称", dataIndex: "payment_name" },
+    { title: "状态", dataIndex: "payment_status", render: paymentStatusTag },
+    { title: "到账时间", dataIndex: "received_at", render: dateText },
+    { title: "到账金额", dataIndex: "received_amount", render: moneyText },
+    { title: "确认金额", dataIndex: "confirmed_amount", render: moneyText },
+    { title: "未核销", dataIndex: "unreconciled_amount", render: moneyText },
+    { title: "付款方", dataIndex: "payer_name", render: textOrDash },
+    { title: "流水号", dataIndex: "bank_flow_no", render: textOrDash },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Space>
+          <Button
+            size="small"
+            disabled={!["registered", "exception"].includes(record.payment_status)}
+            onClick={() => void confirmPayment(record)}
+          >
+            确认到账
+          </Button>
+          <Button
+            size="small"
+            disabled={record.payment_status === "refunded"}
+            onClick={() => void markPaymentException(record)}
+          >
+            登记异常
+          </Button>
+          <Button
+            size="small"
+            danger
+            disabled={record.payment_status === "refunded"}
+            onClick={() => void refundPayment(record)}
+          >
+            标记退款
+          </Button>
+        </Space>
+      )
+    }
+  ];
+
+  const followUpColumns: ColumnsType<ReceivableFollowUp> = [
+    { title: "跟进时间", dataIndex: "follow_up_at", render: dateText },
+    { title: "跟进内容", dataIndex: "follow_up_content" },
+    { title: "客户反馈", dataIndex: "customer_feedback", render: textOrDash },
+    { title: "下一步", dataIndex: "next_action", render: textOrDash }
+  ];
+
+  const attachmentColumns: ColumnsType<Attachment> = [
+    { title: "附件名称", dataIndex: "file_name" },
+    { title: "类型", dataIndex: "file_type", render: receivableAttachmentFileTypeText },
+    { title: "大小", dataIndex: "file_size", render: fileSizeText },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Space>
+          <Button size="small" href={record.file_url} target="_blank" rel="noreferrer">
+            下载
+          </Button>
+          <Button size="small" danger onClick={() => void deleteAttachment(record.id)}>
+            删除
+          </Button>
+        </Space>
+      )
+    }
+  ];
+
+  const createReceivable = async (values: Record<string, unknown>) => {
+    await crmApi.receivablePlans.create({
+      owner_user_id: currentUser.id,
+      ...normalizeInvoiceValues(values, ["planned_receivable_date"])
+    });
+    setDrawerOpen(false);
+    form.resetFields();
+    await receivables.refresh();
+  };
+
+  const createPayment = async (values: Record<string, unknown>) => {
+    if (!selected) {
+      return;
+    }
+    await crmApi.payments.create({
+      contract_id: selected.contract_id,
+      receivable_plan_id: selected.id,
+      owner_user_id: currentUser.id,
+      ...normalizeInvoiceValues(values, ["received_at"])
+    });
+    paymentForm.resetFields();
+    await receivables.refresh();
+    await loadReceivableDetail(selected.id);
+  };
+
+  const createFollowUp = async (values: Record<string, unknown>) => {
+    if (!selected) {
+      return;
+    }
+    await crmApi.receivablePlans.createFollowUp(selected.id, normalizeInvoiceValues(values, ["follow_up_at", "next_follow_up_at"]));
+    followUpForm.resetFields();
+    await loadReceivableDetail(selected.id);
+  };
+
+  const createAttachment = async (values: Record<string, unknown>) => {
+    if (!selected) {
+      return;
+    }
+    await crmApi.attachments.create({
+      object_type: "receivable_plan",
+      object_id: selected.id,
+      ...withoutEmpty(values, [])
+    });
+    attachmentForm.resetFields();
+    await loadReceivableDetail(selected.id);
+  };
+
+  const deleteAttachment = async (attachmentId: number) => {
+    if (!selected) {
+      return;
+    }
+    await crmApi.attachments.delete(attachmentId);
+    await loadReceivableDetail(selected.id);
+  };
+
+  return (
+    <DataWorkspace
+      title="回款管理"
+      description="围绕合同付款条件维护回款计划、到账流水、跟进记录和回单附件。"
+      guide="先按合同、状态和计划日期定位回款节点；进入详情登记到账、沉淀跟进和附件，为后续核销提供准确金额口径。"
+      loading={receivables.loading}
+      error={receivables.error}
+      action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建计划</Button>}
+      refresh={receivables.refresh}
+    >
+      <FilterBar
+        initialValues={filters}
+        onSearch={(values) => setFilters(withoutEmpty(values, []))}
+        onReset={() => setFilters({})}
+      >
+        <Form.Item name="keyword" label="关键词">
+          <Input allowClear placeholder="计划名称/付款条件" />
+        </Form.Item>
+        <Form.Item name="account_id" label="客户">
+          <Select allowClear options={accountOptions} loading={accounts.loading} className="filter-select" />
+        </Form.Item>
+        <Form.Item name="contract_id" label="合同">
+          <Select allowClear options={contractOptions} loading={contracts.loading} className="filter-select" />
+        </Form.Item>
+        <Form.Item name="receivable_status" label="状态">
+          <Select allowClear options={receivableStatusOptions()} />
+        </Form.Item>
+      </FilterBar>
+
+      <Table rowKey="id" dataSource={receivables.data} columns={columns} pagination={{ pageSize: 8 }} locale={{ emptyText: "暂无回款计划" }} />
+
+      <Drawer title="新建回款计划" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
+        <Form form={form} layout="vertical" onFinish={createReceivable}>
+          <ReceivablePlanFormFields contractOptions={contractOptions} />
+          <Button type="primary" htmlType="submit" block>保存计划</Button>
+        </Form>
+      </Drawer>
+
+      <Drawer title="回款详情" open={!!selected} onClose={() => setSelected(null)} size="large">
+        {selected && (
+          <>
+            <section className="drawer-section">
+              <Typography.Title level={3}>回款详情</Typography.Title>
+              <div className="opportunity-summary-grid">
+                <OpportunitySummaryItem label="客户" value={accountById.get(selected.account_id)?.account_name ?? `客户 ${selected.account_id}`} />
+                <OpportunitySummaryItem label="合同" value={contractById.get(selected.contract_id)?.contract_name ?? `合同 ${selected.contract_id}`} />
+                <OpportunitySummaryItem label="状态" value={receivableStatusText(selected.receivable_status)} />
+                <OpportunitySummaryItem label="阶段" value={receivableStageText(selected.plan_stage)} />
+                <OpportunitySummaryItem label="合同金额" value={moneyText(selected.contract_amount)} />
+                <OpportunitySummaryItem label="计划回款" value={moneyText(selected.planned_amount)} />
+                <OpportunitySummaryItem label="已收" value={currencyText(selected.confirmed_received_amount)} />
+                <OpportunitySummaryItem label="未收" value={currencyText(selected.unreceived_amount)} />
+              </div>
+            </section>
+
+            <section className="drawer-section">
+              <Typography.Title level={4}>计划信息</Typography.Title>
+              <RecordDetails
+                record={selected as unknown as Record<string, unknown>}
+                fields={[
+                  ["计划回款日", "planned_receivable_date"],
+                  ["付款条件快照", "payment_terms_snapshot"],
+                  ["逾期原因", "overdue_reason"],
+                  ["终止原因", "termination_reason"],
+                  ["备注", "remark"]
+                ]}
+              />
+            </section>
+
+            <section className="drawer-section">
+              <Typography.Title level={4}>合同口径</Typography.Title>
+              <div className="opportunity-summary-grid">
+                <OpportunitySummaryItem label="合同总额" value={moneyText(selected.contract_amount)} />
+                <OpportunitySummaryItem label="已开票" value={moneyText(selected.effective_invoiced_amount)} />
+                <OpportunitySummaryItem label="已确认回款" value={currencyText(selected.confirmed_received_amount)} />
+                <OpportunitySummaryItem label="未回款" value={currencyText(selected.unreceived_amount)} />
+                <OpportunitySummaryItem label="待核销回款" value={currencyText(selected.unreconciled_payment_amount)} />
+                <OpportunitySummaryItem label="逾期天数" value={selected.overdue_days == null ? "-" : `${selected.overdue_days} 天`} />
+              </div>
+            </section>
+
+            <section className="drawer-section">
+              <div className="section-title-row">
+                <Typography.Title level={4}>到账流水</Typography.Title>
+                <Button icon={<Plus size={16} />} onClick={() => paymentForm.submit()}>登记到账</Button>
+              </div>
+              <Table
+                rowKey="id"
+                size="small"
+                loading={detailLoading}
+                dataSource={payments}
+                columns={paymentColumns}
+                pagination={false}
+                locale={{ emptyText: "暂无到账流水" }}
+              />
+              <Form form={paymentForm} layout="vertical" className="inline-create-form" onFinish={createPayment}>
+                <Form.Item name="payment_name" label="到账名称" rules={[{ required: true }]}>
+                  <Input />
+                </Form.Item>
+                <Form.Item name="received_at" label="到账时间" rules={[{ required: true }]}>
+                  <Input type="datetime-local" />
+                </Form.Item>
+                <Form.Item name="received_amount" label="到账金额" rules={[{ required: true }]}>
+                  <InputNumber min={0} className="full-width" />
+                </Form.Item>
+                <Form.Item name="payment_method" label="到账方式" rules={[{ required: true }]}>
+                  <Select options={paymentMethodOptions()} />
+                </Form.Item>
+                <Form.Item name="payer_name" label="付款方">
+                  <Input />
+                </Form.Item>
+                <Form.Item name="bank_flow_no" label="银行流水号">
+                  <Input />
+                </Form.Item>
+              </Form>
+            </section>
+
+            <section className="drawer-section">
+              <div className="section-title-row">
+                <Typography.Title level={4}>跟进记录</Typography.Title>
+                <Button onClick={() => followUpForm.submit()}>新增跟进</Button>
+              </div>
+              <Table
+                rowKey="id"
+                size="small"
+                loading={detailLoading}
+                dataSource={followUps}
+                columns={followUpColumns}
+                pagination={false}
+                locale={{ emptyText: "暂无跟进记录" }}
+              />
+              <Form form={followUpForm} layout="vertical" className="inline-create-form" onFinish={createFollowUp}>
+                <Form.Item name="follow_up_at" label="跟进时间">
+                  <Input type="datetime-local" />
+                </Form.Item>
+                <Form.Item name="follow_up_content" label="跟进内容" rules={[{ required: true }]}>
+                  <Input.TextArea rows={3} />
+                </Form.Item>
+                <Form.Item name="customer_feedback" label="客户反馈">
+                  <Input.TextArea rows={2} />
+                </Form.Item>
+                <Form.Item name="next_action" label="下一步">
+                  <Input />
+                </Form.Item>
+              </Form>
+            </section>
+
+            <section className="drawer-section">
+              <Typography.Title level={4}>后续核销</Typography.Title>
+              <p className="muted">已确认且未核销的到账流水将进入模块 6 核销工作台。</p>
+            </section>
+
+            <section className="drawer-section">
+              <div className="section-title-row">
+                <Typography.Title level={4}>附件</Typography.Title>
+                <Button icon={<Paperclip size={16} />} onClick={() => attachmentForm.submit()}>添加附件</Button>
+              </div>
+              <Table
+                rowKey="id"
+                size="small"
+                loading={detailLoading}
+                dataSource={attachments}
+                columns={attachmentColumns}
+                pagination={false}
+                locale={{ emptyText: "暂无附件" }}
+              />
+              <Form form={attachmentForm} layout="vertical" className="inline-create-form" onFinish={createAttachment}>
+                <Form.Item name="file_name" label="附件名称" rules={[{ required: true }]}>
+                  <Input />
+                </Form.Item>
+                <Form.Item name="file_url" label="附件地址" rules={[{ required: true }]}>
+                  <Input placeholder="https:// 或 oss:// 地址" />
+                </Form.Item>
+                <Form.Item name="file_type" label="附件类型">
+                  <Select allowClear options={receivableAttachmentFileTypeOptions()} />
+                </Form.Item>
+                <Form.Item name="file_size" label="文件大小">
+                  <InputNumber min={0} className="full-width" />
+                </Form.Item>
+              </Form>
+            </section>
+          </>
+        )}
+      </Drawer>
+    </DataWorkspace>
+  );
+}
+
+function ReceivablePlanFormFields({ contractOptions }: { contractOptions: SelectOption[] }) {
+  return (
+    <>
+      <Form.Item name="contract_id" label="关联合同" rules={[{ required: true }]}>
+        <Select options={contractOptions} className="full-width" />
+      </Form.Item>
+      <Form.Item name="plan_name" label="计划名称" rules={[{ required: true }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item name="plan_stage" label="回款阶段">
+        <Select allowClear options={receivableStageOptions()} />
+      </Form.Item>
+      <Form.Item name="planned_receivable_date" label="计划回款日" rules={[{ required: true }]}>
+        <Input type="datetime-local" />
+      </Form.Item>
+      <Form.Item name="planned_amount" label="计划回款金额" rules={[{ required: true }]}>
+        <InputNumber min={0} className="full-width" />
+      </Form.Item>
+      <Form.Item name="payment_terms_snapshot" label="付款条件快照">
+        <Input.TextArea rows={3} />
+      </Form.Item>
+      <Form.Item name="remark" label="备注">
+        <Input.TextArea rows={3} />
+      </Form.Item>
+    </>
+  );
+}
+
 function InvoiceFormFields({ contractOptions, editing = false }: { contractOptions: SelectOption[]; editing?: boolean }) {
   return (
     <>
@@ -4422,6 +4881,108 @@ function invoiceAttachmentFileTypeText(type?: string) {
   return labels[type] ?? type;
 }
 
+function receivableStatusOptions() {
+  return ["planned", "overdue", "partial_received", "received", "terminated"].map((value) => ({
+    label: receivableStatusText(value),
+    value
+  }));
+}
+
+function receivableStatusText(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    planned: "计划中",
+    overdue: "已逾期",
+    partial_received: "部分回款",
+    received: "已回款",
+    terminated: "已终止"
+  };
+  return labels[status] ?? status;
+}
+
+function receivableStatusTag(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const color =
+    status === "received" ? "green" : status === "overdue" ? "red" : status === "terminated" ? "default" : status === "partial_received" ? "gold" : "blue";
+  return <Tag color={color}>{receivableStatusText(status)}</Tag>;
+}
+
+function receivableStageOptions() {
+  return ["首付款", "上线款", "验收款", "质保款", "尾款"].map((value) => ({ label: value, value }));
+}
+
+function receivableStageText(stage?: string) {
+  return stage || "-";
+}
+
+function paymentStatusText(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    registered: "已登记",
+    confirmed: "已确认",
+    partially_reconciled: "部分核销",
+    reconciled: "已核销",
+    exception: "异常",
+    refunded: "已退款"
+  };
+  return labels[status] ?? status;
+}
+
+function paymentStatusTag(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const color = status === "confirmed" || status === "reconciled" ? "green" : status === "exception" ? "red" : status === "refunded" ? "default" : "blue";
+  return <Tag color={color}>{paymentStatusText(status)}</Tag>;
+}
+
+function paymentMethodOptions() {
+  return ["bank_transfer", "cash", "bill", "other"].map((value) => ({
+    label: paymentMethodText(value),
+    value
+  }));
+}
+
+function paymentMethodText(method?: string) {
+  if (!method) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    bank_transfer: "银行转账",
+    cash: "现金",
+    bill: "票据",
+    other: "其他"
+  };
+  return labels[method] ?? method;
+}
+
+function receivableAttachmentFileTypeOptions() {
+  return ["bank_receipt", "bank_statement", "payment_notice", "customer_confirmation", "other"].map((value) => ({
+    label: receivableAttachmentFileTypeText(value),
+    value
+  }));
+}
+
+function receivableAttachmentFileTypeText(type?: string) {
+  if (!type) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    bank_receipt: "银行回单",
+    bank_statement: "银行流水",
+    payment_notice: "付款通知",
+    customer_confirmation: "客户确认",
+    other: "其他"
+  };
+  return labels[type] ?? type;
+}
+
 function percentText(value?: number | null) {
   if (value === undefined || value === null) {
     return "-";
@@ -4586,6 +5147,13 @@ function moneyText(value?: number | null) {
     return "-";
   }
   return `${value.toLocaleString("zh-CN")} 元`;
+}
+
+function currencyText(value?: number | null) {
+  if (value === undefined || value === null) {
+    return "-";
+  }
+  return `¥${value.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function dateText(value?: string | null) {
