@@ -100,7 +100,8 @@ V2 当前进度：
 - [x] Step 12：完成模块 5 前端回款页面、到账状态动作、跟进和附件增删下载入口。
 - [x] Step 13：完成模块 5 OpenAPI 与接口清单。
 - [x] Step 14：完成模块 5 自动化验证、浏览器 UAT 和提交准备。
-- [ ] Step 15：启动模块 6 发票回款核销链路，输出页面逻辑、数据模型、API 和实施计划。
+- [x] Step 15：启动模块 6 发票回款核销链路，输出页面逻辑、数据模型、API 和实施计划。
+- [ ] Step 16：按实施计划进入后端数据模型、核销工作台 API 和金额联动实现。
 
 当前模块不做：
 
@@ -119,7 +120,7 @@ V2 当前进度：
 - 合同管理链路已完成实现、自动化验证和浏览器 UAT。
 - 模块 4 开票管理设计说明已完成。
 - 模块 5 回款管理链路已完成实现、自动化验证和浏览器 UAT。
-- 模块 6 启动后先完成核销工作台页面逻辑、金额口径、数据模型和 API 契约。
+- 模块 6 设计说明和 TDD 实施计划已完成，下一步进入后端数据模型与核销 API 实现。
 
 ## 4. 模块完成记录
 
@@ -130,7 +131,7 @@ V2 当前进度：
 | 合同管理链路 | Done | 2026-06-29 | 本次提交 | `mvn test`；`mvn -Dtest=OpenApiContractCoverageTest test`；`npm test`；`npm run build` | 127.0.0.1:5175 `/contracts` 已通过列表、详情、变更记录、节点、附件下载/删除入口验证；浏览器控制台无 error | 开票/回款/核销入口占位保留到后续模块 |
 | 开票管理链路 | Done | 2026-06-30 | 本次提交 | `mvn -Dtest=DatabaseMigrationTest,InvoiceControllerTest,AttachmentControllerTest,OpenApiContractCoverageTest test`；`mvn -Dtest=PostgresMigrationIT test`；`npm test -- --run`；`npm run build` | 127.0.0.1:5175 `/invoices` 已通过登录、列表、详情、合同额度、附件、状态动作入口验证；浏览器控制台无 error | 回款/核销联动保留到模块 5/6 |
 | 回款管理链路 | Done | 2026-06-30 | 本次提交 | `mvn -Dtest=DatabaseMigrationTest,ReceivablePlanControllerTest,PaymentControllerTest,AttachmentControllerTest,OpenApiContractCoverageTest test`；`mvn -Dtest=PostgresMigrationIT test`；`npm test -- --run`；`npm run build` | 127.0.0.1:5175 `/receivables` 已通过登录、列表、详情、到账流水、状态动作、跟进、附件下载/删除入口验证；浏览器控制台无 error | 发票与回款多对多核销保留到模块 6 |
-| 发票回款核销链路 | Current | - | - | - | - | 待启动模块 6 设计与实施计划 |
+| 发票回款核销链路 | Current | - | - | - | - | 设计说明与TDD实施计划已完成，进入后端数据模型与API实现 |
 | 客户/商机 V2 入口联动 | Pending | - | - | - | - | - |
 | V2 系统配置与权限审计 | Pending | - | - | - | - | - |
 | V2 全链路回归与 UAT | Pending | - | - | - | - | - |
@@ -142,9 +143,9 @@ V2 当前进度：
 - 总模块：9
 - 已完成：5
 - 当前模块：6. 发票回款核销链路
-- 当前步骤：Step 15. 启动模块 6 设计与实施计划
-- 当前 TODO：输出核销工作台页面逻辑、金额口径、数据模型、API 契约和 TDD 实施计划
-- 完成标准：核销工作台的待核销发票、待分配回款、核销明细、撤销核销链路完成设计并进入实现
+- 当前步骤：Step 16. 按实施计划进入后端数据模型与 API 实现
+- 当前 TODO：执行 `docs/superpowers/plans/2026-06-30-v2-reconciliation-workbench.md` 的 Task 1-2
+- 完成标准：V19 迁移、核销工作台 API、新增核销、撤销核销和金额联动通过后端定向验证
 ```
 
 ## 6. V2 总体页面逻辑与导航方案
