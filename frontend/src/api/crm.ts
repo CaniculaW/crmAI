@@ -164,6 +164,48 @@ export type ContractMilestone = {
   updated_at?: string;
 };
 
+export type Invoice = {
+  id: number;
+  tenant_id?: number;
+  account_id: number;
+  opportunity_id?: number;
+  contract_id: number;
+  plan_name: string;
+  invoice_status: string;
+  invoice_type: string;
+  planned_invoice_date?: string;
+  planned_amount: number;
+  applied_amount?: number;
+  applied_at?: string;
+  application_note?: string;
+  applied_by?: number;
+  invoice_code?: string;
+  invoice_no?: string;
+  invoice_date?: string;
+  tax_rate?: number;
+  net_amount?: number;
+  tax_amount?: number;
+  actual_invoice_amount?: number;
+  signed_at?: string;
+  signed_by_name?: string;
+  sign_note?: string;
+  exception_type?: string;
+  exception_reason?: string;
+  exception_resolution?: string;
+  exception_at?: string;
+  void_reason?: string;
+  voided_at?: string;
+  voided_by?: number;
+  owner_user_id: number;
+  invoice_terms_snapshot?: string;
+  remark?: string;
+  contract_amount?: number;
+  effective_invoiced_amount?: number;
+  remaining_invoice_amount?: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type Activity = {
   id: number;
   account_id: number;
@@ -405,6 +447,24 @@ export const crmApi = {
         method: "PATCH",
         body: JSON.stringify(body)
       })
+  },
+  invoices: {
+    list: (query?: QueryParams) => requestJson<Invoice[]>(withQuery("/api/invoices", query)),
+    detail: (id: number) => requestJson<Invoice>(`/api/invoices/${id}`),
+    create: (body: Record<string, unknown>) =>
+      requestJson<Invoice>("/api/invoices", { method: "POST", body: JSON.stringify(body) }),
+    update: (id: number, body: Record<string, unknown>) =>
+      requestJson<Invoice>(`/api/invoices/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+    apply: (id: number, body: Record<string, unknown>) =>
+      requestJson<Invoice>(`/api/invoices/${id}/apply`, { method: "POST", body: JSON.stringify(body) }),
+    issue: (id: number, body: Record<string, unknown>) =>
+      requestJson<Invoice>(`/api/invoices/${id}/issue`, { method: "POST", body: JSON.stringify(body) }),
+    sign: (id: number, body: Record<string, unknown>) =>
+      requestJson<Invoice>(`/api/invoices/${id}/sign`, { method: "POST", body: JSON.stringify(body) }),
+    exception: (id: number, body: Record<string, unknown>) =>
+      requestJson<Invoice>(`/api/invoices/${id}/exception`, { method: "POST", body: JSON.stringify(body) }),
+    void: (id: number, body: Record<string, unknown>) =>
+      requestJson<Invoice>(`/api/invoices/${id}/void`, { method: "POST", body: JSON.stringify(body) })
   },
   activities: {
     list: (query?: QueryParams) => requestJson<Activity[]>(withQuery("/api/activities", query)),

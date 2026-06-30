@@ -15,6 +15,7 @@ tags:
   - name: Opportunities
   - name: SolutionDocuments
   - name: Contracts
+  - name: Invoices
   - name: Activities
   - name: WeeklyProgress
   - name: Attachments
@@ -1015,6 +1016,219 @@ paths:
       responses:
         '200':
           description: Contract milestone detail.
+  /api/invoices:
+    get:
+      tags: [Invoices]
+      summary: List invoice plans and records
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: invoice_status
+          in: query
+          schema:
+            type: string
+        - name: invoice_type
+          in: query
+          schema:
+            type: string
+        - name: owner_user_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: planned_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: planned_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: invoice_date_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: invoice_date_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: exception_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Invoice list.
+    post:
+      tags: [Invoices]
+      summary: Create invoice plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Invoice detail.
+  /api/invoices/{invoiceId}:
+    get:
+      tags: [Invoices]
+      summary: Get invoice detail
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Invoice detail.
+    patch:
+      tags: [Invoices]
+      summary: Update invoice plan
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Invoice detail.
+  /api/invoices/{invoiceId}/apply:
+    post:
+      tags: [Invoices]
+      summary: Submit invoice application
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Invoice detail.
+  /api/invoices/{invoiceId}/issue:
+    post:
+      tags: [Invoices]
+      summary: Register issued invoice
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Invoice detail.
+  /api/invoices/{invoiceId}/sign:
+    post:
+      tags: [Invoices]
+      summary: Confirm customer invoice receipt
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Invoice detail.
+  /api/invoices/{invoiceId}/exception:
+    post:
+      tags: [Invoices]
+      summary: Register invoice exception
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Invoice detail.
+  /api/invoices/{invoiceId}/void:
+    post:
+      tags: [Invoices]
+      summary: Void issued invoice
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [void_reason]
+              properties:
+                void_reason:
+                  type: string
+      responses:
+        '200':
+          description: Invoice detail.
   /api/attachments:
     get:
       tags: [Attachments]

@@ -41,14 +41,14 @@
 
 | 顺序 | 事项 | 状态 | 完成标准 |
 |---:|---|---|---|
-| 1 | 后端数据模型与权限 | Pending | V17 migration creates invoice table, dictionary rows, permission points; migration tests pass |
-| 2 | 后端开票计划 API | Pending | Create/list/detail/update API tests pass with data permission and contract linkage |
-| 3 | 状态动作与金额校验 | Pending | Apply/issue/sign/exception/void tests pass; cumulative effective issued amount never exceeds contract amount |
-| 4 | 附件对象扩展 | Pending | `invoice` attachments can be created, listed, deleted, and opened by `file_url` |
-| 5 | 前端 API 与菜单 | Pending | Typed invoice API client and `开票管理` entry are covered by frontend tests |
-| 6 | 前端开票页面 | Pending | List/detail/create/edit/apply/issue/sign/exception/void/attachment UI tests pass |
-| 7 | OpenAPI 与接口清单 | Pending | Invoice endpoints are covered by OpenAPI coverage test and API list |
-| 8 | 自动化验证、UAT、记录提交 | Pending | `mvn test`, OpenAPI coverage, `npm test`, `npm run build`, browser Smoke pass; module state recorded |
+| 1 | 后端数据模型与权限 | Done | V17 migration creates invoice table, dictionary rows, permission points; migration tests pass |
+| 2 | 后端开票计划 API | Done | Create/list/detail/update API tests pass with data permission and contract linkage |
+| 3 | 状态动作与金额校验 | Done | Apply/issue/sign/exception/void tests pass; cumulative effective issued amount never exceeds contract amount |
+| 4 | 附件对象扩展 | Done | `invoice` attachments can be created, listed, deleted, and opened by `file_url` |
+| 5 | 前端 API 与菜单 | Done | Typed invoice API client and `开票管理` entry are covered by frontend tests |
+| 6 | 前端开票页面 | Done | List/detail/create/edit/apply/issue/sign/exception/void/attachment UI tests pass |
+| 7 | OpenAPI 与接口清单 | Done | Invoice endpoints are covered by OpenAPI coverage test and API list |
+| 8 | 自动化验证、UAT、记录提交 | Done | `mvn test`, OpenAPI coverage, `npm test`, `npm run build`, browser Smoke pass; module state recorded |
 
 ## Task 1: Backend Data Model And Permissions
 

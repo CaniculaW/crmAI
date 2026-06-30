@@ -279,6 +279,67 @@ class AttachmentControllerTest {
         assertThat(deleteResponse.getBody().path("data").path("deleted").asBoolean()).isTrue();
     }
 
+    @Test
+    void createsListsAndDeletesInvoiceAttachmentMetadata() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("attachment-invoice-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "attachment_invoice_" + suffix,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "contract.create",
+                        "contract.read",
+                        "invoice.create",
+                        "invoice.read",
+                        "attachment.create",
+                        "attachment.read",
+                        "attachment.delete"),
+                List.of("global"));
+        String token = login("attachment_invoice_" + suffix);
+        Long accountId = createAccount(token, "开票附件客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(token, accountId, "开票附件商机-" + suffix, departmentId, userId);
+        Long contractId = createContract(token, accountId, opportunityId, userId, suffix);
+        Long invoiceId = createInvoicePlan(token, contractId, userId, suffix);
+
+        ResponseEntity<JsonNode> createResponse = restTemplate.exchange(
+                "/api/attachments",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "object_type", "invoice",
+                        "object_id", invoiceId,
+                        "file_name", "发票扫描件-" + suffix + ".pdf",
+                        "file_url", "oss://crm/invoice/" + suffix + "/scan.pdf",
+                        "file_type", "invoice_scan",
+                        "file_size", 10240,
+                        "mime_type", "application/pdf"),
+                        authHeaders(token, "attachment-invoice-create-trace-001")),
+                JsonNode.class);
+        Long attachmentId = createResponse.getBody().path("data").path("id").asLong();
+        ResponseEntity<JsonNode> listResponse = restTemplate.exchange(
+                "/api/attachments?object_type=invoice&object_id=" + invoiceId,
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "attachment-invoice-list-trace-001")),
+                JsonNode.class);
+        ResponseEntity<JsonNode> deleteResponse = restTemplate.exchange(
+                "/api/attachments/" + attachmentId,
+                HttpMethod.DELETE,
+                new HttpEntity<>(authHeaders(token, "attachment-invoice-delete-trace-001")),
+                JsonNode.class);
+
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(createResponse.getBody().path("data").path("object_type").asText()).isEqualTo("invoice");
+        assertThat(createResponse.getBody().path("data").path("file_url").asText())
+                .isEqualTo("oss://crm/invoice/" + suffix + "/scan.pdf");
+        assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(listResponse.getBody().path("data")).anySatisfy(attachment ->
+                assertThat(attachment.path("id").asLong()).isEqualTo(attachmentId));
+        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(deleteResponse.getBody().path("data").path("deleted").asBoolean()).isTrue();
+    }
+
     private Long createAttachment(String accessToken, Long accountId, String fileName) {
         ResponseEntity<JsonNode> response = restTemplate.exchange(
                 "/api/attachments",
@@ -387,6 +448,28 @@ class AttachmentControllerTest {
                         "owner_user_id", ownerUserId,
                         "business_owner_id", ownerUserId),
                         authHeaders(accessToken, "attachment-helper-contract-trace-001")),
+                JsonNode.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return response.getBody().path("data").path("id").asLong();
+    }
+
+    private Long createInvoicePlan(
+            String accessToken,
+            Long contractId,
+            Long ownerUserId,
+            String suffix) {
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/invoices",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "contract_id", contractId,
+                        "plan_name", "附件测试开票-" + suffix,
+                        "planned_invoice_date", "2026-07-15T10:00:00+08:00",
+                        "planned_amount", 120000,
+                        "invoice_type", "vat_special",
+                        "tax_rate", 0.13,
+                        "owner_user_id", ownerUserId),
+                        authHeaders(accessToken, "attachment-helper-invoice-trace-001")),
                 JsonNode.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         return response.getBody().path("data").path("id").asLong();

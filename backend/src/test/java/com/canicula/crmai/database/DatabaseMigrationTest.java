@@ -160,9 +160,26 @@ class DatabaseMigrationTest {
                 )
                 """,
                 Integer.class);
+        Integer invoiceTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name = 'crm_invoices'
+                """,
+                Integer.class);
+        Integer invoicePermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'invoice.read', 'invoice.create', 'invoice.update', 'invoice.apply',
+                  'invoice.issue', 'invoice.sign', 'invoice.exception', 'invoice.void'
+                )
+                """,
+                Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(16);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(17);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -182,5 +199,7 @@ class DatabaseMigrationTest {
         assertThat(solutionPermissionCount).isEqualTo(4);
         assertThat(contractTableCount).isEqualTo(3);
         assertThat(contractPermissionCount).isEqualTo(5);
+        assertThat(invoiceTableCount).isEqualTo(1);
+        assertThat(invoicePermissionCount).isEqualTo(8);
     }
 }

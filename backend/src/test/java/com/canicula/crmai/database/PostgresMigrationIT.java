@@ -198,8 +198,26 @@ class PostgresMigrationIT {
                 )
                 """,
                 Integer.class);
+        Integer invoiceTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name = 'crm_invoices'
+                """,
+                Integer.class);
+        Integer invoicePermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'invoice.read', 'invoice.create', 'invoice.update', 'invoice.apply',
+                  'invoice.issue', 'invoice.sign', 'invoice.exception', 'invoice.void'
+                )
+                """,
+                Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("16");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("17");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -221,6 +239,8 @@ class PostgresMigrationIT {
         assertThat(solutionPermissionCount).isEqualTo(4);
         assertThat(contractTableCount).isEqualTo(3);
         assertThat(contractPermissionCount).isEqualTo(5);
+        assertThat(invoiceTableCount).isEqualTo(1);
+        assertThat(invoicePermissionCount).isEqualTo(8);
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type

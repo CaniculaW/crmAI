@@ -1,0 +1,43 @@
+package com.canicula.crmai.invoice;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+
+public record InvoiceResponse(
+        Long id,
+        Long account_id,
+        Long opportunity_id,
+        Long contract_id,
+        String plan_name,
+        String invoice_status,
+        String invoice_type,
+        OffsetDateTime planned_invoice_date,
+        BigDecimal planned_amount,
+        BigDecimal applied_amount,
+        OffsetDateTime applied_at,
+        Long applied_by,
+        String application_note,
+        String invoice_code,
+        String invoice_no,
+        OffsetDateTime invoice_date,
+        BigDecimal tax_rate,
+        BigDecimal net_amount,
+        BigDecimal tax_amount,
+        BigDecimal actual_invoice_amount,
+        OffsetDateTime signed_at,
+        String signed_by_name,
+        String sign_note,
+        String exception_type,
+        String exception_reason,
+        String exception_resolution,
+        String void_reason,
+        OffsetDateTime voided_at,
+        Long voided_by,
+        Long owner_user_id,
+        BigDecimal contract_amount,
+        BigDecimal effective_invoiced_amount,
+        BigDecimal remaining_invoice_amount,
+        String remark,
+        OffsetDateTime created_at,
+        OffsetDateTime updated_at) {
+}

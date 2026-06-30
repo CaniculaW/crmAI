@@ -27,6 +27,7 @@ import {
   LayoutDashboard,
   Paperclip,
   Plus,
+  ReceiptText,
   RefreshCw,
   ShieldCheck,
   Users
@@ -44,6 +45,7 @@ import {
   type Contact as CrmContact,
   type CurrentUser,
   type DictionaryType,
+  type Invoice,
   type Opportunity,
   type Reminder,
   type SolutionDocument,
@@ -83,6 +85,7 @@ const navItems: NavItem[] = [
   { key: "/opportunities", label: "商机", icon: <BriefcaseBusiness size={18} />, permission: "opportunity.read" },
   { key: "/solutions", label: "方案标书", icon: <FileText size={18} />, permission: "solution.read" },
   { key: "/contracts", label: "合同", icon: <FileSignature size={18} />, permission: "contract.read" },
+  { key: "/invoices", label: "开票管理", icon: <ReceiptText size={18} />, permission: "invoice.read" },
   { key: "/activities", label: "销售行动", icon: <CalendarCheck size={18} />, permission: "activity.read" },
   { key: "/weekly-progress", label: "周进展", icon: <BarChart3 size={18} />, permission: "weekly_progress.read" },
   {
@@ -254,6 +257,7 @@ function CrmShell() {
             <Route path="/opportunities" element={<OpportunitiesPage currentUser={user} />} />
             <Route path="/solutions" element={<SolutionDocumentsPage currentUser={user} />} />
             <Route path="/contracts" element={<ContractsPage currentUser={user} />} />
+            <Route path="/invoices" element={<InvoicesPage currentUser={user} />} />
             <Route path="/activities" element={<ActivitiesPage currentUser={user} />} />
             <Route path="/weekly-progress" element={<WeeklyProgressPage />} />
             <Route path="/system" element={<SystemPage section="overview" />} />
@@ -1868,6 +1872,529 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
         </Form>
       </Modal>
     </DataWorkspace>
+  );
+}
+
+function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const invoices = useResource(() => crmApi.invoices.list(filters), [filters]);
+  const accounts = useResource(crmApi.accounts.list, []);
+  const opportunities = useResource(crmApi.opportunities.list, []);
+  const contracts = useResource(crmApi.contracts.list, []);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selected, setSelected] = useState<Invoice | null>(null);
+  const [editing, setEditing] = useState<Invoice | null>(null);
+  const [applying, setApplying] = useState<Invoice | null>(null);
+  const [issuing, setIssuing] = useState<Invoice | null>(null);
+  const [signing, setSigning] = useState<Invoice | null>(null);
+  const [exceptioning, setExceptioning] = useState<Invoice | null>(null);
+  const [voiding, setVoiding] = useState<Invoice | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
+  const [applyForm] = Form.useForm();
+  const [issueForm] = Form.useForm();
+  const [signForm] = Form.useForm();
+  const [exceptionForm] = Form.useForm();
+  const [voidForm] = Form.useForm();
+  const [attachmentForm] = Form.useForm();
+  const accountOptions = toAccountOptions(accounts.data);
+  const opportunityOptions = toOpportunityOptions(opportunities.data);
+  const contractOptions = contracts.data.map((contract) => ({ label: contract.contract_name, value: contract.id }));
+  const accountById = useMemo(() => new Map(accounts.data.map((account) => [account.id, account])), [accounts.data]);
+  const opportunityById = useMemo(
+    () => new Map(opportunities.data.map((opportunity) => [opportunity.id, opportunity])),
+    [opportunities.data]
+  );
+  const contractById = useMemo(() => new Map(contracts.data.map((contract) => [contract.id, contract])), [contracts.data]);
+
+  const loadInvoiceDetail = useCallback(async (invoiceId: number) => {
+    setDetailLoading(true);
+    try {
+      const [nextInvoice, nextAttachments] = await Promise.all([
+        crmApi.invoices.detail(invoiceId),
+        crmApi.attachments.list({ object_type: "invoice", object_id: invoiceId })
+      ]);
+      setSelected(nextInvoice);
+      setAttachments(nextAttachments);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selected) {
+      setAttachments([]);
+      return;
+    }
+    void loadInvoiceDetail(selected.id);
+  }, [loadInvoiceDetail, selected?.id]);
+
+  const columns: ColumnsType<Invoice> = [
+    {
+      title: "开票计划",
+      dataIndex: "plan_name",
+      render: (value, record) => (
+        <Button type="link" className="inline-action" onClick={() => setSelected(record)}>
+          {value}
+        </Button>
+      )
+    },
+    { title: "客户", dataIndex: "account_id", render: (value) => accountById.get(Number(value))?.account_name ?? value },
+    { title: "合同", dataIndex: "contract_id", render: (value) => contractById.get(Number(value))?.contract_name ?? `合同 ${value}` },
+    { title: "类型", dataIndex: "invoice_type", render: invoiceTypeText },
+    { title: "状态", dataIndex: "invoice_status", render: invoiceStatusTag },
+    { title: "计划日期", dataIndex: "planned_invoice_date", render: dateText },
+    { title: "计划金额", dataIndex: "planned_amount", render: moneyText },
+    { title: "实际开票", dataIndex: "actual_invoice_amount", render: moneyText },
+    { title: "发票号", dataIndex: "invoice_no", render: textOrDash },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Space>
+          <Button size="small" onClick={() => setSelected(record)}>
+            查看
+          </Button>
+          <Button
+            size="small"
+            onClick={() => {
+              setEditing(record);
+              editForm.setFieldsValue({
+                ...record,
+                planned_invoice_date: fromDateTime(record.planned_invoice_date)
+              });
+            }}
+          >
+            编辑
+          </Button>
+          <Button
+            size="small"
+            disabled={!canApplyInvoice(record.invoice_status)}
+            onClick={() => {
+              setApplying(record);
+              applyForm.setFieldsValue({
+                applied_amount: record.applied_amount ?? record.planned_amount,
+                applied_at: fromDateTime(record.applied_at) ?? fromDateTime(new Date().toISOString()),
+                application_note: record.application_note
+              });
+            }}
+          >
+            申请
+          </Button>
+          <Button
+            size="small"
+            disabled={record.invoice_status !== "applied"}
+            onClick={() => {
+              setIssuing(record);
+              issueForm.setFieldsValue({
+                tax_rate: record.tax_rate,
+                actual_invoice_amount: record.applied_amount ?? record.planned_amount,
+                invoice_date: fromDateTime(record.invoice_date) ?? fromDateTime(new Date().toISOString())
+              });
+            }}
+          >
+            开票
+          </Button>
+        </Space>
+      )
+    }
+  ];
+
+  const createInvoice = async (values: Record<string, unknown>) => {
+    await crmApi.invoices.create({
+      invoice_type: "vat_special",
+      owner_user_id: currentUser.id,
+      ...normalizeInvoiceValues(values, ["planned_invoice_date"])
+    });
+    setDrawerOpen(false);
+    form.resetFields();
+    await invoices.refresh();
+  };
+
+  const updateInvoice = async (values: Record<string, unknown>) => {
+    if (!editing) {
+      return;
+    }
+    await crmApi.invoices.update(editing.id, normalizeInvoiceValues(values, ["planned_invoice_date"]));
+    setEditing(null);
+    editForm.resetFields();
+    await invoices.refresh();
+    if (selected?.id === editing.id) {
+      await loadInvoiceDetail(editing.id);
+    }
+  };
+
+  const applyInvoice = async (values: Record<string, unknown>) => {
+    if (!applying) {
+      return;
+    }
+    await crmApi.invoices.apply(applying.id, normalizeInvoiceValues(values, ["applied_at"]));
+    setApplying(null);
+    applyForm.resetFields();
+    await invoices.refresh();
+    await loadInvoiceDetail(applying.id);
+  };
+
+  const issueInvoice = async (values: Record<string, unknown>) => {
+    if (!issuing) {
+      return;
+    }
+    await crmApi.invoices.issue(issuing.id, normalizeInvoiceValues(values, ["invoice_date"]));
+    setIssuing(null);
+    issueForm.resetFields();
+    await invoices.refresh();
+    await loadInvoiceDetail(issuing.id);
+  };
+
+  const signInvoice = async (values: Record<string, unknown>) => {
+    if (!signing) {
+      return;
+    }
+    await crmApi.invoices.sign(signing.id, normalizeInvoiceValues(values, ["signed_at"]));
+    setSigning(null);
+    signForm.resetFields();
+    await invoices.refresh();
+    await loadInvoiceDetail(signing.id);
+  };
+
+  const registerException = async (values: Record<string, unknown>) => {
+    if (!exceptioning) {
+      return;
+    }
+    await crmApi.invoices.exception(exceptioning.id, withoutEmpty(values, []));
+    setExceptioning(null);
+    exceptionForm.resetFields();
+    await invoices.refresh();
+    await loadInvoiceDetail(exceptioning.id);
+  };
+
+  const voidInvoice = async (values: Record<string, unknown>) => {
+    if (!voiding) {
+      return;
+    }
+    await crmApi.invoices.void(voiding.id, withoutEmpty(values, []));
+    setVoiding(null);
+    voidForm.resetFields();
+    await invoices.refresh();
+    await loadInvoiceDetail(voiding.id);
+  };
+
+  const createAttachment = async (values: Record<string, unknown>) => {
+    if (!selected) {
+      return;
+    }
+    await crmApi.attachments.create({
+      object_type: "invoice",
+      object_id: selected.id,
+      ...withoutEmpty(values, [])
+    });
+    attachmentForm.resetFields();
+    await loadInvoiceDetail(selected.id);
+  };
+
+  const deleteAttachment = async (attachmentId: number) => {
+    if (!selected) {
+      return;
+    }
+    await crmApi.attachments.delete(attachmentId);
+    await loadInvoiceDetail(selected.id);
+  };
+
+  const attachmentColumns: ColumnsType<Attachment> = [
+    { title: "附件名称", dataIndex: "file_name" },
+    { title: "类型", dataIndex: "file_type", render: invoiceAttachmentFileTypeText },
+    { title: "大小", dataIndex: "file_size", render: fileSizeText },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Space>
+          <Button size="small" href={record.file_url} target="_blank" rel="noreferrer">
+            下载
+          </Button>
+          <Button size="small" danger onClick={() => void deleteAttachment(record.id)}>
+            删除
+          </Button>
+        </Space>
+      )
+    }
+  ];
+
+  return (
+    <DataWorkspace
+      title="开票管理"
+      description="承接合同开票条件，管理计划、申请、发票登记、签收、异常和附件。"
+      guide="先按合同、客户、状态筛选计划；财务开票前校验合同额度，开票后进入签收与后续回款核销。"
+      loading={invoices.loading}
+      error={invoices.error}
+      action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建计划</Button>}
+      refresh={invoices.refresh}
+    >
+      <FilterBar
+        initialValues={filters}
+        onSearch={(values) => setFilters(withoutEmpty(values, []))}
+        onReset={() => setFilters({})}
+      >
+        <Form.Item name="keyword" label="关键词">
+          <Input allowClear placeholder="计划名称/发票号" />
+        </Form.Item>
+        <Form.Item name="account_id" label="客户">
+          <Select allowClear options={accountOptions} loading={accounts.loading} className="filter-select" />
+        </Form.Item>
+        <Form.Item name="contract_id" label="合同">
+          <Select allowClear options={contractOptions} loading={contracts.loading} className="filter-select" />
+        </Form.Item>
+        <Form.Item name="invoice_status" label="状态">
+          <Select allowClear options={invoiceStatusOptions()} />
+        </Form.Item>
+        <Form.Item name="invoice_type" label="类型">
+          <Select allowClear options={invoiceTypeOptions()} />
+        </Form.Item>
+      </FilterBar>
+
+      <Table rowKey="id" dataSource={invoices.data} columns={columns} pagination={{ pageSize: 8 }} locale={{ emptyText: "暂无开票计划" }} />
+
+      <Drawer title="新建开票计划" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
+        <Form form={form} layout="vertical" onFinish={createInvoice}>
+          <InvoiceFormFields contractOptions={contractOptions} />
+          <Button type="primary" htmlType="submit" block>保存计划</Button>
+        </Form>
+      </Drawer>
+
+      <Drawer title="开票详情" open={!!selected} onClose={() => setSelected(null)} size="large">
+        {selected && (
+          <>
+            <section className="drawer-section">
+              <Typography.Title level={3}>开票执行台</Typography.Title>
+              <div className="opportunity-summary-grid">
+                <OpportunitySummaryItem label="客户" value={accountById.get(selected.account_id)?.account_name ?? `客户 ${selected.account_id}`} />
+                <OpportunitySummaryItem label="商机" value={selected.opportunity_id ? opportunityById.get(selected.opportunity_id)?.opportunity_name ?? `商机 ${selected.opportunity_id}` : "-"} />
+                <OpportunitySummaryItem label="合同" value={contractById.get(selected.contract_id)?.contract_name ?? `合同 ${selected.contract_id}`} />
+                <OpportunitySummaryItem label="状态" value={invoiceStatusText(selected.invoice_status)} />
+                <OpportunitySummaryItem label="计划金额" value={moneyText(selected.planned_amount)} />
+                <OpportunitySummaryItem label="实际开票" value={moneyText(selected.actual_invoice_amount)} />
+                <OpportunitySummaryItem label="合同额度" value={moneyText(selected.contract_amount)} />
+                <OpportunitySummaryItem label="剩余额度" value={moneyText(selected.remaining_invoice_amount)} />
+              </div>
+            </section>
+            <section className="drawer-section">
+              <Typography.Title level={4}>申请与发票</Typography.Title>
+              <RecordDetails
+                record={selected as unknown as Record<string, unknown>}
+                fields={[
+                  ["计划日期", "planned_invoice_date"],
+                  ["申请时间", "applied_at"],
+                  ["申请备注", "application_note"],
+                  ["发票代码", "invoice_code"],
+                  ["发票号码", "invoice_no"],
+                  ["实际开票日", "invoice_date"],
+                  ["税率", "tax_rate"],
+                  ["税额", "tax_amount"],
+                  ["不含税金额", "net_amount"]
+                ]}
+              />
+              <Space wrap>
+                <Button disabled={!canApplyInvoice(selected.invoice_status)} onClick={() => {
+                  setApplying(selected);
+                  applyForm.setFieldsValue({
+                    applied_amount: selected.applied_amount ?? selected.planned_amount,
+                    applied_at: fromDateTime(selected.applied_at) ?? fromDateTime(new Date().toISOString()),
+                    application_note: selected.application_note
+                  });
+                }}>
+                  提交申请
+                </Button>
+                <Button disabled={selected.invoice_status !== "applied"} onClick={() => {
+                  setIssuing(selected);
+                  issueForm.setFieldsValue({
+                    tax_rate: selected.tax_rate,
+                    actual_invoice_amount: selected.applied_amount ?? selected.planned_amount,
+                    invoice_date: fromDateTime(selected.invoice_date) ?? fromDateTime(new Date().toISOString())
+                  });
+                }}>
+                  登记发票
+                </Button>
+                <Button disabled={selected.invoice_status !== "invoiced"} onClick={() => {
+                  setSigning(selected);
+                  signForm.setFieldsValue({ signed_at: fromDateTime(selected.signed_at) ?? fromDateTime(new Date().toISOString()) });
+                }}>
+                  确认签收
+                </Button>
+                <Button disabled={selected.invoice_status === "voided"} onClick={() => setExceptioning(selected)}>
+                  登记异常
+                </Button>
+                <Button danger disabled={!canVoidInvoice(selected.invoice_status)} onClick={() => setVoiding(selected)}>
+                  作废发票
+                </Button>
+              </Space>
+            </section>
+            <section className="drawer-section">
+              <Typography.Title level={4}>签收与异常</Typography.Title>
+              <RecordDetails
+                record={selected as unknown as Record<string, unknown>}
+                fields={[
+                  ["签收时间", "signed_at"],
+                  ["签收人", "signed_by_name"],
+                  ["签收备注", "sign_note"],
+                  ["异常类型", "exception_type"],
+                  ["异常原因", "exception_reason"],
+                  ["作废原因", "void_reason"]
+                ]}
+              />
+            </section>
+            <section className="drawer-section">
+              <div className="section-title-row">
+                <Typography.Title level={4}>附件</Typography.Title>
+                <Button icon={<Paperclip size={16} />} onClick={() => attachmentForm.submit()}>添加附件</Button>
+              </div>
+              <Table
+                rowKey="id"
+                size="small"
+                loading={detailLoading}
+                dataSource={attachments}
+                columns={attachmentColumns}
+                pagination={false}
+                locale={{ emptyText: "暂无附件" }}
+              />
+              <Form form={attachmentForm} layout="vertical" className="inline-create-form" onFinish={createAttachment}>
+                <Form.Item name="file_name" label="附件名称" rules={[{ required: true }]}>
+                  <Input />
+                </Form.Item>
+                <Form.Item name="file_url" label="附件地址" rules={[{ required: true }]}>
+                  <Input placeholder="https:// 或 oss:// 地址" />
+                </Form.Item>
+                <Form.Item name="file_type" label="附件类型">
+                  <Select allowClear options={invoiceAttachmentFileTypeOptions()} />
+                </Form.Item>
+                <Form.Item name="file_size" label="文件大小">
+                  <InputNumber min={0} className="full-width" />
+                </Form.Item>
+              </Form>
+            </section>
+            <section className="drawer-section">
+              <Typography.Title level={4}>后续回款/核销</Typography.Title>
+              <p className="muted">当前发票已形成独立对象，后续回款模块将从已开票和已签收状态进入核销。</p>
+            </section>
+          </>
+        )}
+      </Drawer>
+
+      <Modal title="编辑开票计划" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
+        <Form form={editForm} layout="vertical" onFinish={updateInvoice}>
+          <InvoiceFormFields contractOptions={contractOptions} editing />
+          <Button type="primary" htmlType="submit" block>保存修改</Button>
+        </Form>
+      </Modal>
+
+      <Modal title="提交开票申请" open={!!applying} onCancel={() => setApplying(null)} footer={null}>
+        <Form form={applyForm} layout="vertical" onFinish={applyInvoice}>
+          <Form.Item name="applied_amount" label="申请金额" rules={[{ required: true }]}>
+            <InputNumber min={0} className="full-width" />
+          </Form.Item>
+          <Form.Item name="applied_at" label="申请时间">
+            <Input type="datetime-local" />
+          </Form.Item>
+          <Form.Item name="application_note" label="申请备注">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>提交申请</Button>
+        </Form>
+      </Modal>
+
+      <Modal title="登记发票" open={!!issuing} onCancel={() => setIssuing(null)} footer={null}>
+        <Form form={issueForm} layout="vertical" onFinish={issueInvoice}>
+          <Form.Item name="invoice_code" label="发票代码">
+            <Input />
+          </Form.Item>
+          <Form.Item name="invoice_no" label="发票号码" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="invoice_date" label="实际开票日" rules={[{ required: true }]}>
+            <Input type="datetime-local" />
+          </Form.Item>
+          <Form.Item name="tax_rate" label="税率">
+            <InputNumber min={0} max={1} step={0.01} className="full-width" />
+          </Form.Item>
+          <Form.Item name="actual_invoice_amount" label="实际开票金额" rules={[{ required: true }]}>
+            <InputNumber min={0} className="full-width" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>登记发票</Button>
+        </Form>
+      </Modal>
+
+      <Modal title="确认客户签收" open={!!signing} onCancel={() => setSigning(null)} footer={null}>
+        <Form form={signForm} layout="vertical" onFinish={signInvoice}>
+          <Form.Item name="signed_at" label="签收时间">
+            <Input type="datetime-local" />
+          </Form.Item>
+          <Form.Item name="signed_by_name" label="签收人">
+            <Input />
+          </Form.Item>
+          <Form.Item name="sign_note" label="签收备注">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>确认签收</Button>
+        </Form>
+      </Modal>
+
+      <Modal title="登记开票异常" open={!!exceptioning} onCancel={() => setExceptioning(null)} footer={null}>
+        <Form form={exceptionForm} layout="vertical" onFinish={registerException}>
+          <Form.Item name="exception_type" label="异常类型" rules={[{ required: true }]}>
+            <Select options={invoiceExceptionTypeOptions()} />
+          </Form.Item>
+          <Form.Item name="exception_reason" label="异常原因" rules={[{ required: true }]}>
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Form.Item name="exception_resolution" label="处理方案">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>保存异常</Button>
+        </Form>
+      </Modal>
+
+      <Modal title="作废发票" open={!!voiding} onCancel={() => setVoiding(null)} footer={null}>
+        <Form form={voidForm} layout="vertical" onFinish={voidInvoice}>
+          <Form.Item name="void_reason" label="作废原因" rules={[{ required: true }]}>
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Button type="primary" danger htmlType="submit" block>确认作废</Button>
+        </Form>
+      </Modal>
+    </DataWorkspace>
+  );
+}
+
+function InvoiceFormFields({ contractOptions, editing = false }: { contractOptions: SelectOption[]; editing?: boolean }) {
+  return (
+    <>
+      <Form.Item name="contract_id" label="关联合同" rules={editing ? [] : [{ required: true }]}>
+        <Select options={contractOptions} disabled={editing} className="full-width" />
+      </Form.Item>
+      <Form.Item name="plan_name" label="计划名称" rules={editing ? [] : [{ required: true }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item name="invoice_type" label="开票类型" rules={editing ? [] : [{ required: true }]}>
+        <Select options={invoiceTypeOptions()} />
+      </Form.Item>
+      <Form.Item name="planned_invoice_date" label="计划开票日">
+        <Input type="datetime-local" />
+      </Form.Item>
+      <Form.Item name="planned_amount" label="计划金额" rules={editing ? [] : [{ required: true }]}>
+        <InputNumber min={0} className="full-width" />
+      </Form.Item>
+      <Form.Item name="tax_rate" label="税率">
+        <InputNumber min={0} max={1} step={0.01} className="full-width" />
+      </Form.Item>
+      <Form.Item name="owner_user_id" label="负责人">
+        <InputNumber min={1} className="full-width" />
+      </Form.Item>
+      <Form.Item name="invoice_terms_snapshot" label="开票条件快照">
+        <Input.TextArea rows={2} />
+      </Form.Item>
+      <Form.Item name="remark" label="备注">
+        <Input.TextArea rows={2} />
+      </Form.Item>
+    </>
   );
 }
 
@@ -3622,6 +4149,87 @@ function contractRiskTag(risk?: string) {
   return <Tag color={color}>{contractRiskText(risk)}</Tag>;
 }
 
+function invoiceStatusOptions() {
+  return ["planned", "applied", "invoiced", "signed", "exception", "voided"].map((value) => ({
+    label: invoiceStatusText(value),
+    value
+  }));
+}
+
+function invoiceStatusText(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    planned: "计划中",
+    applied: "已申请",
+    invoiced: "已开票",
+    signed: "已签收",
+    exception: "异常",
+    voided: "已作废"
+  };
+  return labels[status] ?? status;
+}
+
+function invoiceStatusTag(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const color =
+    status === "signed" ? "green" : status === "exception" ? "red" : status === "voided" ? "default" : status === "invoiced" ? "purple" : "blue";
+  return <Tag color={color}>{invoiceStatusText(status)}</Tag>;
+}
+
+function invoiceTypeOptions() {
+  return ["vat_special", "vat_normal", "electronic", "other"].map((value) => ({
+    label: invoiceTypeText(value),
+    value
+  }));
+}
+
+function invoiceTypeText(type?: string) {
+  if (!type) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    vat_special: "增值税专票",
+    vat_normal: "增值税普票",
+    electronic: "电子发票",
+    other: "其他"
+  };
+  return labels[type] ?? type;
+}
+
+function invoiceExceptionTypeOptions() {
+  return ["title_error", "tax_no_error", "amount_error", "rejected", "delivery_lost", "other"].map((value) => ({
+    label: invoiceExceptionTypeText(value),
+    value
+  }));
+}
+
+function invoiceExceptionTypeText(type?: string) {
+  if (!type) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    title_error: "抬头错误",
+    tax_no_error: "税号错误",
+    amount_error: "金额错误",
+    rejected: "客户拒收",
+    delivery_lost: "寄送异常",
+    other: "其他"
+  };
+  return labels[type] ?? type;
+}
+
+function canApplyInvoice(status?: string) {
+  return status === "planned" || status === "exception";
+}
+
+function canVoidInvoice(status?: string) {
+  return status === "invoiced" || status === "exception";
+}
+
 function contractChangeTypeText(type?: string) {
   if (!type) {
     return "-";
@@ -3789,6 +4397,27 @@ function contractAttachmentFileTypeText(type?: string) {
     approval_material: "审批材料",
     delivery_material: "交付材料",
     acceptance_material: "验收材料"
+  };
+  return labels[type] ?? type;
+}
+
+function invoiceAttachmentFileTypeOptions() {
+  return ["invoice_scan", "application_form", "sign_receipt", "void_proof", "other"].map((value) => ({
+    label: invoiceAttachmentFileTypeText(value),
+    value
+  }));
+}
+
+function invoiceAttachmentFileTypeText(type?: string) {
+  if (!type) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    invoice_scan: "发票扫描件",
+    application_form: "开票申请单",
+    sign_receipt: "客户签收凭证",
+    void_proof: "作废证明",
+    other: "其他"
   };
   return labels[type] ?? type;
 }
@@ -4007,4 +4636,14 @@ function withoutEmpty(values: Record<string, unknown>, omittedKeys: string[]) {
   return Object.fromEntries(
     Object.entries(values).filter(([key, value]) => !omittedKeys.includes(key) && value !== undefined && value !== "")
   );
+}
+
+function normalizeInvoiceValues(values: Record<string, unknown>, dateKeys: string[]) {
+  const normalized = { ...withoutEmpty(values, []) };
+  dateKeys.forEach((key) => {
+    if (normalized[key]) {
+      normalized[key] = toDateTime(normalized[key]);
+    }
+  });
+  return normalized;
 }

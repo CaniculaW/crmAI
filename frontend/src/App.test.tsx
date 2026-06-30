@@ -23,6 +23,14 @@ const apiData = {
       "contract.update",
       "contract.terminate",
       "contract.milestone.manage",
+      "invoice.read",
+      "invoice.create",
+      "invoice.update",
+      "invoice.apply",
+      "invoice.issue",
+      "invoice.sign",
+      "invoice.exception",
+      "invoice.void",
       "attachment.create",
       "attachment.read",
       "attachment.delete",
@@ -159,6 +167,42 @@ const apiData = {
       milestone_type: "kickoff",
       status: "pending",
       remark: "合同签署后启动"
+    }
+  ],
+  invoices: [
+    {
+      id: 401,
+      account_id: 1,
+      opportunity_id: 10,
+      contract_id: 301,
+      plan_name: "V2 UAT 首期开票",
+      invoice_status: "applied",
+      invoice_type: "vat_special",
+      planned_invoice_date: "2026-07-15T10:00:00+08:00",
+      planned_amount: 360000,
+      applied_amount: 360000,
+      applied_at: "2026-06-30T10:00:00+08:00",
+      application_note: "按首付款节点申请开票",
+      tax_rate: 0.13,
+      net_amount: 318584.07,
+      tax_amount: 41415.93,
+      owner_user_id: 1001,
+      contract_amount: 1200000,
+      effective_invoiced_amount: 0,
+      remaining_invoice_amount: 1200000,
+      remark: "首期计划"
+    }
+  ],
+  invoiceAttachments: [
+    {
+      id: 801,
+      object_type: "invoice",
+      object_id: 401,
+      file_name: "发票扫描件.pdf",
+      file_url: "oss://crm/invoice/401/scan.pdf",
+      file_type: "invoice_scan",
+      file_size: 16384,
+      mime_type: "application/pdf"
     }
   ],
   activities: [
@@ -557,6 +601,41 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("button", { name: "新增节点" })).toBeInTheDocument();
   });
 
+  it("renders the invoice module and loads the V2 invoice list", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "开票管理" }));
+
+    expect(await screen.findByRole("heading", { name: "开票管理" })).toBeInTheDocument();
+    expect(screen.getByText("V2 UAT 首期开票")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "新建计划" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/invoices"), expect.anything());
+    });
+  });
+
+  it("opens the invoice detail drawer with amount summary and attachments", async () => {
+    mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "开票管理" }));
+    await screen.findByRole("button", { name: "V2 UAT 首期开票" });
+    await user.click(screen.getByRole("button", { name: "V2 UAT 首期开票" }));
+
+    expect(await screen.findByText("开票详情")).toBeInTheDocument();
+    expect(screen.getByText("合同额度")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "提交申请" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "登记发票" })).toBeInTheDocument();
+    expect(screen.getByText("发票扫描件.pdf")).toBeInTheDocument();
+  });
+
   it("shows the sales activity execution entry from the activity list", async () => {
     const user = userEvent.setup();
     mockCrmFetch();
@@ -935,7 +1014,31 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     if (path.endsWith("/api/contracts")) {
       return jsonResponse({ code: "OK", data: data.contracts });
     }
+    if (path.endsWith("/api/invoices/401")) {
+      return jsonResponse({ code: "OK", data: data.invoices[0] });
+    }
+    if (path.endsWith("/api/invoices/401/apply") && method === "POST") {
+      return jsonResponse({ code: "OK", data: { ...data.invoices[0], invoice_status: "applied" } });
+    }
+    if (path.endsWith("/api/invoices/401/issue") && method === "POST") {
+      return jsonResponse({ code: "OK", data: { ...data.invoices[0], invoice_status: "invoiced" } });
+    }
+    if (path.endsWith("/api/invoices/401/sign") && method === "POST") {
+      return jsonResponse({ code: "OK", data: { ...data.invoices[0], invoice_status: "signed" } });
+    }
+    if (path.endsWith("/api/invoices/401/exception") && method === "POST") {
+      return jsonResponse({ code: "OK", data: { ...data.invoices[0], invoice_status: "exception" } });
+    }
+    if (path.endsWith("/api/invoices/401/void") && method === "POST") {
+      return jsonResponse({ code: "OK", data: { ...data.invoices[0], invoice_status: "voided" } });
+    }
+    if (path.endsWith("/api/invoices")) {
+      return jsonResponse({ code: "OK", data: data.invoices });
+    }
     if (path.includes("/api/attachments")) {
+      if (url.includes("object_type=invoice")) {
+        return jsonResponse({ code: "OK", data: data.invoiceAttachments });
+      }
       return jsonResponse({ code: "OK", data: [] });
     }
     if (path.endsWith("/api/activities")) {

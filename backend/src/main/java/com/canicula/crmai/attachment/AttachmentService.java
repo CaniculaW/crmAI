@@ -6,6 +6,7 @@ import com.canicula.crmai.api.BusinessRuleException;
 import com.canicula.crmai.auth.ForbiddenException;
 import com.canicula.crmai.contact.ContactService;
 import com.canicula.crmai.contract.ContractService;
+import com.canicula.crmai.invoice.InvoiceService;
 import com.canicula.crmai.opportunity.OpportunityService;
 import com.canicula.crmai.solution.SolutionDocumentService;
 import java.sql.PreparedStatement;
@@ -30,6 +31,7 @@ public class AttachmentService {
     private final ActivityService activityService;
     private final SolutionDocumentService solutionDocumentService;
     private final ContractService contractService;
+    private final InvoiceService invoiceService;
 
     AttachmentService(
             JdbcTemplate jdbcTemplate,
@@ -38,7 +40,8 @@ public class AttachmentService {
             OpportunityService opportunityService,
             ActivityService activityService,
             SolutionDocumentService solutionDocumentService,
-            ContractService contractService) {
+            ContractService contractService,
+            InvoiceService invoiceService) {
         this.jdbcTemplate = jdbcTemplate;
         this.accountService = accountService;
         this.contactService = contactService;
@@ -46,6 +49,7 @@ public class AttachmentService {
         this.activityService = activityService;
         this.solutionDocumentService = solutionDocumentService;
         this.contractService = contractService;
+        this.invoiceService = invoiceService;
     }
 
     @Transactional
@@ -168,6 +172,7 @@ public class AttachmentService {
                 case "activity" -> activityService.readableDetail(objectId, actorUserId);
                 case "solution_document" -> solutionDocumentService.readableDetail(objectId, actorUserId);
                 case "contract" -> contractService.readableDetail(objectId, actorUserId);
+                case "invoice" -> invoiceService.readableDetail(objectId, actorUserId);
                 default -> throw new BusinessRuleException("不支持的附件对象类型");
             }
         } catch (IllegalArgumentException exception) {
