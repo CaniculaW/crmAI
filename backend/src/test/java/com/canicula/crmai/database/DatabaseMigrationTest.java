@@ -210,9 +210,33 @@ class DatabaseMigrationTest {
                 )
                 """,
                 Integer.class);
+        Integer reconciliationTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name = 'crm_reconciliations'
+                """,
+                Integer.class);
+        Integer invoiceReconciledColumnCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.columns
+                where table_name = 'crm_invoices'
+                  and column_name = 'reconciled_amount'
+                """,
+                Integer.class);
+        Integer reconciliationPermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'reconciliation.read', 'reconciliation.create', 'reconciliation.void'
+                )
+                """,
+                Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(18);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(19);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -238,5 +262,8 @@ class DatabaseMigrationTest {
         assertThat(paymentTableCount).isEqualTo(1);
         assertThat(followUpTableCount).isEqualTo(1);
         assertThat(receivablePermissionCount).isEqualTo(11);
+        assertThat(reconciliationTableCount).isEqualTo(1);
+        assertThat(invoiceReconciledColumnCount).isEqualTo(1);
+        assertThat(reconciliationPermissionCount).isEqualTo(3);
     }
 }

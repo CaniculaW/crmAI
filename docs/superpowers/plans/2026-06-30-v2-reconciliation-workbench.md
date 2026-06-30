@@ -38,12 +38,12 @@
 
 | 顺序 | 事项 | 状态 | 完成标准 |
 |---:|---|---|---|
-| 1 | 数据模型与权限 TDD | Pending | V19 adds invoice reconciled amount, reconciliation table, permissions; H2/Postgres migration tests pass |
-| 2 | 核销 API TDD | Pending | Workbench/list/detail/create/void APIs pass amount, status, contract and permission rules |
-| 3 | 金额口径联动 TDD | Pending | Creating/voiding reconciliation updates invoice/payment amounts and payment status correctly |
-| 4 | 前端 API 与核销工作台 | Pending | `/reconciliations` menu/page/form/detail actions covered by Vitest |
-| 5 | OpenAPI 与接口清单 | Pending | OpenAPI coverage and API list include reconciliation endpoints |
-| 6 | 自动化验证、UAT、记录提交 | Pending | Backend targeted tests, Postgres migration, frontend tests/build, browser UAT pass; module record updated |
+| 1 | 数据模型与权限 TDD | Done | V19 adds invoice reconciled amount, reconciliation table, permissions; H2/Postgres migration tests pass |
+| 2 | 核销 API TDD | Done | Workbench/list/detail/create/void APIs pass amount, status, contract and permission rules |
+| 3 | 金额口径联动 TDD | Done | Creating/voiding reconciliation updates invoice/payment amounts and payment status correctly |
+| 4 | 前端 API 与核销工作台 | Done | `/reconciliations` menu/page/form/detail actions covered by Vitest |
+| 5 | OpenAPI 与接口清单 | Done | OpenAPI coverage and API list include reconciliation endpoints |
+| 6 | 自动化验证、UAT、记录提交 | Done | Backend targeted tests, Postgres migration, frontend tests/build, browser UAT pass; module record updated |
 
 ## Task 1: Data Model And Permissions
 

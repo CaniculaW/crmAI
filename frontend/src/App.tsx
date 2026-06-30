@@ -49,6 +49,8 @@ import {
   type Invoice,
   type Opportunity,
   type Payment,
+  type Reconciliation,
+  type ReconciliationWorkbench,
   type ReceivableFollowUp,
   type ReceivablePlan,
   type Reminder,
@@ -91,6 +93,7 @@ const navItems: NavItem[] = [
   { key: "/contracts", label: "合同", icon: <FileSignature size={18} />, permission: "contract.read" },
   { key: "/invoices", label: "开票管理", icon: <ReceiptText size={18} />, permission: "invoice.read" },
   { key: "/receivables", label: "回款管理", icon: <CircleDollarSign size={18} />, permission: "receivable.read" },
+  { key: "/reconciliations", label: "核销工作台", icon: <ReceiptText size={18} />, permission: "reconciliation.read" },
   { key: "/activities", label: "销售行动", icon: <CalendarCheck size={18} />, permission: "activity.read" },
   { key: "/weekly-progress", label: "周进展", icon: <BarChart3 size={18} />, permission: "weekly_progress.read" },
   {
@@ -264,6 +267,7 @@ function CrmShell() {
             <Route path="/contracts" element={<ContractsPage currentUser={user} />} />
             <Route path="/invoices" element={<InvoicesPage currentUser={user} />} />
             <Route path="/receivables" element={<ReceivablesPage currentUser={user} />} />
+            <Route path="/reconciliations" element={<ReconciliationWorkbenchPage />} />
             <Route path="/activities" element={<ActivitiesPage currentUser={user} />} />
             <Route path="/weekly-progress" element={<WeeklyProgressPage />} />
             <Route path="/system" element={<SystemPage section="overview" />} />
@@ -2795,6 +2799,268 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
   );
 }
 
+function ReconciliationWorkbenchPage() {
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const [workbench, setWorkbench] = useState<ReconciliationWorkbench>(() => emptyReconciliationWorkbench());
+  const [loadingWorkbench, setLoadingWorkbench] = useState(false);
+  const [workbenchError, setWorkbenchError] = useState("");
+  const accounts = useResource(crmApi.accounts.list, []);
+  const contracts = useResource(crmApi.contracts.list, []);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
+  const [voiding, setVoiding] = useState<Reconciliation | null>(null);
+  const [form] = Form.useForm();
+  const [voidForm] = Form.useForm();
+  const data = workbench;
+  const accountOptions = toAccountOptions(accounts.data);
+  const contractOptions = contracts.data.map((contract) => ({ label: contract.contract_name, value: contract.id }));
+  const accountById = useMemo(() => new Map(accounts.data.map((account) => [account.id, account])), [accounts.data]);
+  const contractById = useMemo(() => new Map(contracts.data.map((contract) => [contract.id, contract])), [contracts.data]);
+  const selectedInvoice = data.pending_invoices.find((invoice) => invoice.id === selectedInvoiceId);
+  const selectedPayment = data.pending_payments.find((payment) => payment.id === selectedPaymentId);
+
+  const refreshWorkbench = useCallback(async () => {
+    setLoadingWorkbench(true);
+    setWorkbenchError("");
+    try {
+      setWorkbench(await crmApi.reconciliations.workbench(filters));
+    } catch (loadError) {
+      setWorkbenchError(loadError instanceof Error ? loadError.message : "加载失败");
+    } finally {
+      setLoadingWorkbench(false);
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    void refreshWorkbench();
+  }, [refreshWorkbench]);
+
+  useEffect(() => {
+    if (selectedInvoiceId && !data.pending_invoices.some((invoice) => invoice.id === selectedInvoiceId)) {
+      setSelectedInvoiceId(null);
+    }
+    if (selectedPaymentId && !data.pending_payments.some((payment) => payment.id === selectedPaymentId)) {
+      setSelectedPaymentId(null);
+    }
+  }, [data.pending_invoices, data.pending_payments, selectedInvoiceId, selectedPaymentId]);
+
+  useEffect(() => {
+    if (!selectedInvoice || !selectedPayment) {
+      return;
+    }
+    const amount = Math.min(Number(selectedInvoice.unreconciled_amount ?? 0), Number(selectedPayment.unreconciled_amount ?? 0));
+    if (amount > 0) {
+      form.setFieldsValue({ reconciled_amount: amount });
+    }
+  }, [form, selectedInvoice, selectedPayment]);
+
+  const invoiceColumns: ColumnsType<ReconciliationWorkbench["pending_invoices"][number]> = [
+    {
+      title: "选择",
+      width: 72,
+      render: (_, record) => (
+        <input
+          type="radio"
+          name="selected_invoice"
+          aria-label={`选择发票 ${record.plan_name}`}
+          checked={selectedInvoiceId === record.id}
+          onChange={() => setSelectedInvoiceId(record.id)}
+        />
+      )
+    },
+    { title: "开票计划", dataIndex: "plan_name" },
+    { title: "合同", dataIndex: "contract_id", render: (value) => contractById.get(Number(value))?.contract_name ?? `合同 ${value}` },
+    { title: "状态", dataIndex: "invoice_status", render: invoiceStatusTag },
+    { title: "发票号", dataIndex: "invoice_no", render: textOrDash },
+    { title: "实际开票", dataIndex: "actual_invoice_amount", render: moneyText },
+    { title: "未核销", dataIndex: "unreconciled_amount", render: moneyText }
+  ];
+
+  const paymentColumns: ColumnsType<ReconciliationWorkbench["pending_payments"][number]> = [
+    {
+      title: "选择",
+      width: 72,
+      render: (_, record) => (
+        <input
+          type="radio"
+          name="selected_payment"
+          aria-label={`选择回款 ${record.payment_name}`}
+          checked={selectedPaymentId === record.id}
+          onChange={() => setSelectedPaymentId(record.id)}
+        />
+      )
+    },
+    { title: "到账流水", dataIndex: "payment_name" },
+    { title: "合同", dataIndex: "contract_id", render: (value) => contractById.get(Number(value))?.contract_name ?? `合同 ${value}` },
+    { title: "状态", dataIndex: "payment_status", render: paymentStatusTag },
+    { title: "到账时间", dataIndex: "received_at", render: dateText },
+    { title: "确认金额", dataIndex: "confirmed_amount", render: moneyText },
+    { title: "未核销", dataIndex: "unreconciled_amount", render: moneyText }
+  ];
+
+  const reconciliationColumns: ColumnsType<Reconciliation> = [
+    { title: "核销编号", dataIndex: "reconciliation_no" },
+    { title: "状态", dataIndex: "reconciliation_status", render: reconciliationStatusTag },
+    { title: "发票号", dataIndex: "invoice_no", render: textOrDash },
+    { title: "到账流水", dataIndex: "payment_name", render: textOrDash },
+    { title: "核销金额", dataIndex: "reconciled_amount", render: moneyText },
+    { title: "核销时间", dataIndex: "reconciled_at", render: dateText },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Button size="small" danger disabled={record.reconciliation_status === "voided"} onClick={() => setVoiding(record)}>
+          撤销
+        </Button>
+      )
+    }
+  ];
+
+  const createReconciliation = async (values: Record<string, unknown>) => {
+    if (!selectedInvoice || !selectedPayment) {
+      return;
+    }
+    await crmApi.reconciliations.create({
+      invoice_id: selectedInvoice.id,
+      payment_id: selectedPayment.id,
+      reconciled_amount: values.reconciled_amount,
+      reconciled_at: new Date().toISOString(),
+      reconcile_note: values.reconcile_note
+    });
+    form.resetFields();
+    setSelectedInvoiceId(null);
+    setSelectedPaymentId(null);
+    await refreshWorkbench();
+  };
+
+  const voidReconciliation = async (values: Record<string, unknown>) => {
+    if (!voiding) {
+      return;
+    }
+    await crmApi.reconciliations.void(voiding.id, withoutEmpty(values, []));
+    setVoiding(null);
+    voidForm.resetFields();
+    await refreshWorkbench();
+  };
+
+  return (
+    <DataWorkspace
+      title="核销工作台"
+      description="将已开票或已签收发票与已确认到账流水进行匹配，形成可追溯的核销记录。"
+      guide="先按客户或合同筛选待核销发票和待分配回款；选择两侧记录后确认本次核销金额，系统同步更新发票和到账流水剩余金额。"
+      loading={loadingWorkbench}
+      error={workbenchError}
+      refresh={refreshWorkbench}
+    >
+      <FilterBar
+        initialValues={filters}
+        onSearch={(values) => setFilters(withoutEmpty(values, []))}
+        onReset={() => setFilters({})}
+      >
+        <Form.Item name="keyword" label="关键词">
+          <Input allowClear placeholder="发票号/计划/流水" />
+        </Form.Item>
+        <Form.Item name="account_id" label="客户">
+          <Select allowClear options={accountOptions} loading={accounts.loading} className="filter-select" />
+        </Form.Item>
+        <Form.Item name="contract_id" label="合同">
+          <Select allowClear options={contractOptions} loading={contracts.loading} className="filter-select" />
+        </Form.Item>
+      </FilterBar>
+
+      <div className="summary-grid">
+        <article className="summary-panel">
+          <span>待核销发票金额</span>
+          <strong>{currencyText(data.summary.unreconciled_invoice_amount)}</strong>
+        </article>
+        <article className="summary-panel">
+          <span>待分配回款金额</span>
+          <strong>{currencyText(data.summary.unallocated_payment_amount)}</strong>
+        </article>
+        <article className="summary-panel">
+          <span>本页发票总额</span>
+          <strong>{currencyText(data.summary.invoice_amount)}</strong>
+        </article>
+        <article className="summary-panel">
+          <span>本页已核销</span>
+          <strong>{currencyText(data.summary.reconciled_amount)}</strong>
+        </article>
+      </div>
+
+      <div className="reconciliation-workbench-grid">
+        <section className="drawer-section">
+          <Typography.Title level={4}>待核销发票</Typography.Title>
+          <Table
+            rowKey="id"
+            size="small"
+            dataSource={data.pending_invoices}
+            columns={invoiceColumns}
+            pagination={{ pageSize: 5 }}
+            locale={{ emptyText: "暂无待核销发票" }}
+          />
+        </section>
+        <section className="drawer-section">
+          <Typography.Title level={4}>待分配回款</Typography.Title>
+          <Table
+            rowKey="id"
+            size="small"
+            dataSource={data.pending_payments}
+            columns={paymentColumns}
+            pagination={{ pageSize: 5 }}
+            locale={{ emptyText: "暂无待分配回款" }}
+          />
+        </section>
+      </div>
+
+      <section className="drawer-section">
+        <div className="section-title-row">
+          <Typography.Title level={4}>核销确认</Typography.Title>
+          <Tag color={selectedInvoice && selectedPayment ? "blue" : "default"}>
+            {selectedInvoice && selectedPayment ? "已选择发票与回款" : "请选择发票和回款"}
+          </Tag>
+        </div>
+        <div className="opportunity-summary-grid">
+          <OpportunitySummaryItem label="发票" value={selectedInvoice?.plan_name ?? "-"} />
+          <OpportunitySummaryItem label="发票未核销" value={currencyText(selectedInvoice?.unreconciled_amount)} />
+          <OpportunitySummaryItem label="回款" value={selectedPayment?.payment_name ?? "-"} />
+          <OpportunitySummaryItem label="回款未核销" value={currencyText(selectedPayment?.unreconciled_amount)} />
+        </div>
+        <Form form={form} layout="vertical" className="inline-create-form" onFinish={createReconciliation}>
+          <Form.Item name="reconciled_amount" label="本次核销金额" rules={[{ required: true }]}>
+            <InputNumber min={0.01} className="full-width" />
+          </Form.Item>
+          <Form.Item name="reconcile_note" label="核销备注">
+            <Input.TextArea rows={2} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" disabled={!selectedInvoice || !selectedPayment}>
+            确认核销
+          </Button>
+        </Form>
+      </section>
+
+      <section className="drawer-section">
+        <Typography.Title level={4}>最近核销记录</Typography.Title>
+        <Table
+          rowKey="id"
+          size="small"
+          dataSource={data.recent_reconciliations}
+          columns={reconciliationColumns}
+          pagination={{ pageSize: 6 }}
+          locale={{ emptyText: "暂无核销记录" }}
+        />
+      </section>
+
+      <Modal title="撤销核销" open={!!voiding} onCancel={() => setVoiding(null)} footer={null}>
+        <Form form={voidForm} layout="vertical" onFinish={voidReconciliation}>
+          <Form.Item name="void_reason" label="撤销原因" rules={[{ required: true }]}>
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Button type="primary" danger htmlType="submit" block>确认撤销</Button>
+        </Form>
+      </Modal>
+    </DataWorkspace>
+  );
+}
+
 function ReceivablePlanFormFields({ contractOptions }: { contractOptions: SelectOption[] }) {
   return (
     <>
@@ -4940,6 +5206,39 @@ function paymentStatusTag(status?: string) {
   }
   const color = status === "confirmed" || status === "reconciled" ? "green" : status === "exception" ? "red" : status === "refunded" ? "default" : "blue";
   return <Tag color={color}>{paymentStatusText(status)}</Tag>;
+}
+
+function reconciliationStatusText(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    active: "有效",
+    voided: "已撤销"
+  };
+  return labels[status] ?? status;
+}
+
+function reconciliationStatusTag(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  return <Tag color={status === "active" ? "green" : "default"}>{reconciliationStatusText(status)}</Tag>;
+}
+
+function emptyReconciliationWorkbench(): ReconciliationWorkbench {
+  return {
+    summary: {
+      invoice_amount: 0,
+      payment_amount: 0,
+      reconciled_amount: 0,
+      unreconciled_invoice_amount: 0,
+      unallocated_payment_amount: 0
+    },
+    pending_invoices: [],
+    pending_payments: [],
+    recent_reconciliations: []
+  };
 }
 
 function paymentMethodOptions() {

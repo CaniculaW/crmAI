@@ -69,8 +69,8 @@ V2 当前进度：
 | 3 | Done | 合同管理链路 | 合同列表、详情、新建/编辑、状态流转、变更、节点、附件占位 | 把成交商机转成合同资产，并形成开票/回款计划来源 | 已完成实现、验证与提交 |
 | 4 | Done | 开票管理链路 | 开票计划、开票申请、发票登记、异常、签收、作废 | 管理合同下应该开多少、何时开、实际开了多少、异常是什么 | 已完成实现、验证与浏览器 UAT |
 | 5 | Done | 回款管理链路 | 回款计划、回款流水、到账确认、逾期、回款跟进 | 管理合同应收、实收、逾期和回款责任 | 已完成实现、验证与浏览器 UAT |
-| 6 | Current | 发票回款核销链路 | 核销工作台、待核销发票、待分配回款、核销明细、撤销核销 | 支持一笔回款核销多张发票、一张发票被多笔回款分次核销 | 核销金额校验正确；发票/回款/合同金额同步；撤销核销有原因和审计 |
-| 7 | Pending | 客户/商机 V2 入口联动 | 客户详情、商机详情、工作台快捷入口、菜单权限 | 把 V2 能力嵌回 V1 主业务对象，而不是孤立模块 | 客户/商机可看到方案、合同、开票、回款摘要和跳转 |
+| 6 | Done | 发票回款核销链路 | 核销工作台、待核销发票、待分配回款、核销明细、撤销核销 | 支持一笔回款核销多张发票、一张发票被多笔回款分次核销 | 已完成实现、验证与浏览器 UAT |
+| 7 | Current | 客户/商机 V2 入口联动 | 客户详情、商机详情、工作台快捷入口、菜单权限 | 把 V2 能力嵌回 V1 主业务对象，而不是孤立模块 | 客户/商机可看到方案、合同、开票、回款摘要和跳转 |
 | 8 | Pending | V2 系统配置与权限审计 | 字典、权限点、角色授权、审计日志、数据权限补齐 | 保证销售、商务、财务、管理层看到不同入口和动作 | V2 权限点完整；关键金额/状态/核销动作有审计 |
 | 9 | Pending | V2 全链路回归与 UAT | 商机成交 -> 方案/标书 -> 合同 -> 开票 -> 回款 -> 核销 | 验证 V2 销售到财务闭环可跑通 | 前后端测试、构建、浏览器 Smoke、UAT 证据通过 |
 
@@ -101,7 +101,9 @@ V2 当前进度：
 - [x] Step 13：完成模块 5 OpenAPI 与接口清单。
 - [x] Step 14：完成模块 5 自动化验证、浏览器 UAT 和提交准备。
 - [x] Step 15：启动模块 6 发票回款核销链路，输出页面逻辑、数据模型、API 和实施计划。
-- [ ] Step 16：按实施计划进入后端数据模型、核销工作台 API 和金额联动实现。
+- [x] Step 16：完成后端数据模型、核销工作台 API、金额联动和前端核销工作台。
+- [x] Step 17：补齐 OpenAPI/API 清单、浏览器 UAT 证据和提交记录。
+- [ ] Step 18：启动模块 7 客户/商机 V2 入口联动设计与实施计划。
 
 当前模块不做：
 
@@ -120,7 +122,7 @@ V2 当前进度：
 - 合同管理链路已完成实现、自动化验证和浏览器 UAT。
 - 模块 4 开票管理设计说明已完成。
 - 模块 5 回款管理链路已完成实现、自动化验证和浏览器 UAT。
-- 模块 6 设计说明和 TDD 实施计划已完成，下一步进入后端数据模型与核销 API 实现。
+- 模块 6 已完成 V19 数据模型、核销 API、金额联动、前端核销工作台、OpenAPI/API 清单和浏览器 UAT；下一步启动模块 7 客户/商机 V2 入口联动。
 
 ## 4. 模块完成记录
 
@@ -131,8 +133,8 @@ V2 当前进度：
 | 合同管理链路 | Done | 2026-06-29 | 本次提交 | `mvn test`；`mvn -Dtest=OpenApiContractCoverageTest test`；`npm test`；`npm run build` | 127.0.0.1:5175 `/contracts` 已通过列表、详情、变更记录、节点、附件下载/删除入口验证；浏览器控制台无 error | 开票/回款/核销入口占位保留到后续模块 |
 | 开票管理链路 | Done | 2026-06-30 | 本次提交 | `mvn -Dtest=DatabaseMigrationTest,InvoiceControllerTest,AttachmentControllerTest,OpenApiContractCoverageTest test`；`mvn -Dtest=PostgresMigrationIT test`；`npm test -- --run`；`npm run build` | 127.0.0.1:5175 `/invoices` 已通过登录、列表、详情、合同额度、附件、状态动作入口验证；浏览器控制台无 error | 回款/核销联动保留到模块 5/6 |
 | 回款管理链路 | Done | 2026-06-30 | 本次提交 | `mvn -Dtest=DatabaseMigrationTest,ReceivablePlanControllerTest,PaymentControllerTest,AttachmentControllerTest,OpenApiContractCoverageTest test`；`mvn -Dtest=PostgresMigrationIT test`；`npm test -- --run`；`npm run build` | 127.0.0.1:5175 `/receivables` 已通过登录、列表、详情、到账流水、状态动作、跟进、附件下载/删除入口验证；浏览器控制台无 error | 发票与回款多对多核销保留到模块 6 |
-| 发票回款核销链路 | Current | - | - | - | - | 设计说明与TDD实施计划已完成，进入后端数据模型与API实现 |
-| 客户/商机 V2 入口联动 | Pending | - | - | - | - | - |
+| 发票回款核销链路 | Done | 2026-06-30 | 本次提交 | `mvn -Dtest=DatabaseMigrationTest,ReconciliationControllerTest test`；`mvn -Dtest=OpenApiContractCoverageTest test`；`npm test`；`npm run build` | 127.0.0.1:5175 `/reconciliations` 已通过登录态、待核销发票、待分配回款、新增核销、最近核销记录验证；浏览器控制台无 error；证据截图：`docs/testing/evidence/artifacts/v2-reconciliation-workbench-visible-uat-20260630.png` | 自动匹配、银行流水导入、ERP/总账回写保留到后续版本 |
+| 客户/商机 V2 入口联动 | Current | - | - | - | - | - |
 | V2 系统配置与权限审计 | Pending | - | - | - | - | - |
 | V2 全链路回归与 UAT | Pending | - | - | - | - | - |
 
@@ -141,11 +143,11 @@ V2 当前进度：
 ```text
 V2 当前进度：
 - 总模块：9
-- 已完成：5
-- 当前模块：6. 发票回款核销链路
-- 当前步骤：Step 16. 按实施计划进入后端数据模型与 API 实现
-- 当前 TODO：执行 `docs/superpowers/plans/2026-06-30-v2-reconciliation-workbench.md` 的 Task 1-2
-- 完成标准：V19 迁移、核销工作台 API、新增核销、撤销核销和金额联动通过后端定向验证
+- 已完成：6
+- 当前模块：7. 客户/商机 V2 入口联动
+- 当前步骤：Step 18. 启动模块 7 客户/商机 V2 入口联动设计与实施计划
+- 当前 TODO：梳理客户详情、商机详情、工作台快捷入口与 V2 摘要跳转范围
+- 完成标准：输出模块 7 页面逻辑、数据/API 边界、TDD 实施计划
 ```
 
 ## 6. V2 总体页面逻辑与导航方案

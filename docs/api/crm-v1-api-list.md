@@ -443,7 +443,31 @@ OpenAPI契约文件：`docs/openapi/crm-v1-openapi.yaml`。当前已建立 `Open
 
 当前 V2 回款管理基线已落地：`crm_receivable_plans` 从合同继承客户和商机，支持回款计划、终止和跟进记录；`crm_payments` 支持到账登记、确认、异常和退款。回款计划详情返回合同金额、有效开票金额、确认到账金额、未收金额和未核销金额。附件沿用通用附件 API，使用 `object_type=receivable_plan` 和 `object_type=payment`。
 
-## 13. 附件与提醒API
+## 13. 发票回款核销API
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| GET | /api/reconciliations/workbench | 查询核销工作台汇总、待核销发票、待分配回款和最近核销 | reconciliation.read + 关联合同数据权限 |
+| GET | /api/reconciliations | 查询核销明细列表 | reconciliation.read + 关联合同数据权限 |
+| GET | /api/reconciliations/{id} | 查看核销明细详情 | reconciliation.read + 关联合同数据权限 |
+| POST | /api/reconciliations | 新增发票回款核销 | reconciliation.create + 关联合同数据权限 |
+| POST | /api/reconciliations/{id}/void | 撤销核销 | reconciliation.void + 关联合同数据权限 |
+
+过滤参数：
+
+- `keyword`
+- `account_id`
+- `opportunity_id`
+- `contract_id`
+- `invoice_id`
+- `payment_id`
+- `reconciliation_status`
+- `active_only`
+- `pending_only`
+
+当前 V2 核销管理基线已落地：`crm_reconciliations` 关联客户、商机、合同、发票和到账流水；新增核销会同步增加发票与回款的已核销金额，撤销核销会反向恢复金额并记录撤销原因。核销工作台返回待核销发票、待分配回款、汇总金额和最近核销记录；所有操作通过关联合同继承数据权限，并记录 `reconciliation.create`、`reconciliation.void` 审计。
+
+## 14. 附件与提醒API
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
@@ -457,7 +481,7 @@ OpenAPI契约文件：`docs/openapi/crm-v1-openapi.yaml`。当前已建立 `Open
 
 当前提醒基线已落地：`crm_reminders` 支持销售行动下次跟进自动生成 `activity/follow_up` 提醒；`GET /api/reminders` 返回当前用户待办，支持 `status`、`overdue`、`object_type`、`object_id` 筛选，逾期待办在响应中标识为 `overdue`；`PATCH /api/reminders/{id}` 支持将本人提醒更新为 `completed` 或 `cancelled` 并记录 `reminder.update` 审计；完成销售行动会自动完成该行动待处理跟进提醒。真实文件上传链路、下载审计和提醒通知方式待后续确认。
 
-## 14. 待确认项
+## 15. 待确认项
 
 - 登录态采用JWT、服务端Session还是企业统一认证。
 - 列表 `page_size` 最大值。

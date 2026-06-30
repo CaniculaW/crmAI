@@ -1533,6 +1533,147 @@ paths:
       responses:
         '200':
           description: Payment detail.
+  /api/reconciliations/workbench:
+    get:
+      tags: [Reconciliations]
+      summary: Load invoice-payment reconciliation workbench
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: pending_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Workbench summary, pending invoices, pending payments, and recent reconciliations.
+  /api/reconciliations:
+    get:
+      tags: [Reconciliations]
+      summary: List reconciliation records
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: invoice_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: payment_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: reconciliation_status
+          in: query
+          schema:
+            type: string
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Reconciliation record list.
+    post:
+      tags: [Reconciliations]
+      summary: Create reconciliation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invoice_id, payment_id, reconciled_amount]
+              properties:
+                invoice_id:
+                  type: integer
+                  format: int64
+                payment_id:
+                  type: integer
+                  format: int64
+                reconciled_amount:
+                  type: number
+                reconciled_at:
+                  type: string
+                  format: date-time
+                reconcile_note:
+                  type: string
+      responses:
+        '200':
+          description: Reconciliation detail.
+  /api/reconciliations/{reconciliationId}:
+    get:
+      tags: [Reconciliations]
+      summary: Get reconciliation detail
+      parameters:
+        - name: reconciliationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Reconciliation detail.
+  /api/reconciliations/{reconciliationId}/void:
+    post:
+      tags: [Reconciliations]
+      summary: Void reconciliation
+      parameters:
+        - name: reconciliationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [void_reason]
+              properties:
+                void_reason:
+                  type: string
+      responses:
+        '200':
+          description: Reconciliation detail.
   /api/attachments:
     get:
       tags: [Attachments]

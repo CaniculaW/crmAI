@@ -281,6 +281,69 @@ export type Payment = {
   updated_at?: string;
 };
 
+export type Reconciliation = {
+  id: number;
+  account_id: number;
+  opportunity_id?: number;
+  contract_id: number;
+  invoice_id: number;
+  payment_id: number;
+  invoice_no?: string;
+  payment_name?: string;
+  reconciliation_no: string;
+  reconciliation_status: string;
+  reconciled_amount: number;
+  reconciled_at?: string;
+  reconciled_by?: number;
+  reconcile_note?: string;
+  void_reason?: string;
+  voided_at?: string;
+  voided_by?: number;
+  invoice_actual_amount?: number;
+  invoice_reconciled_amount?: number;
+  invoice_unreconciled_amount?: number;
+  payment_confirmed_amount?: number;
+  payment_reconciled_amount?: number;
+  payment_unreconciled_amount?: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ReconciliationWorkbench = {
+  summary: {
+    invoice_amount: number;
+    payment_amount: number;
+    reconciled_amount: number;
+    unreconciled_invoice_amount: number;
+    unallocated_payment_amount: number;
+  };
+  pending_invoices: Array<{
+    id: number;
+    account_id: number;
+    opportunity_id?: number;
+    contract_id: number;
+    plan_name: string;
+    invoice_no?: string;
+    invoice_status: string;
+    actual_invoice_amount?: number;
+    reconciled_amount?: number;
+    unreconciled_amount?: number;
+  }>;
+  pending_payments: Array<{
+    id: number;
+    account_id: number;
+    opportunity_id?: number;
+    contract_id: number;
+    payment_name: string;
+    payment_status: string;
+    received_at?: string;
+    confirmed_amount?: number;
+    reconciled_amount?: number;
+    unreconciled_amount?: number;
+  }>;
+  recent_reconciliations: Reconciliation[];
+};
+
 export type Activity = {
   id: number;
   account_id: number;
@@ -567,6 +630,14 @@ export const crmApi = {
       requestJson<Payment>(`/api/payments/${id}/exception`, { method: "POST", body: JSON.stringify(body) }),
     refund: (id: number, body: Record<string, unknown>) =>
       requestJson<Payment>(`/api/payments/${id}/refund`, { method: "POST", body: JSON.stringify(body) })
+  },
+  reconciliations: {
+    workbench: (query?: QueryParams) => requestJson<ReconciliationWorkbench>(withQuery("/api/reconciliations/workbench", query)),
+    list: (query?: QueryParams) => requestJson<Reconciliation[]>(withQuery("/api/reconciliations", query)),
+    create: (body: Record<string, unknown>) =>
+      requestJson<Reconciliation>("/api/reconciliations", { method: "POST", body: JSON.stringify(body) }),
+    void: (id: number, body: Record<string, unknown>) =>
+      requestJson<Reconciliation>(`/api/reconciliations/${id}/void`, { method: "POST", body: JSON.stringify(body) })
   },
   activities: {
     list: (query?: QueryParams) => requestJson<Activity[]>(withQuery("/api/activities", query)),

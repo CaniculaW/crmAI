@@ -24,6 +24,8 @@ public record InvoiceResponse(
         BigDecimal net_amount,
         BigDecimal tax_amount,
         BigDecimal actual_invoice_amount,
+        BigDecimal reconciled_amount,
+        BigDecimal unreconciled_amount,
         OffsetDateTime signed_at,
         String signed_by_name,
         String sign_note,

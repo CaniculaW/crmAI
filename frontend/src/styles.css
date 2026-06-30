@@ -347,6 +347,12 @@ body {
   padding: 0;
 }
 
+.reconciliation-workbench-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
 .account-operation {
   display: grid;
   gap: 18px;
@@ -1086,6 +1092,7 @@ body {
   .dictionary-grid,
   .opportunity-entry-grid,
   .opportunity-summary-grid,
+  .reconciliation-workbench-grid,
   .relationship-grid,
   .system-module-grid,
   .system-grid,

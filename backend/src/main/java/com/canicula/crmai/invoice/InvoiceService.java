@@ -369,6 +369,8 @@ public class InvoiceService {
                             rs.getBigDecimal("net_amount"),
                             rs.getBigDecimal("tax_amount"),
                             rs.getBigDecimal("actual_invoice_amount"),
+                            rs.getBigDecimal("reconciled_amount"),
+                            BigDecimal.ZERO,
                             nullableOffsetDateTime(rs.getObject("signed_at")),
                             rs.getString("signed_by_name"),
                             rs.getString("sign_note"),
@@ -399,6 +401,7 @@ public class InvoiceService {
                 invoice.contract_id());
         BigDecimal effectiveInvoicedAmount = effectiveInvoicedAmount(invoice.contract_id(), null);
         BigDecimal remainingAmount = nullToZero(contractAmount).subtract(effectiveInvoicedAmount);
+        BigDecimal unreconciledAmount = invoiceUnreconciledAmount(invoice);
         return new InvoiceResponse(
                 invoice.id(),
                 invoice.account_id(),
@@ -420,6 +423,8 @@ public class InvoiceService {
                 invoice.net_amount(),
                 invoice.tax_amount(),
                 invoice.actual_invoice_amount(),
+                invoice.reconciled_amount(),
+                unreconciledAmount,
                 invoice.signed_at(),
                 invoice.signed_by_name(),
                 invoice.sign_note(),
@@ -436,6 +441,17 @@ public class InvoiceService {
                 invoice.remark(),
                 invoice.created_at(),
                 invoice.updated_at());
+    }
+
+    private BigDecimal invoiceUnreconciledAmount(InvoiceResponse invoice) {
+        if (!List.of("invoiced", "signed").contains(invoice.invoice_status())) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        BigDecimal amount = nullToZero(invoice.actual_invoice_amount()).subtract(nullToZero(invoice.reconciled_amount()));
+        if (amount.compareTo(BigDecimal.ZERO) < 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        return amount;
     }
 
     private void validateIssueAmount(ContractResponse contract, Long invoiceId, BigDecimal actualInvoiceAmount) {

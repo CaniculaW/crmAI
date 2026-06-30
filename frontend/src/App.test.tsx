@@ -42,6 +42,9 @@ const apiData = {
       "payment.confirm",
       "payment.exception",
       "payment.refund",
+      "reconciliation.read",
+      "reconciliation.create",
+      "reconciliation.void",
       "attachment.create",
       "attachment.read",
       "attachment.delete",
@@ -187,20 +190,25 @@ const apiData = {
       opportunity_id: 10,
       contract_id: 301,
       plan_name: "V2 UAT 首期开票",
-      invoice_status: "applied",
+      invoice_status: "invoiced",
       invoice_type: "vat_special",
       planned_invoice_date: "2026-07-15T10:00:00+08:00",
       planned_amount: 360000,
       applied_amount: 360000,
       applied_at: "2026-06-30T10:00:00+08:00",
       application_note: "按首付款节点申请开票",
+      invoice_no: "INV-401",
+      invoice_date: "2026-07-16T10:00:00+08:00",
       tax_rate: 0.13,
       net_amount: 318584.07,
       tax_amount: 41415.93,
+      actual_invoice_amount: 360000,
       owner_user_id: 1001,
       contract_amount: 1200000,
-      effective_invoiced_amount: 0,
-      remaining_invoice_amount: 1200000,
+      effective_invoiced_amount: 360000,
+      remaining_invoice_amount: 840000,
+      reconciled_amount: 0,
+      unreconciled_amount: 360000,
       remark: "首期计划"
     }
   ],
@@ -286,6 +294,68 @@ const apiData = {
       file_type: "bank_receipt",
       file_size: 16384,
       mime_type: "application/pdf"
+    }
+  ],
+  reconciliationWorkbench: {
+    summary: {
+      invoice_amount: 360000,
+      payment_amount: 120000,
+      reconciled_amount: 0,
+      unreconciled_invoice_amount: 360000,
+      unallocated_payment_amount: 120000
+    },
+    pending_invoices: [
+      {
+        id: 401,
+        account_id: 1,
+        opportunity_id: 10,
+        contract_id: 301,
+        plan_name: "V2 UAT 首期开票",
+        invoice_no: "INV-401",
+        invoice_status: "invoiced",
+        actual_invoice_amount: 360000,
+        reconciled_amount: 0,
+        unreconciled_amount: 360000
+      }
+    ],
+    pending_payments: [
+      {
+        id: 701,
+        account_id: 1,
+        opportunity_id: 10,
+        contract_id: 301,
+        payment_name: "首付款到账",
+        payment_status: "confirmed",
+        received_at: "2026-07-22T10:00:00+08:00",
+        confirmed_amount: 120000,
+        reconciled_amount: 0,
+        unreconciled_amount: 120000
+      }
+    ],
+    recent_reconciliations: []
+  },
+  reconciliations: [
+    {
+      id: 902,
+      account_id: 1,
+      opportunity_id: 10,
+      contract_id: 301,
+      invoice_id: 401,
+      payment_id: 701,
+      invoice_no: "INV-401",
+      payment_name: "首付款到账",
+      reconciliation_no: "REC-902",
+      reconciliation_status: "active",
+      reconciled_amount: 120000,
+      reconciled_at: "2026-07-23T10:00:00+08:00",
+      reconciled_by: 1001,
+      reconcile_note: "首付款核销",
+      invoice_actual_amount: 360000,
+      invoice_reconciled_amount: 120000,
+      invoice_unreconciled_amount: 240000,
+      payment_confirmed_amount: 120000,
+      payment_reconciled_amount: 120000,
+      payment_unreconciled_amount: 0
     }
   ],
   activities: [
@@ -757,6 +827,55 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("button", { name: "添加附件" })).toBeInTheDocument();
   });
 
+  it("renders the reconciliation workbench with pending invoices and payments", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "核销工作台" }));
+
+    expect(await screen.findByRole("heading", { name: "核销工作台" })).toBeInTheDocument();
+    expect(screen.getByText("待核销发票")).toBeInTheDocument();
+    expect(screen.getByText("待分配回款")).toBeInTheDocument();
+    expect(screen.getByText("V2 UAT 首期开票")).toBeInTheDocument();
+    expect(screen.getByText("首付款到账")).toBeInTheDocument();
+    expect(screen.getByText("待核销发票金额")).toBeInTheDocument();
+    expect(screen.getByText("待分配回款金额")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/reconciliations/workbench"), expect.anything());
+    });
+  });
+
+  it("creates a reconciliation from selected invoice and payment", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "核销工作台" }));
+    await screen.findByText("V2 UAT 首期开票");
+
+    await user.click(screen.getByRole("radio", { name: /V2 UAT 首期开票/ }));
+    await user.click(screen.getByRole("radio", { name: /首付款到账/ }));
+    await user.clear(screen.getByLabelText("本次核销金额"));
+    await user.type(screen.getByLabelText("本次核销金额"), "120000");
+    await user.type(screen.getByLabelText("核销备注"), "首付款核销");
+    await user.click(screen.getByRole("button", { name: "确认核销" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/reconciliations"),
+        expect.objectContaining({ method: "POST" })
+      );
+    });
+    await waitFor(() => {
+      expect(screen.getByText("REC-902")).toBeInTheDocument();
+    });
+  });
+
   it("shows the sales activity execution entry from the activity list", async () => {
     const user = userEvent.setup();
     mockCrmFetch();
@@ -1176,6 +1295,20 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/payments")) {
       return jsonResponse({ code: "OK", data: data.payments });
+    }
+    if (path.endsWith("/api/reconciliations/workbench")) {
+      return jsonResponse({ code: "OK", data: data.reconciliationWorkbench });
+    }
+    if (path.endsWith("/api/reconciliations") && method === "POST") {
+      const mutableWorkbench = data.reconciliationWorkbench as Omit<typeof data.reconciliationWorkbench, "recent_reconciliations"> & {
+        recent_reconciliations: typeof data.reconciliations;
+      };
+      mutableWorkbench.recent_reconciliations = data.reconciliations;
+      data.reconciliationWorkbench.pending_payments = [];
+      return jsonResponse({ code: "OK", data: data.reconciliations[0] });
+    }
+    if (path.endsWith("/api/reconciliations")) {
+      return jsonResponse({ code: "OK", data: data.reconciliations });
     }
     if (path.includes("/api/attachments")) {
       if (url.includes("object_type=receivable_plan")) {
