@@ -28,6 +28,7 @@
 | 5 | Done | V2 越权详情错误码整改 | RED：5 个测试失败，均为 expected 403 but was 500；GREEN：16 tests，0 failures；完整后端回归 72 tests，0 failures |
 | 6 | Done | 后端重启到最新修复 | 8081 旧进程已停止，新进程启动，Flyway v20 up to date |
 | 7 | Done | 浏览器级 V2 专用 smoke 证据 | `npm run smoke:v2:browser` 通过；18 条路由 × desktop/mobile 两种视口，共 36 个页面检查；console failure = 0；API failed response = 0；证据目录 `docs/testing/evidence/artifacts/v2-browser-smoke-20260702/` |
+| 8 | Done | V2 角色权限矩阵验收 | RED：全量回归暴露核销列表在存在不可读记录时返回 403；GREEN：`mvn -Dtest=V2RoleMatrixValidationTest test` 通过；完整后端 `mvn test` 86 tests，0 failures，0 errors |
 
 ## 3. 已修复问题
 
@@ -179,14 +180,43 @@ TDD 证据：
 - 主功能、核心 API、前端测试和构建已通过。
 - 一个高风险 API 错误码问题已按 TDD 修复并回归通过。
 - 稳定的 V2 专用浏览器 smoke 已补齐。
-- 但证据链仍缺少角色权限矩阵、平板响应式、真实文件上传下载、并发/性能/安全类验证。
+- V2 角色权限矩阵自动化验收已补齐。
+- 但证据链仍缺少平板响应式、真实文件上传下载、并发/性能/安全类验证。
 
-## 7. 后续整改清单
+## 7. V2 角色权限矩阵结果
+
+命令：
+
+- `mvn -Dtest=V2RoleMatrixValidationTest test`
+- `mvn test`
+
+结果：
+
+- 定向 Tests run：1
+- 后端全量 Tests run：86
+- Failures：0
+- Errors：0
+- Skipped：0
+
+本轮整改：
+
+- `ReconciliationService.readableList` 在列表读取时同步隐藏 `ForbiddenException`，避免用户有 `reconciliation.read` 但列表中存在不可读关联合同记录时，整页返回 403。
+
+覆盖角色：
+
+| 角色 | 权限口径 | 验证点 |
+|---|---|---|
+| 销售 | 方案维护、合同/开票/回款/到账/核销读取、回款跟进 | V2 读 API 可访问；不能创建核销 |
+| 商务/法务 | 方案维护、合同创建/编辑/终止/节点、开票申请、回款读取 | 合同/开票读 API 可访问；不能登记到账或创建核销 |
+| 财务 | 开票、回款、到账、核销全流程操作 | 开票/到账/核销读 API 可访问；核销创建权限放行到业务校验 |
+| 管理层 | V2 全链路读取、审计日志读取 | V2 读 API 和审计日志可访问；不能创建核销 |
+| 低权限用户 | 仅 V1 客户读取 | V2 关键读 API 全部返回 403 |
+
+## 8. 后续整改清单
 
 | 优先级 | 事项 | 说明 |
 |---|---|---|
 | P1 | 深化 V2 专用 E2E | 当前 browser smoke 已覆盖页面可用性；后续可增加新建、状态流转、核销撤销等写操作链路 |
-| P1 | 角色权限矩阵验收 | 销售、商务/法务、财务、管理层、低权限用户分别验证菜单、按钮、API 403、数据范围 |
 | P1 | 附件能力边界收口 | 当前为附件 URL 元数据管理；若验收口径包含上传下载，需实现 multipart upload/download |
 | P2 | 移动端/平板响应式证据 | 补 375px、768px、1440px 关键页面截图 |
 | P2 | OpenAPI 深度契约 | 校验 request/response schema、错误码、权限扩展字段，更新 V1 标题命名 |

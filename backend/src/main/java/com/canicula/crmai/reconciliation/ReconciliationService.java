@@ -1,6 +1,7 @@
 package com.canicula.crmai.reconciliation;
 
 import com.canicula.crmai.api.BusinessRuleException;
+import com.canicula.crmai.auth.ForbiddenException;
 import com.canicula.crmai.contract.ContractResponse;
 import com.canicula.crmai.contract.ContractService;
 import java.math.BigDecimal;
@@ -108,7 +109,7 @@ public class ReconciliationService {
         for (Long reconciliationId : reconciliationIds) {
             try {
                 readable.add(readableDetail(reconciliationId, actorUserId));
-            } catch (IllegalArgumentException ignored) {
+            } catch (IllegalArgumentException | ForbiddenException ignored) {
                 // List queries hide rows outside linked contract data scope.
             }
         }
