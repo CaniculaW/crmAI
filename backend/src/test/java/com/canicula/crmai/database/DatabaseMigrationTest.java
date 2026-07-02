@@ -234,6 +234,34 @@ class DatabaseMigrationTest {
                 )
                 """,
                 Integer.class);
+        Integer v2DictionaryTypeCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_dict_types
+                where dict_code in (
+                  'solution_doc_type', 'solution_status', 'solution_self_check_result', 'solution_risk_level',
+                  'contract_type', 'contract_status', 'contract_change_type', 'contract_milestone_status',
+                  'invoice_status', 'invoice_type', 'invoice_exception_type',
+                  'receivable_plan_status', 'payment_status', 'payment_method', 'receivable_follow_up_result',
+                  'reconciliation_status', 'reconciliation_source'
+                )
+                """,
+                Integer.class);
+        Integer v2DictionaryItemCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_dict_items i
+                join sys_dict_types t on t.id = i.dict_type_id
+                where t.dict_code in (
+                  'solution_doc_type', 'solution_status', 'solution_self_check_result', 'solution_risk_level',
+                  'contract_type', 'contract_status', 'contract_change_type', 'contract_milestone_status',
+                  'invoice_status', 'invoice_type', 'invoice_exception_type',
+                  'receivable_plan_status', 'payment_status', 'payment_method', 'receivable_follow_up_result',
+                  'reconciliation_status', 'reconciliation_source'
+                )
+                  and i.is_active = true
+                """,
+                Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
         assertThat(migrationCount).isGreaterThanOrEqualTo(19);
@@ -265,5 +293,7 @@ class DatabaseMigrationTest {
         assertThat(reconciliationTableCount).isEqualTo(1);
         assertThat(invoiceReconciledColumnCount).isEqualTo(1);
         assertThat(reconciliationPermissionCount).isEqualTo(3);
+        assertThat(v2DictionaryTypeCount).isEqualTo(17);
+        assertThat(v2DictionaryItemCount).isGreaterThanOrEqualTo(48);
     }
 }
