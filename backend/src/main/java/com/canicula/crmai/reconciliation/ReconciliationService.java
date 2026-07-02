@@ -144,8 +144,7 @@ public class ReconciliationService {
             throw new BusinessRuleException("核销金额不能超过发票或回款剩余金额");
         }
         Long reconciliationId = insertReconciliation(request, invoice, payment, actorUserId);
-        BigDecimal nextPaymentReconciledAmount = nullToZero(payment.reconciled_amount()).add(request.reconciled_amount());
-        jdbcTemplate.update(
+        int updatedInvoiceCount = jdbcTemplate.update(
                 """
                 update crm_invoices
                 set reconciled_amount = reconciled_amount + ?,
@@ -154,25 +153,38 @@ public class ReconciliationService {
                     version = version + 1
                 where id = ?
                   and deleted_at is null
+                  and actual_invoice_amount - reconciled_amount >= ?
                 """,
                 request.reconciled_amount(),
                 actorUserId,
-                invoice.id());
-        jdbcTemplate.update(
+                invoice.id(),
+                request.reconciled_amount());
+        if (updatedInvoiceCount == 0) {
+            throw new BusinessRuleException("核销金额不能超过发票剩余金额");
+        }
+        int updatedPaymentCount = jdbcTemplate.update(
                 """
                 update crm_payments
                 set reconciled_amount = reconciled_amount + ?,
-                    payment_status = ?,
+                    payment_status = case
+                        when reconciled_amount + ? < confirmed_amount then 'partially_reconciled'
+                        else 'reconciled'
+                    end,
                     updated_by = ?,
                     updated_at = current_timestamp,
                     version = version + 1
                 where id = ?
                   and deleted_at is null
+                  and confirmed_amount - reconciled_amount >= ?
                 """,
                 request.reconciled_amount(),
-                paymentStatusAfterReconciliation(nextPaymentReconciledAmount, payment.confirmed_amount()),
+                request.reconciled_amount(),
                 actorUserId,
-                payment.id());
+                payment.id(),
+                request.reconciled_amount());
+        if (updatedPaymentCount == 0) {
+            throw new BusinessRuleException("核销金额不能超过回款剩余金额");
+        }
         return readableDetail(reconciliationId, actorUserId);
     }
 

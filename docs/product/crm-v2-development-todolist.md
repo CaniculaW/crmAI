@@ -121,12 +121,12 @@ V2 当前进度：
 - [x] Step 26：完成模块 9 浏览器 UAT 和证据截图。
 - [x] Step 27：沈思维最终确认 V2 版本，签署 GO。
 - [x] Step 28：组建测试与验收 Agent 团队完成全面复核，修复 V2 越权详情 `500` 错误码问题。
-- [ ] Step 29：建设 V2 专用浏览器 E2E、角色矩阵、移动端和附件真实上传下载证据，作为生产发布复审门禁。
+- [x] Step 29：建设 V2 专用浏览器 E2E、角色矩阵、移动端、附件真实上传下载、性能/安全/并发证据，作为生产发布复审门禁。
   - [x] Step 29.1：建设 V2 专用浏览器 smoke，覆盖桌面/移动 18 条路由，产出截图和 JSON 报告。
   - [x] Step 29.2：补齐角色权限矩阵验收，覆盖销售、商务/法务、财务、管理层、低权限用户。
   - [x] Step 29.3：补齐移动端/平板响应式证据，重点复核遮挡、换行、表格可读性和关键操作入口。
   - [x] Step 29.4：补齐真实附件上传/下载能力，明确 URL 元数据管理与本地文件存储边界。
-  - [ ] Step 29.5：补齐性能/安全/并发复审证据，形成生产发布复审结论。
+  - [x] Step 29.5：补齐性能/安全/并发复审证据，形成生产发布复审结论。
 
 当前模块不做：
 
@@ -153,6 +153,7 @@ V2 当前进度：
 - V2 专用浏览器 smoke 已建设并通过：`npm run smoke:v2:browser` 覆盖 18 条路由 × desktop/tablet/mobile 三种视口，console failure = 0，API failed response = 0，证据目录 `docs/testing/evidence/artifacts/v2-browser-smoke-20260702/`。
 - V2 角色权限矩阵已补自动化验收：`mvn -Dtest=V2RoleMatrixValidationTest test` 覆盖销售、商务/法务、财务、管理层、低权限用户，验证权限集、V2 读 API、跨职责写操作 403 和财务核销写权限放行到业务校验。
 - V2 附件真实上传/下载已补齐：后端新增 `POST /api/attachments/upload` multipart 上传和 `GET /api/attachments/{attachmentId}/download` 鉴权下载；前端方案、合同、开票、回款附件表单改为真实文件选择；验证命令 `mvn -Dtest=AttachmentControllerTest,OpenApiContractCoverageTest test`、`mvn test`、`npm test -- --run`、`npm run build` 均通过。
+- V2 性能/安全/并发复审证据已补齐：附件新增文件名清洗与匿名下载 401 测试；核销并发从 RED `[200,500]` 修复为 `[200,409]` 业务冲突；本地 8081 核心 GET API 性能 smoke 10/10 通过，max 57ms，avg 31ms；后端全量 `mvn test` 89 tests，0 failures。
 
 ## 4. 模块完成记录
 
@@ -175,9 +176,9 @@ V2 当前进度：
 - 总模块：9
 - 已完成：9
 - 当前模块：V2 生产发布复审证据门禁
-- 当前步骤：Step 29.5 性能/安全/并发复审证据
-- 当前 TODO：补齐性能/安全/并发复审证据
-- 完成标准：生产发布复审通过
+- 当前步骤：Step 29 完成复核
+- 当前 TODO：无，等待最终人工确认是否发布
+- 完成标准：生产发布复审通过，进入最终确认
 ```
 
 ## 6. V2 总体页面逻辑与导航方案

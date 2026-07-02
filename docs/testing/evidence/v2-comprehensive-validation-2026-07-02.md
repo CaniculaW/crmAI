@@ -31,6 +31,7 @@
 | 8 | Done | V2 角色权限矩阵验收 | RED：全量回归暴露核销列表在存在不可读记录时返回 403；GREEN：`mvn -Dtest=V2RoleMatrixValidationTest test` 通过；完整后端 `mvn test` 86 tests，0 failures，0 errors |
 | 9 | Done | 移动端/平板响应式证据 | V2 browser smoke 已补 `tablet 768×1024`；同目录新增 18 张 tablet 截图；三档视口共 54 个页面检查 |
 | 10 | Done | 附件真实上传/下载验收 | RED：`AttachmentControllerTest#uploadsAndDownloadsAttachmentFile` 期望 200 但上传返回 500；GREEN：`mvn -Dtest=AttachmentControllerTest test` 9 tests，0 failures；`mvn -Dtest=AttachmentControllerTest,OpenApiContractCoverageTest test` 10 tests，0 failures；完整后端 `mvn test` 87 tests，0 failures；前端 `npm test -- --run` 45 tests，0 failures；`npm run build` 通过；本地 8081 真实 smoke 登录/上传/下载/删除均 200 |
+| 11 | Done | 性能/安全/并发复审 | 附件安全测试覆盖路径穿越文件名清洗与匿名下载 401；前端危险 DOM sink 扫描 0 命中；并发核销 RED `[200,500]`，GREEN `[200,409]`；本地 8081 性能 smoke 10 个核心 GET 全 200，max 57ms，avg 31ms；完整后端 `mvn test` 89 tests，0 failures |
 
 ## 3. 已修复问题
 
@@ -187,7 +188,7 @@ TDD 证据：
 - V2 角色权限矩阵自动化验收已补齐。
 - 移动端/平板响应式截图证据已补齐。
 - 真实文件上传下载能力与证据已补齐。
-- 但证据链仍缺少并发/性能/安全类验证。
+- 并发/性能/安全类轻量复审证据已补齐。
 
 ## 7. V2 角色权限矩阵结果
 
@@ -249,13 +250,42 @@ TDD 证据：
 - 前端方案、合同、开票、回款附件区由“填写附件地址”调整为“选择文件 + 附件类型 + 备注”，下载按钮改为带 Bearer token 的 blob 下载。
 - OpenAPI 已补充上传/下载两个运行时 API。
 
-## 9. 后续整改清单
+## 9. 性能/安全/并发复审结果
+
+命令：
+
+- `mvn -Dtest=AttachmentControllerTest#sanitizesUploadedFilenameAndRequiresReadPermissionForDownload,ReconciliationControllerTest#preventsConcurrentReconciliationOverAllocation test`
+- `mvn -Dtest=AttachmentControllerTest,ReconciliationControllerTest test`
+- `rg -n "dangerouslySetInnerHTML|innerHTML|outerHTML|insertAdjacentHTML|document\\.write|eval\\(|new Function|setTimeout\\(\\s*['\\\"]|setInterval\\(\\s*['\\\"]|target=\\\"_blank\\\"|window\\.location" frontend/src frontend/index.html`
+- 本地 8081 性能 smoke：登录后访问 10 个核心 GET API
+- `mvn test`
+
+结果：
+
+- 新增安全/并发定向用例：2 tests，0 failures，0 errors
+- 附件 + 核销控制器：15 tests，0 failures，0 errors
+- 前端危险 DOM sink 扫描：0 命中
+- 本地 8081 性能 smoke：10/10 API 200，max 57ms，avg 31ms，login 896ms
+- 后端全量：89 tests，0 failures，0 errors
+
+本轮整改：
+
+- 附件上传对 `../secret.txt` 类文件名进行 basename 清洗，匿名下载返回 401。
+- 核销并发从 RED `[200,500]` 修复为 GREEN `[200,409]`：第二个竞争请求返回业务冲突，不再暴露服务端异常。
+- 核销金额更新改为原子条件更新，发票与回款剩余额不足时返回业务冲突，避免并发超额核销。
+
+生产发布复审结论：
+
+- V2 本地 UAT/研发复审证据门禁已通过，可进入用户最终人工确认。
+- 后续如进入真实生产，还建议补对象存储、病毒扫描、限流、审计级 evidence manifest、正式压测和安全扫描。
+
+## 10. 后续整改清单
 
 | 优先级 | 事项 | 说明 |
 |---|---|---|
 | P1 | 深化 V2 专用 E2E | 当前 browser smoke 已覆盖页面可用性；后续可增加新建、状态流转、核销撤销等写操作链路 |
 | P1 | 附件能力边界收口 | 已支持 URL 元数据与本地 multipart 上传/下载；后续生产化可接对象存储、病毒扫描、大小/类型策略和签名 URL |
 | P2 | OpenAPI 深度契约 | 校验 request/response schema、错误码、权限扩展字段，更新 V1 标题命名 |
-| P2 | 并发与幂等验证 | 核销、开票额度、回款分配需并发竞争测试 |
+| P2 | 并发与幂等验证 | 核销并发已补基础竞争测试；后续可扩展开票额度、回款分配、撤销幂等等更多竞争测试 |
 | P2 | 前端质量门 | 增加 lint、axe/pa11y 或等价无障碍自动化 |
 | P3 | 证据规范 | 建立 V2 evidence manifest，绑定 commit、命令、exit code、环境、截图、账号和执行人 |

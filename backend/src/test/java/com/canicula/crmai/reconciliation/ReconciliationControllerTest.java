@@ -18,6 +18,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -218,6 +224,54 @@ class ReconciliationControllerTest {
 
         assertThat(response.status()).isEqualTo(HttpStatus.CONFLICT.value());
         assertThat(response.body().path("message").asText()).contains("同一合同");
+    }
+
+    @Test
+    void preventsConcurrentReconciliationOverAllocation() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("recon-concurrent-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "recon_concurrent_" + suffix,
+                departmentId,
+                allReconciliationPermissions(),
+                List.of("global"));
+        String token = login("recon_concurrent_" + suffix);
+        Long accountId = createAccount(token, "核销并发客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(token, accountId, "核销并发商机-" + suffix, departmentId, userId);
+        Long contractId = createContract(token, accountId, opportunityId, userId, suffix, 300000);
+        Long invoiceId = createIssuedInvoice(token, contractId, userId, suffix, 100000);
+        Long planId = createReceivablePlan(token, contractId, userId, suffix, 100000);
+        Long paymentId = createConfirmedPayment(token, contractId, planId, userId, suffix, 100000);
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Callable<HttpJsonResponse> task = () -> {
+            ready.countDown();
+            assertThat(start.await(5, TimeUnit.SECONDS)).isTrue();
+            return postJson(
+                    "/api/reconciliations",
+                    Map.of(
+                            "invoice_id", invoiceId,
+                            "payment_id", paymentId,
+                            "reconciled_amount", 80000,
+                            "reconciled_at", "2026-07-25T10:00:00+08:00",
+                            "reconcile_note", "并发核销防超额"),
+                    authHeaders(token, "recon-concurrent-create-trace-001"));
+        };
+
+        try {
+            Future<HttpJsonResponse> first = executor.submit(task);
+            Future<HttpJsonResponse> second = executor.submit(task);
+            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+            List<Integer> statuses = List.of(first.get().status(), second.get().status());
+
+            assertThat(statuses).contains(HttpStatus.OK.value(), HttpStatus.CONFLICT.value());
+            assertInvoiceAmounts(token, invoiceId, 80000.0, 20000.0);
+            assertPaymentAmounts(token, paymentId, "partially_reconciled", 80000.0, 20000.0);
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     private Long createIssuedInvoice(String accessToken, Long contractId, Long ownerUserId, String suffix, int amount) {

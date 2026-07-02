@@ -142,6 +142,37 @@ class AttachmentControllerTest {
     }
 
     @Test
+    void sanitizesUploadedFilenameAndRequiresReadPermissionForDownload() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("attachment-security-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "attachment_security_" + suffix,
+                departmentId,
+                List.of("account.create", "attachment.create", "attachment.read"),
+                List.of("global"));
+        String token = login("attachment_security_" + suffix);
+        Long accountId = createAccount(token, "附件安全客户-" + suffix, departmentId, userId);
+
+        ResponseEntity<JsonNode> uploadResponse = restTemplate.exchange(
+                "/api/attachments/upload",
+                HttpMethod.POST,
+                new HttpEntity<>(
+                        multipartUploadBody(accountId, "../secret-" + suffix + ".txt", "safe content".getBytes()),
+                        multipartHeaders(token, "attachment-security-upload-trace-001")),
+                JsonNode.class);
+        Long attachmentId = uploadResponse.getBody().path("data").path("id").asLong();
+        ResponseEntity<byte[]> anonymousDownloadResponse = restTemplate.exchange(
+                "/api/attachments/" + attachmentId + "/download",
+                HttpMethod.GET,
+                new HttpEntity<>(traceHeaders("attachment-security-anonymous-download-trace-001")),
+                byte[].class);
+
+        assertThat(uploadResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(uploadResponse.getBody().path("data").path("file_name").asText()).isEqualTo("secret-" + suffix + ".txt");
+        assertThat(anonymousDownloadResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
     void rejectsAttachmentMetadataWhenObjectIsNotReadable() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         Long departmentId = createDepartment("attachment-deny-dept-" + suffix);
