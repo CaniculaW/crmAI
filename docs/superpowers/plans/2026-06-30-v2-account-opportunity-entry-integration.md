@@ -8,16 +8,16 @@
 
 - [x] Task 1：确认现有 V2 API 已支持客户/商机维度过滤。
 - [x] Task 2：确认客户经营抽屉与商机推进抽屉当前页面结构。
-- [ ] Task 3：先写前端失败测试，覆盖客户抽屉 V2 摘要与跳转入口。
-- [ ] Task 4：先写前端失败测试，覆盖商机抽屉 V2 摘要与跳转入口。
-- [ ] Task 5：先写前端失败测试，覆盖 V2 页面读取 URL 查询参数作为初始筛选。
-- [ ] Task 6：实现查询参数初始化工具，接入方案、合同、开票、回款、核销页面。
-- [ ] Task 7：实现 V2 业务摘要加载与展示组件，接入客户抽屉。
-- [ ] Task 8：复用 V2 业务摘要组件，接入商机抽屉。
-- [ ] Task 9：按权限控制 V2 摘要入口可见性。
-- [ ] Task 10：运行前端测试与构建。
-- [ ] Task 11：启动本地环境，完成浏览器 UAT 并留证据截图。
-- [ ] Task 12：更新 TODOList、提交并推送。
+- [x] Task 3：先写前端失败测试，覆盖客户抽屉 V2 摘要与跳转入口。
+- [x] Task 4：先写前端失败测试，覆盖商机抽屉 V2 摘要与跳转入口。
+- [x] Task 5：先写前端失败测试，覆盖 V2 页面读取 URL 查询参数作为初始筛选。
+- [x] Task 6：实现查询参数初始化工具，接入方案、合同、开票、回款、核销页面。
+- [x] Task 7：实现 V2 业务摘要加载与展示组件，接入客户抽屉。
+- [x] Task 8：复用 V2 业务摘要组件，接入商机抽屉。
+- [x] Task 9：按权限控制 V2 摘要入口可见性。
+- [x] Task 10：运行前端测试与构建。
+- [x] Task 11：启动本地环境，完成浏览器 UAT 并留证据截图。
+- [x] Task 12：更新 TODOList、提交并推送。
 
 ## TDD 顺序
 
@@ -69,6 +69,7 @@ npm run build
 证据文件命名：
 
 ```text
-docs/testing/evidence/artifacts/v2-account-entry-integration-uat-20260630.png
-docs/testing/evidence/artifacts/v2-opportunity-entry-integration-uat-20260630.png
+docs/testing/evidence/artifacts/v2-account-entry-integration-uat-20260702.png
+docs/testing/evidence/artifacts/v2-opportunity-entry-integration-uat-20260702.png
+docs/testing/evidence/artifacts/v2-scoped-contract-filter-uat-20260702.png
 ```

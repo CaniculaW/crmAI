@@ -70,19 +70,19 @@ V2 当前进度：
 | 4 | Done | 开票管理链路 | 开票计划、开票申请、发票登记、异常、签收、作废 | 管理合同下应该开多少、何时开、实际开了多少、异常是什么 | 已完成实现、验证与浏览器 UAT |
 | 5 | Done | 回款管理链路 | 回款计划、回款流水、到账确认、逾期、回款跟进 | 管理合同应收、实收、逾期和回款责任 | 已完成实现、验证与浏览器 UAT |
 | 6 | Done | 发票回款核销链路 | 核销工作台、待核销发票、待分配回款、核销明细、撤销核销 | 支持一笔回款核销多张发票、一张发票被多笔回款分次核销 | 已完成实现、验证与浏览器 UAT |
-| 7 | Current | 客户/商机 V2 入口联动 | 客户详情、商机详情、工作台快捷入口、菜单权限 | 把 V2 能力嵌回 V1 主业务对象，而不是孤立模块 | 客户/商机可看到方案、合同、开票、回款摘要和跳转 |
-| 8 | Pending | V2 系统配置与权限审计 | 字典、权限点、角色授权、审计日志、数据权限补齐 | 保证销售、商务、财务、管理层看到不同入口和动作 | V2 权限点完整；关键金额/状态/核销动作有审计 |
+| 7 | Done | 客户/商机 V2 入口联动 | 客户详情、商机详情、工作台快捷入口、菜单权限 | 把 V2 能力嵌回 V1 主业务对象，而不是孤立模块 | 已完成实现、验证与浏览器 UAT |
+| 8 | Current | V2 系统配置与权限审计 | 字典、权限点、角色授权、审计日志、数据权限补齐 | 保证销售、商务、财务、管理层看到不同入口和动作 | V2 权限点完整；关键金额/状态/核销动作有审计 |
 | 9 | Pending | V2 全链路回归与 UAT | 商机成交 -> 方案/标书 -> 合同 -> 开票 -> 回款 -> 核销 | 验证 V2 销售到财务闭环可跑通 | 前后端测试、构建、浏览器 Smoke、UAT 证据通过 |
 
 ## 3. 当前任务
 
-当前任务：`v2-account-opportunity-entry-integration-kickoff`
+当前任务：`v2-system-config-permission-audit-kickoff`
 
 状态：Current
 
 责任侧：AI 研发主力推进；沈思维作为最终版本确认人，重点确认页面逻辑、模块范围和验收口径。
 
-当前模块：客户/商机 V2 入口联动
+当前模块：V2 系统配置与权限审计
 
 当前步骤：
 
@@ -105,16 +105,16 @@ V2 当前进度：
 - [x] Step 17：补齐 OpenAPI/API 清单、浏览器 UAT 证据和提交记录。
 - [x] Step 18：启动模块 7 客户/商机 V2 入口联动设计与实施计划。
 - [x] Step 19：按模块 7 实施计划进入前端 TDD，实现客户/商机抽屉 V2 摘要、上下文跳转和 URL 初始筛选。
-- [ ] Step 20：完成模块 7 浏览器 UAT、证据截图、提交记录并切换到模块 8。
+- [x] Step 20：完成模块 7 浏览器 UAT、证据截图、提交记录并切换到模块 8。
+- [ ] Step 21：启动模块 8 V2 系统配置与权限审计，输出字典、权限点、角色授权、审计日志和数据权限补齐计划。
 
 当前模块不做：
 
-- 不做客户经营驾驶舱。
-- 不做商机完整详情页重构。
-- 不新增后端统计聚合接口。
-- 不做跨客户、跨部门的数据权限重构。
-- 不做 AI 推荐下一步动作。
-- 不做 V2 财务 BI 图表。
+- 不做复杂审批流设计器。
+- 不做企业级单点登录、LDAP、OAuth 集成。
+- 不做跨租户权限模型重构。
+- 不做审计日志归档、冷热分层和外部 SIEM 对接。
+- 不做字段级权限和行级规则可视化配置器。
 
 完成标准：
 
@@ -126,7 +126,8 @@ V2 当前进度：
 - 模块 4 开票管理设计说明已完成。
 - 模块 5 回款管理链路已完成实现、自动化验证和浏览器 UAT。
 - 模块 6 已完成 V19 数据模型、核销 API、金额联动、前端核销工作台、OpenAPI/API 清单和浏览器 UAT。
-- 模块 7 已完成前端 TDD 实现：客户/商机抽屉 V2 摘要、权限入口、上下文跳转和 URL 初始筛选；下一步完成浏览器 UAT 与提交记录。
+- 模块 7 已完成前端 TDD 实现、浏览器 UAT、证据截图和提交记录。
+- 模块 8 切换为 Current；下一步启动 V2 字典、权限点、角色授权、审计日志和数据权限补齐计划。
 
 ## 4. 模块完成记录
 
@@ -138,8 +139,8 @@ V2 当前进度：
 | 开票管理链路 | Done | 2026-06-30 | 本次提交 | `mvn -Dtest=DatabaseMigrationTest,InvoiceControllerTest,AttachmentControllerTest,OpenApiContractCoverageTest test`；`mvn -Dtest=PostgresMigrationIT test`；`npm test -- --run`；`npm run build` | 127.0.0.1:5175 `/invoices` 已通过登录、列表、详情、合同额度、附件、状态动作入口验证；浏览器控制台无 error | 回款/核销联动保留到模块 5/6 |
 | 回款管理链路 | Done | 2026-06-30 | 本次提交 | `mvn -Dtest=DatabaseMigrationTest,ReceivablePlanControllerTest,PaymentControllerTest,AttachmentControllerTest,OpenApiContractCoverageTest test`；`mvn -Dtest=PostgresMigrationIT test`；`npm test -- --run`；`npm run build` | 127.0.0.1:5175 `/receivables` 已通过登录、列表、详情、到账流水、状态动作、跟进、附件下载/删除入口验证；浏览器控制台无 error | 发票与回款多对多核销保留到模块 6 |
 | 发票回款核销链路 | Done | 2026-06-30 | 1216f5a | `mvn -Dtest=DatabaseMigrationTest,ReconciliationControllerTest test`；`mvn -Dtest=OpenApiContractCoverageTest test`；`npm test`；`npm run build` | 127.0.0.1:5175 `/reconciliations` 已通过登录态、待核销发票、待分配回款、新增核销、最近核销记录验证；浏览器控制台无 error；证据截图：`docs/testing/evidence/artifacts/v2-reconciliation-workbench-visible-uat-20260630.png` | 自动匹配、银行流水导入、ERP/总账回写保留到后续版本 |
-| 客户/商机 V2 入口联动 | Current | - | - | - | - | - |
-| V2 系统配置与权限审计 | Pending | - | - | - | - | - |
+| 客户/商机 V2 入口联动 | Done | 2026-07-02 | 本次提交 | `npm test -- --run`；`npm run build` | 127.0.0.1:5175 已通过客户抽屉 V2 业务闭环、商机抽屉成交执行闭环、合同页 scoped URL 筛选验证；浏览器控制台 app error = 0；证据截图：`docs/testing/evidence/artifacts/v2-account-entry-integration-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-opportunity-entry-integration-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-scoped-contract-filter-uat-20260702.png` | 无 |
+| V2 系统配置与权限审计 | Current | - | - | - | - | - |
 | V2 全链路回归与 UAT | Pending | - | - | - | - | - |
 
 ## 5. 当前进度快照
@@ -147,11 +148,11 @@ V2 当前进度：
 ```text
 V2 当前进度：
 - 总模块：9
-- 已完成：6
-- 当前模块：7. 客户/商机 V2 入口联动
-- 当前步骤：Step 20. 模块 7 浏览器 UAT 与提交记录
-- 当前 TODO：在本地浏览器验证客户/商机抽屉 V2 摘要、上下文跳转、V2 页面筛选，并留证据截图
-- 完成标准：浏览器 UAT 无控制台应用错误；证据截图归档；提交并推送后切换到模块 8
+- 已完成：7
+- 当前模块：8. V2 系统配置与权限审计
+- 当前步骤：Step 21. 启动模块 8 V2 系统配置与权限审计
+- 当前 TODO：梳理 V2 字典、权限点、角色授权、关键动作审计和数据权限补齐范围
+- 完成标准：输出模块 8 页面/API 边界、权限/审计清单、TDD 实施计划
 ```
 
 ## 6. V2 总体页面逻辑与导航方案
