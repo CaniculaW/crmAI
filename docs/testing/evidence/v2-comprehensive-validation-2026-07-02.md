@@ -32,6 +32,7 @@
 | 9 | Done | 移动端/平板响应式证据 | V2 browser smoke 已补 `tablet 768×1024`；同目录新增 18 张 tablet 截图；三档视口共 54 个页面检查 |
 | 10 | Done | 附件真实上传/下载验收 | RED：`AttachmentControllerTest#uploadsAndDownloadsAttachmentFile` 期望 200 但上传返回 500；GREEN：`mvn -Dtest=AttachmentControllerTest test` 9 tests，0 failures；`mvn -Dtest=AttachmentControllerTest,OpenApiContractCoverageTest test` 10 tests，0 failures；完整后端 `mvn test` 87 tests，0 failures；前端 `npm test -- --run` 45 tests，0 failures；`npm run build` 通过；本地 8081 真实 smoke 登录/上传/下载/删除均 200 |
 | 11 | Done | 性能/安全/并发复审 | 附件安全测试覆盖路径穿越文件名清洗与匿名下载 401；前端危险 DOM sink 扫描 0 命中；并发核销 RED `[200,500]`，GREEN `[200,409]`；本地 8081 性能 smoke 10 个核心 GET 全 200，max 57ms，avg 31ms；完整后端 `mvn test` 89 tests，0 failures |
+| 12 | Done | 最终人工确认 | 2026-07-02，沈思维作为版本最终确认人确认 V2 GO；当前本地访问前端 `http://127.0.0.1:5175/`，后端 `http://127.0.0.1:8081/` |
 
 ## 3. 已修复问题
 
@@ -276,7 +277,8 @@ TDD 证据：
 
 生产发布复审结论：
 
-- V2 本地 UAT/研发复审证据门禁已通过，可进入用户最终人工确认。
+- V2 本地 UAT/研发复审证据门禁已通过。
+- 2026-07-02，沈思维作为版本最终确认人确认 V2 GO，本地 UAT、研发复审与最终人工确认已闭环。
 - 后续如进入真实生产，还建议补对象存储、病毒扫描、限流、审计级 evidence manifest、正式压测和安全扫描。
 
 ## 10. 后续整改清单
