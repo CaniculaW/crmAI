@@ -607,6 +607,35 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByText("下一步建议")).toBeInTheDocument();
   });
 
+  it("shows the customer V2 business snapshot with scoped links", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "客户池" }));
+    await screen.findByText("测试客户A");
+    await user.click(screen.getByRole("button", { name: /查看经营/ }));
+
+    expect(await screen.findByRole("heading", { name: "V2 业务闭环" })).toBeInTheDocument();
+    expect(screen.getByText("合同金额")).toBeInTheDocument();
+    expect(screen.getByText("待核销发票")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看方案标书" })).toHaveAttribute("href", "/solutions?account_id=1");
+    expect(screen.getByRole("link", { name: "查看合同" })).toHaveAttribute("href", "/contracts?account_id=1");
+    expect(screen.getByRole("link", { name: "查看开票" })).toHaveAttribute("href", "/invoices?account_id=1");
+    expect(screen.getByRole("link", { name: "查看回款" })).toHaveAttribute("href", "/receivables?account_id=1");
+    expect(screen.getByRole("link", { name: "查看核销" })).toHaveAttribute("href", "/reconciliations?account_id=1");
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/solutions?account_id=1"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/contracts?account_id=1"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/invoices?account_id=1"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/receivable-plans?account_id=1"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/reconciliations/workbench?account_id=1"), expect.anything());
+    });
+  });
+
   it("updates an account from the customer list page", async () => {
     const fetchMock = mockCrmFetch();
     const user = userEvent.setup();
@@ -701,6 +730,65 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("link", { name: "查看周进展" })).toHaveAttribute("href", "/weekly-progress");
   });
 
+  it("shows the opportunity V2 execution snapshot with account and opportunity scoped links", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "商机" }));
+    await screen.findByRole("button", { name: "测试商机A" });
+    await user.click(screen.getByRole("button", { name: "测试商机A" }));
+
+    expect(await screen.findByRole("heading", { name: "成交执行闭环" })).toBeInTheDocument();
+    expect(screen.getByText("报价合计")).toBeInTheDocument();
+    expect(screen.getByText("已确认回款")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看方案标书" })).toHaveAttribute(
+      "href",
+      "/solutions?account_id=1&opportunity_id=10"
+    );
+    expect(screen.getByRole("link", { name: "查看合同" })).toHaveAttribute(
+      "href",
+      "/contracts?account_id=1&opportunity_id=10"
+    );
+    expect(screen.getByRole("link", { name: "查看开票" })).toHaveAttribute(
+      "href",
+      "/invoices?account_id=1&opportunity_id=10"
+    );
+    expect(screen.getByRole("link", { name: "查看回款" })).toHaveAttribute(
+      "href",
+      "/receivables?account_id=1&opportunity_id=10"
+    );
+    expect(screen.getByRole("link", { name: "查看核销" })).toHaveAttribute(
+      "href",
+      "/reconciliations?account_id=1&opportunity_id=10"
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/solutions?account_id=1&opportunity_id=10"),
+        expect.anything()
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/contracts?account_id=1&opportunity_id=10"),
+        expect.anything()
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/invoices?account_id=1&opportunity_id=10"),
+        expect.anything()
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/receivable-plans?account_id=1&opportunity_id=10"),
+        expect.anything()
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/reconciliations/workbench?account_id=1&opportunity_id=10"),
+        expect.anything()
+      );
+    });
+  });
+
   it("renders the solution document module and loads the V2 solution list", async () => {
     const fetchMock = mockCrmFetch();
     const user = userEvent.setup();
@@ -732,6 +820,23 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("button", { name: "新建合同" })).toBeInTheDocument();
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/contracts"), expect.anything());
+    });
+  });
+
+  it("uses URL query parameters as initial V2 list filters", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/contracts?account_id=1&opportunity_id=10");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "合同" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/contracts?account_id=1&opportunity_id=10"),
+        expect.anything()
+      );
     });
   });
 

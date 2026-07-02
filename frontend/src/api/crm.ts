@@ -202,6 +202,8 @@ export type Invoice = {
   contract_amount?: number;
   effective_invoiced_amount?: number;
   remaining_invoice_amount?: number;
+  reconciled_amount?: number;
+  unreconciled_amount?: number;
   created_at?: string;
   updated_at?: string;
 };

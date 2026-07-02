@@ -124,6 +124,19 @@ type RelationshipBucket = {
 
 type SystemSection = "overview" | "departments" | "users" | "roles" | "auditLogs" | "dictionaries";
 
+type V2BusinessScope = {
+  account_id: number;
+  opportunity_id?: number;
+};
+
+type V2BusinessSnapshotData = {
+  solutions: SolutionDocument[];
+  contracts: CrmContract[];
+  invoices: Invoice[];
+  receivables: ReceivablePlan[];
+  reconciliationWorkbench: ReconciliationWorkbench;
+};
+
 function canAccessNavItem(item: Pick<NavItem, "permission" | "permissions">, permissions: string[]) {
   return (
     (!item.permission || permissions.includes(item.permission)) &&
@@ -553,7 +566,7 @@ function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
         </Form>
       </Drawer>
       <Drawer title="客户经营" open={!!selected} onClose={() => setSelected(null)} size="large">
-        <AccountOperationDrawer account={selected} />
+        <AccountOperationDrawer account={selected} currentUser={currentUser} />
       </Drawer>
       <Modal title="编辑客户" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
         <Form form={editForm} layout="vertical" onFinish={updateAccount}>
@@ -573,7 +586,7 @@ function AccountsPage({ currentUser }: { currentUser: CurrentUser }) {
   );
 }
 
-function AccountOperationDrawer({ account }: { account: Account | null }) {
+function AccountOperationDrawer({ account, currentUser }: { account: Account | null; currentUser: CurrentUser }) {
   if (!account) {
     return null;
   }
@@ -642,6 +655,12 @@ function AccountOperationDrawer({ account }: { account: Account | null }) {
           ))}
         </div>
       </section>
+
+      <V2BusinessSnapshot
+        title="V2 业务闭环"
+        scope={{ account_id: account.id }}
+        permissions={currentUser.permissions}
+      />
 
       <section className="account-next-step">
         <Typography.Title level={4}>下一步建议</Typography.Title>
@@ -1141,6 +1160,7 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
         <OpportunityProgressDrawer
           opportunity={selected}
           account={selected ? accountById.get(selected.account_id) : undefined}
+          currentUser={currentUser}
         />
       </Drawer>
       <Modal title="编辑商机" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
@@ -1187,7 +1207,15 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
   );
 }
 
-function OpportunityProgressDrawer({ opportunity, account }: { opportunity: Opportunity | null; account?: Account }) {
+function OpportunityProgressDrawer({
+  opportunity,
+  account,
+  currentUser
+}: {
+  opportunity: Opportunity | null;
+  account?: Account;
+  currentUser: CurrentUser;
+}) {
   if (!opportunity) {
     return null;
   }
@@ -1267,7 +1295,82 @@ function OpportunityProgressDrawer({ opportunity, account }: { opportunity: Oppo
           ))}
         </div>
       </section>
+
+      <V2BusinessSnapshot
+        title="成交执行闭环"
+        scope={{ account_id: opportunity.account_id, opportunity_id: opportunity.id }}
+        permissions={currentUser.permissions}
+      />
     </div>
+  );
+}
+
+function V2BusinessSnapshot({
+  title,
+  scope,
+  permissions
+}: {
+  title: string;
+  scope: V2BusinessScope;
+  permissions: string[];
+}) {
+  const { data, loading, error, refresh } = useV2BusinessSnapshot(scope, permissions);
+  const entries = v2BusinessEntries(scope, permissions);
+
+  if (entries.length === 0) {
+    return null;
+  }
+
+  const solutionQuotationAmount = sumBy(data.solutions, (solution) => solution.quotation_amount);
+  const contractAmount = sumBy(data.contracts, (contract) => contract.contract_amount);
+  const actualInvoiceAmount = sumBy(data.invoices, (invoice) => invoice.actual_invoice_amount);
+  const unreconciledInvoiceAmount = sumBy(data.invoices, (invoice) => invoice.unreconciled_amount);
+  const confirmedReceivedAmount = sumBy(data.receivables, (receivable) => receivable.confirmed_received_amount);
+  const unreceivedAmount = sumBy(data.receivables, (receivable) => receivable.unreceived_amount);
+  const overdueCount = data.receivables.filter((receivable) => Number(receivable.overdue_days ?? 0) > 0).length;
+  const exceptionCount = data.invoices.filter((invoice) => invoice.invoice_status === "exception").length;
+
+  return (
+    <section>
+      <div className="section-title-row">
+        <Typography.Title level={4}>{title}</Typography.Title>
+        <Button size="small" icon={<RefreshCw size={16} />} loading={loading} onClick={refresh}>
+          刷新
+        </Button>
+      </div>
+      {error ? <p className="error-text">V2 摘要加载失败：{error}</p> : null}
+      <div className="opportunity-summary-grid">
+        <OpportunitySummaryItem label="方案数量" value={`${data.solutions.length} 个`} />
+        <OpportunitySummaryItem label="报价合计" value={currencyText(solutionQuotationAmount)} />
+        <OpportunitySummaryItem label="合同数量" value={`${data.contracts.length} 个`} />
+        <OpportunitySummaryItem label="合同金额" value={currencyText(contractAmount)} />
+        <OpportunitySummaryItem label="开票计划" value={`${data.invoices.length} 个`} />
+        <OpportunitySummaryItem label="实际开票" value={currencyText(actualInvoiceAmount)} />
+        <OpportunitySummaryItem label="待核销发票" value={currencyText(unreconciledInvoiceAmount)} />
+        <OpportunitySummaryItem label="开票异常" value={`${exceptionCount} 个`} />
+        <OpportunitySummaryItem label="回款计划" value={`${data.receivables.length} 个`} />
+        <OpportunitySummaryItem label="已确认回款" value={currencyText(confirmedReceivedAmount)} />
+        <OpportunitySummaryItem label="未收金额" value={currencyText(unreceivedAmount)} />
+        <OpportunitySummaryItem label="逾期计划" value={`${overdueCount} 个`} />
+        <OpportunitySummaryItem
+          label="待分配回款"
+          value={currencyText(data.reconciliationWorkbench.summary.unallocated_payment_amount)}
+        />
+        <OpportunitySummaryItem
+          label="最近核销"
+          value={`${data.reconciliationWorkbench.recent_reconciliations.length} 条`}
+        />
+      </div>
+      <div className="opportunity-entry-grid">
+        {entries.map((entry) => (
+          <Link key={entry.to} className="opportunity-entry-link" to={entry.to} aria-label={entry.title}>
+            {entry.icon}
+            <strong>{entry.title}</strong>
+            <span>{entry.description}</span>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -1281,7 +1384,8 @@ function OpportunitySummaryItem({ label, value }: { label: string; value: React.
 }
 
 function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
-  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const initialFilters = useInitialQueryFilters(["account_id", "opportunity_id"]);
+  const [filters, setFilters] = useState<Record<string, unknown>>(initialFilters);
   const solutions = useResource(() => crmApi.solutions.list(filters), [filters]);
   const accounts = useResource(crmApi.accounts.list, []);
   const opportunities = useResource(crmApi.opportunities.list, []);
@@ -1535,7 +1639,8 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
 }
 
 function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
-  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const initialFilters = useInitialQueryFilters(["account_id", "opportunity_id"]);
+  const [filters, setFilters] = useState<Record<string, unknown>>(initialFilters);
   const contracts = useResource(() => crmApi.contracts.list(filters), [filters]);
   const accounts = useResource(crmApi.accounts.list, []);
   const opportunities = useResource(crmApi.opportunities.list, []);
@@ -1886,7 +1991,8 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
 }
 
 function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
-  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const initialFilters = useInitialQueryFilters(["account_id", "opportunity_id", "contract_id"]);
+  const [filters, setFilters] = useState<Record<string, unknown>>(initialFilters);
   const invoices = useResource(() => crmApi.invoices.list(filters), [filters]);
   const accounts = useResource(crmApi.accounts.list, []);
   const opportunities = useResource(crmApi.opportunities.list, []);
@@ -2375,7 +2481,8 @@ function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
 }
 
 function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
-  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const initialFilters = useInitialQueryFilters(["account_id", "opportunity_id", "contract_id"]);
+  const [filters, setFilters] = useState<Record<string, unknown>>(initialFilters);
   const receivables = useResource(() => crmApi.receivablePlans.list(filters), [filters]);
   const accounts = useResource(crmApi.accounts.list, []);
   const contracts = useResource(crmApi.contracts.list, []);
@@ -2800,7 +2907,8 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
 }
 
 function ReconciliationWorkbenchPage() {
-  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const initialFilters = useInitialQueryFilters(["account_id", "opportunity_id", "contract_id"]);
+  const [filters, setFilters] = useState<Record<string, unknown>>(initialFilters);
   const [workbench, setWorkbench] = useState<ReconciliationWorkbench>(() => emptyReconciliationWorkbench());
   const [loadingWorkbench, setLoadingWorkbench] = useState(false);
   const [workbenchError, setWorkbenchError] = useState("");
@@ -4574,6 +4682,123 @@ function useResource<T>(loader: () => Promise<T[]>, deps: React.DependencyList) 
   }, [refresh]);
 
   return { data, loading, error, refresh };
+}
+
+function useV2BusinessSnapshot(scope: V2BusinessScope, permissions: string[]) {
+  const [data, setData] = useState<V2BusinessSnapshotData>(() => emptyV2BusinessSnapshotData());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const scopeKey = `${scope.account_id}:${scope.opportunity_id ?? ""}`;
+  const permissionKey = permissions.join(",");
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const [solutions, contracts, invoices, receivables, reconciliationWorkbench] = await Promise.all([
+        hasPermission(permissions, "solution.read") ? crmApi.solutions.list(scope) : Promise.resolve([]),
+        hasPermission(permissions, "contract.read") ? crmApi.contracts.list(scope) : Promise.resolve([]),
+        hasPermission(permissions, "invoice.read") ? crmApi.invoices.list(scope) : Promise.resolve([]),
+        hasPermission(permissions, "receivable.read") ? crmApi.receivablePlans.list(scope) : Promise.resolve([]),
+        hasPermission(permissions, "reconciliation.read")
+          ? crmApi.reconciliations.workbench(scope)
+          : Promise.resolve(emptyReconciliationWorkbench())
+      ]);
+      setData({ solutions, contracts, invoices, receivables, reconciliationWorkbench });
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "加载失败");
+    } finally {
+      setLoading(false);
+    }
+  }, [scopeKey, permissionKey]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  return { data, loading, error, refresh };
+}
+
+function emptyV2BusinessSnapshotData(): V2BusinessSnapshotData {
+  return {
+    solutions: [],
+    contracts: [],
+    invoices: [],
+    receivables: [],
+    reconciliationWorkbench: emptyReconciliationWorkbench()
+  };
+}
+
+function v2BusinessEntries(scope: V2BusinessScope, permissions: string[]) {
+  return [
+    {
+      permission: "solution.read",
+      icon: <FileText size={18} />,
+      title: "查看方案标书",
+      description: "查看当前对象下的方案版本、报价和标书自评。",
+      to: buildScopedPath("/solutions", scope)
+    },
+    {
+      permission: "contract.read",
+      icon: <FileSignature size={18} />,
+      title: "查看合同",
+      description: "查看合同资产、金额、状态和执行节点。",
+      to: buildScopedPath("/contracts", scope)
+    },
+    {
+      permission: "invoice.read",
+      icon: <ReceiptText size={18} />,
+      title: "查看开票",
+      description: "查看开票计划、发票状态、异常和未核销金额。",
+      to: buildScopedPath("/invoices", scope)
+    },
+    {
+      permission: "receivable.read",
+      icon: <CircleDollarSign size={18} />,
+      title: "查看回款",
+      description: "查看回款计划、已收、未收和逾期情况。",
+      to: buildScopedPath("/receivables", scope)
+    },
+    {
+      permission: "reconciliation.read",
+      icon: <ReceiptText size={18} />,
+      title: "查看核销",
+      description: "进入核销工作台处理发票与到账流水匹配。",
+      to: buildScopedPath("/reconciliations", scope)
+    }
+  ].filter((entry) => hasPermission(permissions, entry.permission));
+}
+
+function hasPermission(permissions: string[], permission: string) {
+  return permissions.includes(permission);
+}
+
+function buildScopedPath(path: string, scope: V2BusinessScope) {
+  const params = new URLSearchParams();
+  params.set("account_id", String(scope.account_id));
+  if (scope.opportunity_id) {
+    params.set("opportunity_id", String(scope.opportunity_id));
+  }
+  return `${path}?${params.toString()}`;
+}
+
+function useInitialQueryFilters(keys: string[], defaults: Record<string, unknown> = {}) {
+  const location = useLocation();
+  return useMemo(() => ({ ...defaults, ...queryFiltersFromSearch(location.search, keys) }), [location.search, keys.join(",")]);
+}
+
+function queryFiltersFromSearch(search: string, keys: string[]) {
+  const params = new URLSearchParams(search);
+  return Object.fromEntries(
+    keys
+      .map((key) => [key, params.get(key)] as const)
+      .filter(([, value]) => value !== null && value !== "")
+      .map(([key, value]) => [key, /^\d+$/.test(value ?? "") ? Number(value) : value])
+  );
+}
+
+function sumBy<T>(items: T[], selector: (item: T) => number | null | undefined) {
+  return items.reduce((total, item) => total + Number(selector(item) ?? 0), 0);
 }
 
 function toAccountOptions(accounts: Account[]): SelectOption[] {
