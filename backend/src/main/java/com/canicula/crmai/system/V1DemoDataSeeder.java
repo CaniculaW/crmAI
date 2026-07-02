@@ -40,7 +40,13 @@ public class V1DemoDataSeeder implements ApplicationRunner {
             "activity",
             "weekly_progress",
             "attachment",
-            "reminder");
+            "reminder",
+            "solution",
+            "contract",
+            "invoice",
+            "receivable",
+            "payment",
+            "reconciliation");
 
     private final JdbcTemplate jdbcTemplate;
     private final PasswordCredentialService passwordCredentialService;
