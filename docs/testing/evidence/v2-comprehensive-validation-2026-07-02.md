@@ -27,7 +27,7 @@
 | 4 | Done | API smoke | 登录成功；20 个核心接口全部 200/OK；旧红灯 `/api/contracts?account_id=1&opportunity_id=10` 为 200/OK |
 | 5 | Done | V2 越权详情错误码整改 | RED：5 个测试失败，均为 expected 403 but was 500；GREEN：16 tests，0 failures；完整后端回归 72 tests，0 failures |
 | 6 | Done | 后端重启到最新修复 | 8081 旧进程已停止，新进程启动，Flyway v20 up to date |
-| 7 | Pending | 浏览器级 V2 专用 E2E 证据 | 当前插件全量页面巡检两次超时，未归档半成品；需后续建设稳定 Playwright/V2 smoke |
+| 7 | Done | 浏览器级 V2 专用 smoke 证据 | `npm run smoke:v2:browser` 通过；18 条路由 × desktop/mobile 两种视口，共 36 个页面检查；console failure = 0；API failed response = 0；证据目录 `docs/testing/evidence/artifacts/v2-browser-smoke-20260702/` |
 
 ## 3. 已修复问题
 
@@ -115,9 +115,59 @@ TDD 证据：
 
 - 历史截图 `v2-scoped-contract-filter-uat-20260702.png` 曾显示“服务端异常”。
 - 本轮 API smoke 复核 `/api/contracts?account_id=1&opportunity_id=10`：`200/OK`，`message=success`。
-- 浏览器插件全量巡检未能稳定归档，后续需要 V2 专用 Playwright smoke 作为审计级证据。
+- 浏览器插件全量巡检曾未能稳定归档，现已补充项目内 V2 专用 browser smoke 作为可复跑证据。
 
-## 5. 准出结论
+## 5. V2 浏览器 Smoke 结果
+
+执行环境：
+
+- Frontend：`http://127.0.0.1:5175`
+- Backend：`http://127.0.0.1:8081`
+- 账号：`demo_admin`
+- 命令：`CRM_SMOKE_URL=http://127.0.0.1:5175 CRM_SMOKE_EVIDENCE_DIR=docs/testing/evidence/artifacts/v2-browser-smoke-20260702 npm run smoke:v2:browser`
+
+结果摘要：
+
+| 指标 | 结果 |
+|---|---:|
+| 页面检查 | 36 |
+| 路由 | 18 |
+| 视口 | desktop 1440×1000；mobile 390×844 |
+| Console failure | 0 |
+| API failed response | 0 |
+| 证据文件 | 36 张截图 + `report.json` |
+
+覆盖路由：
+
+- `/`
+- `/accounts`
+- `/contacts`
+- `/opportunities`
+- `/activities`
+- `/weekly-progress`
+- `/solutions`
+- `/contracts`
+- `/contracts?account_id=1&opportunity_id=10`
+- `/invoices`
+- `/receivables`
+- `/reconciliations`
+- `/system`
+- `/system/departments`
+- `/system/users`
+- `/system/roles`
+- `/system/audit-logs`
+- `/system/dictionaries`
+
+证据目录：
+
+- `docs/testing/evidence/artifacts/v2-browser-smoke-20260702/report.json`
+- `docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-dashboard.png`
+- `docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-reconciliations.png`
+- `docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-dashboard.png`
+- `docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-reconciliations.png`
+- 其余页面截图同目录按 `{viewport}-{route}.png` 命名。
+
+## 6. 准出结论
 
 当前结论：
 
@@ -128,13 +178,14 @@ TDD 证据：
 
 - 主功能、核心 API、前端测试和构建已通过。
 - 一个高风险 API 错误码问题已按 TDD 修复并回归通过。
-- 但证据链仍缺少稳定的 V2 专用浏览器 E2E、移动端/平板截图、角色权限矩阵、真实文件上传下载、并发/性能/安全类验证。
+- 稳定的 V2 专用浏览器 smoke 已补齐。
+- 但证据链仍缺少角色权限矩阵、平板响应式、真实文件上传下载、并发/性能/安全类验证。
 
-## 6. 后续整改清单
+## 7. 后续整改清单
 
 | 优先级 | 事项 | 说明 |
 |---|---|---|
-| P1 | 建设 V2 专用 Playwright E2E | 登录后跑商机/方案/合同/开票/回款/核销/撤销，输出 test-results 和截图 |
+| P1 | 深化 V2 专用 E2E | 当前 browser smoke 已覆盖页面可用性；后续可增加新建、状态流转、核销撤销等写操作链路 |
 | P1 | 角色权限矩阵验收 | 销售、商务/法务、财务、管理层、低权限用户分别验证菜单、按钮、API 403、数据范围 |
 | P1 | 附件能力边界收口 | 当前为附件 URL 元数据管理；若验收口径包含上传下载，需实现 multipart upload/download |
 | P2 | 移动端/平板响应式证据 | 补 375px、768px、1440px 关键页面截图 |
