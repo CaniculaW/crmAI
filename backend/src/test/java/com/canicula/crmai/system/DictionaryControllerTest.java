@@ -26,6 +26,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class DictionaryControllerTest {
@@ -41,6 +42,9 @@ class DictionaryControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @LocalServerPort
     private int port;
@@ -122,6 +126,9 @@ class DictionaryControllerTest {
                     assertThat(item.path("item_code").asText()).isEqualTo("partner");
                     assertThat(item.path("is_active").asBoolean()).isFalse();
                 });
+        assertThat(auditCount("system.dict.type.create", "dict_type", dictTypeId)).isEqualTo(1);
+        assertThat(auditCount("system.dict.item.create", "dict_item", itemId)).isEqualTo(1);
+        assertThat(auditCount("system.dict.item.update", "dict_item", itemId)).isEqualTo(1);
     }
 
     @Test
@@ -226,6 +233,21 @@ class DictionaryControllerTest {
         } catch (Exception exception) {
             throw new IllegalStateException("JSON request failed", exception);
         }
+    }
+
+    private Integer auditCount(String actionCode, String objectType, Long objectId) {
+        return jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_audit_logs
+                where action_code = ?
+                  and object_type = ?
+                  and object_id = ?
+                """,
+                Integer.class,
+                actionCode,
+                objectType,
+                objectId);
     }
 
     private record HttpJsonResponse(int status, JsonNode body) {
