@@ -14,9 +14,11 @@ import {
   Table,
   Tag,
   Typography,
+  Upload,
   message
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import type { UploadFile } from "antd/es/upload/interface";
 import {
   BarChart3,
   BriefcaseBusiness,
@@ -171,6 +173,12 @@ type V2BusinessScope = {
   opportunity_id?: number;
 };
 
+type AttachmentUploadFormValues = {
+  file?: UploadFile[];
+  file_type?: string;
+  remark?: string;
+};
+
 type V2BusinessSnapshotData = {
   solutions: SolutionDocument[];
   contracts: CrmContract[];
@@ -178,6 +186,67 @@ type V2BusinessSnapshotData = {
   receivables: ReceivablePlan[];
   reconciliationWorkbench: ReconciliationWorkbench;
 };
+
+function AttachmentUploadFormFields({ options }: { options: Array<{ label: string; value: string }> }) {
+  return (
+    <>
+      <Form.Item
+        name="file"
+        label="上传文件"
+        valuePropName="fileList"
+        getValueFromEvent={normalizeUploadEvent}
+        rules={[{ required: true, message: "请选择附件文件" }]}
+      >
+        <Upload beforeUpload={() => false} maxCount={1}>
+          <Button icon={<Paperclip size={16} />}>选择文件</Button>
+        </Upload>
+      </Form.Item>
+      <Form.Item name="file_type" label="附件类型">
+        <Select allowClear options={options} />
+      </Form.Item>
+      <Form.Item name="remark" label="备注">
+        <Input.TextArea rows={2} />
+      </Form.Item>
+    </>
+  );
+}
+
+function normalizeUploadEvent(event: UploadFile[] | { fileList?: UploadFile[] }) {
+  return Array.isArray(event) ? event : event?.fileList ?? [];
+}
+
+async function uploadAttachment(objectType: string, objectId: number, values: Record<string, unknown>) {
+  const uploadValues = values as AttachmentUploadFormValues;
+  const file = uploadValues.file?.[0]?.originFileObj;
+  if (!file) {
+    message.warning("请选择附件文件");
+    return false;
+  }
+  await crmApi.attachments.upload({
+    object_type: objectType,
+    object_id: objectId,
+    file,
+    file_type: uploadValues.file_type,
+    remark: uploadValues.remark
+  });
+  return true;
+}
+
+async function downloadAttachment(record: Attachment) {
+  try {
+    const blob = await crmApi.attachments.download(record.id);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = record.file_name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : "附件下载失败");
+  }
+}
 
 function canAccessNavItem(item: Pick<NavItem, "permission" | "permissions">, permissions: string[]) {
   return (
@@ -1516,7 +1585,7 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
       title: "操作",
       render: (_, record) => (
         <Space>
-          <Button size="small" href={record.file_url} target="_blank" rel="noreferrer">
+          <Button size="small" onClick={() => void downloadAttachment(record)}>
             下载
           </Button>
           <Button size="small" danger onClick={() => void deleteAttachment(record.id)}>
@@ -1564,11 +1633,10 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
     if (!selected) {
       return;
     }
-    await crmApi.attachments.create({
-      object_type: "solution_document",
-      object_id: selected.id,
-      ...withoutEmpty(values, [])
-    });
+    const uploaded = await uploadAttachment("solution_document", selected.id, values);
+    if (!uploaded) {
+      return;
+    }
     attachmentForm.resetFields();
     await loadAttachments(selected.id);
   };
@@ -1644,18 +1712,7 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
             locale={{ emptyText: "暂无附件" }}
           />
           <Form form={attachmentForm} layout="vertical" className="inline-create-form" onFinish={createAttachment}>
-            <Form.Item name="file_name" label="附件名称" rules={[{ required: true }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item name="file_url" label="附件地址" rules={[{ required: true }]}>
-              <Input placeholder="https:// 或 oss:// 地址" />
-            </Form.Item>
-            <Form.Item name="file_type" label="附件类型">
-              <Select allowClear options={attachmentFileTypeOptions()} />
-            </Form.Item>
-            <Form.Item name="file_size" label="文件大小">
-              <InputNumber min={0} className="full-width" />
-            </Form.Item>
+            <AttachmentUploadFormFields options={attachmentFileTypeOptions()} />
             <Button type="primary" htmlType="submit">新增附件</Button>
           </Form>
         </section>
@@ -1810,7 +1867,10 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
     if (!selected) {
       return;
     }
-    await crmApi.attachments.create({ object_type: "contract", object_id: selected.id, ...withoutEmpty(values, []) });
+    const uploaded = await uploadAttachment("contract", selected.id, values);
+    if (!uploaded) {
+      return;
+    }
     attachmentForm.resetFields();
     await loadContractDetail(selected.id);
   };
@@ -1844,7 +1904,7 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
       title: "操作",
       render: (_, record) => (
         <Space>
-          <Button size="small" href={record.file_url} target="_blank" rel="noreferrer">
+          <Button size="small" onClick={() => void downloadAttachment(record)}>
             下载
           </Button>
           <Button size="small" danger onClick={() => void deleteAttachment(record.id)}>
@@ -1992,18 +2052,7 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
                 locale={{ emptyText: "暂无附件" }}
               />
               <Form form={attachmentForm} layout="vertical" className="inline-create-form" onFinish={createAttachment}>
-                <Form.Item name="file_name" label="附件名称" rules={[{ required: true }]}>
-                  <Input />
-                </Form.Item>
-                <Form.Item name="file_url" label="附件地址" rules={[{ required: true }]}>
-                  <Input placeholder="https:// 或 oss:// 地址" />
-                </Form.Item>
-                <Form.Item name="file_type" label="附件类型">
-                  <Select allowClear options={contractAttachmentFileTypeOptions()} />
-                </Form.Item>
-                <Form.Item name="file_size" label="文件大小">
-                  <InputNumber min={0} className="full-width" />
-                </Form.Item>
+                <AttachmentUploadFormFields options={contractAttachmentFileTypeOptions()} />
               </Form>
             </section>
           </>
@@ -2242,11 +2291,10 @@ function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
     if (!selected) {
       return;
     }
-    await crmApi.attachments.create({
-      object_type: "invoice",
-      object_id: selected.id,
-      ...withoutEmpty(values, [])
-    });
+    const uploaded = await uploadAttachment("invoice", selected.id, values);
+    if (!uploaded) {
+      return;
+    }
     attachmentForm.resetFields();
     await loadInvoiceDetail(selected.id);
   };
@@ -2267,7 +2315,7 @@ function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
       title: "操作",
       render: (_, record) => (
         <Space>
-          <Button size="small" href={record.file_url} target="_blank" rel="noreferrer">
+          <Button size="small" onClick={() => void downloadAttachment(record)}>
             下载
           </Button>
           <Button size="small" danger onClick={() => void deleteAttachment(record.id)}>
@@ -2415,18 +2463,7 @@ function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
                 locale={{ emptyText: "暂无附件" }}
               />
               <Form form={attachmentForm} layout="vertical" className="inline-create-form" onFinish={createAttachment}>
-                <Form.Item name="file_name" label="附件名称" rules={[{ required: true }]}>
-                  <Input />
-                </Form.Item>
-                <Form.Item name="file_url" label="附件地址" rules={[{ required: true }]}>
-                  <Input placeholder="https:// 或 oss:// 地址" />
-                </Form.Item>
-                <Form.Item name="file_type" label="附件类型">
-                  <Select allowClear options={invoiceAttachmentFileTypeOptions()} />
-                </Form.Item>
-                <Form.Item name="file_size" label="文件大小">
-                  <InputNumber min={0} className="full-width" />
-                </Form.Item>
+                <AttachmentUploadFormFields options={invoiceAttachmentFileTypeOptions()} />
               </Form>
             </section>
             <section className="drawer-section">
@@ -2694,7 +2731,7 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
       title: "操作",
       render: (_, record) => (
         <Space>
-          <Button size="small" href={record.file_url} target="_blank" rel="noreferrer">
+          <Button size="small" onClick={() => void downloadAttachment(record)}>
             下载
           </Button>
           <Button size="small" danger onClick={() => void deleteAttachment(record.id)}>
@@ -2743,11 +2780,10 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
     if (!selected) {
       return;
     }
-    await crmApi.attachments.create({
-      object_type: "receivable_plan",
-      object_id: selected.id,
-      ...withoutEmpty(values, [])
-    });
+    const uploaded = await uploadAttachment("receivable_plan", selected.id, values);
+    if (!uploaded) {
+      return;
+    }
     attachmentForm.resetFields();
     await loadReceivableDetail(selected.id);
   };
@@ -2927,18 +2963,7 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
                 locale={{ emptyText: "暂无附件" }}
               />
               <Form form={attachmentForm} layout="vertical" className="inline-create-form" onFinish={createAttachment}>
-                <Form.Item name="file_name" label="附件名称" rules={[{ required: true }]}>
-                  <Input />
-                </Form.Item>
-                <Form.Item name="file_url" label="附件地址" rules={[{ required: true }]}>
-                  <Input placeholder="https:// 或 oss:// 地址" />
-                </Form.Item>
-                <Form.Item name="file_type" label="附件类型">
-                  <Select allowClear options={receivableAttachmentFileTypeOptions()} />
-                </Form.Item>
-                <Form.Item name="file_size" label="文件大小">
-                  <InputNumber min={0} className="full-width" />
-                </Form.Item>
+                <AttachmentUploadFormFields options={receivableAttachmentFileTypeOptions()} />
               </Form>
             </section>
           </>

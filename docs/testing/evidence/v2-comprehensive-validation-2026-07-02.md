@@ -30,6 +30,7 @@
 | 7 | Done | 浏览器级 V2 专用 smoke 证据 | `npm run smoke:v2:browser` 通过；18 条路由 × desktop/tablet/mobile 三种视口，共 54 个页面检查；console failure = 0；API failed response = 0；证据目录 `docs/testing/evidence/artifacts/v2-browser-smoke-20260702/` |
 | 8 | Done | V2 角色权限矩阵验收 | RED：全量回归暴露核销列表在存在不可读记录时返回 403；GREEN：`mvn -Dtest=V2RoleMatrixValidationTest test` 通过；完整后端 `mvn test` 86 tests，0 failures，0 errors |
 | 9 | Done | 移动端/平板响应式证据 | V2 browser smoke 已补 `tablet 768×1024`；同目录新增 18 张 tablet 截图；三档视口共 54 个页面检查 |
+| 10 | Done | 附件真实上传/下载验收 | RED：`AttachmentControllerTest#uploadsAndDownloadsAttachmentFile` 期望 200 但上传返回 500；GREEN：`mvn -Dtest=AttachmentControllerTest test` 9 tests，0 failures；`mvn -Dtest=AttachmentControllerTest,OpenApiContractCoverageTest test` 10 tests，0 failures；完整后端 `mvn test` 87 tests，0 failures；前端 `npm test -- --run` 45 tests，0 failures；`npm run build` 通过；本地 8081 真实 smoke 登录/上传/下载/删除均 200 |
 
 ## 3. 已修复问题
 
@@ -185,7 +186,8 @@ TDD 证据：
 - 稳定的 V2 专用浏览器 smoke 已补齐。
 - V2 角色权限矩阵自动化验收已补齐。
 - 移动端/平板响应式截图证据已补齐。
-- 但证据链仍缺少真实文件上传下载、并发/性能/安全类验证。
+- 真实文件上传下载能力与证据已补齐。
+- 但证据链仍缺少并发/性能/安全类验证。
 
 ## 7. V2 角色权限矩阵结果
 
@@ -216,12 +218,43 @@ TDD 证据：
 | 管理层 | V2 全链路读取、审计日志读取 | V2 读 API 和审计日志可访问；不能创建核销 |
 | 低权限用户 | 仅 V1 客户读取 | V2 关键读 API 全部返回 403 |
 
-## 8. 后续整改清单
+## 8. 附件真实上传/下载结果
+
+命令：
+
+- `mvn -Dtest=AttachmentControllerTest#uploadsAndDownloadsAttachmentFile test`
+- `mvn -Dtest=AttachmentControllerTest test`
+- `mvn -Dtest=AttachmentControllerTest,OpenApiContractCoverageTest test`
+- `mvn test`
+- `npm test -- --run`
+- `npm run build`
+- 本地 8081 真实 API smoke：`demo_admin` 登录后上传 `v2-local-attachment-smoke.txt` 到 `account:1`，再下载校验内容并删除
+
+结果：
+
+- 定向上传/下载用例：1 test，0 failures，0 errors
+- 附件控制器：9 tests，0 failures，0 errors
+- 附件 + OpenAPI：10 tests，0 failures，0 errors
+- 后端全量：87 tests，0 failures，0 errors
+- 前端全量：3 files / 45 tests passed
+- 前端构建：通过，保留既有 `antd-vendor` chunk 体积提示
+- 本地 8081 smoke：login 200，upload 200，download 200，delete 200，`file_url=/api/attachments/5/download`
+
+本轮整改：
+
+- 保留原 `POST /api/attachments` URL 元数据模式，兼容历史附件记录。
+- 新增 `POST /api/attachments/upload`，支持 multipart 文件上传，按对象权限校验可读性后落本地存储目录。
+- 新增 `GET /api/attachments/{attachmentId}/download`，通过 `attachment.read` 鉴权后返回二进制文件流。
+- 统一响应包装跳过 `Resource` 文件流，避免下载被包装成 JSON。
+- 前端方案、合同、开票、回款附件区由“填写附件地址”调整为“选择文件 + 附件类型 + 备注”，下载按钮改为带 Bearer token 的 blob 下载。
+- OpenAPI 已补充上传/下载两个运行时 API。
+
+## 9. 后续整改清单
 
 | 优先级 | 事项 | 说明 |
 |---|---|---|
 | P1 | 深化 V2 专用 E2E | 当前 browser smoke 已覆盖页面可用性；后续可增加新建、状态流转、核销撤销等写操作链路 |
-| P1 | 附件能力边界收口 | 当前为附件 URL 元数据管理；若验收口径包含上传下载，需实现 multipart upload/download |
+| P1 | 附件能力边界收口 | 已支持 URL 元数据与本地 multipart 上传/下载；后续生产化可接对象存储、病毒扫描、大小/类型策略和签名 URL |
 | P2 | OpenAPI 深度契约 | 校验 request/response schema、错误码、权限扩展字段，更新 V1 标题命名 |
 | P2 | 并发与幂等验证 | 核销、开票额度、回款分配需并发竞争测试 |
 | P2 | 前端质量门 | 增加 lint、axe/pa11y 或等价无障碍自动化 |

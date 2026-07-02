@@ -36,7 +36,7 @@ export function clearAuthToken() {
 export async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
   const token = getAuthToken();
   const headers = new Headers(init?.headers);
-  if (!headers.has("Content-Type") && init?.body !== undefined) {
+  if (!headers.has("Content-Type") && init?.body !== undefined && !(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
   if (token && !headers.has("Authorization")) {
@@ -64,4 +64,29 @@ export async function requestJson<T>(input: RequestInfo | URL, init?: RequestIni
   }
 
   return payload as T;
+}
+
+export async function requestBlob(input: RequestInfo | URL, init?: RequestInit): Promise<Blob> {
+  const token = getAuthToken();
+  const headers = new Headers(init?.headers);
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(input, {
+    ...init,
+    headers
+  });
+
+  if (!response.ok) {
+    let payload: ErrorPayload = {};
+    try {
+      payload = (await response.json()) as ErrorPayload;
+    } catch {
+      payload = {};
+    }
+    throw new ApiError(payload.message ?? "请求失败", response.status);
+  }
+
+  return response.blob();
 }

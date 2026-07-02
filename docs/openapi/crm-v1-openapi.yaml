@@ -1705,6 +1705,33 @@ paths:
       responses:
         '200':
           description: Attachment metadata.
+  /api/attachments/upload:
+    post:
+      tags: [Attachments]
+      summary: Upload attachment file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [object_type, object_id, file]
+              properties:
+                object_type:
+                  type: string
+                object_id:
+                  type: integer
+                  format: int64
+                file:
+                  type: string
+                  format: binary
+                file_type:
+                  type: string
+                remark:
+                  type: string
+      responses:
+        '200':
+          description: Uploaded attachment metadata.
   /api/attachments/{attachmentId}:
     delete:
       tags: [Attachments]
@@ -1719,6 +1746,25 @@ paths:
       responses:
         '200':
           description: Deletion result.
+  /api/attachments/{attachmentId}/download:
+    get:
+      tags: [Attachments]
+      summary: Download uploaded attachment file
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Attachment binary stream.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
   /api/reminders:
     get:
       tags: [Reminders]

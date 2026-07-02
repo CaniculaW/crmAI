@@ -913,6 +913,8 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("button", { name: "提交申请" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "登记发票" })).toBeInTheDocument();
     expect(screen.getByText("发票扫描件.pdf")).toBeInTheDocument();
+    expect(screen.getByText("选择文件")).toBeInTheDocument();
+    expect(screen.queryByText("附件地址")).not.toBeInTheDocument();
   });
 
   it("renders the receivable module and loads the V2 receivable list", async () => {

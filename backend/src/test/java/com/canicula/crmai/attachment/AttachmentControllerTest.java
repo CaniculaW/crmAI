@@ -21,8 +21,12 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AttachmentControllerTest {
@@ -86,6 +90,55 @@ class AttachmentControllerTest {
         assertThat(listResponse.getBody().path("data")).anySatisfy(attachment ->
                 assertThat(attachment.path("id").asLong()).isEqualTo(attachmentId));
         assertThat(auditCount).isEqualTo(1);
+    }
+
+    @Test
+    void uploadsAndDownloadsAttachmentFile() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("attachment-upload-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "attachment_upload_" + suffix,
+                departmentId,
+                List.of("account.create", "attachment.create", "attachment.read", "attachment.delete"),
+                List.of("global"));
+        String token = login("attachment_upload_" + suffix);
+        Long accountId = createAccount(token, "附件上传客户-" + suffix, departmentId, userId);
+        String fileName = "验收附件-" + suffix + ".txt";
+        byte[] content = ("V2 attachment upload evidence " + suffix).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+        ResponseEntity<JsonNode> uploadResponse = restTemplate.exchange(
+                "/api/attachments/upload",
+                HttpMethod.POST,
+                new HttpEntity<>(multipartUploadBody(accountId, fileName, content), multipartHeaders(token, "attachment-upload-trace-001")),
+                JsonNode.class);
+
+        assertThat(uploadResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode uploaded = uploadResponse.getBody().path("data");
+        Long attachmentId = uploaded.path("id").asLong();
+        assertThat(uploaded.path("object_type").asText()).isEqualTo("account");
+        assertThat(uploaded.path("object_id").asLong()).isEqualTo(accountId);
+        assertThat(uploaded.path("file_name").asText()).isEqualTo(fileName);
+        assertThat(uploaded.path("file_url").asText()).isEqualTo("/api/attachments/" + attachmentId + "/download");
+        assertThat(uploaded.path("file_size").asLong()).isEqualTo(content.length);
+        assertThat(uploaded.path("mime_type").asText()).isEqualTo("text/plain");
+
+        ResponseEntity<byte[]> downloadResponse = restTemplate.exchange(
+                "/api/attachments/" + attachmentId + "/download",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "attachment-download-trace-001")),
+                byte[].class);
+        ResponseEntity<JsonNode> listResponse = restTemplate.exchange(
+                "/api/attachments?object_type=account&object_id=" + accountId,
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "attachment-upload-list-trace-001")),
+                JsonNode.class);
+
+        assertThat(downloadResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(downloadResponse.getHeaders().getContentType()).isEqualTo(MediaType.TEXT_PLAIN);
+        assertThat(downloadResponse.getBody()).isEqualTo(content);
+        assertThat(downloadResponse.getHeaders().getContentDisposition().getFilename()).isEqualTo(fileName);
+        assertThat(listResponse.getBody().path("data")).anySatisfy(attachment ->
+                assertThat(attachment.path("file_url").asText()).isEqualTo("/api/attachments/" + attachmentId + "/download"));
     }
 
     @Test
@@ -729,5 +782,26 @@ class AttachmentControllerTest {
         HttpHeaders headers = traceHeaders(traceId);
         headers.setBearerAuth(accessToken);
         return headers;
+    }
+
+    private static HttpHeaders multipartHeaders(String accessToken, String traceId) {
+        HttpHeaders headers = authHeaders(accessToken, traceId);
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        return headers;
+    }
+
+    private static MultiValueMap<String, Object> multipartUploadBody(Long accountId, String fileName, byte[] content) {
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("object_type", "account");
+        body.add("object_id", accountId.toString());
+        body.add("file_type", "customer_material");
+        body.add("remark", "真实上传下载验收");
+        body.add("file", new ByteArrayResource(content) {
+            @Override
+            public String getFilename() {
+                return fileName;
+            }
+        });
+        return body;
     }
 }

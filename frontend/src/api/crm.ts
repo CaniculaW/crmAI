@@ -1,4 +1,4 @@
-import { clearAuthToken, requestJson, setAuthToken } from "./client";
+import { clearAuthToken, requestBlob, requestJson, setAuthToken } from "./client";
 
 type QueryParams = Record<string, unknown>;
 
@@ -398,6 +398,14 @@ export type Attachment = {
   remark?: string;
 };
 
+export type AttachmentUploadRequest = {
+  object_type: string;
+  object_id: number;
+  file: File;
+  file_type?: string;
+  remark?: string;
+};
+
 export type WeeklyProgressItem = {
   activity_id: number;
   subject: string;
@@ -660,6 +668,20 @@ export const crmApi = {
     list: (query: QueryParams) => requestJson<Attachment[]>(withQuery("/api/attachments", query)),
     create: (body: Record<string, unknown>) =>
       requestJson<Attachment>("/api/attachments", { method: "POST", body: JSON.stringify(body) }),
+    upload: (body: AttachmentUploadRequest) => {
+      const formData = new FormData();
+      formData.set("object_type", body.object_type);
+      formData.set("object_id", String(body.object_id));
+      formData.set("file", body.file);
+      if (body.file_type) {
+        formData.set("file_type", body.file_type);
+      }
+      if (body.remark) {
+        formData.set("remark", body.remark);
+      }
+      return requestJson<Attachment>("/api/attachments/upload", { method: "POST", body: formData });
+    },
+    download: (id: number) => requestBlob(`/api/attachments/${id}/download`),
     delete: (id: number) => requestJson<{ deleted: boolean }>(`/api/attachments/${id}`, { method: "DELETE" })
   },
   weeklyProgress: {
