@@ -72,17 +72,17 @@ V2 当前进度：
 | 6 | Done | 发票回款核销链路 | 核销工作台、待核销发票、待分配回款、核销明细、撤销核销 | 支持一笔回款核销多张发票、一张发票被多笔回款分次核销 | 已完成实现、验证与浏览器 UAT |
 | 7 | Done | 客户/商机 V2 入口联动 | 客户详情、商机详情、工作台快捷入口、菜单权限 | 把 V2 能力嵌回 V1 主业务对象，而不是孤立模块 | 已完成实现、验证与浏览器 UAT |
 | 8 | Done | V2 系统配置与权限审计 | 字典、权限点、角色授权、审计日志、数据权限补齐 | 保证销售、商务、财务、管理层看到不同入口和动作 | 已完成实现、验证与浏览器 UAT |
-| 9 | Current | V2 全链路回归与 UAT | 商机成交 -> 方案/标书 -> 合同 -> 开票 -> 回款 -> 核销 | 验证 V2 销售到财务闭环可跑通 | 前后端测试、构建、浏览器 Smoke、UAT 证据通过 |
+| 9 | Done | V2 全链路回归与 UAT | 商机成交 -> 方案/标书 -> 合同 -> 开票 -> 回款 -> 核销 | 验证 V2 销售到财务闭环可跑通 | 已完成前后端回归、构建、浏览器 Smoke 与 UAT 证据归档 |
 
 ## 3. 当前任务
 
-当前任务：`v2-full-chain-regression-uat`
+当前任务：`v2-final-version-confirmation`
 
-状态：Current
+状态：Ready for user confirmation
 
 责任侧：AI 研发主力推进；沈思维作为最终版本确认人，重点确认页面逻辑、模块范围和验收口径。
 
-当前模块：V2 全链路回归与 UAT
+当前模块：V2 版本确认
 
 当前步骤：
 
@@ -108,7 +108,11 @@ V2 当前进度：
 - [x] Step 20：完成模块 7 浏览器 UAT、证据截图、提交记录并切换到模块 8。
 - [x] Step 21：启动模块 8 V2 系统配置与权限审计，输出字典、权限点、角色授权、审计日志和数据权限补齐计划。
 - [x] Step 22：按模块 8 实施计划进入 TDD：V2 字典覆盖、字典审计、角色权限分组、审计筛选和数据权限回归。
-- [ ] Step 23：启动模块 9 V2 全链路回归与 UAT，按业务链路执行端到端验证与证据归档。
+- [x] Step 23：启动模块 9 V2 全链路回归与 UAT，按业务链路执行端到端验证与证据归档。
+- [x] Step 24：完成模块 9 后端 V2 全链路回归测试。
+- [x] Step 25：完成模块 9 前端测试与构建。
+- [x] Step 26：完成模块 9 浏览器 UAT 和证据截图。
+- [ ] Step 27：等待沈思维最终确认 V2 版本。
 
 当前模块不做：
 
@@ -129,7 +133,8 @@ V2 当前进度：
 - 模块 5 回款管理链路已完成实现、自动化验证和浏览器 UAT。
 - 模块 6 已完成 V19 数据模型、核销 API、金额联动、前端核销工作台、OpenAPI/API 清单和浏览器 UAT。
 - 模块 7 已完成前端 TDD 实现、浏览器 UAT、证据截图和提交记录。
-- 模块 8 已完成后端治理、前端系统治理 UI、自动化验证和浏览器 UAT；模块 9 切换为 Current。
+- 模块 8 已完成后端治理、前端系统治理 UI、自动化验证和浏览器 UAT。
+- 模块 9 已完成后端全链路回归、前端测试与构建、浏览器 UAT 和证据截图；V2 进入最终版本确认。
 
 ## 4. 模块完成记录
 
@@ -143,18 +148,18 @@ V2 当前进度：
 | 发票回款核销链路 | Done | 2026-06-30 | 1216f5a | `mvn -Dtest=DatabaseMigrationTest,ReconciliationControllerTest test`；`mvn -Dtest=OpenApiContractCoverageTest test`；`npm test`；`npm run build` | 127.0.0.1:5175 `/reconciliations` 已通过登录态、待核销发票、待分配回款、新增核销、最近核销记录验证；浏览器控制台无 error；证据截图：`docs/testing/evidence/artifacts/v2-reconciliation-workbench-visible-uat-20260630.png` | 自动匹配、银行流水导入、ERP/总账回写保留到后续版本 |
 | 客户/商机 V2 入口联动 | Done | 2026-07-02 | 本次提交 | `npm test -- --run`；`npm run build` | 127.0.0.1:5175 已通过客户抽屉 V2 业务闭环、商机抽屉成交执行闭环、合同页 scoped URL 筛选验证；浏览器控制台 app error = 0；证据截图：`docs/testing/evidence/artifacts/v2-account-entry-integration-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-opportunity-entry-integration-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-scoped-contract-filter-uat-20260702.png` | 无 |
 | V2 系统配置与权限审计 | Done | 2026-07-02 | 本次提交 | `mvn -Dtest=DatabaseMigrationTest,DictionaryControllerTest,DataPermissionServiceTest,V1DemoDataSeederTest,IdentityAdminControllerTest,AuditLogControllerTest test`；`npm test -- --run`；`npm run build` | 127.0.0.1:5175 已通过系统概览 V2 治理覆盖、角色权限分组、审计日志核销筛选、V2 字典管理验证；浏览器控制台 app error = 0；证据截图：`docs/testing/evidence/artifacts/v2-system-overview-governance-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-role-permission-groups-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-audit-quick-filter-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-dictionary-governance-uat-20260702.png` | 无 |
-| V2 全链路回归与 UAT | Current | - | - | - | - | - |
+| V2 全链路回归与 UAT | Done | 2026-07-02 | 本次提交 | `mvn -Dtest=DatabaseMigrationTest,SolutionDocumentControllerTest,ContractControllerTest,InvoiceControllerTest,ReceivablePlanControllerTest,PaymentControllerTest,ReconciliationControllerTest,AttachmentControllerTest,OpenApiContractCoverageTest,DictionaryControllerTest,DataPermissionServiceTest,V1DemoDataSeederTest,IdentityAdminControllerTest,AuditLogControllerTest test`；`npm test -- --run`；`npm run build` | 127.0.0.1:5175 已通过工作台、方案标书、合同、开票管理、回款管理、核销工作台页面级 UAT；浏览器控制台 app error = 0；证据截图：`docs/testing/evidence/artifacts/v2-full-chain-dashboard-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-full-chain-solutions-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-full-chain-contracts-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-full-chain-invoices-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-full-chain-receivables-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-full-chain-reconciliations-uat-20260702.png` | 自动匹配、银行流水导入、ERP/总账回写保留到后续版本；V2 等待最终确认 |
 
 ## 5. 当前进度快照
 
 ```text
 V2 当前进度：
 - 总模块：9
-- 已完成：8
-- 当前模块：9. V2 全链路回归与 UAT
-- 当前步骤：Step 23. 启动模块 9 V2 全链路回归与 UAT
-- 当前 TODO：按业务链路验证商机成交 -> 方案/标书 -> 合同 -> 开票 -> 回款 -> 核销，整理最终 V2 UAT 证据
-- 完成标准：前后端回归、浏览器 Smoke、端到端链路证据通过，V2 可进入版本确认
+- 已完成：9
+- 当前模块：V2 版本确认
+- 当前步骤：Step 27. 等待沈思维最终确认 V2 版本
+- 当前 TODO：由沈思维基于本地环境和 UAT 证据确认 V2 是否签署 GO
+- 完成标准：最终确认通过后，V2 进入版本归档和后续 V3/V2.1 规划
 ```
 
 ## 6. V2 总体页面逻辑与导航方案
