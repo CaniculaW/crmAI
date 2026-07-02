@@ -470,6 +470,27 @@ const apiData = {
       module_code: "account"
     },
     {
+      id: 4201,
+      permission_code: "contract.terminate",
+      permission_name: "终止合同",
+      permission_type: "operation",
+      module_code: "contract"
+    },
+    {
+      id: 4202,
+      permission_code: "invoice.issue",
+      permission_name: "登记发票",
+      permission_type: "operation",
+      module_code: "invoice"
+    },
+    {
+      id: 4203,
+      permission_code: "reconciliation.void",
+      permission_name: "撤销核销",
+      permission_type: "operation",
+      module_code: "reconciliation"
+    },
+    {
       id: 4103,
       permission_code: "system.audit.read",
       permission_name: "查看审计日志",
@@ -1233,6 +1254,48 @@ describe("CRM frontend V1 workflow", () => {
           method: "PUT",
           body: expect.stringContaining("system.audit.read")
         })
+      );
+    });
+  });
+
+  it("shows V2 system governance coverage on overview and role authorization", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "系统概览" }));
+
+    expect(await screen.findByText("V2治理覆盖")).toBeInTheDocument();
+    expect(screen.getByText("V2权限点")).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("link", { name: "角色权限" })[0]);
+    await user.click(screen.getByRole("button", { name: "授权" }));
+
+    expect(await screen.findByText("V2 合同")).toBeInTheDocument();
+    expect(screen.getByLabelText("终止合同")).toBeInTheDocument();
+    expect(screen.getByText("V2 开票")).toBeInTheDocument();
+    expect(screen.getByLabelText("登记发票")).toBeInTheDocument();
+    expect(screen.getByText("V2 核销")).toBeInTheDocument();
+    expect(screen.getByLabelText("撤销核销")).toBeInTheDocument();
+  });
+
+  it("filters audit logs by V2 quick actions", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "系统概览" }));
+    await user.click(screen.getAllByRole("link", { name: "审计日志" })[0]);
+    await user.click(await screen.findByRole("button", { name: "核销审计" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/system/audit-logs?module_code=reconciliation"),
+        expect.anything()
       );
     });
   });

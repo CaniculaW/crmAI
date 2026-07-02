@@ -124,6 +124,48 @@ type RelationshipBucket = {
 
 type SystemSection = "overview" | "departments" | "users" | "roles" | "auditLogs" | "dictionaries";
 
+const v2GovernanceModules = ["solution", "contract", "invoice", "receivable", "payment", "reconciliation", "attachment"];
+const v2DictionaryCodes = [
+  "solution_doc_type",
+  "solution_status",
+  "solution_self_check_result",
+  "solution_risk_level",
+  "contract_type",
+  "contract_status",
+  "contract_change_type",
+  "contract_milestone_status",
+  "invoice_status",
+  "invoice_type",
+  "invoice_exception_type",
+  "receivable_plan_status",
+  "payment_status",
+  "payment_method",
+  "receivable_follow_up_result",
+  "reconciliation_status",
+  "reconciliation_source"
+];
+
+const permissionGroups = [
+  { label: "V1 基础业务", modules: ["account", "contact", "opportunity", "activity", "weekly_progress", "reminder"] },
+  { label: "V2 方案标书", modules: ["solution"] },
+  { label: "V2 合同", modules: ["contract"] },
+  { label: "V2 开票", modules: ["invoice"] },
+  { label: "V2 回款", modules: ["receivable", "payment"] },
+  { label: "V2 核销", modules: ["reconciliation"] },
+  { label: "附件", modules: ["attachment"] },
+  { label: "系统管理", modules: ["system"] }
+];
+
+const auditQuickFilters = [
+  { label: "方案审计", module_code: "solution" },
+  { label: "合同审计", module_code: "contract" },
+  { label: "开票审计", module_code: "invoice" },
+  { label: "回款审计", module_code: "receivable" },
+  { label: "到账审计", module_code: "payment" },
+  { label: "核销审计", module_code: "reconciliation" },
+  { label: "系统变更", module_code: "system" }
+];
+
 type V2BusinessScope = {
   account_id: number;
   opportunity_id?: number;
@@ -3944,8 +3986,9 @@ function WeeklyProgressItems({ items }: { items: WeeklyProgress["progress_items"
 }
 
 function SystemPage({ section }: { section: SystemSection }) {
+  const [auditQuery, setAuditQuery] = useState<Record<string, unknown>>({ limit: 20 });
   const dictionaries = useResource(crmApi.dictionaries.list, []);
-  const auditLogs = useResource(() => crmApi.auditLogs.list({ limit: 20 }), []);
+  const auditLogs = useResource(() => crmApi.auditLogs.list(auditQuery), [auditQuery]);
   const users = useResource(crmApi.users.list, []);
   const departments = useResource(crmApi.departments.list, []);
   const roles = useResource(crmApi.roles.list, []);
@@ -4056,6 +4099,16 @@ function SystemPage({ section }: { section: SystemSection }) {
     await auditLogs.refresh();
   };
 
+  const groupedPermissions = permissionGroups
+    .map((group) => ({
+      ...group,
+      permissions: permissions.data.filter((permission) => group.modules.includes(permission.module_code))
+    }))
+    .filter((group) => group.permissions.length > 0);
+  const v2PermissionCount = permissions.data.filter((permission) => v2GovernanceModules.includes(permission.module_code)).length;
+  const v2DictionaryCount = dictionaries.data.filter((dictionary) => v2DictionaryCodes.includes(dictionary.dict_code)).length;
+  const v2AuditCount = auditLogs.data.filter((log) => v2GovernanceModules.includes(log.module_code)).length;
+
   const userColumns: ColumnsType<SystemUser> = [
     { title: "姓名", dataIndex: "name", width: 140 },
     { title: "部门ID", dataIndex: "department_id", width: 90, render: textOrDash },
@@ -4144,7 +4197,7 @@ function SystemPage({ section }: { section: SystemSection }) {
     },
     dictionaries: {
       title: "字典管理",
-      description: "维护客户、商机、行动、风险等 V1 基础选项。",
+      description: "维护基础选项与 V2 商务财务选项。",
       guide: "先确认字典类型，再维护字典项；停用项不再作为新建业务数据的推荐选项。"
     }
   };
@@ -4218,6 +4271,13 @@ function SystemPage({ section }: { section: SystemSection }) {
     >
       {section === "overview" ? (
         <>
+          <Card size="small" title="V2治理覆盖">
+            <div className="summary-grid compact">
+              <SummaryPanel title="V2权限点" value={v2PermissionCount} loading={permissions.loading} />
+              <SummaryPanel title="V2字典类型" value={v2DictionaryCount} loading={dictionaries.loading} />
+              <SummaryPanel title="V2审计记录" value={v2AuditCount} loading={auditLogs.loading} />
+            </div>
+          </Card>
           <div className="system-module-grid">
             <SystemModuleCard title="组织管理" description="部门、区域和组织状态维护" path="/system/departments" value={departments.data.length} />
             <SystemModuleCard title="用户管理" description="账号、角色和状态维护" path="/system/users" value={users.data.length} />
@@ -4302,16 +4362,24 @@ function SystemPage({ section }: { section: SystemSection }) {
       ) : null}
       {section === "auditLogs" ? (
         <Card size="small" title="最近审计日志">
-        <Table
-          rowKey="id"
-          size="small"
-          loading={auditLogs.loading}
-          dataSource={auditLogs.data}
-          columns={auditColumns}
-          pagination={{ pageSize: 8 }}
-          locale={{ emptyText: "暂无审计日志" }}
-        />
-      </Card>
+          <Space wrap className="toolbar">
+            <Button onClick={() => setAuditQuery({ limit: 20 })}>全部审计</Button>
+            {auditQuickFilters.map((filter) => (
+              <Button key={filter.module_code} onClick={() => setAuditQuery({ module_code: filter.module_code, limit: 20 })}>
+                {filter.label}
+              </Button>
+            ))}
+          </Space>
+          <Table
+            rowKey="id"
+            size="small"
+            loading={auditLogs.loading}
+            dataSource={auditLogs.data}
+            columns={auditColumns}
+            pagination={{ pageSize: 8 }}
+            locale={{ emptyText: "暂无审计日志" }}
+          />
+        </Card>
       ) : null}
       <Modal title="新建组织" open={departmentOpen} onCancel={() => setDepartmentOpen(false)} footer={null} destroyOnHidden>
         <Form name="departmentForm" form={departmentForm} layout="vertical" onFinish={createDepartment} initialValues={{ status: "active" }}>
@@ -4461,10 +4529,17 @@ function SystemPage({ section }: { section: SystemSection }) {
         <Form form={permissionForm} layout="vertical" onFinish={saveRolePermissions}>
           <Form.Item name="permission_codes" label="权限点">
             <Checkbox.Group className="permission-check-list">
-              {permissions.data.map((permission: SystemPermission) => (
-                <Checkbox key={permission.id} value={permission.permission_code}>
-                  {permission.permission_name}
-                </Checkbox>
+              {groupedPermissions.map((group) => (
+                <div key={group.label} className="permission-group">
+                  <Typography.Text strong>{group.label}</Typography.Text>
+                  <Space wrap>
+                    {group.permissions.map((permission: SystemPermission) => (
+                      <Checkbox key={permission.id} value={permission.permission_code}>
+                        {permission.permission_name}
+                      </Checkbox>
+                    ))}
+                  </Space>
+                </div>
               ))}
             </Checkbox.Group>
           </Form.Item>

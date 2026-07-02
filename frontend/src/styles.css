@@ -192,6 +192,11 @@ body {
   margin-bottom: 18px;
 }
 
+.summary-grid.compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+
 .dashboard-command-center {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
@@ -295,6 +300,22 @@ body {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px 12px;
+}
+
+.permission-group {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+}
+
+.permission-group .ant-space {
+  gap: 6px 12px !important;
+}
+
+.toolbar {
+  margin-bottom: 12px;
 }
 
 .filter-bar {
