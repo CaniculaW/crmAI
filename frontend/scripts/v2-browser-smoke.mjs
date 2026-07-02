@@ -32,6 +32,7 @@ export const DEFAULT_V2_PAGE_CHECKS = [
 
 const DEFAULT_VIEWPORTS = [
   { name: "desktop", width: 1440, height: 1000, mobile: false, deviceScaleFactor: 1 },
+  { name: "tablet", width: 768, height: 1024, mobile: true, deviceScaleFactor: 2 },
   { name: "mobile", width: 390, height: 844, mobile: true, deviceScaleFactor: 2 }
 ];
 
@@ -156,17 +157,24 @@ async function runSmoke(config = resolveSmokeConfig()) {
     for (const viewport of config.viewports) {
       await setViewport(page, viewport);
       for (const check of config.pageChecks) {
-        await navigate(page, `${config.baseUrl}${check.path}`, config.timeoutMs);
-        try {
-          await waitForAllTexts(page, check.expectedTexts, config.timeoutMs);
-        } catch (error) {
-          const pageState = await describePage(page);
-          const debugScreenshotPath = path.join(config.evidenceDir, `failed-${viewport.name}-${slugify(check.path)}.png`);
-          const debugScreenshot = await page.send("Page.captureScreenshot", { format: "png", fromSurface: true });
-          await writeFile(debugScreenshotPath, Buffer.from(debugScreenshot.data, "base64"));
-          throw new Error(`${error.message}. Current URL: ${pageState.url}. Body: ${pageState.bodyText.slice(0, 1200)}. Screenshot: ${debugScreenshotPath}`);
+        let pageState;
+        for (let attempt = 1; attempt <= 2; attempt += 1) {
+          await navigate(page, `${config.baseUrl}${check.path}`, config.timeoutMs);
+          try {
+            await waitForAllTexts(page, check.expectedTexts, config.timeoutMs);
+          } catch (error) {
+            pageState = await describePage(page);
+            const debugScreenshotPath = path.join(config.evidenceDir, `failed-${viewport.name}-${slugify(check.path)}.png`);
+            const debugScreenshot = await page.send("Page.captureScreenshot", { format: "png", fromSurface: true });
+            await writeFile(debugScreenshotPath, Buffer.from(debugScreenshot.data, "base64"));
+            throw new Error(`${error.message}. Current URL: ${pageState.url}. Body: ${pageState.bodyText.slice(0, 1200)}. Screenshot: ${debugScreenshotPath}`);
+          }
+          pageState = await describePage(page);
+          if (!hasBlockingText(pageState.bodyText) || attempt === 2) {
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
-        const pageState = await describePage(page);
         const screenshotPath = path.join(config.evidenceDir, `${viewport.name}-${slugify(check.path)}.png`);
         const screenshot = await page.send("Page.captureScreenshot", { format: "png", fromSurface: true });
         await writeFile(screenshotPath, Buffer.from(screenshot.data, "base64"));
@@ -374,6 +382,10 @@ function createCdpClient(webSocketUrl) {
 
 function findBlockingText(bodyText) {
   return BLOCKING_TEXTS.find((text) => bodyText.includes(text)) ?? "unknown";
+}
+
+function hasBlockingText(bodyText) {
+  return BLOCKING_TEXTS.some((text) => bodyText.includes(text));
 }
 
 function isApplicationApiUrl(url) {

@@ -12,7 +12,7 @@ describe("v2 browser smoke script helpers", () => {
     expect(config.baseUrl).toBe("http://127.0.0.1:5175");
     expect(config.username).toBe("demo_admin");
     expect(config.password).toBe("S3cure!123");
-    expect(config.viewports.map((viewport) => viewport.name)).toEqual(["desktop", "mobile"]);
+    expect(config.viewports.map((viewport) => viewport.name)).toEqual(["desktop", "tablet", "mobile"]);
     expect(config.pageChecks.map((check) => check.path)).toEqual(DEFAULT_V2_PAGE_CHECKS.map((check) => check.path));
     expect(config.evidenceDir).toContain("v2-browser-smoke-");
   });
