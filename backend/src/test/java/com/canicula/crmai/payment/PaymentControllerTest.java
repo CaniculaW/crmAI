@@ -224,7 +224,7 @@ class PaymentControllerTest {
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(listResponse.getBody().path("data")).noneSatisfy(payment ->
                 assertThat(payment.path("id").asLong()).isEqualTo(paymentId));
-        assertThat(detailResponse.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(detailResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test

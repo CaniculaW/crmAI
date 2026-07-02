@@ -269,7 +269,7 @@ class InvoiceControllerTest {
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(listResponse.getBody().path("data")).noneSatisfy(invoice ->
                 assertThat(invoice.path("id").asLong()).isEqualTo(invoiceId));
-        assertThat(detailResponse.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(detailResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     private Long createInvoicePlan(

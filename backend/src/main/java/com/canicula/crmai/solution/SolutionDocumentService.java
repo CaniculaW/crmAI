@@ -1,6 +1,7 @@
 package com.canicula.crmai.solution;
 
 import com.canicula.crmai.api.BusinessRuleException;
+import com.canicula.crmai.auth.ForbiddenException;
 import com.canicula.crmai.opportunity.OpportunityResponse;
 import com.canicula.crmai.opportunity.OpportunityService;
 import java.sql.PreparedStatement;
@@ -58,7 +59,7 @@ public class SolutionDocumentService {
         for (Long solutionId : solutionIds) {
             try {
                 readableSolutions.add(readableDetail(solutionId, actorUserId));
-            } catch (IllegalArgumentException ignored) {
+            } catch (IllegalArgumentException | ForbiddenException ignored) {
                 // List queries hide rows outside the linked opportunity data scope.
             }
         }
@@ -71,7 +72,7 @@ public class SolutionDocumentService {
             opportunityService.readableDetail(response.opportunity_id(), actorUserId);
             return response;
         } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException("方案标书不存在或无权访问");
+            throw new ForbiddenException("方案标书不存在或无权访问");
         }
     }
 

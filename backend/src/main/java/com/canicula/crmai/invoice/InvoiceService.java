@@ -1,6 +1,7 @@
 package com.canicula.crmai.invoice;
 
 import com.canicula.crmai.api.BusinessRuleException;
+import com.canicula.crmai.auth.ForbiddenException;
 import com.canicula.crmai.contract.ContractResponse;
 import com.canicula.crmai.contract.ContractService;
 import java.math.BigDecimal;
@@ -78,7 +79,7 @@ public class InvoiceService {
         for (Long invoiceId : invoiceIds) {
             try {
                 readableInvoices.add(readableDetail(invoiceId, actorUserId));
-            } catch (IllegalArgumentException ignored) {
+            } catch (IllegalArgumentException | ForbiddenException ignored) {
                 // List queries hide rows outside linked contract data scope.
             }
         }
@@ -91,7 +92,7 @@ public class InvoiceService {
             readableContract(response.contract_id(), actorUserId);
             return response;
         } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException("开票记录不存在或无权访问");
+            throw new ForbiddenException("开票记录不存在或无权访问");
         }
     }
 

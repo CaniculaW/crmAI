@@ -1,6 +1,7 @@
 package com.canicula.crmai.receivable;
 
 import com.canicula.crmai.api.BusinessRuleException;
+import com.canicula.crmai.auth.ForbiddenException;
 import com.canicula.crmai.contract.ContractResponse;
 import com.canicula.crmai.contract.ContractService;
 import java.math.BigDecimal;
@@ -74,7 +75,7 @@ public class ReceivablePlanService {
         for (Long planId : planIds) {
             try {
                 readablePlans.add(readableDetail(planId, actorUserId));
-            } catch (IllegalArgumentException ignored) {
+            } catch (IllegalArgumentException | ForbiddenException ignored) {
                 // List queries hide rows outside linked contract data scope.
             }
         }
@@ -87,7 +88,7 @@ public class ReceivablePlanService {
             readableContract(response.contract_id(), actorUserId);
             return response;
         } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException("回款计划不存在或无权访问");
+            throw new ForbiddenException("回款计划不存在或无权访问");
         }
     }
 

@@ -263,7 +263,7 @@ class ContractControllerTest {
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(listResponse.getBody().path("data")).noneSatisfy(contract ->
                 assertThat(contract.path("id").asLong()).isEqualTo(contractId));
-        assertThat(detailResponse.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(detailResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     private Long createContract(

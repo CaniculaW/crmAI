@@ -179,7 +179,7 @@ class ReceivablePlanControllerTest {
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(listResponse.getBody().path("data")).noneSatisfy(plan ->
                 assertThat(plan.path("id").asLong()).isEqualTo(planId));
-        assertThat(detailResponse.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(detailResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     private Long createReceivablePlan(
