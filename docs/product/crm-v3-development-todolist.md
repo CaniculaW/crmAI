@@ -72,20 +72,20 @@ V3 当前进度：
 | 3 | Done | 经营驾驶舱总览 | `/dashboard`、总览 API、风险摘要、关键指标卡 | 管理层进入系统后先看到整体经营健康度 | `/dashboard` 已展示预测、合同、开票、回款、风险摘要与下钻；API 权限、中文指标、OpenAPI、自动化验证和浏览器 UAT 已完成 |
 | 4 | Done | 销售漏斗与商机预测 | `/dashboard/funnel`、漏斗 API、阶段转化、预计成交、预测金额、停滞/高风险关注 | 判断销售前端是否健康、未来收入是否可预期 | 权限、后端 API、OpenAPI、前端页面、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-funnel-forecast-uat-20260703.png` |
 | 5 | Done | 合同看板 | `/dashboard/contracts`、合同金额、状态、节点、变更、履约风险 | 判断已成交合同资产和履约节点风险 | 权限、后端 API、OpenAPI、前端页面、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-contract-dashboard-uat-20260703.png` |
-| 6 | Current | 开票看板 | 应开、已开、待开、异常、签收、作废 | 判断合同到开票的执行效率和异常 | 开票金额、待开缺口、异常发票和下钻可用 |
-| 7 | Pending | 回款看板 | 应收、实收、逾期、到账、核销、未分配 | 判断现金回收、逾期和核销质量 | 回款率、逾期金额、未核销金额和下钻可用 |
+| 6 | Done | 开票看板 | 应开、已开、待开、异常、签收、作废 | 判断合同到开票的执行效率和异常 | 权限、后端 API、OpenAPI、前端页面、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-invoice-dashboard-uat-20260704.png` |
+| 7 | Current | 回款看板 | 应收、实收、逾期、到账、核销、未分配 | 判断现金回收、逾期和核销质量 | 回款率、逾期金额、未核销金额和下钻可用 |
 | 8 | Pending | 风险预警与数据下钻 | 商机停滞、合同节点逾期、开票异常、回款逾期、核销异常 | 把管理分析落到可处理的业务对象 | 风险列表、优先级、责任人和业务页面跳转可用 |
 | 9 | Pending | V3 全链路回归与 UAT | 经营总览 -> 漏斗/预测 -> 合同/开票/回款 -> 风险下钻 | 验证 V3 管理分析闭环可跑通 | 前后端回归、构建、浏览器 Smoke 与 UAT 证据归档 |
 
 ## 3. 当前任务
 
-当前任务：`v3-invoice-dashboard-implementation`
+当前任务：`v3-receivable-dashboard-design`
 
 状态：Ready
 
 责任侧：AI 研发主力推进；沈思维作为最终版本确认人，重点确认 V3 页面逻辑、指标口径和验收口径。
 
-当前模块：开票看板
+当前模块：回款看板
 
 当前 TODO：
 
@@ -110,31 +110,32 @@ V3 当前进度：
 - [x] Step 19：进入合同看板模块设计与实现计划。
 - [x] Step 20：按实现计划实施合同看板。
 - [x] Step 21：进入开票看板模块设计与实现计划。
-- [ ] Step 22：按实现计划实施开票看板。
+- [x] Step 22：按实现计划实施开票看板。
+- [ ] Step 23：进入回款看板模块设计与实现计划。
 
 完成标准：
 
-- 开票看板权限、后端聚合 API、OpenAPI、前端页面和下钻联动完成。
-- 后端定向测试、前端定向测试、构建和全量验证通过。
-- 浏览器 UAT 通过并留存截图证据。
-- 模块 6 Done，模块 7 回款看板进入 Current。
+- 回款看板页面逻辑、指标口径、API 范围和实现计划完成。
+- 沈思维确认推荐方案后进入实现。
+- 模块 7 保持 Current，下一轮按设计计划推进。
 
 ## 4. 当前进度快照
 
 ```text
 V3 当前进度：
 - 总模块：9
-- 已完成：5
-- 当前模块：开票看板
-- 当前步骤：Step 22 按实现计划实施开票看板
-- 当前 TODO：按 `docs/superpowers/plans/2026-07-04-v3-invoice-dashboard.md` 执行权限迁移、后端 API、OpenAPI、前端页面、UAT 证据
-- 完成标准：开票看板页面 `/dashboard/invoices` 可用，自动化验证和浏览器 UAT 通过
-- 本轮预计产出：代码实现、测试、证据、提交与推送
+- 已完成：6
+- 当前模块：回款看板
+- 当前步骤：Step 23 进入回款看板模块设计与实现计划
+- 当前 TODO：设计回款看板页面逻辑、指标口径、API 范围、下钻路径和验收标准
+- 完成标准：回款看板设计说明与实现计划输出，用户确认后进入实现
+- 本轮预计产出：回款看板设计方案与 TODO
 
 上一模块：
-- 状态：开票看板设计与实现计划 Done
-- 验证结果：设计说明 `docs/superpowers/specs/2026-07-04-v3-invoice-dashboard-design.md` 与实现计划 `docs/superpowers/plans/2026-07-04-v3-invoice-dashboard.md` 已输出；页面职责、开票金额口径、状态分布、缺口趋势、签收与异常风险、API 响应、任务拆分和验收方式已明确
-- 提交号：本次提交
+- 状态：开票看板 Done
+- 验证结果：`mvn -Dtest=DatabaseMigrationTest,DashboardControllerTest,OpenApiContractCoverageTest test` 通过；`mvn -Dtest=PostgresMigrationIT test` 通过；`npm test -- --run src/App.test.tsx` 通过；`npm run build` 通过；API smoke `GET /api/dashboard/invoices` 返回 200；浏览器 UAT 控制台错误 0
+- 提交号：`7306a30`、`0b6c39b`、`aed6778`、`8356be3`
+- 证据：`docs/testing/evidence/artifacts/v3-invoice-dashboard-uat-20260704.png`
 - 遗留问题：无
 ```
 
