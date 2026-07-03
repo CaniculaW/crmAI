@@ -279,7 +279,7 @@ class PostgresMigrationIT {
                 """,
                 Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("23");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("24");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -415,6 +415,33 @@ class PostgresMigrationIT {
                 from sys_permissions
                 where permission_code = 'dashboard.contracts.read'
                   and permission_name = '查看合同看板'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void createsDashboardInvoicesReadPermission() {
+        Flyway flyway = Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .locations("classpath:db/migration")
+                .placeholders(Map.of(
+                        "activeRecordFilter", "where deleted_at is null",
+                        "jsonDataType", "jsonb"))
+                .load();
+
+        flyway.migrate();
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.invoices.read'
+                  and permission_name = '查看开票看板'
                   and module_code = 'dashboard'
                 """,
                 Integer.class);
