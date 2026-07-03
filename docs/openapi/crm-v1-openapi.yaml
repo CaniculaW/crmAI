@@ -118,6 +118,52 @@ paths:
       responses:
         '200':
           description: Sales funnel stages, forecast trend, and attention opportunities.
+  /api/dashboard/contracts:
+    get:
+      tags: [Dashboard]
+      summary: V3 contract execution dashboard
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: owner_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_status
+          in: query
+          schema:
+            type: string
+        - name: risk_level
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Contract metrics, status distribution, milestones, changes, and attention contracts.
   /api/auth/login:
     post:
       tags: [Auth]

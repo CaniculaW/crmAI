@@ -12,6 +12,7 @@ const apiData = {
       "account.create",
       "dashboard.read",
       "dashboard.funnel.read",
+      "dashboard.contracts.read",
       "contact.read",
       "contact.create",
       "opportunity.read",
@@ -434,6 +435,41 @@ const apiData = {
       }
     ]
   },
+  dashboardContracts: {
+    filters: {},
+    metric_cards: [
+      { key: "contract_amount", label: "合同总额", value: 1200000, unit: "CNY", drilldown_url: "/contracts" },
+      { key: "performing_amount", label: "执行中金额", value: 900000, unit: "CNY", drilldown_url: "/contracts?contract_status=performing" },
+      { key: "overdue_milestone_count", label: "逾期节点", value: 1, unit: "count", drilldown_url: "/contracts?milestone_status=overdue" }
+    ],
+    status_distribution: [
+      { status: "performing", label: "执行中", count: 1, amount: 900000, drilldown_url: "/contracts?contract_status=performing" },
+      { status: "completed", label: "已完成", count: 1, amount: 300000, drilldown_url: "/contracts?contract_status=completed" }
+    ],
+    milestone_summary: [
+      { key: "overdue", label: "逾期节点", count: 1, drilldown_url: "/contracts?milestone_status=overdue" },
+      { key: "due_soon", label: "30天内到期", count: 2, drilldown_url: "/contracts?milestone_due=soon" }
+    ],
+    change_trend: [
+      { period: "2026-07", change_count: 2 }
+    ],
+    attention_contracts: [
+      {
+        contract_id: 301,
+        contract_name: "CRM AI V3 实施合同",
+        account_id: 1,
+        opportunity_id: 10,
+        owner_user_id: 1001,
+        contract_status: "performing",
+        risk_level: "high",
+        contract_amount: 900000,
+        next_milestone_name: "上线验收",
+        next_milestone_planned_at: "2026-07-20T10:00:00+08:00",
+        reason: "节点逾期",
+        drilldown_url: "/contracts?contract_id=301"
+      }
+    ]
+  },
   reconciliations: [
     {
       id: 902,
@@ -684,6 +720,26 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByText("停滞超过14天")).toBeInTheDocument();
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/dashboard/funnel"), expect.anything());
+    });
+  });
+
+  it("renders the V3 contract dashboard page", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/dashboard/contracts");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "合同看板" })).toBeInTheDocument();
+    expect(screen.getByText("合同总额")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "合同状态分布" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "履约节点概览" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "变更趋势" })).toBeInTheDocument();
+    expect(screen.getByText("CRM AI V3 实施合同")).toBeInTheDocument();
+    expect(screen.getByText("节点逾期")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/dashboard/contracts"), expect.anything());
     });
   });
 
@@ -1551,6 +1607,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/dashboard/funnel")) {
       return jsonResponse({ code: "OK", data: data.dashboardFunnel });
+    }
+    if (path.endsWith("/api/dashboard/contracts")) {
+      return jsonResponse({ code: "OK", data: data.dashboardContracts });
     }
     if (path.endsWith("/api/accounts/1") && method === "PATCH") {
       return jsonResponse({ code: "OK", data: { ...data.accounts[0], remark: "重点推进" } });

@@ -360,13 +360,18 @@ body {
 
 .dashboard-funnel__stages,
 .dashboard-funnel__trend,
-.dashboard-funnel__attention {
+.dashboard-funnel__attention,
+.dashboard-contracts__status-list,
+.dashboard-contracts__milestones,
+.dashboard-contracts__changes {
   display: grid;
   gap: 10px;
 }
 
 .dashboard-funnel__stage,
-.dashboard-funnel__attention-row {
+.dashboard-funnel__attention-row,
+.dashboard-contracts__status-row,
+.dashboard-contracts__milestone {
   display: grid;
   gap: 8px;
   padding: 12px;
@@ -377,13 +382,16 @@ body {
 }
 
 .dashboard-funnel__stage:hover,
-.dashboard-funnel__attention-row:hover {
+.dashboard-funnel__attention-row:hover,
+.dashboard-contracts__status-row:hover,
+.dashboard-contracts__milestone:hover {
   border-color: #1f5eff;
   color: #1f5eff;
 }
 
 .dashboard-funnel__stage span,
-.dashboard-funnel__attention-row span {
+.dashboard-funnel__attention-row span,
+.dashboard-contracts__status-row span {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -391,15 +399,21 @@ body {
 }
 
 .dashboard-funnel__stage strong,
-.dashboard-funnel__attention-row strong {
+.dashboard-funnel__attention-row strong,
+.dashboard-contracts__status-row strong {
   min-width: 0;
   word-break: break-word;
 }
 
 .dashboard-funnel__stage small,
 .dashboard-funnel__attention-row small,
-.dashboard-funnel__trend-row small {
+.dashboard-funnel__trend-row small,
+.dashboard-contracts__status-row small {
   color: #667085;
+}
+
+.dashboard-contracts__milestone {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .dashboard-funnel__bar {

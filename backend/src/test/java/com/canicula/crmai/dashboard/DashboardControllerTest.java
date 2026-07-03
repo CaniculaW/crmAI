@@ -198,6 +198,77 @@ class DashboardControllerTest {
     }
 
     @Test
+    void contractsDashboardReturnsMetricsStatusMilestonesChangesAndAttentionContracts() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("dashboard-contract-dept-" + suffix);
+        TestUser user = createLoginReadyUser(
+                "dashboard_contract_" + suffix,
+                departmentId,
+                allDashboardPermissions(),
+                List.of("global"));
+        DashboardFixture fixture = createCompleteFixture(suffix, departmentId, user.userId());
+
+        try {
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    "/api/dashboard/contracts?date_from=2026-07-01&date_to=2026-07-31",
+                    HttpMethod.GET,
+                    new HttpEntity<>(authHeaders(user.token(), "dashboard-contract-trace-001")),
+                    JsonNode.class);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode data = response.getBody().path("data");
+            assertThat(data.path("filters").path("date_from").asText()).isEqualTo("2026-07-01");
+            assertThat(data.path("filters").path("date_to").asText()).isEqualTo("2026-07-31");
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("contract_amount");
+                assertThat(card.path("label").asText()).isEqualTo("合同总额");
+                assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(500000));
+            });
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("overdue_milestone_count");
+                assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.ONE);
+            });
+            assertThat(data.path("status_distribution")).anySatisfy(status -> {
+                assertThat(status.path("status").asText()).isEqualTo("performing");
+                assertThat(status.path("label").asText()).isEqualTo("执行中");
+                assertThat(status.path("amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(500000));
+            });
+            assertThat(data.path("milestone_summary")).anySatisfy(summary -> {
+                assertThat(summary.path("key").asText()).isEqualTo("overdue");
+                assertThat(summary.path("count").asLong()).isEqualTo(1);
+                assertThat(summary.path("drilldown_url").asText()).startsWith("/contracts");
+            });
+            assertThat(data.path("change_trend").isArray()).isTrue();
+            assertThat(data.path("attention_contracts")).anySatisfy(item -> {
+                assertThat(item.path("contract_id").asLong()).isEqualTo(fixture.contractId());
+                assertThat(item.path("reason").asText()).contains("节点逾期");
+                assertThat(item.path("drilldown_url").asText()).isEqualTo("/contracts?contract_id=" + fixture.contractId());
+            });
+        } finally {
+            deleteFixture(fixture);
+        }
+    }
+
+    @Test
+    void contractsDashboardRequiresDashboardContractsReadPermission() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("dashboard-contract-forbidden-dept-" + suffix);
+        TestUser user = createLoginReadyUser(
+                "dashboard_contract_forbidden_" + suffix,
+                departmentId,
+                List.of("dashboard.read", "dashboard.funnel.read", "contract.read"),
+                List.of("global"));
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/dashboard/contracts",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(user.token(), "dashboard-contract-forbidden-trace-001")),
+                JsonNode.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     void overviewDateFilterNarrowsMetrics() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         Long departmentId = createDepartment("dashboard-date-dept-" + suffix);
@@ -509,6 +580,7 @@ class DashboardControllerTest {
         return List.of(
                 "dashboard.read",
                 "dashboard.funnel.read",
+                "dashboard.contracts.read",
                 "opportunity.read",
                 "contract.read",
                 "invoice.read",

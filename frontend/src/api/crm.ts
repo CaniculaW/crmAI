@@ -576,6 +576,50 @@ export type DashboardFunnel = {
   attention_opportunities: DashboardAttentionOpportunity[];
 };
 
+export type DashboardContractStatusItem = {
+  status: string;
+  label: string;
+  count: number;
+  amount: number;
+  drilldown_url: string;
+};
+
+export type DashboardContractMilestoneSummary = {
+  key: string;
+  label: string;
+  count: number;
+  drilldown_url: string;
+};
+
+export type DashboardContractChangeTrendPoint = {
+  period: string;
+  change_count: number;
+};
+
+export type DashboardAttentionContract = {
+  contract_id: number;
+  contract_name: string;
+  account_id?: number;
+  opportunity_id?: number;
+  owner_user_id?: number;
+  contract_status: string;
+  risk_level?: string;
+  contract_amount: number;
+  next_milestone_name?: string;
+  next_milestone_planned_at?: string;
+  reason: string;
+  drilldown_url: string;
+};
+
+export type DashboardContracts = {
+  filters: Record<string, unknown>;
+  metric_cards: DashboardMetricCard[];
+  status_distribution: DashboardContractStatusItem[];
+  milestone_summary: DashboardContractMilestoneSummary[];
+  change_trend: DashboardContractChangeTrendPoint[];
+  attention_contracts: DashboardAttentionContract[];
+};
+
 function withQuery(path: string, query?: QueryParams) {
   if (!query) {
     return path;
@@ -628,7 +672,8 @@ export function resetPassword(body: Record<string, unknown>) {
 export const crmApi = {
   dashboard: {
     overview: (query?: QueryParams) => requestJson<DashboardOverview>(withQuery("/api/dashboard/overview", query)),
-    funnel: (query?: QueryParams) => requestJson<DashboardFunnel>(withQuery("/api/dashboard/funnel", query))
+    funnel: (query?: QueryParams) => requestJson<DashboardFunnel>(withQuery("/api/dashboard/funnel", query)),
+    contracts: (query?: QueryParams) => requestJson<DashboardContracts>(withQuery("/api/dashboard/contracts", query))
   },
   accounts: {
     list: (query?: QueryParams) => requestJson<Account[]>(withQuery("/api/accounts", query)),

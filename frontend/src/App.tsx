@@ -47,8 +47,13 @@ import {
   type ContractMilestone,
   type Contact as CrmContact,
   type CurrentUser,
+  type DashboardAttentionContract,
   type DashboardAttentionOpportunity,
   type DashboardBusinessFlowItem,
+  type DashboardContractChangeTrendPoint,
+  type DashboardContractMilestoneSummary,
+  type DashboardContracts,
+  type DashboardContractStatusItem,
   type DashboardForecastTrendPoint,
   type DashboardFunnel,
   type DashboardFunnelStage,
@@ -104,7 +109,8 @@ const navItems: NavItem[] = [
     permission: "dashboard.read",
     children: [
       { key: "/dashboard", label: "经营总览", permission: "dashboard.read" },
-      { key: "/dashboard/funnel", label: "销售漏斗", permission: "dashboard.funnel.read" }
+      { key: "/dashboard/funnel", label: "销售漏斗", permission: "dashboard.funnel.read" },
+      { key: "/dashboard/contracts", label: "合同看板", permission: "dashboard.contracts.read" }
     ]
   },
   { key: "/accounts", label: "客户池", icon: <Users size={18} />, permission: "account.read" },
@@ -405,6 +411,7 @@ function CrmShell() {
             <Route index element={<Dashboard />} />
             <Route path="/dashboard" element={<DashboardOverviewPage />} />
             <Route path="/dashboard/funnel" element={<DashboardFunnelPage />} />
+            <Route path="/dashboard/contracts" element={<DashboardContractsPage />} />
             <Route path="/accounts" element={<AccountsPage currentUser={user} />} />
             <Route path="/contacts" element={<ContactsPage currentUser={user} />} />
             <Route path="/opportunities" element={<OpportunitiesPage currentUser={user} />} />
@@ -677,6 +684,72 @@ function DashboardFunnelPage() {
   );
 }
 
+function DashboardContractsPage() {
+  const { data, loading, error, refresh } = useObjectResource<DashboardContracts>(
+    crmApi.dashboard.contracts,
+    emptyDashboardContracts,
+    []
+  );
+  const maxStatusAmount = Math.max(1, ...data.status_distribution.map((status) => status.amount));
+
+  return (
+    <section className="workspace dashboard-overview dashboard-contracts">
+      <PageTitle
+        title="合同看板"
+        description="查看合同金额、执行状态、履约节点、变更趋势与需要关注的合同风险。"
+        action={<RefreshButton onClick={refresh} loading={loading} />}
+      />
+      {error ? <div className="error-banner">{error}</div> : null}
+
+      <div className="dashboard-overview__metrics">
+        {data.metric_cards.map((metric) => (
+          <DashboardMetricCardView key={metric.key} metric={metric} />
+        ))}
+      </div>
+
+      <div className="dashboard-funnel__layout">
+        <Card title={<Typography.Title level={3}>合同状态分布</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-contracts__status-list">
+            {data.status_distribution.map((status) => (
+              <DashboardContractStatusRow key={status.status} status={status} maxAmount={maxStatusAmount} />
+            ))}
+            {data.status_distribution.length === 0 ? <span className="muted">暂无合同状态数据</span> : null}
+          </div>
+        </Card>
+
+        <Card title={<Typography.Title level={3}>履约节点概览</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-contracts__milestones">
+            {data.milestone_summary.map((summary) => (
+              <DashboardContractMilestoneRow key={summary.key} summary={summary} />
+            ))}
+            {data.milestone_summary.length === 0 ? <span className="muted">暂无履约节点数据</span> : null}
+          </div>
+        </Card>
+      </div>
+
+      <div className="dashboard-funnel__layout">
+        <Card title={<Typography.Title level={3}>变更趋势</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-contracts__changes">
+            {data.change_trend.map((point) => (
+              <DashboardContractChangeTrendRow key={point.period} point={point} />
+            ))}
+            {data.change_trend.length === 0 ? <span className="muted">暂无合同变更</span> : null}
+          </div>
+        </Card>
+
+        <Card title={<Typography.Title level={3}>重点关注合同</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-funnel__attention">
+            {data.attention_contracts.map((contract) => (
+              <DashboardAttentionContractRow key={contract.contract_id} contract={contract} />
+            ))}
+            {data.attention_contracts.length === 0 ? <span className="muted">暂无需要重点关注的合同</span> : null}
+          </div>
+        </Card>
+      </div>
+    </section>
+  );
+}
+
 function DashboardMetricCardView({ metric }: { metric: DashboardMetricCard }) {
   return (
     <Link className="dashboard-overview__metric" to={metric.drilldown_url}>
@@ -728,6 +801,60 @@ function DashboardAttentionOpportunityRow({ opportunity }: { opportunity: Dashbo
       <small>
         {currencyText(opportunity.amount)} · {opportunity.stage}
         {opportunity.expected_close_date ? ` · ${dateText(opportunity.expected_close_date)}` : ""}
+      </small>
+    </Link>
+  );
+}
+
+function DashboardContractStatusRow({ status, maxAmount }: { status: DashboardContractStatusItem; maxAmount: number }) {
+  const width = Math.max(4, Math.round((status.amount / maxAmount) * 100));
+  return (
+    <Link className="dashboard-contracts__status-row" to={status.drilldown_url}>
+      <span>
+        <strong>{status.label}</strong>
+        <small>{status.count} 份</small>
+      </span>
+      <div className="dashboard-funnel__bar" aria-hidden="true">
+        <i style={{ width: `${width}%` }} />
+      </div>
+      <small>{currencyText(status.amount)}</small>
+    </Link>
+  );
+}
+
+function DashboardContractMilestoneRow({ summary }: { summary: DashboardContractMilestoneSummary }) {
+  const color = summary.key === "overdue" ? "red" : summary.key === "due_soon" ? "gold" : "blue";
+  return (
+    <Link className="dashboard-contracts__milestone" to={summary.drilldown_url}>
+      <span>{summary.label}</span>
+      <Tag color={color}>{summary.count} 个</Tag>
+    </Link>
+  );
+}
+
+function DashboardContractChangeTrendRow({ point }: { point: DashboardContractChangeTrendPoint }) {
+  return (
+    <div className="dashboard-funnel__trend-row">
+      <strong>{point.period}</strong>
+      <span>{point.change_count} 次变更</span>
+      <small>合同履约口径</small>
+    </div>
+  );
+}
+
+function DashboardAttentionContractRow({ contract }: { contract: DashboardAttentionContract }) {
+  return (
+    <Link className="dashboard-funnel__attention-row" to={contract.drilldown_url}>
+      <span>
+        <strong>{contract.contract_name}</strong>
+        <Tag color={contract.reason.includes("逾期") ? "red" : contract.reason.includes("风险") ? "orange" : "blue"}>
+          {contract.reason}
+        </Tag>
+      </span>
+      <small>
+        {currencyText(contract.contract_amount)} · {contractStatusText(contract.contract_status)}
+        {contract.next_milestone_name ? ` · ${contract.next_milestone_name}` : ""}
+        {contract.next_milestone_planned_at ? ` · ${dateText(contract.next_milestone_planned_at)}` : ""}
       </small>
     </Link>
   );
@@ -802,6 +929,17 @@ function emptyDashboardFunnel(): DashboardFunnel {
     stages: [],
     forecast_trend: [],
     attention_opportunities: []
+  };
+}
+
+function emptyDashboardContracts(): DashboardContracts {
+  return {
+    filters: {},
+    metric_cards: [],
+    status_distribution: [],
+    milestone_summary: [],
+    change_trend: [],
+    attention_contracts: []
   };
 }
 

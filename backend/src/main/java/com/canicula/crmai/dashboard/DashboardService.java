@@ -33,6 +33,14 @@ public class DashboardService {
             new StageDefinition("negotiation", "商务谈判", new BigDecimal("0.70")),
             new StageDefinition("contract", "合同推进", new BigDecimal("0.90")),
             new StageDefinition("won", "商业成交", ONE));
+    private static final List<ContractStatusDefinition> CONTRACT_STATUSES = List.of(
+            new ContractStatusDefinition("drafting", "拟定中"),
+            new ContractStatusDefinition("approving", "审批中"),
+            new ContractStatusDefinition("pending_signature", "待签署"),
+            new ContractStatusDefinition("performing", "执行中"),
+            new ContractStatusDefinition("paused", "暂停中"),
+            new ContractStatusDefinition("completed", "已完成"),
+            new ContractStatusDefinition("terminated", "已终止"));
     private static final DataPermissionColumns OPPORTUNITY_COLUMNS = new DataPermissionColumns(
             "o.owner_user_id",
             "o.owner_department_id",
@@ -94,6 +102,21 @@ public class DashboardService {
                 attentionOpportunities(opportunities));
     }
 
+    public DashboardContractResponse contracts(Long userId, DashboardContractFilter requestedFilter) {
+        DashboardContractFilter filter = normalizeContractFilter(requestedFilter);
+        DomainAccess contract = access(userId, "contract", "contract.read", CONTRACT_COLUMNS);
+        List<ContractDashboardRow> contracts = contractRows(filter, contract);
+        List<ContractMilestoneDashboardRow> milestones = contractMilestones(filter, contract);
+        List<ContractChangeDashboardRow> changes = contractChanges(filter, contract);
+        return new DashboardContractResponse(
+                contractFilterMap(filter),
+                contractMetricCards(filter, contracts, milestones),
+                contractStatusDistribution(filter, contracts),
+                contractMilestoneSummary(filter, milestones),
+                contractChangeTrend(changes),
+                attentionContracts(contracts, milestones, changes));
+    }
+
     private DashboardFilter normalizeFilter(DashboardFilter filter) {
         LocalDate today = LocalDate.now();
         LocalDate defaultFrom = today.withDayOfMonth(1);
@@ -125,6 +148,24 @@ public class DashboardService {
                 filter.risk_status());
     }
 
+    private DashboardContractFilter normalizeContractFilter(DashboardContractFilter filter) {
+        LocalDate today = LocalDate.now();
+        int quarterStartMonth = ((today.getMonthValue() - 1) / 3) * 3 + 1;
+        LocalDate defaultFrom = LocalDate.of(today.getYear(), quarterStartMonth, 1);
+        LocalDate defaultTo = defaultFrom.plusMonths(3).minusDays(1);
+        LocalDate dateFrom = filter.date_from() == null ? defaultFrom : filter.date_from();
+        LocalDate dateTo = filter.date_to() == null ? defaultTo : filter.date_to();
+        return new DashboardContractFilter(
+                dateFrom,
+                dateTo,
+                filter.department_id(),
+                filter.owner_id(),
+                filter.account_id(),
+                filter.opportunity_id(),
+                filter.contract_status(),
+                filter.risk_level());
+    }
+
     private Map<String, Object> filterMap(DashboardFilter filter) {
         Map<String, Object> filters = new LinkedHashMap<>();
         filters.put("date_from", filter.date_from());
@@ -145,6 +186,196 @@ public class DashboardService {
         filters.put("account_id", filter.account_id());
         filters.put("risk_status", filter.risk_status());
         return filters;
+    }
+
+    private Map<String, Object> contractFilterMap(DashboardContractFilter filter) {
+        Map<String, Object> filters = new LinkedHashMap<>();
+        filters.put("date_from", filter.date_from());
+        filters.put("date_to", filter.date_to());
+        filters.put("department_id", filter.department_id());
+        filters.put("owner_id", filter.owner_id());
+        filters.put("account_id", filter.account_id());
+        filters.put("opportunity_id", filter.opportunity_id());
+        filters.put("contract_status", filter.contract_status());
+        filters.put("risk_level", filter.risk_level());
+        return filters;
+    }
+
+    private List<DashboardMetricCard> contractMetricCards(
+            DashboardContractFilter filter,
+            List<ContractDashboardRow> contracts,
+            List<ContractMilestoneDashboardRow> milestones) {
+        BigDecimal contractAmount = contracts.stream()
+                .map(ContractDashboardRow::amount)
+                .reduce(ZERO, BigDecimal::add);
+        BigDecimal performingAmount = contracts.stream()
+                .filter(row -> "performing".equals(row.status()))
+                .map(ContractDashboardRow::amount)
+                .reduce(ZERO, BigDecimal::add);
+        BigDecimal terminatedAmount = contracts.stream()
+                .filter(row -> "terminated".equals(row.status()))
+                .map(ContractDashboardRow::amount)
+                .reduce(ZERO, BigDecimal::add);
+        long highRiskCount = contracts.stream().filter(row -> isHighContractRisk(row.riskLevel())).count();
+        OffsetDateTime now = OffsetDateTime.now(DEFAULT_OFFSET);
+        long overdueCount = milestones.stream().filter(row -> isOverdueMilestone(row, now)).count();
+        long dueSoonCount = milestones.stream().filter(row -> isDueSoonMilestone(row, now)).count();
+        return List.of(
+                new DashboardMetricCard(
+                        "contract_amount",
+                        "合同总额",
+                        contractAmount,
+                        "CNY",
+                        "/contracts" + contractQueryString(filter)),
+                new DashboardMetricCard(
+                        "performing_amount",
+                        "执行中金额",
+                        performingAmount,
+                        "CNY",
+                        "/contracts" + contractQueryString(filter) + "&contract_status=performing"),
+                new DashboardMetricCard(
+                        "terminated_amount",
+                        "已终止金额",
+                        terminatedAmount,
+                        "CNY",
+                        "/contracts" + contractQueryString(filter) + "&contract_status=terminated"),
+                new DashboardMetricCard(
+                        "high_risk_count",
+                        "高风险合同",
+                        BigDecimal.valueOf(highRiskCount),
+                        "count",
+                        "/contracts" + contractQueryString(filter) + "&risk_level=high"),
+                new DashboardMetricCard(
+                        "overdue_milestone_count",
+                        "逾期节点",
+                        BigDecimal.valueOf(overdueCount),
+                        "count",
+                        "/contracts" + contractQueryString(filter) + "&milestone_status=overdue"),
+                new DashboardMetricCard(
+                        "due_soon_milestone_count",
+                        "临近节点",
+                        BigDecimal.valueOf(dueSoonCount),
+                        "count",
+                        "/contracts" + contractQueryString(filter) + "&milestone_due=soon"));
+    }
+
+    private List<DashboardContractStatusItem> contractStatusDistribution(
+            DashboardContractFilter filter,
+            List<ContractDashboardRow> contracts) {
+        Map<String, ContractStatusAccumulator> accumulators = new LinkedHashMap<>();
+        CONTRACT_STATUSES.forEach(status -> accumulators.put(status.key(), new ContractStatusAccumulator()));
+        contracts.forEach(row -> accumulators.computeIfAbsent(row.status(), ignored -> new ContractStatusAccumulator())
+                .add(row.amount()));
+        return accumulators.entrySet().stream()
+                .map(entry -> new DashboardContractStatusItem(
+                        entry.getKey(),
+                        contractStatusLabel(entry.getKey()),
+                        entry.getValue().count(),
+                        entry.getValue().amount(),
+                        "/contracts" + contractQueryString(filter) + "&contract_status=" + entry.getKey()))
+                .toList();
+    }
+
+    private List<DashboardContractMilestoneSummary> contractMilestoneSummary(
+            DashboardContractFilter filter,
+            List<ContractMilestoneDashboardRow> milestones) {
+        OffsetDateTime now = OffsetDateTime.now(DEFAULT_OFFSET);
+        long overdue = milestones.stream().filter(row -> isOverdueMilestone(row, now)).count();
+        long dueSoon = milestones.stream().filter(row -> isDueSoonMilestone(row, now)).count();
+        long open = milestones.stream().filter(row -> !isCompletedMilestone(row.status())).count();
+        long completed = milestones.stream().filter(row -> isCompletedMilestone(row.status())).count();
+        return List.of(
+                new DashboardContractMilestoneSummary(
+                        "overdue",
+                        "逾期节点",
+                        overdue,
+                        "/contracts" + contractQueryString(filter) + "&milestone_status=overdue"),
+                new DashboardContractMilestoneSummary(
+                        "due_soon",
+                        "30天内到期",
+                        dueSoon,
+                        "/contracts" + contractQueryString(filter) + "&milestone_due=soon"),
+                new DashboardContractMilestoneSummary(
+                        "open",
+                        "未完成节点",
+                        open,
+                        "/contracts" + contractQueryString(filter) + "&milestone_open=true"),
+                new DashboardContractMilestoneSummary(
+                        "completed",
+                        "已完成节点",
+                        completed,
+                        "/contracts" + contractQueryString(filter) + "&milestone_status=completed"));
+    }
+
+    private List<DashboardContractChangeTrendPoint> contractChangeTrend(List<ContractChangeDashboardRow> changes) {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        changes.stream()
+                .filter(row -> row.changedAt() != null)
+                .sorted(Comparator.comparing(ContractChangeDashboardRow::changedAt))
+                .forEach(row -> {
+                    String period = "%04d-%02d".formatted(
+                            row.changedAt().getYear(),
+                            row.changedAt().getMonthValue());
+                    counts.merge(period, 1L, Long::sum);
+                });
+        return counts.entrySet().stream()
+                .map(entry -> new DashboardContractChangeTrendPoint(entry.getKey(), entry.getValue()))
+                .toList();
+    }
+
+    private List<DashboardAttentionContract> attentionContracts(
+            List<ContractDashboardRow> contracts,
+            List<ContractMilestoneDashboardRow> milestones,
+            List<ContractChangeDashboardRow> changes) {
+        Map<Long, List<ContractMilestoneDashboardRow>> milestonesByContract = new LinkedHashMap<>();
+        milestones.forEach(row -> milestonesByContract.computeIfAbsent(row.contractId(), ignored -> new ArrayList<>()).add(row));
+        Map<Long, Long> changesByContract = new LinkedHashMap<>();
+        changes.forEach(row -> changesByContract.merge(row.contractId(), 1L, Long::sum));
+        OffsetDateTime now = OffsetDateTime.now(DEFAULT_OFFSET);
+        return contracts.stream()
+                .map(row -> attentionContract(row, milestonesByContract.getOrDefault(row.id(), List.of()),
+                        changesByContract.getOrDefault(row.id(), 0L), now))
+                .filter(item -> item.reason() != null)
+                .sorted(Comparator.comparing(DashboardAttentionContract::contract_amount).reversed()
+                        .thenComparing(DashboardAttentionContract::next_milestone_planned_at,
+                                Comparator.nullsLast(Comparator.naturalOrder())))
+                .limit(8)
+                .toList();
+    }
+
+    private DashboardAttentionContract attentionContract(
+            ContractDashboardRow contract,
+            List<ContractMilestoneDashboardRow> milestones,
+            long changeCount,
+            OffsetDateTime now) {
+        ContractMilestoneDashboardRow nextMilestone = milestones.stream()
+                .filter(row -> !isCompletedMilestone(row.status()))
+                .min(Comparator.comparing(ContractMilestoneDashboardRow::plannedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .orElse(null);
+        String reason = null;
+        if (milestones.stream().anyMatch(row -> isOverdueMilestone(row, now))) {
+            reason = "节点逾期";
+        } else if (isHighContractRisk(contract.riskLevel())) {
+            reason = "高风险合同";
+        } else if (changeCount > 0) {
+            reason = "近期变更";
+        } else if (milestones.stream().anyMatch(row -> isDueSoonMilestone(row, now))) {
+            reason = "节点临近";
+        }
+        return new DashboardAttentionContract(
+                contract.id(),
+                contract.name(),
+                contract.accountId(),
+                contract.opportunityId(),
+                contract.ownerUserId(),
+                contract.status(),
+                contract.riskLevel(),
+                contract.amount(),
+                nextMilestone == null ? null : nextMilestone.name(),
+                nextMilestone == null ? null : nextMilestone.plannedAt(),
+                reason,
+                "/contracts?contract_id=" + contract.id());
     }
 
     private List<DashboardMetricCard> funnelMetricCards(
@@ -920,6 +1151,99 @@ public class DashboardService {
                 params.toArray());
     }
 
+    private List<ContractDashboardRow> contractRows(DashboardContractFilter filter, DomainAccess access) {
+        if (!access.visible()) {
+            return List.of();
+        }
+        List<Object> params = new ArrayList<>(access.parameters());
+        StringBuilder filters = new StringBuilder();
+        appendTimestampFilter(filters, params, "coalesce(c.signed_at, c.created_at)", filter.date_from(), filter.date_to());
+        appendContractDashboardFilters(filters, params, filter);
+        return jdbcTemplate.query("""
+                select c.id, c.contract_name, c.account_id, c.opportunity_id, c.owner_user_id,
+                       c.contract_status, c.risk_level, c.contract_amount, c.signed_at, c.created_at
+                from crm_contracts c
+                join crm_accounts a on a.id = c.account_id and a.deleted_at is null
+                where c.deleted_at is null
+                  and %s
+                  %s
+                """.formatted(access.clause(), filters),
+                (rs, rowNum) -> new ContractDashboardRow(
+                        rs.getLong("id"),
+                        rs.getString("contract_name"),
+                        rs.getLong("account_id"),
+                        nullableLong(rs.getObject("opportunity_id")),
+                        rs.getLong("owner_user_id"),
+                        rs.getString("contract_status"),
+                        rs.getString("risk_level"),
+                        amount(rs.getBigDecimal("contract_amount")),
+                        rs.getObject("signed_at", OffsetDateTime.class),
+                        rs.getObject("created_at", OffsetDateTime.class)),
+                params.toArray());
+    }
+
+    private List<ContractMilestoneDashboardRow> contractMilestones(DashboardContractFilter filter, DomainAccess access) {
+        if (!access.visible()) {
+            return List.of();
+        }
+        List<Object> params = new ArrayList<>(access.parameters());
+        StringBuilder filters = new StringBuilder();
+        appendTimestampFilter(filters, params, "coalesce(c.signed_at, c.created_at)", filter.date_from(), filter.date_to());
+        appendContractDashboardFilters(filters, params, filter);
+        return jdbcTemplate.query("""
+                select m.id, m.contract_id, m.milestone_name, m.status, m.planned_at, m.actual_at
+                from crm_contract_milestones m
+                join crm_contracts c on c.id = m.contract_id and c.deleted_at is null
+                join crm_accounts a on a.id = c.account_id and a.deleted_at is null
+                where m.deleted_at is null
+                  and %s
+                  %s
+                """.formatted(access.clause(), filters),
+                (rs, rowNum) -> new ContractMilestoneDashboardRow(
+                        rs.getLong("id"),
+                        rs.getLong("contract_id"),
+                        rs.getString("milestone_name"),
+                        rs.getString("status"),
+                        rs.getObject("planned_at", OffsetDateTime.class),
+                        rs.getObject("actual_at", OffsetDateTime.class)),
+                params.toArray());
+    }
+
+    private List<ContractChangeDashboardRow> contractChanges(DashboardContractFilter filter, DomainAccess access) {
+        if (!access.visible()) {
+            return List.of();
+        }
+        List<Object> params = new ArrayList<>(access.parameters());
+        StringBuilder filters = new StringBuilder();
+        appendTimestampFilter(filters, params, "cc.changed_at", filter.date_from(), filter.date_to());
+        appendContractDashboardFilters(filters, params, filter);
+        return jdbcTemplate.query("""
+                select cc.id, cc.contract_id, cc.changed_at
+                from crm_contract_changes cc
+                join crm_contracts c on c.id = cc.contract_id and c.deleted_at is null
+                join crm_accounts a on a.id = c.account_id and a.deleted_at is null
+                where %s
+                  %s
+                """.formatted(access.clause(), filters),
+                (rs, rowNum) -> new ContractChangeDashboardRow(
+                        rs.getLong("id"),
+                        rs.getLong("contract_id"),
+                        rs.getObject("changed_at", OffsetDateTime.class)),
+                params.toArray());
+    }
+
+    private static void appendContractDashboardFilters(
+            StringBuilder sql,
+            List<Object> params,
+            DashboardContractFilter filter) {
+        appendEquals(sql, params, "a.owner_department_id", filter.department_id());
+        appendEquals(sql, params, "c.owner_user_id", filter.owner_id());
+        appendEquals(sql, params, "c.account_id", filter.account_id());
+        appendEquals(sql, params, "c.opportunity_id", filter.opportunity_id());
+        appendEquals(sql, params, "c.contract_status", filter.contract_status());
+        appendEquals(sql, params, "c.risk_level", filter.risk_level());
+    }
+
     private static void appendFunnelOpportunityFilters(
             StringBuilder sql,
             List<Object> params,
@@ -982,6 +1306,36 @@ public class DashboardService {
             return "高风险商机";
         }
         return "临近预计成交日";
+    }
+
+    private static String contractStatusLabel(String status) {
+        return CONTRACT_STATUSES.stream()
+                .filter(item -> item.key().equals(status))
+                .map(ContractStatusDefinition::label)
+                .findFirst()
+                .orElse(status);
+    }
+
+    private static boolean isHighContractRisk(String riskLevel) {
+        return Set.of("high", "critical", "risk", "high_risk").contains(riskLevel);
+    }
+
+    private static boolean isCompletedMilestone(String status) {
+        return Set.of("completed", "done", "cancelled", "voided").contains(status);
+    }
+
+    private static boolean isOverdueMilestone(ContractMilestoneDashboardRow milestone, OffsetDateTime now) {
+        return "overdue".equals(milestone.status())
+                || (milestone.plannedAt() != null
+                && milestone.plannedAt().isBefore(now)
+                && !isCompletedMilestone(milestone.status()));
+    }
+
+    private static boolean isDueSoonMilestone(ContractMilestoneDashboardRow milestone, OffsetDateTime now) {
+        return milestone.plannedAt() != null
+                && !milestone.plannedAt().isBefore(now)
+                && milestone.plannedAt().isBefore(now.plusDays(30))
+                && !isCompletedMilestone(milestone.status());
     }
 
     private DomainAccess access(
@@ -1144,6 +1498,31 @@ public class DashboardService {
         return "?" + String.join("&", parts);
     }
 
+    private static String contractQueryString(DashboardContractFilter filter) {
+        List<String> parts = new ArrayList<>();
+        parts.add("date_from=" + filter.date_from());
+        parts.add("date_to=" + filter.date_to());
+        if (filter.department_id() != null) {
+            parts.add("department_id=" + filter.department_id());
+        }
+        if (filter.owner_id() != null) {
+            parts.add("owner_id=" + filter.owner_id());
+        }
+        if (filter.account_id() != null) {
+            parts.add("account_id=" + filter.account_id());
+        }
+        if (filter.opportunity_id() != null) {
+            parts.add("opportunity_id=" + filter.opportunity_id());
+        }
+        if (filter.contract_status() != null) {
+            parts.add("contract_status=" + filter.contract_status());
+        }
+        if (filter.risk_level() != null) {
+            parts.add("risk_level=" + filter.risk_level());
+        }
+        return "?" + String.join("&", parts);
+    }
+
     private static BigDecimal amount(BigDecimal amount) {
         return amount == null ? ZERO : amount;
     }
@@ -1156,6 +1535,9 @@ public class DashboardService {
     }
 
     private record StageDefinition(String key, String label, BigDecimal defaultRate) {
+    }
+
+    private record ContractStatusDefinition(String key, String label) {
     }
 
     private record FunnelOpportunityRow(
@@ -1171,6 +1553,31 @@ public class DashboardService {
             LocalDate expectedCloseDate,
             OffsetDateTime lastActivityAt,
             String closeType) {
+    }
+
+    private record ContractDashboardRow(
+            Long id,
+            String name,
+            Long accountId,
+            Long opportunityId,
+            Long ownerUserId,
+            String status,
+            String riskLevel,
+            BigDecimal amount,
+            OffsetDateTime signedAt,
+            OffsetDateTime createdAt) {
+    }
+
+    private record ContractMilestoneDashboardRow(
+            Long id,
+            Long contractId,
+            String name,
+            String status,
+            OffsetDateTime plannedAt,
+            OffsetDateTime actualAt) {
+    }
+
+    private record ContractChangeDashboardRow(Long id, Long contractId, OffsetDateTime changedAt) {
     }
 
     private static final class StageAccumulator {
@@ -1194,6 +1601,24 @@ public class DashboardService {
 
         BigDecimal weightedAmount() {
             return weightedAmount;
+        }
+    }
+
+    private static final class ContractStatusAccumulator {
+        private long count;
+        private BigDecimal amount = ZERO;
+
+        void add(BigDecimal amountToAdd) {
+            count++;
+            amount = amount.add(DashboardService.amount(amountToAdd));
+        }
+
+        long count() {
+            return count;
+        }
+
+        BigDecimal amount() {
+            return amount;
         }
     }
 
