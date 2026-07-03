@@ -47,6 +47,11 @@ import {
   type ContractMilestone,
   type Contact as CrmContact,
   type CurrentUser,
+  type DashboardBusinessFlowItem,
+  type DashboardMetricCard,
+  type DashboardOverview,
+  type DashboardRiskItem,
+  type DashboardRiskSummary,
   type DictionaryType,
   type Invoice,
   type Opportunity,
@@ -88,6 +93,7 @@ type NavItem = BaseNavItem & {
 
 const navItems: NavItem[] = [
   { key: "/", label: "工作台", icon: <LayoutDashboard size={18} /> },
+  { key: "/dashboard", label: "驾驶舱", icon: <BarChart3 size={18} />, permission: "dashboard.read" },
   { key: "/accounts", label: "客户池", icon: <Users size={18} />, permission: "account.read" },
   { key: "/contacts", label: "联系人", icon: <Contact size={18} />, permission: "contact.read" },
   { key: "/opportunities", label: "商机", icon: <BriefcaseBusiness size={18} />, permission: "opportunity.read" },
@@ -368,8 +374,8 @@ function CrmShell() {
       <Layout>
         <Header className="app-header">
           <div>
-            <strong>V1 销售基础闭环</strong>
-            <span>客户、联系人、商机、行动与周进展</span>
+            <strong>项目型大客户 CRM</strong>
+            <span>销售、商务、财务与经营驾驶舱</span>
           </div>
           <div className="header-actions">
             <Tag color="blue">{user.permissions.length} 个权限点</Tag>
@@ -384,6 +390,7 @@ function CrmShell() {
         <Content className="app-content">
           <Routes>
             <Route index element={<Dashboard />} />
+            <Route path="/dashboard" element={<DashboardOverviewPage />} />
             <Route path="/accounts" element={<AccountsPage currentUser={user} />} />
             <Route path="/contacts" element={<ContactsPage currentUser={user} />} />
             <Route path="/opportunities" element={<OpportunitiesPage currentUser={user} />} />
@@ -537,6 +544,139 @@ function Dashboard() {
       </div>
     </section>
   );
+}
+
+function DashboardOverviewPage() {
+  const { data, loading, error, refresh } = useObjectResource<DashboardOverview>(
+    crmApi.dashboard.overview,
+    emptyDashboardOverview,
+    []
+  );
+  const overdueRisk = data.risk_summary.find((risk) => risk.risk_type === "receivable_overdue") ?? data.risk_summary[0];
+
+  return (
+    <section className="workspace dashboard-overview">
+      <PageTitle
+        title="经营总览"
+        description="统一查看预测、合同、开票、回款、核销与风险处理状态。"
+        action={<RefreshButton onClick={refresh} loading={loading} />}
+      />
+      {error ? <div className="error-banner">{error}</div> : null}
+
+      <div className="dashboard-overview__metrics">
+        {data.metric_cards.map((metric) => (
+          <DashboardMetricCardView key={metric.key} metric={metric} />
+        ))}
+      </div>
+
+      <section className="dashboard-overview__section">
+        <div className="section-title-row">
+          <Typography.Title level={3}>销售到财务链路</Typography.Title>
+        </div>
+        <div className="dashboard-overview__flow">
+          {data.business_flow.map((item) => (
+            <DashboardFlowStep key={item.key} item={item} />
+          ))}
+        </div>
+      </section>
+
+      <div className="dashboard-overview__columns">
+        <Card title={<Typography.Title level={3}>风险摘要</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-overview__risk-list">
+            {data.risk_summary.map((risk) => (
+              <DashboardRiskSummaryRow key={risk.risk_type} risk={risk} />
+            ))}
+            {data.risk_summary.length === 0 ? <span className="muted">暂无经营风险</span> : null}
+          </div>
+          {overdueRisk ? (
+            <Link className="dashboard-overview__risk-link" to={overdueRisk.drilldown_url}>
+              查看逾期回款
+            </Link>
+          ) : null}
+        </Card>
+
+        <Card title={<Typography.Title level={3}>待处理排行</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-overview__top-risks">
+            {data.top_risks.map((risk) => (
+              <DashboardRiskItemRow key={`${risk.object_type}-${risk.object_id}-${risk.risk_type}`} risk={risk} />
+            ))}
+            {data.top_risks.length === 0 ? <span className="muted">暂无待处理风险</span> : null}
+          </div>
+        </Card>
+      </div>
+    </section>
+  );
+}
+
+function DashboardMetricCardView({ metric }: { metric: DashboardMetricCard }) {
+  return (
+    <Link className="dashboard-overview__metric" to={metric.drilldown_url}>
+      <span>{metric.label}</span>
+      <strong>{dashboardMetricValue(metric)}</strong>
+    </Link>
+  );
+}
+
+function DashboardFlowStep({ item }: { item: DashboardBusinessFlowItem }) {
+  return (
+    <Link className="dashboard-overview__flow-step" to={item.drilldown_url}>
+      <span>{item.label}</span>
+      <strong>{currencyText(item.amount)}</strong>
+      <small>
+        {item.count} 项
+        {item.risk_count > 0 ? ` / ${item.risk_count} 个风险` : ""}
+      </small>
+    </Link>
+  );
+}
+
+function DashboardRiskSummaryRow({ risk }: { risk: DashboardRiskSummary }) {
+  return (
+    <Link className="dashboard-overview__risk-row" to={risk.drilldown_url}>
+      <span>
+        <strong>{risk.label}</strong>
+        {contractRiskTag(risk.highest_level)}
+      </span>
+      <small>
+        {risk.count} 项 · {currencyText(risk.amount)}
+      </small>
+    </Link>
+  );
+}
+
+function DashboardRiskItemRow({ risk }: { risk: DashboardRiskItem }) {
+  return (
+    <Link className="dashboard-overview__top-risk" to={risk.drilldown_url}>
+      <span>
+        <strong>{risk.title}</strong>
+        {contractRiskTag(risk.risk_level)}
+      </span>
+      <small>
+        {currencyText(risk.amount)}
+        {risk.occurred_at ? ` · ${dateText(risk.occurred_at)}` : ""}
+      </small>
+    </Link>
+  );
+}
+
+function dashboardMetricValue(metric: DashboardMetricCard) {
+  if (metric.unit === "CNY") {
+    return currencyText(metric.value);
+  }
+  if (metric.unit === "count") {
+    return `${metric.value.toLocaleString("zh-CN")} 个`;
+  }
+  return `${metric.value.toLocaleString("zh-CN")} ${metric.unit}`;
+}
+
+function emptyDashboardOverview(): DashboardOverview {
+  return {
+    filters: {},
+    metric_cards: [],
+    business_flow: [],
+    risk_summary: [],
+    top_risks: []
+  };
 }
 
 function getDashboardPriorityMessage(
@@ -4762,6 +4902,30 @@ function SimpleList<T>({ items, render, empty }: { items: T[]; render: (item: T)
 
 function useResource<T>(loader: () => Promise<T[]>, deps: React.DependencyList) {
   const [data, setData] = useState<T[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      setData(await loader());
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "加载失败");
+    } finally {
+      setLoading(false);
+    }
+  }, deps);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  return { data, loading, error, refresh };
+}
+
+function useObjectResource<T>(loader: () => Promise<T>, emptyFactory: () => T, deps: React.DependencyList) {
+  const [data, setData] = useState<T>(() => emptyFactory());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 

@@ -10,6 +10,7 @@ const apiData = {
     permissions: [
       "account.read",
       "account.create",
+      "dashboard.read",
       "contact.read",
       "contact.create",
       "opportunity.read",
@@ -334,6 +335,57 @@ const apiData = {
     ],
     recent_reconciliations: []
   },
+  dashboardOverview: {
+    filters: {},
+    metric_cards: [
+      { key: "forecast_amount", label: "预测金额", value: 620000, unit: "CNY", drilldown_url: "/opportunities" },
+      { key: "contract_amount", label: "合同金额", value: 1200000, unit: "CNY", drilldown_url: "/contracts" },
+      { key: "invoiced_amount", label: "已开票金额", value: 360000, unit: "CNY", drilldown_url: "/invoices" },
+      { key: "received_amount", label: "已回款金额", value: 120000, unit: "CNY", drilldown_url: "/receivables" },
+      { key: "overdue_amount", label: "逾期金额", value: 240000, unit: "CNY", drilldown_url: "/receivables?overdue=true" },
+      { key: "risk_count", label: "风险数", value: 2, unit: "count", drilldown_url: "/dashboard?view=risks" }
+    ],
+    business_flow: [
+      { key: "opportunity_forecast", label: "商机预测", amount: 620000, count: 1, risk_count: 0, drilldown_url: "/opportunities" },
+      { key: "contract", label: "合同", amount: 1200000, count: 1, risk_count: 0, drilldown_url: "/contracts" },
+      { key: "invoice", label: "开票", amount: 360000, count: 1, risk_count: 0, drilldown_url: "/invoices" },
+      { key: "receivable", label: "回款", amount: 120000, count: 1, risk_count: 1, drilldown_url: "/receivables" },
+      { key: "reconciliation", label: "核销", amount: 120000, count: 1, risk_count: 1, drilldown_url: "/reconciliations" }
+    ],
+    risk_summary: [
+      {
+        risk_type: "receivable_overdue",
+        label: "回款逾期",
+        count: 1,
+        amount: 240000,
+        highest_level: "high",
+        drilldown_url: "/receivables?overdue=true"
+      },
+      {
+        risk_type: "unreconciled_payment",
+        label: "未核销回款",
+        count: 1,
+        amount: 120000,
+        highest_level: "medium",
+        drilldown_url: "/reconciliations"
+      }
+    ],
+    top_risks: [
+      {
+        risk_type: "receivable_overdue",
+        risk_level: "high",
+        title: "V2 UAT 首付款回款逾期",
+        amount: 240000,
+        object_type: "receivable_plan",
+        object_id: 601,
+        owner_user_id: 1001,
+        account_id: 1,
+        opportunity_id: 10,
+        occurred_at: "2026-07-23T10:00:00+08:00",
+        drilldown_url: "/receivables?overdue=true"
+      }
+    ]
+  },
   reconciliations: [
     {
       id: 902,
@@ -546,6 +598,36 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("link", { name: "新建商机" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "新建行动" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "查看周进展" })).toBeInTheDocument();
+  });
+
+  it("renders the V3 dashboard overview with metrics risks and drilldowns", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/dashboard");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "经营总览" })).toBeInTheDocument();
+    expect(screen.getByText("预测金额")).toBeInTheDocument();
+    expect(screen.getByText("合同金额")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "销售到财务链路" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "风险摘要" })).toBeInTheDocument();
+    expect(screen.getByText("V2 UAT 首付款回款逾期")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看逾期回款" })).toHaveAttribute("href", "/receivables?overdue=true");
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/dashboard/overview"), expect.anything());
+    });
+  });
+
+  it("shows dashboard navigation only with dashboard read permission", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(screen.getByRole("link", { name: "驾驶舱" })).toHaveAttribute("href", "/dashboard");
   });
 
   it("shows login errors from the unified API layer", async () => {
@@ -1396,6 +1478,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/auth/reset-password")) {
       return jsonResponse({ code: "OK", data: { force_password_change: true } });
+    }
+    if (path.endsWith("/api/dashboard/overview")) {
+      return jsonResponse({ code: "OK", data: data.dashboardOverview });
     }
     if (path.endsWith("/api/accounts/1") && method === "PATCH") {
       return jsonResponse({ code: "OK", data: { ...data.accounts[0], remark: "重点推进" } });

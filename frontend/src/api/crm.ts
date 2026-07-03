@@ -489,6 +489,54 @@ export type SystemPermission = {
   module_code: string;
 };
 
+export type DashboardMetricCard = {
+  key: string;
+  label: string;
+  value: number;
+  unit: string;
+  drilldown_url: string;
+};
+
+export type DashboardBusinessFlowItem = {
+  key: string;
+  label: string;
+  amount: number;
+  count: number;
+  risk_count: number;
+  drilldown_url: string;
+};
+
+export type DashboardRiskSummary = {
+  risk_type: string;
+  label: string;
+  count: number;
+  amount: number;
+  highest_level: string;
+  drilldown_url: string;
+};
+
+export type DashboardRiskItem = {
+  risk_type: string;
+  risk_level: string;
+  title: string;
+  amount: number;
+  object_type: string;
+  object_id: number;
+  owner_user_id?: number;
+  account_id?: number;
+  opportunity_id?: number;
+  occurred_at?: string;
+  drilldown_url: string;
+};
+
+export type DashboardOverview = {
+  filters: Record<string, unknown>;
+  metric_cards: DashboardMetricCard[];
+  business_flow: DashboardBusinessFlowItem[];
+  risk_summary: DashboardRiskSummary[];
+  top_risks: DashboardRiskItem[];
+};
+
 function withQuery(path: string, query?: QueryParams) {
   if (!query) {
     return path;
@@ -539,6 +587,9 @@ export function resetPassword(body: Record<string, unknown>) {
 }
 
 export const crmApi = {
+  dashboard: {
+    overview: (query?: QueryParams) => requestJson<DashboardOverview>(withQuery("/api/dashboard/overview", query))
+  },
   accounts: {
     list: (query?: QueryParams) => requestJson<Account[]>(withQuery("/api/accounts", query)),
     detail: (id: number) => requestJson<Account>(`/api/accounts/${id}`),
