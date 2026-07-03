@@ -79,13 +79,13 @@ V3 当前进度：
 
 ## 3. 当前任务
 
-当前任务：`v3-funnel-forecast-implementation`
+当前任务：`v3-contract-dashboard-implementation`
 
 状态：Ready
 
 责任侧：AI 研发主力推进；沈思维作为最终版本确认人，重点确认 V3 页面逻辑、指标口径和验收口径。
 
-当前模块：销售漏斗与商机预测
+当前模块：合同看板
 
 当前 TODO：
 
@@ -107,12 +107,15 @@ V3 当前进度：
 - [x] Step 16：进入销售漏斗与商机预测模块设计。
 - [x] Step 17：输出销售漏斗与商机预测实现计划。
 - [x] Step 18：按实现计划实施销售漏斗与商机预测。
-- [ ] Step 19：进入合同看板模块设计与实现计划。
+- [x] Step 19：进入合同看板模块设计与实现计划。
+- [ ] Step 20：按实现计划实施合同看板。
 
 完成标准：
 
-- 合同看板页面逻辑、指标口径、API 范围和验收方式完成对齐。
-- 输出合同看板实现计划并进入代码实施。
+- 合同看板权限、后端聚合 API、OpenAPI、前端页面和下钻联动完成。
+- 后端定向测试、前端定向测试、构建和全量验证通过。
+- 浏览器 UAT 通过并留存截图证据。
+- 模块 5 Done，模块 6 开票看板进入 Current。
 
 ## 4. 当前进度快照
 
@@ -121,14 +124,14 @@ V3 当前进度：
 - 总模块：9
 - 已完成：4
 - 当前模块：合同看板
-- 当前步骤：Step 19 进入合同看板模块设计与实现计划
-- 当前 TODO：对齐合同金额、状态、节点、变更与履约风险看板口径
-- 完成标准：合同看板设计说明与实现计划完成，进入代码实施
-- 本轮预计产出：合同看板设计/计划与下一轮实施 TODO
+- 当前步骤：Step 20 按实现计划实施合同看板
+- 当前 TODO：按 `docs/superpowers/plans/2026-07-03-v3-contract-dashboard.md` 执行权限迁移、后端 API、OpenAPI、前端页面、UAT 证据
+- 完成标准：合同看板页面 `/dashboard/contracts` 可用，自动化验证和浏览器 UAT 通过
+- 本轮预计产出：代码实现、测试、证据、提交与推送
 
 上一模块：
-- 状态：销售漏斗与商机预测 Done
-- 验证结果：`mvn -Dtest=DatabaseMigrationTest,DashboardControllerTest,OpenApiContractCoverageTest test` 通过；`npm test -- --run` 通过；`npm run build` 通过；浏览器 UAT `/dashboard/funnel` 通过，控制台 error=0，证据 `docs/testing/evidence/artifacts/v3-funnel-forecast-uat-20260703.png`
+- 状态：合同看板设计与实现计划 Done
+- 验证结果：设计说明 `docs/superpowers/specs/2026-07-03-v3-contract-dashboard-design.md` 与实现计划 `docs/superpowers/plans/2026-07-03-v3-contract-dashboard.md` 已输出；页面职责、合同金额口径、状态分布、节点风险、变更趋势、API 响应、任务拆分和验收方式已明确
 - 提交号：本次提交
 - 遗留问题：无
 ```
