@@ -34,6 +34,23 @@ public class DashboardController {
                 new DashboardFilter(dateFrom, dateTo, departmentId, ownerId, accountId, opportunityId));
     }
 
+    @RequirePermission("dashboard.funnel.read")
+    @GetMapping("/api/dashboard/funnel")
+    DashboardFunnelResponse funnel(
+            @RequestParam(name = "date_from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                    LocalDate dateFrom,
+            @RequestParam(name = "date_to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                    LocalDate dateTo,
+            @RequestParam(name = "department_id", required = false) Long departmentId,
+            @RequestParam(name = "owner_id", required = false) Long ownerId,
+            @RequestParam(name = "account_id", required = false) Long accountId,
+            @RequestParam(name = "risk_status", required = false) String riskStatus,
+            HttpServletRequest httpRequest) {
+        return dashboardService.funnel(
+                currentUserId(httpRequest),
+                new DashboardFunnelFilter(dateFrom, dateTo, departmentId, ownerId, accountId, riskStatus));
+    }
+
     private static Long currentUserId(HttpServletRequest request) {
         return (Long) request.getAttribute("crm.currentUserId");
     }

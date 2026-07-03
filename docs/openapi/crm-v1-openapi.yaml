@@ -81,6 +81,43 @@ paths:
       responses:
         '200':
           description: Dashboard overview metrics, flow, and risks.
+  /api/dashboard/funnel:
+    get:
+      tags: [Dashboard]
+      summary: V3 sales funnel and forecast dashboard
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: owner_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: risk_status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sales funnel stages, forecast trend, and attention opportunities.
   /api/auth/login:
     post:
       tags: [Auth]

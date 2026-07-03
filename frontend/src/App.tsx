@@ -47,7 +47,11 @@ import {
   type ContractMilestone,
   type Contact as CrmContact,
   type CurrentUser,
+  type DashboardAttentionOpportunity,
   type DashboardBusinessFlowItem,
+  type DashboardForecastTrendPoint,
+  type DashboardFunnel,
+  type DashboardFunnelStage,
   type DashboardMetricCard,
   type DashboardOverview,
   type DashboardRiskItem,
@@ -93,7 +97,16 @@ type NavItem = BaseNavItem & {
 
 const navItems: NavItem[] = [
   { key: "/", label: "工作台", icon: <LayoutDashboard size={18} /> },
-  { key: "/dashboard", label: "驾驶舱", icon: <BarChart3 size={18} />, permission: "dashboard.read" },
+  {
+    key: "/dashboard",
+    label: "驾驶舱",
+    icon: <BarChart3 size={18} />,
+    permission: "dashboard.read",
+    children: [
+      { key: "/dashboard", label: "经营总览", permission: "dashboard.read" },
+      { key: "/dashboard/funnel", label: "销售漏斗", permission: "dashboard.funnel.read" }
+    ]
+  },
   { key: "/accounts", label: "客户池", icon: <Users size={18} />, permission: "account.read" },
   { key: "/contacts", label: "联系人", icon: <Contact size={18} />, permission: "contact.read" },
   { key: "/opportunities", label: "商机", icon: <BriefcaseBusiness size={18} />, permission: "opportunity.read" },
@@ -359,11 +372,11 @@ function CrmShell() {
         <Menu
           mode="inline"
           selectedKeys={[selectedMenuKey]}
-          defaultOpenKeys={["/system-root"]}
+          defaultOpenKeys={["/dashboard-root", "/system-root"]}
           items={allowedNav.map((item) => ({
             key: item.children ? `${item.key}-root` : item.key,
             icon: item.icon,
-            label: item.children ? item.label : <Link to={item.key}>{item.label}</Link>,
+            label: item.children && item.key !== "/dashboard" ? item.label : <Link to={item.key}>{item.label}</Link>,
             children: item.children?.map((child) => ({
               key: child.key,
               label: <Link to={child.key}>{child.label}</Link>
@@ -391,6 +404,7 @@ function CrmShell() {
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="/dashboard" element={<DashboardOverviewPage />} />
+            <Route path="/dashboard/funnel" element={<DashboardFunnelPage />} />
             <Route path="/accounts" element={<AccountsPage currentUser={user} />} />
             <Route path="/contacts" element={<ContactsPage currentUser={user} />} />
             <Route path="/opportunities" element={<OpportunitiesPage currentUser={user} />} />
@@ -608,11 +622,113 @@ function DashboardOverviewPage() {
   );
 }
 
+function DashboardFunnelPage() {
+  const { data, loading, error, refresh } = useObjectResource<DashboardFunnel>(
+    crmApi.dashboard.funnel,
+    emptyDashboardFunnel,
+    []
+  );
+  const maxStageAmount = Math.max(1, ...data.stages.map((stage) => stage.amount));
+
+  return (
+    <section className="workspace dashboard-overview dashboard-funnel">
+      <PageTitle
+        title="销售漏斗"
+        description="按商机阶段查看预测金额、加权预测、月度趋势与需要关注的推进风险。"
+        action={<RefreshButton onClick={refresh} loading={loading} />}
+      />
+      {error ? <div className="error-banner">{error}</div> : null}
+
+      <div className="dashboard-overview__metrics">
+        {data.metric_cards.map((metric) => (
+          <DashboardMetricCardView key={metric.key} metric={metric} />
+        ))}
+      </div>
+
+      <div className="dashboard-funnel__layout">
+        <Card title={<Typography.Title level={3}>阶段分布</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-funnel__stages">
+            {data.stages.map((stage) => (
+              <DashboardFunnelStageRow key={stage.key} stage={stage} maxAmount={maxStageAmount} />
+            ))}
+            {data.stages.length === 0 ? <span className="muted">暂无销售漏斗数据</span> : null}
+          </div>
+        </Card>
+
+        <Card title={<Typography.Title level={3}>预测趋势</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-funnel__trend">
+            {data.forecast_trend.map((point) => (
+              <DashboardForecastTrendRow key={point.period} point={point} />
+            ))}
+            {data.forecast_trend.length === 0 ? <span className="muted">暂无预测趋势</span> : null}
+          </div>
+        </Card>
+      </div>
+
+      <Card title={<Typography.Title level={3}>重点关注商机</Typography.Title>} className="dashboard-overview__card">
+        <div className="dashboard-funnel__attention">
+          {data.attention_opportunities.map((opportunity) => (
+            <DashboardAttentionOpportunityRow key={opportunity.opportunity_id} opportunity={opportunity} />
+          ))}
+          {data.attention_opportunities.length === 0 ? <span className="muted">暂无需要重点关注的商机</span> : null}
+        </div>
+      </Card>
+    </section>
+  );
+}
+
 function DashboardMetricCardView({ metric }: { metric: DashboardMetricCard }) {
   return (
     <Link className="dashboard-overview__metric" to={metric.drilldown_url}>
       <span>{metric.label}</span>
       <strong>{dashboardMetricValue(metric)}</strong>
+    </Link>
+  );
+}
+
+function DashboardFunnelStageRow({ stage, maxAmount }: { stage: DashboardFunnelStage; maxAmount: number }) {
+  const width = Math.max(4, Math.round((stage.amount / maxAmount) * 100));
+  return (
+    <Link className="dashboard-funnel__stage" to={stage.drilldown_url}>
+      <span>
+        <strong>{stage.label}</strong>
+        <small>
+          {stage.count} 项 · {rateText(stage.conversion_rate)}
+        </small>
+      </span>
+      <div className="dashboard-funnel__bar" aria-hidden="true">
+        <i style={{ width: `${width}%` }} />
+      </div>
+      <small>
+        {currencyText(stage.amount)} / 加权 {currencyText(stage.weighted_amount)}
+      </small>
+    </Link>
+  );
+}
+
+function DashboardForecastTrendRow({ point }: { point: DashboardForecastTrendPoint }) {
+  return (
+    <div className="dashboard-funnel__trend-row">
+      <strong>{point.period}</strong>
+      <span>{currencyText(point.forecast_amount)}</span>
+      <small>
+        加权 {currencyText(point.weighted_forecast_amount)} · {point.count} 项
+      </small>
+    </div>
+  );
+}
+
+function DashboardAttentionOpportunityRow({ opportunity }: { opportunity: DashboardAttentionOpportunity }) {
+  return (
+    <Link className="dashboard-funnel__attention-row" to={opportunity.drilldown_url}>
+      <span>
+        <strong>{opportunity.opportunity_name}</strong>
+        <Tag color={opportunity.reason.includes("停滞") ? "orange" : "red"}>{opportunity.reason}</Tag>
+      </span>
+      <small>
+        {currencyText(opportunity.amount)} · {opportunity.stage}
+        {opportunity.expected_close_date ? ` · ${dateText(opportunity.expected_close_date)}` : ""}
+      </small>
     </Link>
   );
 }
@@ -677,6 +793,20 @@ function emptyDashboardOverview(): DashboardOverview {
     risk_summary: [],
     top_risks: []
   };
+}
+
+function emptyDashboardFunnel(): DashboardFunnel {
+  return {
+    filters: {},
+    metric_cards: [],
+    stages: [],
+    forecast_trend: [],
+    attention_opportunities: []
+  };
+}
+
+function rateText(value: number) {
+  return `${Math.round(value * 100)}%`;
 }
 
 function getDashboardPriorityMessage(

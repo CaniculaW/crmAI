@@ -4,6 +4,7 @@ import com.canicula.crmai.identity.DataPermissionColumns;
 import com.canicula.crmai.identity.DataPermissionCondition;
 import com.canicula.crmai.identity.DataPermissionService;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -23,6 +24,15 @@ public class DashboardService {
 
     private static final ZoneOffset DEFAULT_OFFSET = ZoneOffset.ofHours(8);
     private static final BigDecimal ZERO = BigDecimal.ZERO;
+    private static final BigDecimal ONE = BigDecimal.ONE.setScale(2, RoundingMode.HALF_UP);
+    private static final List<StageDefinition> STAGES = List.of(
+            new StageDefinition("lead", "商业线索", new BigDecimal("0.10")),
+            new StageDefinition("validation", "商业验证", new BigDecimal("0.20")),
+            new StageDefinition("proposal", "商业方案", new BigDecimal("0.45")),
+            new StageDefinition("solution", "方案确认", new BigDecimal("0.55")),
+            new StageDefinition("negotiation", "商务谈判", new BigDecimal("0.70")),
+            new StageDefinition("contract", "合同推进", new BigDecimal("0.90")),
+            new StageDefinition("won", "商业成交", ONE));
     private static final DataPermissionColumns OPPORTUNITY_COLUMNS = new DataPermissionColumns(
             "o.owner_user_id",
             "o.owner_department_id",
@@ -72,6 +82,18 @@ public class DashboardService {
                 topRisks(filter, opportunity, contract, invoice, receivable, payment));
     }
 
+    public DashboardFunnelResponse funnel(Long userId, DashboardFunnelFilter requestedFilter) {
+        DashboardFunnelFilter filter = normalizeFunnelFilter(requestedFilter);
+        DomainAccess opportunity = access(userId, "opportunity", "opportunity.read", OPPORTUNITY_COLUMNS);
+        List<FunnelOpportunityRow> opportunities = funnelOpportunities(filter, opportunity);
+        return new DashboardFunnelResponse(
+                funnelFilterMap(filter),
+                funnelMetricCards(filter, opportunities),
+                funnelStages(filter, opportunities),
+                forecastTrend(opportunities),
+                attentionOpportunities(opportunities));
+    }
+
     private DashboardFilter normalizeFilter(DashboardFilter filter) {
         LocalDate today = LocalDate.now();
         LocalDate defaultFrom = today.withDayOfMonth(1);
@@ -87,6 +109,22 @@ public class DashboardService {
                 filter.opportunity_id());
     }
 
+    private DashboardFunnelFilter normalizeFunnelFilter(DashboardFunnelFilter filter) {
+        LocalDate today = LocalDate.now();
+        int quarterStartMonth = ((today.getMonthValue() - 1) / 3) * 3 + 1;
+        LocalDate defaultFrom = LocalDate.of(today.getYear(), quarterStartMonth, 1);
+        LocalDate defaultTo = defaultFrom.plusMonths(3).minusDays(1);
+        LocalDate dateFrom = filter.date_from() == null ? defaultFrom : filter.date_from();
+        LocalDate dateTo = filter.date_to() == null ? defaultTo : filter.date_to();
+        return new DashboardFunnelFilter(
+                dateFrom,
+                dateTo,
+                filter.department_id(),
+                filter.owner_id(),
+                filter.account_id(),
+                filter.risk_status());
+    }
+
     private Map<String, Object> filterMap(DashboardFilter filter) {
         Map<String, Object> filters = new LinkedHashMap<>();
         filters.put("date_from", filter.date_from());
@@ -96,6 +134,129 @@ public class DashboardService {
         filters.put("account_id", filter.account_id());
         filters.put("opportunity_id", filter.opportunity_id());
         return filters;
+    }
+
+    private Map<String, Object> funnelFilterMap(DashboardFunnelFilter filter) {
+        Map<String, Object> filters = new LinkedHashMap<>();
+        filters.put("date_from", filter.date_from());
+        filters.put("date_to", filter.date_to());
+        filters.put("department_id", filter.department_id());
+        filters.put("owner_id", filter.owner_id());
+        filters.put("account_id", filter.account_id());
+        filters.put("risk_status", filter.risk_status());
+        return filters;
+    }
+
+    private List<DashboardMetricCard> funnelMetricCards(
+            DashboardFunnelFilter filter,
+            List<FunnelOpportunityRow> opportunities) {
+        BigDecimal forecastAmount = opportunities.stream()
+                .map(FunnelOpportunityRow::amount)
+                .reduce(ZERO, BigDecimal::add);
+        BigDecimal weightedForecastAmount = opportunities.stream()
+                .map(row -> weightedAmount(row.amount(), conversionRate(row)))
+                .reduce(ZERO, BigDecimal::add);
+        long activeCount = opportunities.stream().filter(DashboardService::isActiveOpportunity).count();
+        long stalledCount = opportunities.stream().filter(DashboardService::isStalledOpportunity).count();
+        long highRiskCount = opportunities.stream().filter(row -> isHighRisk(row.riskStatus())).count();
+        return List.of(
+                new DashboardMetricCard(
+                        "forecast_amount",
+                        "预测金额",
+                        forecastAmount,
+                        "CNY",
+                        "/opportunities" + funnelQueryString(filter)),
+                new DashboardMetricCard(
+                        "weighted_forecast_amount",
+                        "加权预测",
+                        weightedForecastAmount,
+                        "CNY",
+                        "/opportunities" + funnelQueryString(filter)),
+                new DashboardMetricCard(
+                        "active_count",
+                        "推进中商机",
+                        BigDecimal.valueOf(activeCount),
+                        "count",
+                        "/opportunities" + funnelQueryString(filter)),
+                new DashboardMetricCard(
+                        "stalled_count",
+                        "停滞商机",
+                        BigDecimal.valueOf(stalledCount),
+                        "count",
+                        "/opportunities" + funnelQueryString(filter)),
+                new DashboardMetricCard(
+                        "high_risk_count",
+                        "高风险商机",
+                        BigDecimal.valueOf(highRiskCount),
+                        "count",
+                        "/opportunities" + funnelQueryString(filter)));
+    }
+
+    private List<DashboardFunnelStage> funnelStages(
+            DashboardFunnelFilter filter,
+            List<FunnelOpportunityRow> opportunities) {
+        Map<String, StageAccumulator> accumulators = new LinkedHashMap<>();
+        STAGES.forEach(stage -> accumulators.put(stage.key(), new StageAccumulator()));
+        opportunities.forEach(row -> {
+            StageDefinition stage = stageDefinition(row.stage());
+            StageAccumulator accumulator = accumulators.get(stage.key());
+            accumulator.add(row.amount(), weightedAmount(row.amount(), conversionRate(row)));
+        });
+        return STAGES.stream()
+                .map(stage -> {
+                    StageAccumulator accumulator = accumulators.get(stage.key());
+                    return new DashboardFunnelStage(
+                            stage.key(),
+                            stage.label(),
+                            accumulator.count(),
+                            accumulator.amount(),
+                            accumulator.weightedAmount(),
+                            stage.defaultRate(),
+                            "/opportunities" + funnelQueryString(filter) + "&stage=" + stage.key());
+                })
+                .toList();
+    }
+
+    private List<DashboardForecastTrendPoint> forecastTrend(List<FunnelOpportunityRow> opportunities) {
+        Map<String, StageAccumulator> accumulators = new LinkedHashMap<>();
+        opportunities.stream()
+                .filter(row -> row.expectedCloseDate() != null)
+                .sorted(Comparator.comparing(FunnelOpportunityRow::expectedCloseDate))
+                .forEach(row -> {
+                    String period = "%04d-%02d".formatted(
+                            row.expectedCloseDate().getYear(),
+                            row.expectedCloseDate().getMonthValue());
+                    accumulators.computeIfAbsent(period, ignored -> new StageAccumulator())
+                            .add(row.amount(), weightedAmount(row.amount(), conversionRate(row)));
+                });
+        return accumulators.entrySet().stream()
+                .map(entry -> new DashboardForecastTrendPoint(
+                        entry.getKey(),
+                        entry.getValue().amount(),
+                        entry.getValue().weightedAmount(),
+                        entry.getValue().count()))
+                .toList();
+    }
+
+    private List<DashboardAttentionOpportunity> attentionOpportunities(List<FunnelOpportunityRow> opportunities) {
+        return opportunities.stream()
+                .filter(row -> isStalledOpportunity(row) || isHighRisk(row.riskStatus()) || isClosingSoon(row))
+                .sorted(Comparator.comparing(FunnelOpportunityRow::amount).reversed()
+                        .thenComparing(FunnelOpportunityRow::expectedCloseDate, Comparator.nullsLast(Comparator.naturalOrder())))
+                .limit(8)
+                .map(row -> new DashboardAttentionOpportunity(
+                        row.id(),
+                        row.name(),
+                        row.accountId(),
+                        row.ownerUserId(),
+                        row.stage(),
+                        row.riskStatus(),
+                        row.amount(),
+                        row.expectedCloseDate(),
+                        row.lastActivityAt(),
+                        attentionReason(row),
+                        "/opportunities?opportunity_id=" + row.id()))
+                .toList();
     }
 
     private List<DashboardMetricCard> metricCards(
@@ -724,6 +885,105 @@ public class DashboardService {
                 params.toArray());
     }
 
+    private List<FunnelOpportunityRow> funnelOpportunities(DashboardFunnelFilter filter, DomainAccess access) {
+        if (!access.visible()) {
+            return List.of();
+        }
+        List<Object> params = new ArrayList<>(access.parameters());
+        StringBuilder filters = new StringBuilder();
+        appendDateFilter(filters, params, "o.expected_close_date", filter.date_from(), filter.date_to());
+        appendFunnelOpportunityFilters(filters, params, filter);
+        return jdbcTemplate.query("""
+                select o.id, o.opportunity_name, o.account_id, o.stage, o.status, o.risk_status,
+                       o.estimated_contract_amount, o.win_rate, o.expected_close_date,
+                       o.owner_user_id, o.close_type, coalesce(o.last_activity_at, o.updated_at) as last_activity_at
+                from crm_opportunities o
+                where o.deleted_at is null
+                  and coalesce(o.status, '') not in ('lost', 'cancelled')
+                  and coalesce(o.close_type, '') not in ('lost', 'cancelled')
+                  and %s
+                  %s
+                """.formatted(access.clause(), filters),
+                (rs, rowNum) -> new FunnelOpportunityRow(
+                        rs.getLong("id"),
+                        rs.getString("opportunity_name"),
+                        rs.getLong("account_id"),
+                        rs.getLong("owner_user_id"),
+                        rs.getString("stage"),
+                        rs.getString("status"),
+                        rs.getString("risk_status"),
+                        amount(rs.getBigDecimal("estimated_contract_amount")),
+                        rs.getBigDecimal("win_rate"),
+                        rs.getObject("expected_close_date", LocalDate.class),
+                        rs.getObject("last_activity_at", OffsetDateTime.class),
+                        rs.getString("close_type")),
+                params.toArray());
+    }
+
+    private static void appendFunnelOpportunityFilters(
+            StringBuilder sql,
+            List<Object> params,
+            DashboardFunnelFilter filter) {
+        appendEquals(sql, params, "o.owner_department_id", filter.department_id());
+        appendEquals(sql, params, "o.owner_user_id", filter.owner_id());
+        appendEquals(sql, params, "o.account_id", filter.account_id());
+        appendEquals(sql, params, "o.risk_status", filter.risk_status());
+    }
+
+    private static StageDefinition stageDefinition(String stage) {
+        return STAGES.stream()
+                .filter(item -> item.key().equals(stage))
+                .findFirst()
+                .orElse(STAGES.get(0));
+    }
+
+    private static BigDecimal conversionRate(FunnelOpportunityRow row) {
+        if (row.winRate() == null || row.winRate().compareTo(ZERO) <= 0) {
+            return stageDefinition(row.stage()).defaultRate();
+        }
+        if (row.winRate().compareTo(ONE) > 0) {
+            return row.winRate().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
+        }
+        return row.winRate();
+    }
+
+    private static BigDecimal weightedAmount(BigDecimal amount, BigDecimal rate) {
+        return amount(amount).multiply(rate).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private static boolean isActiveOpportunity(FunnelOpportunityRow row) {
+        return !"won".equals(row.status()) && !"won".equals(row.closeType());
+    }
+
+    private static boolean isStalledOpportunity(FunnelOpportunityRow row) {
+        OffsetDateTime lastActivityAt = row.lastActivityAt();
+        return isActiveOpportunity(row)
+                && lastActivityAt != null
+                && lastActivityAt.isBefore(OffsetDateTime.now(DEFAULT_OFFSET).minusDays(14));
+    }
+
+    private static boolean isHighRisk(String riskStatus) {
+        return Set.of("risk", "high_risk", "warning").contains(riskStatus);
+    }
+
+    private static boolean isClosingSoon(FunnelOpportunityRow row) {
+        LocalDate expectedCloseDate = row.expectedCloseDate();
+        return isActiveOpportunity(row)
+                && expectedCloseDate != null
+                && !expectedCloseDate.isBefore(LocalDate.now(DEFAULT_OFFSET))
+                && !expectedCloseDate.isAfter(LocalDate.now(DEFAULT_OFFSET).plusDays(30));
+    }
+
+    private static String attentionReason(FunnelOpportunityRow row) {
+        if (isStalledOpportunity(row)) {
+            return "停滞超过14天";
+        }
+        if (isHighRisk(row.riskStatus())) {
+            return "高风险商机";
+        }
+        return "临近预计成交日";
+    }
+
     private DomainAccess access(
             Long userId,
             String moduleCode,
@@ -865,6 +1125,25 @@ public class DashboardService {
         return "?" + String.join("&", parts);
     }
 
+    private static String funnelQueryString(DashboardFunnelFilter filter) {
+        List<String> parts = new ArrayList<>();
+        parts.add("date_from=" + filter.date_from());
+        parts.add("date_to=" + filter.date_to());
+        if (filter.department_id() != null) {
+            parts.add("department_id=" + filter.department_id());
+        }
+        if (filter.owner_id() != null) {
+            parts.add("owner_id=" + filter.owner_id());
+        }
+        if (filter.account_id() != null) {
+            parts.add("account_id=" + filter.account_id());
+        }
+        if (filter.risk_status() != null) {
+            parts.add("risk_status=" + filter.risk_status());
+        }
+        return "?" + String.join("&", parts);
+    }
+
     private static BigDecimal amount(BigDecimal amount) {
         return amount == null ? ZERO : amount;
     }
@@ -874,6 +1153,48 @@ public class DashboardService {
             return null;
         }
         return ((Number) value).longValue();
+    }
+
+    private record StageDefinition(String key, String label, BigDecimal defaultRate) {
+    }
+
+    private record FunnelOpportunityRow(
+            Long id,
+            String name,
+            Long accountId,
+            Long ownerUserId,
+            String stage,
+            String status,
+            String riskStatus,
+            BigDecimal amount,
+            BigDecimal winRate,
+            LocalDate expectedCloseDate,
+            OffsetDateTime lastActivityAt,
+            String closeType) {
+    }
+
+    private static final class StageAccumulator {
+        private long count;
+        private BigDecimal amount = ZERO;
+        private BigDecimal weightedAmount = ZERO;
+
+        void add(BigDecimal amountToAdd, BigDecimal weightedAmountToAdd) {
+            count++;
+            amount = amount.add(DashboardService.amount(amountToAdd));
+            weightedAmount = weightedAmount.add(DashboardService.amount(weightedAmountToAdd));
+        }
+
+        long count() {
+            return count;
+        }
+
+        BigDecimal amount() {
+            return amount;
+        }
+
+        BigDecimal weightedAmount() {
+            return weightedAmount;
+        }
     }
 
     private record DomainAccess(boolean visible, String clause, List<Object> parameters) {

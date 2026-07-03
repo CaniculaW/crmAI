@@ -11,6 +11,7 @@ const apiData = {
       "account.read",
       "account.create",
       "dashboard.read",
+      "dashboard.funnel.read",
       "contact.read",
       "contact.create",
       "opportunity.read",
@@ -386,6 +387,53 @@ const apiData = {
       }
     ]
   },
+  dashboardFunnel: {
+    filters: {},
+    metric_cards: [
+      { key: "forecast_amount", label: "预测金额", value: 900000, unit: "CNY", drilldown_url: "/opportunities" },
+      { key: "weighted_forecast_amount", label: "加权预测", value: 405000, unit: "CNY", drilldown_url: "/opportunities" },
+      { key: "active_count", label: "推进中商机", value: 1, unit: "count", drilldown_url: "/opportunities" },
+      { key: "stalled_count", label: "停滞商机", value: 1, unit: "count", drilldown_url: "/opportunities" }
+    ],
+    stages: [
+      {
+        key: "proposal",
+        label: "商业方案",
+        count: 1,
+        amount: 900000,
+        weighted_amount: 405000,
+        conversion_rate: 0.45,
+        drilldown_url: "/opportunities?stage=proposal"
+      },
+      {
+        key: "contract",
+        label: "合同推进",
+        count: 0,
+        amount: 0,
+        weighted_amount: 0,
+        conversion_rate: 0.9,
+        drilldown_url: "/opportunities?stage=contract"
+      }
+    ],
+    forecast_trend: [
+      { period: "2026-07", forecast_amount: 900000, weighted_forecast_amount: 405000, count: 1 }
+    ],
+    attention_opportunities: [
+      {
+        opportunity_id: 10,
+        opportunity_name: "CRM AI 预测商机",
+        account_id: 1,
+        owner_user_id: 1001,
+        stage: "proposal",
+        risk_status: "warning",
+        amount: 900000,
+        expected_close_date: "2026-07-20",
+        last_activity_at: "2026-06-01T00:00:00+08:00",
+        reason: "停滞超过14天",
+        drilldown_url: "/opportunities?opportunity_id=10"
+      }
+    ]
+  },
   reconciliations: [
     {
       id: 902,
@@ -617,6 +665,25 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("link", { name: "查看逾期回款" })).toHaveAttribute("href", "/receivables?overdue=true");
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/dashboard/overview"), expect.anything());
+    });
+  });
+
+  it("renders the V3 sales funnel forecast page", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/dashboard/funnel");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "销售漏斗" })).toBeInTheDocument();
+    expect(screen.getByText("加权预测")).toBeInTheDocument();
+    expect(screen.getByText("商业方案")).toBeInTheDocument();
+    expect(screen.getByText("2026-07")).toBeInTheDocument();
+    expect(screen.getByText("CRM AI 预测商机")).toBeInTheDocument();
+    expect(screen.getByText("停滞超过14天")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/dashboard/funnel"), expect.anything());
     });
   });
 
@@ -1481,6 +1548,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/dashboard/overview")) {
       return jsonResponse({ code: "OK", data: data.dashboardOverview });
+    }
+    if (path.endsWith("/api/dashboard/funnel")) {
+      return jsonResponse({ code: "OK", data: data.dashboardFunnel });
     }
     if (path.endsWith("/api/accounts/1") && method === "PATCH") {
       return jsonResponse({ code: "OK", data: { ...data.accounts[0], remark: "重点推进" } });

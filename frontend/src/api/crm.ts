@@ -537,6 +537,45 @@ export type DashboardOverview = {
   top_risks: DashboardRiskItem[];
 };
 
+export type DashboardFunnelStage = {
+  key: string;
+  label: string;
+  count: number;
+  amount: number;
+  weighted_amount: number;
+  conversion_rate: number;
+  drilldown_url: string;
+};
+
+export type DashboardForecastTrendPoint = {
+  period: string;
+  forecast_amount: number;
+  weighted_forecast_amount: number;
+  count: number;
+};
+
+export type DashboardAttentionOpportunity = {
+  opportunity_id: number;
+  opportunity_name: string;
+  account_id?: number;
+  owner_user_id?: number;
+  stage: string;
+  risk_status?: string;
+  amount: number;
+  expected_close_date?: string;
+  last_activity_at?: string;
+  reason: string;
+  drilldown_url: string;
+};
+
+export type DashboardFunnel = {
+  filters: Record<string, unknown>;
+  metric_cards: DashboardMetricCard[];
+  stages: DashboardFunnelStage[];
+  forecast_trend: DashboardForecastTrendPoint[];
+  attention_opportunities: DashboardAttentionOpportunity[];
+};
+
 function withQuery(path: string, query?: QueryParams) {
   if (!query) {
     return path;
@@ -588,7 +627,8 @@ export function resetPassword(body: Record<string, unknown>) {
 
 export const crmApi = {
   dashboard: {
-    overview: (query?: QueryParams) => requestJson<DashboardOverview>(withQuery("/api/dashboard/overview", query))
+    overview: (query?: QueryParams) => requestJson<DashboardOverview>(withQuery("/api/dashboard/overview", query)),
+    funnel: (query?: QueryParams) => requestJson<DashboardFunnel>(withQuery("/api/dashboard/funnel", query))
   },
   accounts: {
     list: (query?: QueryParams) => requestJson<Account[]>(withQuery("/api/accounts", query)),

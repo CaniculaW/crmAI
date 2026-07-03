@@ -122,6 +122,82 @@ class DashboardControllerTest {
     }
 
     @Test
+    void funnelReturnsStageForecastTrendAndAttentionOpportunities() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("dashboard-funnel-dept-" + suffix);
+        TestUser user = createLoginReadyUser(
+                "dashboard_funnel_" + suffix,
+                departmentId,
+                allDashboardPermissions(),
+                List.of("global"));
+        DashboardFixture fixture = createCompleteFixture(suffix, departmentId, user.userId());
+
+        try {
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    "/api/dashboard/funnel?date_from=2026-07-01&date_to=2026-07-31",
+                    HttpMethod.GET,
+                    new HttpEntity<>(authHeaders(user.token(), "dashboard-funnel-trace-001")),
+                    JsonNode.class);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode data = response.getBody().path("data");
+            assertThat(data.path("filters").path("date_from").asText()).isEqualTo("2026-07-01");
+            assertThat(data.path("filters").path("date_to").asText()).isEqualTo("2026-07-31");
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("forecast_amount");
+                assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(900000));
+            });
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("weighted_forecast_amount");
+                assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(405000));
+            });
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("stalled_count");
+                assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.ONE);
+            });
+            assertThat(data.path("stages")).anySatisfy(stage -> {
+                assertThat(stage.path("key").asText()).isEqualTo("proposal");
+                assertThat(stage.path("label").asText()).isEqualTo("商业方案");
+                assertThat(stage.path("count").asLong()).isEqualTo(1);
+                assertThat(stage.path("amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(900000));
+                assertThat(stage.path("weighted_amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(405000));
+                assertThat(stage.path("conversion_rate").decimalValue()).isEqualByComparingTo("0.45");
+            });
+            assertThat(data.path("forecast_trend")).anySatisfy(point -> {
+                assertThat(point.path("period").asText()).isEqualTo("2026-07");
+                assertThat(point.path("forecast_amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(900000));
+                assertThat(point.path("weighted_forecast_amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(405000));
+            });
+            assertThat(data.path("attention_opportunities")).anySatisfy(item -> {
+                assertThat(item.path("opportunity_id").asLong()).isEqualTo(fixture.opportunityId());
+                assertThat(item.path("reason").asText()).contains("停滞");
+                assertThat(item.path("drilldown_url").asText()).isEqualTo("/opportunities?opportunity_id=" + fixture.opportunityId());
+            });
+        } finally {
+            deleteFixture(fixture);
+        }
+    }
+
+    @Test
+    void funnelRequiresDashboardFunnelReadPermission() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("dashboard-funnel-forbidden-dept-" + suffix);
+        TestUser user = createLoginReadyUser(
+                "dashboard_funnel_forbidden_" + suffix,
+                departmentId,
+                List.of("dashboard.read", "opportunity.read"),
+                List.of("global"));
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/dashboard/funnel",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(user.token(), "dashboard-funnel-forbidden-trace-001")),
+                JsonNode.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     void overviewDateFilterNarrowsMetrics() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         Long departmentId = createDepartment("dashboard-date-dept-" + suffix);
@@ -323,6 +399,17 @@ class DashboardControllerTest {
                 ownerUserId);
     }
 
+    private void deleteFixture(DashboardFixture fixture) {
+        jdbcTemplate.update("delete from crm_reconciliations where payment_id = ?", fixture.paymentId());
+        jdbcTemplate.update("delete from crm_payments where id = ?", fixture.paymentId());
+        jdbcTemplate.update("delete from crm_receivable_plans where id = ?", fixture.receivablePlanId());
+        jdbcTemplate.update("delete from crm_invoices where id = ?", fixture.invoiceId());
+        jdbcTemplate.update("delete from crm_contract_milestones where contract_id = ?", fixture.contractId());
+        jdbcTemplate.update("delete from crm_contracts where id = ?", fixture.contractId());
+        jdbcTemplate.update("delete from crm_opportunities where id = ?", fixture.opportunityId());
+        jdbcTemplate.update("delete from crm_accounts where id = ?", fixture.accountId());
+    }
+
     private Long insertAndReturnId(String sql, Object... args) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
@@ -421,6 +508,7 @@ class DashboardControllerTest {
     private List<String> allDashboardPermissions() {
         return List.of(
                 "dashboard.read",
+                "dashboard.funnel.read",
                 "opportunity.read",
                 "contract.read",
                 "invoice.read",

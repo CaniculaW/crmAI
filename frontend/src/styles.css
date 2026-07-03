@@ -352,6 +352,85 @@ body {
   font-weight: 600;
 }
 
+.dashboard-funnel__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 14px;
+}
+
+.dashboard-funnel__stages,
+.dashboard-funnel__trend,
+.dashboard-funnel__attention {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-funnel__stage,
+.dashboard-funnel__attention-row {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  color: #172033;
+  background: #f8fafd;
+}
+
+.dashboard-funnel__stage:hover,
+.dashboard-funnel__attention-row:hover {
+  border-color: #1f5eff;
+  color: #1f5eff;
+}
+
+.dashboard-funnel__stage span,
+.dashboard-funnel__attention-row span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dashboard-funnel__stage strong,
+.dashboard-funnel__attention-row strong {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.dashboard-funnel__stage small,
+.dashboard-funnel__attention-row small,
+.dashboard-funnel__trend-row small {
+  color: #667085;
+}
+
+.dashboard-funnel__bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf2f7;
+}
+
+.dashboard-funnel__bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #1f5eff;
+}
+
+.dashboard-funnel__trend-row {
+  display: grid;
+  grid-template-columns: minmax(72px, 0.5fr) minmax(110px, 1fr);
+  gap: 4px 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.dashboard-funnel__trend-row small {
+  grid-column: 2;
+}
+
 .quick-entry-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1245,6 +1324,7 @@ body {
   .contact-summary-grid,
   .dashboard-overview__columns,
   .dashboard-overview__flow,
+  .dashboard-funnel__layout,
   .dashboard-grid,
   .dictionary-grid,
   .opportunity-entry-grid,
