@@ -114,40 +114,40 @@ public class DashboardService {
         return List.of(
                 new DashboardMetricCard(
                         "forecast_amount",
-                        "Forecast Amount",
+                        "预测金额",
                         forecastAmount,
-                        "amount",
+                        "CNY",
                         "/opportunities" + queryString(filter)),
                 new DashboardMetricCard(
                         "contract_amount",
-                        "Contract Amount",
+                        "合同金额",
                         contractAmount,
-                        "amount",
+                        "CNY",
                         "/contracts" + queryString(filter)),
                 new DashboardMetricCard(
                         "invoiced_amount",
-                        "Invoiced Amount",
+                        "已开票金额",
                         invoicedAmount,
-                        "amount",
+                        "CNY",
                         "/invoices" + queryString(filter)),
                 new DashboardMetricCard(
                         "received_amount",
-                        "Received Amount",
+                        "已回款金额",
                         receivedAmount,
-                        "amount",
-                        "/payments" + queryString(filter)),
+                        "CNY",
+                        "/receivables" + queryString(filter)),
                 new DashboardMetricCard(
                         "overdue_amount",
-                        "Overdue Amount",
+                        "逾期金额",
                         overdueAmount,
-                        "amount",
-                        "/receivable-plans" + queryString(filter)),
+                        "CNY",
+                        "/receivables" + queryString(filter)),
                 new DashboardMetricCard(
                         "risk_count",
-                        "Risk Count",
+                        "风险数",
                         BigDecimal.valueOf(riskCount),
                         "count",
-                        "/dashboard/risks" + queryString(filter)));
+                        "/dashboard" + queryString(filter)));
     }
 
     private List<DashboardBusinessFlowItem> businessFlow(
@@ -165,35 +165,35 @@ public class DashboardService {
         return List.of(
                 new DashboardBusinessFlowItem(
                         "opportunity",
-                        "Opportunity",
+                        "商机预测",
                         opportunityFlow.amount(),
                         opportunityFlow.count(),
                         opportunityFlow.riskCount(),
                         "/opportunities" + queryString(filter)),
                 new DashboardBusinessFlowItem(
                         "contract",
-                        "Contract",
+                        "合同",
                         contractFlow.amount(),
                         contractFlow.count(),
                         contractFlow.riskCount(),
                         "/contracts" + queryString(filter)),
                 new DashboardBusinessFlowItem(
                         "invoice",
-                        "Invoice",
+                        "开票",
                         invoiceFlow.amount(),
                         invoiceFlow.count(),
                         invoiceFlow.riskCount(),
                         "/invoices" + queryString(filter)),
                 new DashboardBusinessFlowItem(
                         "receivable",
-                        "Receivable",
+                        "回款",
                         receivableFlow.amount(),
                         receivableFlow.count(),
                         receivableFlow.riskCount(),
-                        "/receivable-plans" + queryString(filter)),
+                        "/receivables" + queryString(filter)),
                 new DashboardBusinessFlowItem(
                         "reconciliation",
-                        "Reconciliation",
+                        "核销",
                         reconciliationFlow.amount(),
                         reconciliationFlow.count(),
                         reconciliationFlow.riskCount(),
@@ -215,39 +215,39 @@ public class DashboardService {
         return List.of(
                 new DashboardRiskSummary(
                         "opportunity_stalled",
-                        "Opportunity Stalled",
+                        "商机停滞",
                         opportunityStalled.count(),
                         opportunityStalled.amount(),
                         opportunityStalled.highestLevel(),
                         "/opportunities" + queryString(filter)),
                 new DashboardRiskSummary(
                         "contract_milestone_overdue",
-                        "Contract Milestone Overdue",
+                        "合同节点逾期",
                         contractMilestoneOverdue.count(),
                         contractMilestoneOverdue.amount(),
                         contractMilestoneOverdue.highestLevel(),
                         "/contracts" + queryString(filter)),
                 new DashboardRiskSummary(
                         "invoice_exception",
-                        "Invoice Exception",
+                        "开票异常",
                         invoiceException.count(),
                         invoiceException.amount(),
                         invoiceException.highestLevel(),
                         "/invoices" + queryString(filter)),
                 new DashboardRiskSummary(
                         "receivable_overdue",
-                        "Receivable Overdue",
+                        "回款逾期",
                         receivableOverdue.count(),
                         receivableOverdue.amount(),
                         receivableOverdue.highestLevel(),
-                        "/receivable-plans" + queryString(filter)),
+                        "/receivables" + queryString(filter)),
                 new DashboardRiskSummary(
                         "unreconciled_payment",
-                        "Unreconciled Payment",
+                        "未核销回款",
                         unreconciledPayment.count(),
                         unreconciledPayment.amount(),
                         unreconciledPayment.highestLevel(),
-                        "/payments" + queryString(filter)));
+                        "/reconciliations" + queryString(filter)));
     }
 
     private List<DashboardRiskItem> topRisks(
@@ -586,7 +586,7 @@ public class DashboardService {
                         rs.getLong("account_id"),
                         rs.getLong("opportunity_id"),
                         rs.getObject("occurred_at", OffsetDateTime.class),
-                        "/opportunities/" + rs.getLong("id")),
+                        "/opportunities?opportunity_id=" + rs.getLong("id")),
                 params.toArray());
     }
 
@@ -654,7 +654,7 @@ public class DashboardService {
                         rs.getLong("account_id"),
                         nullableLong(rs.getObject("opportunity_id")),
                         rs.getObject("occurred_at", OffsetDateTime.class),
-                        "/invoices/" + rs.getLong("id")),
+                        "/invoices?invoice_id=" + rs.getLong("id")),
                 params.toArray());
     }
 
@@ -687,7 +687,7 @@ public class DashboardService {
                         rs.getLong("account_id"),
                         nullableLong(rs.getObject("opportunity_id")),
                         rs.getObject("occurred_at", OffsetDateTime.class),
-                        "/receivable-plans/" + rs.getLong("id")),
+                        "/receivables?receivable_plan_id=" + rs.getLong("id")),
                 params.toArray());
     }
 
@@ -720,7 +720,7 @@ public class DashboardService {
                         rs.getLong("account_id"),
                         nullableLong(rs.getObject("opportunity_id")),
                         rs.getObject("occurred_at", OffsetDateTime.class),
-                        "/payments/" + rs.getLong("id")),
+                        "/reconciliations?payment_id=" + rs.getLong("id")),
                 params.toArray());
     }
 

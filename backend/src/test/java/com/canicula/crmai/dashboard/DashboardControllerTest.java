@@ -68,15 +68,31 @@ class DashboardControllerTest {
         assertThat(data.path("filters").path("date_to").asText()).isEqualTo("2026-07-31");
         assertThat(data.path("metric_cards")).anySatisfy(card -> {
             assertThat(card.path("key").asText()).isEqualTo("forecast_amount");
+            assertThat(card.path("label").asText()).isEqualTo("预测金额");
             assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(900000));
+            assertThat(card.path("unit").asText()).isEqualTo("CNY");
             assertThat(card.path("drilldown_url").asText()).startsWith("/opportunities");
         });
-        assertThat(data.path("business_flow")).anySatisfy(item ->
-                assertThat(item.path("key").asText()).isEqualTo("opportunity"));
+        assertThat(data.path("metric_cards")).anySatisfy(card -> {
+            assertThat(card.path("key").asText()).isEqualTo("received_amount");
+            assertThat(card.path("label").asText()).isEqualTo("已回款金额");
+            assertThat(card.path("drilldown_url").asText()).startsWith("/receivables");
+        });
+        assertThat(data.path("business_flow")).anySatisfy(item -> {
+            assertThat(item.path("key").asText()).isEqualTo("opportunity");
+            assertThat(item.path("label").asText()).isEqualTo("商机预测");
+        });
+        assertThat(data.path("business_flow")).anySatisfy(item -> {
+            assertThat(item.path("key").asText()).isEqualTo("receivable");
+            assertThat(item.path("label").asText()).isEqualTo("回款");
+            assertThat(item.path("drilldown_url").asText()).startsWith("/receivables");
+        });
         assertThat(data.path("risk_summary")).anySatisfy(summary -> {
             assertThat(summary.path("risk_type").asText()).isEqualTo("receivable_overdue");
+            assertThat(summary.path("label").asText()).isEqualTo("回款逾期");
             assertThat(summary.path("count").asLong()).isGreaterThan(0);
             assertThat(summary.path("amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(260000));
+            assertThat(summary.path("drilldown_url").asText()).startsWith("/receivables");
         });
         assertThat(data.path("top_risks")).isNotEmpty();
         assertThat(data.path("top_risks").size()).isLessThanOrEqualTo(8);
