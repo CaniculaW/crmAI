@@ -269,6 +269,85 @@ class DashboardControllerTest {
     }
 
     @Test
+    void invoicesDashboardReturnsMetricsStatusGapRisksAndAttentionInvoices() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("dashboard-invoice-dept-" + suffix);
+        TestUser user = createLoginReadyUser(
+                "dashboard_invoice_" + suffix,
+                departmentId,
+                allDashboardPermissions(),
+                List.of("global"));
+        DashboardFixture fixture = createCompleteFixture(suffix, departmentId, user.userId());
+
+        try {
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    "/api/dashboard/invoices?date_from=2026-07-01&date_to=2026-07-31",
+                    HttpMethod.GET,
+                    new HttpEntity<>(authHeaders(user.token(), "dashboard-invoice-trace-001")),
+                    JsonNode.class);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode data = response.getBody().path("data");
+            assertThat(data.path("filters").path("date_from").asText()).isEqualTo("2026-07-01");
+            assertThat(data.path("filters").path("date_to").asText()).isEqualTo("2026-07-31");
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("planned_invoice_amount");
+                assertThat(card.path("label").asText()).isEqualTo("计划开票金额");
+                assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(300000));
+                assertThat(card.path("drilldown_url").asText()).startsWith("/invoices");
+            });
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("exception_count");
+                assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.ONE);
+            });
+            assertThat(data.path("status_distribution")).anySatisfy(status -> {
+                assertThat(status.path("status").asText()).isEqualTo("exception");
+                assertThat(status.path("label").asText()).isEqualTo("异常");
+                assertThat(status.path("count").asLong()).isEqualTo(1);
+                assertThat(status.path("planned_amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(300000));
+                assertThat(status.path("actual_amount").decimalValue()).isEqualByComparingTo(BigDecimal.ZERO);
+            });
+            assertThat(data.path("gap_trend")).anySatisfy(point -> {
+                assertThat(point.path("period").asText()).isEqualTo("2026-07");
+                assertThat(point.path("planned_amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(300000));
+                assertThat(point.path("invoiced_amount").decimalValue()).isEqualByComparingTo(BigDecimal.ZERO);
+                assertThat(point.path("gap_amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(300000));
+            });
+            assertThat(data.path("risk_summary")).anySatisfy(summary -> {
+                assertThat(summary.path("key").asText()).isEqualTo("exception");
+                assertThat(summary.path("label").asText()).isEqualTo("异常开票");
+                assertThat(summary.path("count").asLong()).isEqualTo(1);
+            });
+            assertThat(data.path("attention_invoices")).anySatisfy(item -> {
+                assertThat(item.path("invoice_id").asLong()).isEqualTo(fixture.invoiceId());
+                assertThat(item.path("reason").asText()).contains("开票异常");
+                assertThat(item.path("drilldown_url").asText()).isEqualTo("/invoices?invoice_id=" + fixture.invoiceId());
+            });
+        } finally {
+            deleteFixture(fixture);
+        }
+    }
+
+    @Test
+    void invoicesDashboardRequiresDashboardInvoicesReadPermission() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("dashboard-invoice-forbidden-dept-" + suffix);
+        TestUser user = createLoginReadyUser(
+                "dashboard_invoice_forbidden_" + suffix,
+                departmentId,
+                List.of("dashboard.read", "dashboard.funnel.read", "dashboard.contracts.read", "invoice.read"),
+                List.of("global"));
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/dashboard/invoices",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(user.token(), "dashboard-invoice-forbidden-trace-001")),
+                JsonNode.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     void overviewDateFilterNarrowsMetrics() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         Long departmentId = createDepartment("dashboard-date-dept-" + suffix);
@@ -581,6 +660,7 @@ class DashboardControllerTest {
                 "dashboard.read",
                 "dashboard.funnel.read",
                 "dashboard.contracts.read",
+                "dashboard.invoices.read",
                 "opportunity.read",
                 "contract.read",
                 "invoice.read",

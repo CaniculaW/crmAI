@@ -41,6 +41,13 @@ public class DashboardService {
             new ContractStatusDefinition("paused", "暂停中"),
             new ContractStatusDefinition("completed", "已完成"),
             new ContractStatusDefinition("terminated", "已终止"));
+    private static final List<InvoiceStatusDefinition> INVOICE_STATUSES = List.of(
+            new InvoiceStatusDefinition("planned", "计划中"),
+            new InvoiceStatusDefinition("applied", "已申请"),
+            new InvoiceStatusDefinition("invoiced", "已开票"),
+            new InvoiceStatusDefinition("signed", "已签收"),
+            new InvoiceStatusDefinition("exception", "异常"),
+            new InvoiceStatusDefinition("voided", "已作废"));
     private static final DataPermissionColumns OPPORTUNITY_COLUMNS = new DataPermissionColumns(
             "o.owner_user_id",
             "o.owner_department_id",
@@ -117,6 +124,19 @@ public class DashboardService {
                 attentionContracts(contracts, milestones, changes));
     }
 
+    public DashboardInvoiceResponse invoices(Long userId, DashboardInvoiceFilter requestedFilter) {
+        DashboardInvoiceFilter filter = normalizeInvoiceFilter(requestedFilter);
+        DomainAccess invoice = access(userId, "invoice", "invoice.read", INVOICE_COLUMNS);
+        List<InvoiceDashboardRow> invoices = invoiceRows(filter, invoice);
+        return new DashboardInvoiceResponse(
+                invoiceFilterMap(filter),
+                invoiceMetricCards(filter, invoices),
+                invoiceStatusDistribution(filter, invoices),
+                invoiceGapTrend(invoices),
+                invoiceRiskSummary(filter, invoices),
+                attentionInvoices(invoices));
+    }
+
     private DashboardFilter normalizeFilter(DashboardFilter filter) {
         LocalDate today = LocalDate.now();
         LocalDate defaultFrom = today.withDayOfMonth(1);
@@ -166,6 +186,25 @@ public class DashboardService {
                 filter.risk_level());
     }
 
+    private DashboardInvoiceFilter normalizeInvoiceFilter(DashboardInvoiceFilter filter) {
+        LocalDate today = LocalDate.now();
+        int quarterStartMonth = ((today.getMonthValue() - 1) / 3) * 3 + 1;
+        LocalDate defaultFrom = LocalDate.of(today.getYear(), quarterStartMonth, 1);
+        LocalDate defaultTo = defaultFrom.plusMonths(3).minusDays(1);
+        LocalDate dateFrom = filter.date_from() == null ? defaultFrom : filter.date_from();
+        LocalDate dateTo = filter.date_to() == null ? defaultTo : filter.date_to();
+        return new DashboardInvoiceFilter(
+                dateFrom,
+                dateTo,
+                filter.department_id(),
+                filter.owner_id(),
+                filter.account_id(),
+                filter.opportunity_id(),
+                filter.contract_id(),
+                filter.invoice_status(),
+                filter.exception_only());
+    }
+
     private Map<String, Object> filterMap(DashboardFilter filter) {
         Map<String, Object> filters = new LinkedHashMap<>();
         filters.put("date_from", filter.date_from());
@@ -199,6 +238,206 @@ public class DashboardService {
         filters.put("contract_status", filter.contract_status());
         filters.put("risk_level", filter.risk_level());
         return filters;
+    }
+
+    private Map<String, Object> invoiceFilterMap(DashboardInvoiceFilter filter) {
+        Map<String, Object> filters = new LinkedHashMap<>();
+        filters.put("date_from", filter.date_from());
+        filters.put("date_to", filter.date_to());
+        filters.put("department_id", filter.department_id());
+        filters.put("owner_id", filter.owner_id());
+        filters.put("account_id", filter.account_id());
+        filters.put("opportunity_id", filter.opportunity_id());
+        filters.put("contract_id", filter.contract_id());
+        filters.put("invoice_status", filter.invoice_status());
+        filters.put("exception_only", filter.exception_only());
+        return filters;
+    }
+
+    private List<DashboardMetricCard> invoiceMetricCards(
+            DashboardInvoiceFilter filter,
+            List<InvoiceDashboardRow> invoices) {
+        BigDecimal plannedAmount = invoices.stream()
+                .map(InvoiceDashboardRow::plannedAmount)
+                .reduce(ZERO, BigDecimal::add);
+        BigDecimal appliedAmount = invoices.stream()
+                .map(InvoiceDashboardRow::appliedAmount)
+                .reduce(ZERO, BigDecimal::add);
+        BigDecimal invoicedAmount = invoices.stream()
+                .map(DashboardService::invoiceActualAmount)
+                .reduce(ZERO, BigDecimal::add);
+        BigDecimal signedAmount = invoices.stream()
+                .filter(row -> "signed".equals(row.status()))
+                .map(DashboardService::invoiceActualAmount)
+                .reduce(ZERO, BigDecimal::add);
+        BigDecimal gapAmount = invoices.stream()
+                .map(row -> positiveGap(row.plannedAmount(), invoiceActualAmount(row)))
+                .reduce(ZERO, BigDecimal::add);
+        long exceptionCount = invoices.stream()
+                .filter(row -> "exception".equals(row.status()))
+                .count();
+        return List.of(
+                new DashboardMetricCard(
+                        "planned_invoice_amount",
+                        "计划开票金额",
+                        plannedAmount,
+                        "CNY",
+                        "/invoices" + invoiceQueryString(filter)),
+                new DashboardMetricCard(
+                        "applied_invoice_amount",
+                        "已申请金额",
+                        appliedAmount,
+                        "CNY",
+                        "/invoices" + invoiceQueryString(filter) + "&invoice_status=applied"),
+                new DashboardMetricCard(
+                        "invoiced_amount",
+                        "已开票金额",
+                        invoicedAmount,
+                        "CNY",
+                        "/invoices" + invoiceQueryString(filter) + "&invoice_status=invoiced"),
+                new DashboardMetricCard(
+                        "signed_amount",
+                        "已签收金额",
+                        signedAmount,
+                        "CNY",
+                        "/invoices" + invoiceQueryString(filter) + "&invoice_status=signed"),
+                new DashboardMetricCard(
+                        "invoice_gap_amount",
+                        "开票缺口金额",
+                        gapAmount,
+                        "CNY",
+                        "/invoices" + invoiceQueryString(filter)),
+                new DashboardMetricCard(
+                        "exception_count",
+                        "异常开票",
+                        BigDecimal.valueOf(exceptionCount),
+                        "count",
+                        "/invoices" + invoiceQueryString(filter) + "&exception_only=true"));
+    }
+
+    private List<DashboardInvoiceStatusItem> invoiceStatusDistribution(
+            DashboardInvoiceFilter filter,
+            List<InvoiceDashboardRow> invoices) {
+        Map<String, InvoiceStatusAccumulator> accumulators = new LinkedHashMap<>();
+        INVOICE_STATUSES.forEach(status -> accumulators.put(status.key(), new InvoiceStatusAccumulator()));
+        invoices.forEach(row -> accumulators.computeIfAbsent(row.status(), ignored -> new InvoiceStatusAccumulator())
+                .add(row.plannedAmount(), invoiceActualAmount(row)));
+        return accumulators.entrySet().stream()
+                .map(entry -> new DashboardInvoiceStatusItem(
+                        entry.getKey(),
+                        invoiceStatusLabel(entry.getKey()),
+                        entry.getValue().count(),
+                        entry.getValue().plannedAmount(),
+                        entry.getValue().actualAmount(),
+                        "/invoices" + invoiceQueryString(filter) + "&invoice_status=" + entry.getKey()))
+                .toList();
+    }
+
+    private List<DashboardInvoiceGapTrendPoint> invoiceGapTrend(List<InvoiceDashboardRow> invoices) {
+        Map<String, InvoiceGapAccumulator> accumulators = new LinkedHashMap<>();
+        invoices.stream()
+                .filter(row -> row.plannedInvoiceDate() != null)
+                .sorted(Comparator.comparing(InvoiceDashboardRow::plannedInvoiceDate))
+                .forEach(row -> {
+                    String period = "%04d-%02d".formatted(
+                            row.plannedInvoiceDate().getYear(),
+                            row.plannedInvoiceDate().getMonthValue());
+                    accumulators.computeIfAbsent(period, ignored -> new InvoiceGapAccumulator())
+                            .add(row.plannedAmount(), invoiceActualAmount(row));
+                });
+        return accumulators.entrySet().stream()
+                .map(entry -> new DashboardInvoiceGapTrendPoint(
+                        entry.getKey(),
+                        entry.getValue().plannedAmount(),
+                        entry.getValue().invoicedAmount(),
+                        entry.getValue().gapAmount(),
+                        entry.getValue().count()))
+                .toList();
+    }
+
+    private List<DashboardInvoiceRiskSummary> invoiceRiskSummary(
+            DashboardInvoiceFilter filter,
+            List<InvoiceDashboardRow> invoices) {
+        OffsetDateTime now = OffsetDateTime.now(DEFAULT_OFFSET);
+        List<InvoiceDashboardRow> overdueUnissued = invoices.stream()
+                .filter(row -> isOverdueUnissued(row, now))
+                .toList();
+        List<InvoiceDashboardRow> unsigned = invoices.stream()
+                .filter(DashboardService::isUnsignedInvoice)
+                .toList();
+        List<InvoiceDashboardRow> exceptions = invoices.stream()
+                .filter(row -> "exception".equals(row.status()))
+                .toList();
+        List<InvoiceDashboardRow> voided = invoices.stream()
+                .filter(row -> "voided".equals(row.status()))
+                .toList();
+        return List.of(
+                invoiceRisk("overdue_unissued", "逾期未开票", overdueUnissued, "high",
+                        "/invoices" + invoiceQueryString(filter) + "&invoice_risk=overdue_unissued"),
+                invoiceRisk("unsigned", "开票未签收", unsigned, "medium",
+                        "/invoices" + invoiceQueryString(filter) + "&invoice_risk=unsigned"),
+                invoiceRisk("exception", "异常开票", exceptions, "medium",
+                        "/invoices" + invoiceQueryString(filter) + "&exception_only=true"),
+                invoiceRisk("voided", "已作废", voided, "low",
+                        "/invoices" + invoiceQueryString(filter) + "&invoice_status=voided"));
+    }
+
+    private static DashboardInvoiceRiskSummary invoiceRisk(
+            String key,
+            String label,
+            List<InvoiceDashboardRow> rows,
+            String levelWhenPresent,
+            String drilldownUrl) {
+        BigDecimal amount = rows.stream()
+                .map(InvoiceDashboardRow::plannedAmount)
+                .reduce(ZERO, BigDecimal::add);
+        return new DashboardInvoiceRiskSummary(
+                key,
+                label,
+                rows.size(),
+                amount,
+                rows.isEmpty() ? "none" : levelWhenPresent,
+                drilldownUrl);
+    }
+
+    private List<DashboardAttentionInvoice> attentionInvoices(List<InvoiceDashboardRow> invoices) {
+        OffsetDateTime now = OffsetDateTime.now(DEFAULT_OFFSET);
+        return invoices.stream()
+                .map(row -> attentionInvoice(row, now))
+                .filter(item -> item.reason() != null)
+                .sorted(Comparator.comparing(DashboardAttentionInvoice::planned_amount).reversed()
+                        .thenComparing(DashboardAttentionInvoice::planned_invoice_date,
+                                Comparator.nullsLast(Comparator.naturalOrder())))
+                .limit(8)
+                .toList();
+    }
+
+    private DashboardAttentionInvoice attentionInvoice(InvoiceDashboardRow row, OffsetDateTime now) {
+        String reason = null;
+        if ("exception".equals(row.status())) {
+            reason = "开票异常";
+        } else if (isOverdueUnissued(row, now)) {
+            reason = "逾期未开票";
+        } else if (isUnsignedInvoice(row)) {
+            reason = "开票未签收";
+        } else if (row.plannedAmount().compareTo(new BigDecimal("100000")) >= 0
+                && Set.of("planned", "applied").contains(row.status())) {
+            reason = "大额待开票";
+        }
+        return new DashboardAttentionInvoice(
+                row.id(),
+                row.planName(),
+                row.accountId(),
+                row.opportunityId(),
+                row.contractId(),
+                row.ownerUserId(),
+                row.status(),
+                row.plannedAmount(),
+                invoiceActualAmount(row),
+                row.plannedInvoiceDate(),
+                row.invoiceDate(),
+                reason,
+                "/invoices?invoice_id=" + row.id());
     }
 
     private List<DashboardMetricCard> contractMetricCards(
@@ -1232,6 +1471,41 @@ public class DashboardService {
                 params.toArray());
     }
 
+    private List<InvoiceDashboardRow> invoiceRows(DashboardInvoiceFilter filter, DomainAccess access) {
+        if (!access.visible()) {
+            return List.of();
+        }
+        List<Object> params = new ArrayList<>(access.parameters());
+        StringBuilder filters = new StringBuilder();
+        appendTimestampFilter(filters, params, "i.planned_invoice_date", filter.date_from(), filter.date_to());
+        appendInvoiceDashboardFilters(filters, params, filter);
+        return jdbcTemplate.query("""
+                select i.id, i.plan_name, i.account_id, i.opportunity_id, i.contract_id, i.owner_user_id,
+                       i.invoice_status, i.planned_amount, i.applied_amount, i.actual_invoice_amount,
+                       i.planned_invoice_date, i.invoice_date, i.signed_at
+                from crm_invoices i
+                join crm_accounts a on a.id = i.account_id and a.deleted_at is null
+                where i.deleted_at is null
+                  and %s
+                  %s
+                """.formatted(access.clause(), filters),
+                (rs, rowNum) -> new InvoiceDashboardRow(
+                        rs.getLong("id"),
+                        rs.getString("plan_name"),
+                        rs.getLong("account_id"),
+                        nullableLong(rs.getObject("opportunity_id")),
+                        nullableLong(rs.getObject("contract_id")),
+                        rs.getLong("owner_user_id"),
+                        rs.getString("invoice_status"),
+                        amount(rs.getBigDecimal("planned_amount")),
+                        amount(rs.getBigDecimal("applied_amount")),
+                        amount(rs.getBigDecimal("actual_invoice_amount")),
+                        rs.getObject("planned_invoice_date", OffsetDateTime.class),
+                        rs.getObject("invoice_date", OffsetDateTime.class),
+                        rs.getObject("signed_at", OffsetDateTime.class)),
+                params.toArray());
+    }
+
     private static void appendContractDashboardFilters(
             StringBuilder sql,
             List<Object> params,
@@ -1242,6 +1516,21 @@ public class DashboardService {
         appendEquals(sql, params, "c.opportunity_id", filter.opportunity_id());
         appendEquals(sql, params, "c.contract_status", filter.contract_status());
         appendEquals(sql, params, "c.risk_level", filter.risk_level());
+    }
+
+    private static void appendInvoiceDashboardFilters(
+            StringBuilder sql,
+            List<Object> params,
+            DashboardInvoiceFilter filter) {
+        appendEquals(sql, params, "a.owner_department_id", filter.department_id());
+        appendEquals(sql, params, "i.owner_user_id", filter.owner_id());
+        appendEquals(sql, params, "i.account_id", filter.account_id());
+        appendEquals(sql, params, "i.opportunity_id", filter.opportunity_id());
+        appendEquals(sql, params, "i.contract_id", filter.contract_id());
+        appendEquals(sql, params, "i.invoice_status", filter.invoice_status());
+        if (Boolean.TRUE.equals(filter.exception_only())) {
+            appendEquals(sql, params, "i.invoice_status", "exception");
+        }
     }
 
     private static void appendFunnelOpportunityFilters(
@@ -1314,6 +1603,36 @@ public class DashboardService {
                 .map(ContractStatusDefinition::label)
                 .findFirst()
                 .orElse(status);
+    }
+
+    private static String invoiceStatusLabel(String status) {
+        return INVOICE_STATUSES.stream()
+                .filter(item -> item.key().equals(status))
+                .map(InvoiceStatusDefinition::label)
+                .findFirst()
+                .orElse(status);
+    }
+
+    private static BigDecimal invoiceActualAmount(InvoiceDashboardRow row) {
+        if (Set.of("invoiced", "signed").contains(row.status())) {
+            return row.actualAmount();
+        }
+        return ZERO;
+    }
+
+    private static BigDecimal positiveGap(BigDecimal plannedAmount, BigDecimal actualAmount) {
+        BigDecimal gap = amount(plannedAmount).subtract(amount(actualAmount));
+        return gap.compareTo(ZERO) > 0 ? gap : ZERO;
+    }
+
+    private static boolean isOverdueUnissued(InvoiceDashboardRow row, OffsetDateTime now) {
+        return row.plannedInvoiceDate() != null
+                && row.plannedInvoiceDate().isBefore(now)
+                && !Set.of("invoiced", "signed", "voided").contains(row.status());
+    }
+
+    private static boolean isUnsignedInvoice(InvoiceDashboardRow row) {
+        return "invoiced".equals(row.status()) && row.signedAt() == null;
     }
 
     private static boolean isHighContractRisk(String riskLevel) {
@@ -1523,6 +1842,34 @@ public class DashboardService {
         return "?" + String.join("&", parts);
     }
 
+    private static String invoiceQueryString(DashboardInvoiceFilter filter) {
+        List<String> parts = new ArrayList<>();
+        parts.add("date_from=" + filter.date_from());
+        parts.add("date_to=" + filter.date_to());
+        if (filter.department_id() != null) {
+            parts.add("department_id=" + filter.department_id());
+        }
+        if (filter.owner_id() != null) {
+            parts.add("owner_id=" + filter.owner_id());
+        }
+        if (filter.account_id() != null) {
+            parts.add("account_id=" + filter.account_id());
+        }
+        if (filter.opportunity_id() != null) {
+            parts.add("opportunity_id=" + filter.opportunity_id());
+        }
+        if (filter.contract_id() != null) {
+            parts.add("contract_id=" + filter.contract_id());
+        }
+        if (filter.invoice_status() != null) {
+            parts.add("invoice_status=" + filter.invoice_status());
+        }
+        if (filter.exception_only() != null) {
+            parts.add("exception_only=" + filter.exception_only());
+        }
+        return "?" + String.join("&", parts);
+    }
+
     private static BigDecimal amount(BigDecimal amount) {
         return amount == null ? ZERO : amount;
     }
@@ -1538,6 +1885,9 @@ public class DashboardService {
     }
 
     private record ContractStatusDefinition(String key, String label) {
+    }
+
+    private record InvoiceStatusDefinition(String key, String label) {
     }
 
     private record FunnelOpportunityRow(
@@ -1580,6 +1930,22 @@ public class DashboardService {
     private record ContractChangeDashboardRow(Long id, Long contractId, OffsetDateTime changedAt) {
     }
 
+    private record InvoiceDashboardRow(
+            Long id,
+            String planName,
+            Long accountId,
+            Long opportunityId,
+            Long contractId,
+            Long ownerUserId,
+            String status,
+            BigDecimal plannedAmount,
+            BigDecimal appliedAmount,
+            BigDecimal actualAmount,
+            OffsetDateTime plannedInvoiceDate,
+            OffsetDateTime invoiceDate,
+            OffsetDateTime signedAt) {
+    }
+
     private static final class StageAccumulator {
         private long count;
         private BigDecimal amount = ZERO;
@@ -1619,6 +1985,58 @@ public class DashboardService {
 
         BigDecimal amount() {
             return amount;
+        }
+    }
+
+    private static final class InvoiceStatusAccumulator {
+        private long count;
+        private BigDecimal plannedAmount = ZERO;
+        private BigDecimal actualAmount = ZERO;
+
+        void add(BigDecimal plannedAmountToAdd, BigDecimal actualAmountToAdd) {
+            count++;
+            plannedAmount = plannedAmount.add(DashboardService.amount(plannedAmountToAdd));
+            actualAmount = actualAmount.add(DashboardService.amount(actualAmountToAdd));
+        }
+
+        long count() {
+            return count;
+        }
+
+        BigDecimal plannedAmount() {
+            return plannedAmount;
+        }
+
+        BigDecimal actualAmount() {
+            return actualAmount;
+        }
+    }
+
+    private static final class InvoiceGapAccumulator {
+        private long count;
+        private BigDecimal plannedAmount = ZERO;
+        private BigDecimal invoicedAmount = ZERO;
+
+        void add(BigDecimal plannedAmountToAdd, BigDecimal invoicedAmountToAdd) {
+            count++;
+            plannedAmount = plannedAmount.add(DashboardService.amount(plannedAmountToAdd));
+            invoicedAmount = invoicedAmount.add(DashboardService.amount(invoicedAmountToAdd));
+        }
+
+        long count() {
+            return count;
+        }
+
+        BigDecimal plannedAmount() {
+            return plannedAmount;
+        }
+
+        BigDecimal invoicedAmount() {
+            return invoicedAmount;
+        }
+
+        BigDecimal gapAmount() {
+            return positiveGap(plannedAmount, invoicedAmount);
         }
     }
 
