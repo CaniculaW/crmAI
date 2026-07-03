@@ -79,7 +79,7 @@ V3 当前进度：
 
 ## 3. 当前任务
 
-当前任务：`v3-invoice-dashboard-design`
+当前任务：`v3-invoice-dashboard-implementation`
 
 状态：Ready
 
@@ -109,13 +109,15 @@ V3 当前进度：
 - [x] Step 18：按实现计划实施销售漏斗与商机预测。
 - [x] Step 19：进入合同看板模块设计与实现计划。
 - [x] Step 20：按实现计划实施合同看板。
-- [ ] Step 21：进入开票看板模块设计与实现计划。
+- [x] Step 21：进入开票看板模块设计与实现计划。
+- [ ] Step 22：按实现计划实施开票看板。
 
 完成标准：
 
-- 开票看板业务/UI 方案、指标口径、API 范围、实现计划输出。
-- 开票金额、待开缺口、异常发票、签收/作废风险和下钻口径明确。
-- 沈思维确认推荐方案后进入实现。
+- 开票看板权限、后端聚合 API、OpenAPI、前端页面和下钻联动完成。
+- 后端定向测试、前端定向测试、构建和全量验证通过。
+- 浏览器 UAT 通过并留存截图证据。
+- 模块 6 Done，模块 7 回款看板进入 Current。
 
 ## 4. 当前进度快照
 
@@ -124,14 +126,14 @@ V3 当前进度：
 - 总模块：9
 - 已完成：5
 - 当前模块：开票看板
-- 当前步骤：Step 21 进入开票看板模块设计与实现计划
-- 当前 TODO：输出开票看板业务/UI 方案、指标口径、API 范围和实现计划
-- 完成标准：开票看板方案可确认，进入实现前无范围歧义
-- 本轮预计产出：开票看板设计说明与实现计划
+- 当前步骤：Step 22 按实现计划实施开票看板
+- 当前 TODO：按 `docs/superpowers/plans/2026-07-04-v3-invoice-dashboard.md` 执行权限迁移、后端 API、OpenAPI、前端页面、UAT 证据
+- 完成标准：开票看板页面 `/dashboard/invoices` 可用，自动化验证和浏览器 UAT 通过
+- 本轮预计产出：代码实现、测试、证据、提交与推送
 
 上一模块：
-- 状态：合同看板 Done
-- 验证结果：`mvn -Dtest=DatabaseMigrationTest,DashboardControllerTest,OpenApiContractCoverageTest test` 通过；`mvn -Dtest=PostgresMigrationIT test` 通过；`npm test -- --run src/App.test.tsx` 通过；`npm run build` 通过；浏览器 UAT `/dashboard/contracts` 通过且控制台 error 为 0
+- 状态：开票看板设计与实现计划 Done
+- 验证结果：设计说明 `docs/superpowers/specs/2026-07-04-v3-invoice-dashboard-design.md` 与实现计划 `docs/superpowers/plans/2026-07-04-v3-invoice-dashboard.md` 已输出；页面职责、开票金额口径、状态分布、缺口趋势、签收与异常风险、API 响应、任务拆分和验收方式已明确
 - 提交号：本次提交
 - 遗留问题：无
 ```
