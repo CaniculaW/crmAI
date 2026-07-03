@@ -296,4 +296,19 @@ class DatabaseMigrationTest {
         assertThat(v2DictionaryTypeCount).isEqualTo(17);
         assertThat(v2DictionaryItemCount).isGreaterThanOrEqualTo(48);
     }
+
+    @Test
+    void createsDashboardReadPermission() {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.read'
+                  and permission_name = '查看驾驶舱'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
 }

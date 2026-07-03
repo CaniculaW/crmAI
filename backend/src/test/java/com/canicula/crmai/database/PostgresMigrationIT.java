@@ -340,4 +340,31 @@ class PostgresMigrationIT {
 
         assertThat(activeAccountTypeCount).isEqualTo(1);
     }
+
+    @Test
+    void createsDashboardReadPermission() {
+        Flyway flyway = Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .locations("classpath:db/migration")
+                .placeholders(Map.of(
+                        "activeRecordFilter", "where deleted_at is null",
+                        "jsonDataType", "jsonb"))
+                .load();
+
+        flyway.migrate();
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.read'
+                  and permission_name = '查看驾驶舱'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
 }
