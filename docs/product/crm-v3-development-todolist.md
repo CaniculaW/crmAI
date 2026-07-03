@@ -111,13 +111,15 @@ V3 当前进度：
 - [x] Step 20：按实现计划实施合同看板。
 - [x] Step 21：进入开票看板模块设计与实现计划。
 - [x] Step 22：按实现计划实施开票看板。
-- [ ] Step 23：进入回款看板模块设计与实现计划。
+- [x] Step 23：进入回款看板模块设计与实现计划。
+- [ ] Step 24：按实现计划实施回款看板。
 
 完成标准：
 
-- 回款看板页面逻辑、指标口径、API 范围和实现计划完成。
-- 沈思维确认推荐方案后进入实现。
-- 模块 7 保持 Current，下一轮按设计计划推进。
+- 回款看板权限、后端聚合 API、OpenAPI、前端页面和下钻联动完成。
+- 后端定向测试、前端定向测试、构建和全量验证通过。
+- 浏览器 UAT 通过并留存截图证据。
+- 模块 7 Done，模块 8 风险预警进入 Current。
 
 ## 4. 当前进度快照
 
@@ -126,16 +128,16 @@ V3 当前进度：
 - 总模块：9
 - 已完成：6
 - 当前模块：回款看板
-- 当前步骤：Step 23 进入回款看板模块设计与实现计划
-- 当前 TODO：回款看板设计说明已输出，待确认后进入实现计划
-- 完成标准：回款看板设计说明与实现计划输出，用户确认后进入实现
-- 本轮预计产出：实现计划与任务拆分
+- 当前步骤：Step 24 按实现计划实施回款看板
+- 当前 TODO：按 `docs/superpowers/plans/2026-07-04-v3-receivable-dashboard.md` 执行权限迁移、后端 API、OpenAPI、前端页面、UAT 证据
+- 完成标准：回款看板页面 `/dashboard/receivables` 可用，自动化验证和浏览器 UAT 通过
+- 本轮预计产出：代码实现、测试、证据、提交与推送
 
 上一模块：
-- 状态：开票看板 Done
-- 验证结果：`mvn -Dtest=DatabaseMigrationTest,DashboardControllerTest,OpenApiContractCoverageTest test` 通过；`mvn -Dtest=PostgresMigrationIT test` 通过；`npm test -- --run src/App.test.tsx` 通过；`npm run build` 通过；API smoke `GET /api/dashboard/invoices` 返回 200；浏览器 UAT 控制台错误 0
-- 提交号：`7306a30`、`0b6c39b`、`aed6778`、`8356be3`
-- 证据：`docs/testing/evidence/artifacts/v3-invoice-dashboard-uat-20260704.png`
+- 状态：回款看板设计与实现计划 Done
+- 验证结果：设计说明 `docs/superpowers/specs/2026-07-04-v3-receivable-dashboard-design.md` 与实现计划 `docs/superpowers/plans/2026-07-04-v3-receivable-dashboard.md` 已输出；页面职责、回款金额口径、状态分布、缺口趋势、到账与核销风险、API 响应、任务拆分和验收方式已明确
+- 提交号：本次提交
+- 证据：待实现阶段归档
 - 遗留问题：无
 ```
 
