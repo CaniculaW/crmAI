@@ -22,6 +22,7 @@ tags:
   - name: WeeklyProgress
   - name: Attachments
   - name: Reminders
+  - name: Dashboard
 paths:
   /api/health:
     get:
@@ -42,6 +43,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiBootstrapResponse'
+  /api/dashboard/overview:
+    get:
+      tags: [Dashboard]
+      summary: V3 management dashboard overview
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: owner_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Dashboard overview metrics, flow, and risks.
   /api/auth/login:
     post:
       tags: [Auth]
