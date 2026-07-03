@@ -264,7 +264,7 @@ class DatabaseMigrationTest {
                 Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(19);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(21);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
