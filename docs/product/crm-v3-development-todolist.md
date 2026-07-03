@@ -79,7 +79,7 @@ V3 当前进度：
 
 ## 3. 当前任务
 
-当前任务：`v3-funnel-forecast-design`
+当前任务：`v3-funnel-forecast-implementation`
 
 状态：Ready
 
@@ -104,14 +104,16 @@ V3 当前进度：
 - [x] Step 13：按确认的执行方式实施经营驾驶舱总览。
 - [x] Step 14：补齐经营总览中文指标、金额单位和可用下钻路由契约。
 - [x] Step 15：完成经营总览自动化验证与浏览器 UAT 证据归档。
-- [ ] Step 16：进入销售漏斗与商机预测模块设计。
+- [x] Step 16：进入销售漏斗与商机预测模块设计。
+- [x] Step 17：输出销售漏斗与商机预测实现计划。
+- [ ] Step 18：按实现计划实施销售漏斗与商机预测。
 
 完成标准：
 
-- 销售漏斗页面目标、阶段口径、预测口径和风险口径清楚。
-- 漏斗/预测 API 范围清楚。
-- 阶段转化、预计成交、预测金额、丢单/停滞风险和下钻入口清楚。
-- 自动化测试和浏览器验收口径清楚。
+- 销售漏斗权限、后端聚合 API、OpenAPI、前端页面和下钻联动完成。
+- 后端定向测试、前端定向测试、构建和全量验证通过。
+- 浏览器 UAT 通过并留存截图证据。
+- 模块 4 Done，模块 5 合同看板进入 Current。
 
 ## 4. 当前进度快照
 
@@ -120,16 +122,16 @@ V3 当前进度：
 - 总模块：9
 - 已完成：3
 - 当前模块：销售漏斗与商机预测
-- 当前步骤：Step 16 进入模块 4 设计
-- 当前 TODO：输出销售漏斗与商机预测模块设计说明
-- 完成标准：阶段分布、转化趋势、预测清单、停滞/丢单风险和业务下钻设计清楚
-- 本轮预计产出：模块 4 设计说明、指标口径、API 范围、验证方式
+- 当前步骤：Step 18 实施销售漏斗与商机预测
+- 当前 TODO：按 `docs/superpowers/plans/2026-07-03-v3-funnel-forecast.md` 执行权限迁移、后端 API、OpenAPI、前端页面、UAT 证据
+- 完成标准：销售漏斗页面 `/dashboard/funnel` 可用，自动化验证和浏览器 UAT 通过
+- 本轮预计产出：代码实现、测试、证据、提交与推送
 
 上一模块：
-- 状态：经营驾驶舱总览 Done
-- 验证结果：`mvn test` 93 tests 0 failures；`npm test -- --run` 47 tests 0 failures；`npm run build` 通过；`http://127.0.0.1:5175/dashboard` 浏览器 UAT 通过，无服务端异常、无控制台错误，截图 `docs/testing/evidence/artifacts/v3-dashboard-overview-uat-20260703.png`
+- 状态：销售漏斗与商机预测设计 Done
+- 验证结果：设计说明 `docs/superpowers/specs/2026-07-03-v3-funnel-forecast-design.md` 与实现计划 `docs/superpowers/plans/2026-07-03-v3-funnel-forecast.md` 已输出；页面职责、阶段口径、预测口径、API 响应、任务拆分和验收方式已明确
 - 提交号：本次提交
-- 遗留问题：`antd-vendor` 构建 chunk 844.38 kB 仍有 Vite 体积提醒，非阻塞；jsdom `getComputedStyle` pseudo-elements 提示为既有测试环境提示，非失败项
+- 遗留问题：无
 ```
 
 ## 5. V3 推荐启动方案
