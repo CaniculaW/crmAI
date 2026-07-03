@@ -363,7 +363,10 @@ body {
 .dashboard-funnel__attention,
 .dashboard-contracts__status-list,
 .dashboard-contracts__milestones,
-.dashboard-contracts__changes {
+.dashboard-contracts__changes,
+.dashboard-invoices__status-list,
+.dashboard-invoices__gap-trend,
+.dashboard-invoices__risks {
   display: grid;
   gap: 10px;
 }
@@ -371,7 +374,9 @@ body {
 .dashboard-funnel__stage,
 .dashboard-funnel__attention-row,
 .dashboard-contracts__status-row,
-.dashboard-contracts__milestone {
+.dashboard-contracts__milestone,
+.dashboard-invoices__status-row,
+.dashboard-invoices__risk-row {
   display: grid;
   gap: 8px;
   padding: 12px;
@@ -384,14 +389,18 @@ body {
 .dashboard-funnel__stage:hover,
 .dashboard-funnel__attention-row:hover,
 .dashboard-contracts__status-row:hover,
-.dashboard-contracts__milestone:hover {
+.dashboard-contracts__milestone:hover,
+.dashboard-invoices__status-row:hover,
+.dashboard-invoices__risk-row:hover {
   border-color: #1f5eff;
   color: #1f5eff;
 }
 
 .dashboard-funnel__stage span,
 .dashboard-funnel__attention-row span,
-.dashboard-contracts__status-row span {
+.dashboard-contracts__status-row span,
+.dashboard-invoices__status-row span,
+.dashboard-invoices__risk-row span {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -400,7 +409,9 @@ body {
 
 .dashboard-funnel__stage strong,
 .dashboard-funnel__attention-row strong,
-.dashboard-contracts__status-row strong {
+.dashboard-contracts__status-row strong,
+.dashboard-invoices__status-row strong,
+.dashboard-invoices__risk-row strong {
   min-width: 0;
   word-break: break-word;
 }
@@ -408,7 +419,9 @@ body {
 .dashboard-funnel__stage small,
 .dashboard-funnel__attention-row small,
 .dashboard-funnel__trend-row small,
-.dashboard-contracts__status-row small {
+.dashboard-contracts__status-row small,
+.dashboard-invoices__status-row small,
+.dashboard-invoices__risk-row small {
   color: #667085;
 }
 

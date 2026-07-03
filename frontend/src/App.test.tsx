@@ -13,6 +13,7 @@ const apiData = {
       "dashboard.read",
       "dashboard.funnel.read",
       "dashboard.contracts.read",
+      "dashboard.invoices.read",
       "contact.read",
       "contact.create",
       "opportunity.read",
@@ -470,6 +471,43 @@ const apiData = {
       }
     ]
   },
+  dashboardInvoices: {
+    filters: {},
+    metric_cards: [
+      { key: "planned_invoice_amount", label: "计划开票金额", value: 360000, unit: "CNY", drilldown_url: "/invoices" },
+      { key: "applied_invoice_amount", label: "已申请金额", value: 360000, unit: "CNY", drilldown_url: "/invoices?invoice_status=applied" },
+      { key: "invoice_gap_amount", label: "开票缺口金额", value: 120000, unit: "CNY", drilldown_url: "/invoices" },
+      { key: "exception_count", label: "异常开票", value: 1, unit: "count", drilldown_url: "/invoices?exception_only=true" }
+    ],
+    status_distribution: [
+      { status: "invoiced", label: "已开票", count: 1, planned_amount: 240000, actual_amount: 240000, drilldown_url: "/invoices?invoice_status=invoiced" },
+      { status: "exception", label: "异常", count: 1, planned_amount: 120000, actual_amount: 0, drilldown_url: "/invoices?invoice_status=exception" }
+    ],
+    gap_trend: [
+      { period: "2026-07", planned_amount: 360000, invoiced_amount: 240000, gap_amount: 120000, count: 2 }
+    ],
+    risk_summary: [
+      { key: "exception", label: "异常开票", count: 1, amount: 120000, level: "medium", drilldown_url: "/invoices?exception_only=true" },
+      { key: "unsigned", label: "开票未签收", count: 1, amount: 240000, level: "medium", drilldown_url: "/invoices?invoice_risk=unsigned" }
+    ],
+    attention_invoices: [
+      {
+        invoice_id: 401,
+        plan_name: "V2 UAT 首期开票",
+        account_id: 1,
+        opportunity_id: 10,
+        contract_id: 301,
+        owner_user_id: 1001,
+        invoice_status: "exception",
+        planned_amount: 120000,
+        actual_amount: 0,
+        planned_invoice_date: "2026-07-15T10:00:00+08:00",
+        invoice_date: "2026-07-16T10:00:00+08:00",
+        reason: "开票异常",
+        drilldown_url: "/invoices?invoice_id=401"
+      }
+    ]
+  },
   reconciliations: [
     {
       id: 902,
@@ -740,6 +778,27 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByText("节点逾期")).toBeInTheDocument();
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/dashboard/contracts"), expect.anything());
+    });
+  });
+
+  it("renders the V3 invoice dashboard page", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/dashboard/invoices");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "开票看板" })).toBeInTheDocument();
+    expect(screen.getByText("计划开票金额")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "开票状态分布" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "开票缺口趋势" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "签收与异常概览" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "重点关注开票" })).toBeInTheDocument();
+    expect(screen.getByText("V2 UAT 首期开票")).toBeInTheDocument();
+    expect(screen.getByText("开票异常")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/dashboard/invoices"), expect.anything());
     });
   });
 
@@ -1610,6 +1669,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/dashboard/contracts")) {
       return jsonResponse({ code: "OK", data: data.dashboardContracts });
+    }
+    if (path.endsWith("/api/dashboard/invoices")) {
+      return jsonResponse({ code: "OK", data: data.dashboardInvoices });
     }
     if (path.endsWith("/api/accounts/1") && method === "PATCH") {
       return jsonResponse({ code: "OK", data: { ...data.accounts[0], remark: "重点推进" } });

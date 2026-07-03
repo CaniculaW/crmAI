@@ -620,6 +620,57 @@ export type DashboardContracts = {
   attention_contracts: DashboardAttentionContract[];
 };
 
+export type DashboardInvoiceStatusItem = {
+  status: string;
+  label: string;
+  count: number;
+  planned_amount: number;
+  actual_amount: number;
+  drilldown_url: string;
+};
+
+export type DashboardInvoiceGapTrendPoint = {
+  period: string;
+  planned_amount: number;
+  invoiced_amount: number;
+  gap_amount: number;
+  count: number;
+};
+
+export type DashboardInvoiceRiskSummary = {
+  key: string;
+  label: string;
+  count: number;
+  amount: number;
+  level: string;
+  drilldown_url: string;
+};
+
+export type DashboardAttentionInvoice = {
+  invoice_id: number;
+  plan_name: string;
+  account_id?: number;
+  opportunity_id?: number;
+  contract_id?: number;
+  owner_user_id?: number;
+  invoice_status: string;
+  planned_amount: number;
+  actual_amount: number;
+  planned_invoice_date?: string;
+  invoice_date?: string;
+  reason: string;
+  drilldown_url: string;
+};
+
+export type DashboardInvoices = {
+  filters: Record<string, unknown>;
+  metric_cards: DashboardMetricCard[];
+  status_distribution: DashboardInvoiceStatusItem[];
+  gap_trend: DashboardInvoiceGapTrendPoint[];
+  risk_summary: DashboardInvoiceRiskSummary[];
+  attention_invoices: DashboardAttentionInvoice[];
+};
+
 function withQuery(path: string, query?: QueryParams) {
   if (!query) {
     return path;
@@ -673,7 +724,8 @@ export const crmApi = {
   dashboard: {
     overview: (query?: QueryParams) => requestJson<DashboardOverview>(withQuery("/api/dashboard/overview", query)),
     funnel: (query?: QueryParams) => requestJson<DashboardFunnel>(withQuery("/api/dashboard/funnel", query)),
-    contracts: (query?: QueryParams) => requestJson<DashboardContracts>(withQuery("/api/dashboard/contracts", query))
+    contracts: (query?: QueryParams) => requestJson<DashboardContracts>(withQuery("/api/dashboard/contracts", query)),
+    invoices: (query?: QueryParams) => requestJson<DashboardInvoices>(withQuery("/api/dashboard/invoices", query))
   },
   accounts: {
     list: (query?: QueryParams) => requestJson<Account[]>(withQuery("/api/accounts", query)),

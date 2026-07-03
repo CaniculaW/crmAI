@@ -54,9 +54,14 @@ import {
   type DashboardContractMilestoneSummary,
   type DashboardContracts,
   type DashboardContractStatusItem,
+  type DashboardAttentionInvoice,
   type DashboardForecastTrendPoint,
   type DashboardFunnel,
   type DashboardFunnelStage,
+  type DashboardInvoiceGapTrendPoint,
+  type DashboardInvoiceRiskSummary,
+  type DashboardInvoices,
+  type DashboardInvoiceStatusItem,
   type DashboardMetricCard,
   type DashboardOverview,
   type DashboardRiskItem,
@@ -110,7 +115,8 @@ const navItems: NavItem[] = [
     children: [
       { key: "/dashboard", label: "经营总览", permission: "dashboard.read" },
       { key: "/dashboard/funnel", label: "销售漏斗", permission: "dashboard.funnel.read" },
-      { key: "/dashboard/contracts", label: "合同看板", permission: "dashboard.contracts.read" }
+      { key: "/dashboard/contracts", label: "合同看板", permission: "dashboard.contracts.read" },
+      { key: "/dashboard/invoices", label: "开票看板", permission: "dashboard.invoices.read" }
     ]
   },
   { key: "/accounts", label: "客户池", icon: <Users size={18} />, permission: "account.read" },
@@ -412,6 +418,7 @@ function CrmShell() {
             <Route path="/dashboard" element={<DashboardOverviewPage />} />
             <Route path="/dashboard/funnel" element={<DashboardFunnelPage />} />
             <Route path="/dashboard/contracts" element={<DashboardContractsPage />} />
+            <Route path="/dashboard/invoices" element={<DashboardInvoicesPage />} />
             <Route path="/accounts" element={<AccountsPage currentUser={user} />} />
             <Route path="/contacts" element={<ContactsPage currentUser={user} />} />
             <Route path="/opportunities" element={<OpportunitiesPage currentUser={user} />} />
@@ -750,6 +757,75 @@ function DashboardContractsPage() {
   );
 }
 
+function DashboardInvoicesPage() {
+  const { data, loading, error, refresh } = useObjectResource<DashboardInvoices>(
+    crmApi.dashboard.invoices,
+    emptyDashboardInvoices,
+    []
+  );
+  const maxStatusAmount = Math.max(
+    1,
+    ...data.status_distribution.map((status) => Math.max(status.planned_amount, status.actual_amount))
+  );
+
+  return (
+    <section className="workspace dashboard-overview dashboard-invoices">
+      <PageTitle
+        title="开票看板"
+        description="查看计划开票、申请、已开票、签收、异常与开票缺口。"
+        action={<RefreshButton onClick={refresh} loading={loading} />}
+      />
+      {error ? <div className="error-banner">{error}</div> : null}
+
+      <div className="dashboard-overview__metrics">
+        {data.metric_cards.map((metric) => (
+          <DashboardMetricCardView key={metric.key} metric={metric} />
+        ))}
+      </div>
+
+      <div className="dashboard-funnel__layout">
+        <Card title={<Typography.Title level={3}>开票状态分布</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-invoices__status-list">
+            {data.status_distribution.map((status) => (
+              <DashboardInvoiceStatusRow key={status.status} status={status} maxAmount={maxStatusAmount} />
+            ))}
+            {data.status_distribution.length === 0 ? <span className="muted">暂无开票状态数据</span> : null}
+          </div>
+        </Card>
+
+        <Card title={<Typography.Title level={3}>开票缺口趋势</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-invoices__gap-trend">
+            {data.gap_trend.map((point) => (
+              <DashboardInvoiceGapTrendRow key={point.period} point={point} />
+            ))}
+            {data.gap_trend.length === 0 ? <span className="muted">暂无开票缺口趋势</span> : null}
+          </div>
+        </Card>
+      </div>
+
+      <div className="dashboard-funnel__layout">
+        <Card title={<Typography.Title level={3}>签收与异常概览</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-invoices__risks">
+            {data.risk_summary.map((summary) => (
+              <DashboardInvoiceRiskRow key={summary.key} summary={summary} />
+            ))}
+            {data.risk_summary.length === 0 ? <span className="muted">暂无开票风险</span> : null}
+          </div>
+        </Card>
+
+        <Card title={<Typography.Title level={3}>重点关注开票</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-funnel__attention">
+            {data.attention_invoices.map((invoice) => (
+              <DashboardAttentionInvoiceRow key={invoice.invoice_id} invoice={invoice} />
+            ))}
+            {data.attention_invoices.length === 0 ? <span className="muted">暂无需要重点关注的开票</span> : null}
+          </div>
+        </Card>
+      </div>
+    </section>
+  );
+}
+
 function DashboardMetricCardView({ metric }: { metric: DashboardMetricCard }) {
   return (
     <Link className="dashboard-overview__metric" to={metric.drilldown_url}>
@@ -860,6 +936,66 @@ function DashboardAttentionContractRow({ contract }: { contract: DashboardAttent
   );
 }
 
+function DashboardInvoiceStatusRow({ status, maxAmount }: { status: DashboardInvoiceStatusItem; maxAmount: number }) {
+  const width = Math.max(4, Math.round((status.planned_amount / maxAmount) * 100));
+  return (
+    <Link className="dashboard-invoices__status-row" to={status.drilldown_url}>
+      <span>
+        <strong>{status.label}</strong>
+        <small>{status.count} 笔</small>
+      </span>
+      <div className="dashboard-funnel__bar" aria-hidden="true">
+        <i style={{ width: `${width}%` }} />
+      </div>
+      <small>
+        计划 {currencyText(status.planned_amount)} · 实开 {currencyText(status.actual_amount)}
+      </small>
+    </Link>
+  );
+}
+
+function DashboardInvoiceGapTrendRow({ point }: { point: DashboardInvoiceGapTrendPoint }) {
+  return (
+    <div className="dashboard-funnel__trend-row">
+      <strong>{point.period}</strong>
+      <span>{currencyText(point.gap_amount)}</span>
+      <small>
+        计划 {currencyText(point.planned_amount)} · 已开 {currencyText(point.invoiced_amount)} · {point.count} 笔
+      </small>
+    </div>
+  );
+}
+
+function DashboardInvoiceRiskRow({ summary }: { summary: DashboardInvoiceRiskSummary }) {
+  const color = summary.level === "high" ? "red" : summary.level === "medium" ? "orange" : "blue";
+  return (
+    <Link className="dashboard-invoices__risk-row" to={summary.drilldown_url}>
+      <span>
+        <strong>{summary.label}</strong>
+        <Tag color={color}>{summary.count} 笔</Tag>
+      </span>
+      <small>{currencyText(summary.amount)}</small>
+    </Link>
+  );
+}
+
+function DashboardAttentionInvoiceRow({ invoice }: { invoice: DashboardAttentionInvoice }) {
+  return (
+    <Link className="dashboard-funnel__attention-row" to={invoice.drilldown_url}>
+      <span>
+        <strong>{invoice.plan_name}</strong>
+        <Tag color={invoice.reason.includes("异常") ? "red" : invoice.reason.includes("逾期") ? "orange" : "blue"}>
+          {invoice.reason}
+        </Tag>
+      </span>
+      <small>
+        {currencyText(invoice.planned_amount)} · {invoiceStatusText(invoice.invoice_status)}
+        {invoice.planned_invoice_date ? ` · ${dateText(invoice.planned_invoice_date)}` : ""}
+      </small>
+    </Link>
+  );
+}
+
 function DashboardFlowStep({ item }: { item: DashboardBusinessFlowItem }) {
   return (
     <Link className="dashboard-overview__flow-step" to={item.drilldown_url}>
@@ -940,6 +1076,17 @@ function emptyDashboardContracts(): DashboardContracts {
     milestone_summary: [],
     change_trend: [],
     attention_contracts: []
+  };
+}
+
+function emptyDashboardInvoices(): DashboardInvoices {
+  return {
+    filters: {},
+    metric_cards: [],
+    status_distribution: [],
+    gap_trend: [],
+    risk_summary: [],
+    attention_invoices: []
   };
 }
 
