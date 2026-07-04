@@ -79,7 +79,7 @@ V3 当前进度：
 
 ## 3. 当前任务
 
-当前任务：`v3-risk-warning-design`
+当前任务：`v3-risk-warning-implementation`
 
 状态：Ready
 
@@ -113,13 +113,14 @@ V3 当前进度：
 - [x] Step 22：按实现计划实施开票看板。
 - [x] Step 23：进入回款看板模块设计与实现计划。
 - [x] Step 24：按实现计划实施回款看板。
-- [ ] Step 25：进入风险预警与数据下钻模块设计。
+- [x] Step 25：进入风险预警与数据下钻模块设计。
+- [ ] Step 26：按实现计划实施风险预警与数据下钻。
 
 完成标准：
 
-- 风险预警与数据下钻页面逻辑、指标口径、API 范围和验收方式完成。
-- 明确风险列表、优先级、责任人、金额、时间和业务页面跳转规则。
-- 输出模块设计说明与实现计划后进入实现。
+- `/dashboard/risks` 风险预警页面、`/api/dashboard/risks`、`dashboard.risks.read` 权限、OpenAPI、自动化测试和浏览器 UAT 完成。
+- 五类风险可展示、可排序、可按负责人追责，并能下钻到商机、合同、开票、回款、核销处理页面。
+- 输出 UAT 证据后进入 V3 全链路回归与 UAT。
 
 ## 4. 当前进度快照
 
@@ -128,17 +129,21 @@ V3 当前进度：
 - 总模块：9
 - 已完成：7
 - 当前模块：风险预警与数据下钻
-- 当前步骤：Step 25 进入风险预警与数据下钻模块设计
-- 当前 TODO：输出风险预警与数据下钻的页面逻辑、指标口径、API 范围、下钻规则和实现计划
-- 完成标准：风险预警设计说明与实现计划输出，确认后进入实现
-- 本轮预计产出：模块 8 设计与任务拆分
+- 当前步骤：Step 26 按实现计划实施风险预警与数据下钻
+- 当前 TODO：新增风险预警权限、统一风险 API、风险预警页面、商机/合同/开票/回款/核销下钻和 UAT 证据
+- 完成标准：风险预警页面、API、OpenAPI、自动化测试、浏览器 UAT 与证据归档完成
+- 本轮预计产出：模块 8 可运行版本与验收证据
 
 上一模块：
 - 状态：回款看板 Done
 - 验证结果：`mvn -Dtest=DatabaseMigrationTest,DashboardControllerTest,OpenApiContractCoverageTest test` 通过；`mvn -Dtest=PostgresMigrationIT test` 通过；`npm test -- --run src/App.test.tsx` 45/45 通过；`npm run build` 通过；API smoke `GET /api/dashboard/receivables` 返回 200，metricCards=6、statuses=5、gapTrend=1、reconciliation=6、attention=2；浏览器 UAT 覆盖回款看板、到账流水、回款详情、核销下钻，控制台错误 0
-- 提交号：本次提交
+- 提交号：`2747a8c`
 - 证据：`docs/testing/evidence/artifacts/v3-receivable-dashboard-uat-20260704.png`、`docs/testing/evidence/artifacts/v3-receivable-drilldown-uat-20260704.png`
 - 遗留问题：无
+
+本模块设计与计划：
+- 设计说明：`docs/superpowers/specs/2026-07-05-v3-risk-warning-drilldown-design.md`
+- 实施计划：`docs/superpowers/plans/2026-07-05-v3-risk-warning-drilldown.md`
 ```
 
 ## 5. V3 推荐启动方案
