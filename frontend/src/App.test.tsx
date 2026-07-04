@@ -14,6 +14,7 @@ const apiData = {
       "dashboard.funnel.read",
       "dashboard.contracts.read",
       "dashboard.invoices.read",
+      "dashboard.receivables.read",
       "contact.read",
       "contact.create",
       "opportunity.read",
@@ -386,6 +387,42 @@ const apiData = {
         opportunity_id: 10,
         occurred_at: "2026-07-23T10:00:00+08:00",
         drilldown_url: "/receivables?overdue=true"
+      }
+    ]
+  },
+  dashboardReceivables: {
+    filters: {},
+    metric_cards: [
+      { key: "planned_receivable_amount", label: "计划应收金额", value: 360000, unit: "CNY", drilldown_url: "/receivables" },
+      { key: "confirmed_received_amount", label: "已确认回款", value: 180000, unit: "CNY", drilldown_url: "/receivables?received=true" },
+      { key: "unreceived_amount", label: "未收金额", value: 180000, unit: "CNY", drilldown_url: "/receivables?unreceived=true" },
+      { key: "pending_reconciliation_amount", label: "待核销到账", value: 60000, unit: "CNY", drilldown_url: "/reconciliations?pending_only=true" }
+    ],
+    status_distribution: [
+      { status: "overdue", label: "已逾期", count: 1, planned_amount: 260000, received_amount: 180000, unreceived_amount: 80000, drilldown_url: "/receivables?receivable_status=overdue" },
+      { status: "planned", label: "计划中", count: 1, planned_amount: 100000, received_amount: 0, unreceived_amount: 100000, drilldown_url: "/receivables?receivable_status=planned" }
+    ],
+    gap_trend: [
+      { period: "2026-07", planned_amount: 360000, received_amount: 180000, gap_amount: 180000, receivable_count: 2 }
+    ],
+    reconciliation_summary: [
+      { key: "confirmed_unreconciled", label: "待核销到账", count: 1, amount: 60000, level: "medium", drilldown_url: "/reconciliations?pending_only=true" },
+      { key: "payment_exception", label: "异常到账", count: 0, amount: 0, level: "none", drilldown_url: "/payments?exception_only=true" }
+    ],
+    attention_receivables: [
+      {
+        object_type: "receivable_plan",
+        object_id: 601,
+        title: "V2 UAT 首付款回款",
+        account_id: 1,
+        opportunity_id: 10,
+        contract_id: 301,
+        owner_user_id: 1001,
+        status: "overdue",
+        amount: 80000,
+        planned_at: "2026-07-20T10:00:00+08:00",
+        reason: "大额逾期未收",
+        drilldown_url: "/receivables?receivable_plan_id=601"
       }
     ]
   },
@@ -802,6 +839,84 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
+  it("renders the V3 receivable dashboard page", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/dashboard/receivables");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "回款看板" })).toBeInTheDocument();
+    expect(screen.getByText("计划应收金额")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "回款状态分布" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "回款缺口趋势" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "到账与核销概览" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "重点关注回款" })).toBeInTheDocument();
+    expect(screen.getByText("V2 UAT 首付款回款")).toBeInTheDocument();
+    expect(screen.getByText("大额逾期未收")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/dashboard/receivables"), expect.anything());
+    });
+  });
+
+  it("opens receivable drilldown links with the plan detail selected", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/receivables?account_id=1&contract_id=301&receivable_plan_id=601");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "回款管理" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "回款详情" })).toBeInTheDocument();
+    expect(screen.getByText("首付款到账")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/receivable-plans?account_id=1&contract_id=301"),
+        expect.anything()
+      );
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/receivable-plans/601"), expect.anything());
+    });
+  });
+
+  it("renders the payment list drilldown with query filters", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/payments?account_id=1&contract_id=301&payment_status=confirmed");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "到账流水" })).toBeInTheDocument();
+    expect(screen.getByText("首付款到账")).toBeInTheDocument();
+    expect(screen.getByText("FLOW-701")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/payments?account_id=1&contract_id=301&payment_status=confirmed"),
+        expect.anything()
+      );
+    });
+  });
+
+  it("keeps reconciliation drilldown filters and selected payment", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/reconciliations?account_id=1&payment_id=701&reconciliation_status=active");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "核销工作台" })).toBeInTheDocument();
+    expect(await screen.findByRole("radio", { name: /首付款到账/ })).toBeChecked();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/reconciliations?account_id=1&payment_id=701&reconciliation_status=active"),
+        expect.anything()
+      );
+    });
+  });
+
   it("shows dashboard navigation only with dashboard read permission", async () => {
     const user = userEvent.setup();
     mockCrmFetch();
@@ -1211,7 +1326,7 @@ describe("CRM frontend V1 workflow", () => {
     await user.click(screen.getByRole("button", { name: "V2 UAT 首付款回款" }));
 
     expect(await screen.findByRole("heading", { name: "回款详情" })).toBeInTheDocument();
-    expect(screen.getByText("到账流水")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "到账流水" })).toBeInTheDocument();
     expect(screen.getByText("首付款到账")).toBeInTheDocument();
     expect(screen.getByText("客户财务流程已提交")).toBeInTheDocument();
     expect(screen.getByText("银行回单.pdf")).toBeInTheDocument();
@@ -1672,6 +1787,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/dashboard/invoices")) {
       return jsonResponse({ code: "OK", data: data.dashboardInvoices });
+    }
+    if (path.endsWith("/api/dashboard/receivables")) {
+      return jsonResponse({ code: "OK", data: data.dashboardReceivables });
     }
     if (path.endsWith("/api/accounts/1") && method === "PATCH") {
       return jsonResponse({ code: "OK", data: { ...data.accounts[0], remark: "重点推进" } });

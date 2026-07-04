@@ -48,6 +48,12 @@ public class DashboardService {
             new InvoiceStatusDefinition("signed", "已签收"),
             new InvoiceStatusDefinition("exception", "异常"),
             new InvoiceStatusDefinition("voided", "已作废"));
+    private static final List<ReceivableStatusDefinition> RECEIVABLE_STATUSES = List.of(
+            new ReceivableStatusDefinition("planned", "计划中"),
+            new ReceivableStatusDefinition("partial", "部分回款"),
+            new ReceivableStatusDefinition("received", "已回款"),
+            new ReceivableStatusDefinition("overdue", "已逾期"),
+            new ReceivableStatusDefinition("terminated", "已终止"));
     private static final DataPermissionColumns OPPORTUNITY_COLUMNS = new DataPermissionColumns(
             "o.owner_user_id",
             "o.owner_department_id",
@@ -137,6 +143,23 @@ public class DashboardService {
                 attentionInvoices(invoices));
     }
 
+    public DashboardReceivableResponse receivables(Long userId, DashboardReceivableFilter requestedFilter) {
+        DashboardReceivableFilter filter = normalizeReceivableFilter(requestedFilter);
+        DomainAccess receivable = access(userId, "receivable", "receivable.read", RECEIVABLE_COLUMNS);
+        DomainAccess payment = access(userId, "payment", "payment.read", PAYMENT_COLUMNS);
+        DomainAccess reconciliation = access(userId, "reconciliation", "reconciliation.read", RECONCILIATION_COLUMNS);
+        List<ReceivableDashboardRow> receivables = receivableRows(filter, receivable);
+        List<PaymentDashboardRow> payments = paymentRows(filter, payment);
+        List<ReconciliationDashboardRow> reconciliations = reconciliationRows(filter, reconciliation);
+        return new DashboardReceivableResponse(
+                receivableFilterMap(filter),
+                receivableMetricCards(filter, receivables, payments),
+                receivableStatusDistribution(filter, receivables),
+                receivableGapTrend(receivables),
+                reconciliationSummary(filter, payments, reconciliations),
+                attentionReceivables(receivables, payments));
+    }
+
     private DashboardFilter normalizeFilter(DashboardFilter filter) {
         LocalDate today = LocalDate.now();
         LocalDate defaultFrom = today.withDayOfMonth(1);
@@ -205,6 +228,25 @@ public class DashboardService {
                 filter.exception_only());
     }
 
+    private DashboardReceivableFilter normalizeReceivableFilter(DashboardReceivableFilter filter) {
+        LocalDate today = LocalDate.now();
+        int quarterStartMonth = ((today.getMonthValue() - 1) / 3) * 3 + 1;
+        LocalDate defaultFrom = LocalDate.of(today.getYear(), quarterStartMonth, 1);
+        LocalDate defaultTo = defaultFrom.plusMonths(3).minusDays(1);
+        LocalDate dateFrom = filter.date_from() == null ? defaultFrom : filter.date_from();
+        LocalDate dateTo = filter.date_to() == null ? defaultTo : filter.date_to();
+        return new DashboardReceivableFilter(
+                dateFrom,
+                dateTo,
+                filter.department_id(),
+                filter.owner_id(),
+                filter.account_id(),
+                filter.opportunity_id(),
+                filter.contract_id(),
+                filter.receivable_status(),
+                filter.overdue_only());
+    }
+
     private Map<String, Object> filterMap(DashboardFilter filter) {
         Map<String, Object> filters = new LinkedHashMap<>();
         filters.put("date_from", filter.date_from());
@@ -252,6 +294,287 @@ public class DashboardService {
         filters.put("invoice_status", filter.invoice_status());
         filters.put("exception_only", filter.exception_only());
         return filters;
+    }
+
+    private Map<String, Object> receivableFilterMap(DashboardReceivableFilter filter) {
+        Map<String, Object> filters = new LinkedHashMap<>();
+        filters.put("date_from", filter.date_from());
+        filters.put("date_to", filter.date_to());
+        filters.put("department_id", filter.department_id());
+        filters.put("owner_id", filter.owner_id());
+        filters.put("account_id", filter.account_id());
+        filters.put("opportunity_id", filter.opportunity_id());
+        filters.put("contract_id", filter.contract_id());
+        filters.put("receivable_status", filter.receivable_status());
+        filters.put("overdue_only", filter.overdue_only());
+        return filters;
+    }
+
+    private List<DashboardMetricCard> receivableMetricCards(
+            DashboardReceivableFilter filter,
+            List<ReceivableDashboardRow> receivables,
+            List<PaymentDashboardRow> payments) {
+        BigDecimal plannedAmount = receivables.stream()
+                .map(ReceivableDashboardRow::plannedAmount)
+                .reduce(ZERO, BigDecimal::add);
+        BigDecimal confirmedReceivedAmount = payments.stream()
+                .filter(DashboardService::effectivePayment)
+                .map(PaymentDashboardRow::confirmedAmount)
+                .reduce(ZERO, BigDecimal::add);
+        BigDecimal unreceivedAmount = receivables.stream()
+                .map(ReceivableDashboardRow::unreceivedAmount)
+                .reduce(ZERO, BigDecimal::add);
+        OffsetDateTime now = OffsetDateTime.now(DEFAULT_OFFSET);
+        BigDecimal overdueAmount = receivables.stream()
+                .filter(row -> overdueReceivable(row, now))
+                .map(ReceivableDashboardRow::unreceivedAmount)
+                .reduce(ZERO, BigDecimal::add);
+        BigDecimal pendingReconciliationAmount = payments.stream()
+                .map(DashboardService::paymentUnreconciledAmount)
+                .reduce(ZERO, BigDecimal::add);
+        BigDecimal unallocatedPaymentAmount = payments.stream()
+                .filter(row -> row.receivablePlanId() == null)
+                .filter(DashboardService::effectivePayment)
+                .map(PaymentDashboardRow::confirmedAmount)
+                .reduce(ZERO, BigDecimal::add);
+        return List.of(
+                new DashboardMetricCard(
+                        "planned_receivable_amount",
+                        "计划应收金额",
+                        plannedAmount,
+                        "CNY",
+                        "/receivables" + receivableQueryString(filter)),
+                new DashboardMetricCard(
+                        "confirmed_received_amount",
+                        "已确认回款",
+                        confirmedReceivedAmount,
+                        "CNY",
+                        "/receivables" + receivableQueryString(filter) + "&received=true"),
+                new DashboardMetricCard(
+                        "unreceived_amount",
+                        "未收金额",
+                        unreceivedAmount,
+                        "CNY",
+                        "/receivables" + receivableQueryString(filter) + "&unreceived=true"),
+                new DashboardMetricCard(
+                        "overdue_amount",
+                        "逾期未收",
+                        overdueAmount,
+                        "CNY",
+                        "/receivables" + receivableQueryString(filter) + "&overdue_only=true"),
+                new DashboardMetricCard(
+                        "pending_reconciliation_amount",
+                        "待核销到账",
+                        pendingReconciliationAmount,
+                        "CNY",
+                        "/reconciliations" + receivableQueryString(filter) + "&pending_only=true"),
+                new DashboardMetricCard(
+                        "unallocated_payment_amount",
+                        "未分配到账",
+                        unallocatedPaymentAmount,
+                        "CNY",
+                        "/reconciliations" + receivableQueryString(filter) + "&unallocated_only=true"));
+    }
+
+    private List<DashboardReceivableStatusItem> receivableStatusDistribution(
+            DashboardReceivableFilter filter,
+            List<ReceivableDashboardRow> receivables) {
+        Map<String, ReceivableStatusAccumulator> accumulators = new LinkedHashMap<>();
+        RECEIVABLE_STATUSES.forEach(status -> accumulators.put(status.key(), new ReceivableStatusAccumulator()));
+        receivables.forEach(row -> accumulators.computeIfAbsent(row.status(), ignored -> new ReceivableStatusAccumulator())
+                .add(row.plannedAmount(), row.receivedAmount(), row.unreceivedAmount()));
+        return accumulators.entrySet().stream()
+                .map(entry -> new DashboardReceivableStatusItem(
+                        entry.getKey(),
+                        receivableStatusLabel(entry.getKey()),
+                        entry.getValue().count(),
+                        entry.getValue().plannedAmount(),
+                        entry.getValue().receivedAmount(),
+                        entry.getValue().unreceivedAmount(),
+                        "/receivables" + receivableQueryString(filter) + "&receivable_status=" + entry.getKey()))
+                .toList();
+    }
+
+    private List<DashboardReceivableGapTrendPoint> receivableGapTrend(List<ReceivableDashboardRow> receivables) {
+        Map<String, ReceivableGapAccumulator> accumulators = new LinkedHashMap<>();
+        receivables.stream()
+                .filter(row -> row.plannedAt() != null)
+                .sorted(Comparator.comparing(ReceivableDashboardRow::plannedAt))
+                .forEach(row -> {
+                    String period = "%04d-%02d".formatted(
+                            row.plannedAt().getYear(),
+                            row.plannedAt().getMonthValue());
+                    accumulators.computeIfAbsent(period, ignored -> new ReceivableGapAccumulator())
+                            .add(row.plannedAmount(), row.receivedAmount());
+                });
+        return accumulators.entrySet().stream()
+                .map(entry -> new DashboardReceivableGapTrendPoint(
+                        entry.getKey(),
+                        entry.getValue().plannedAmount(),
+                        entry.getValue().receivedAmount(),
+                        entry.getValue().gapAmount(),
+                        entry.getValue().count()))
+                .toList();
+    }
+
+    private List<DashboardReconciliationSummary> reconciliationSummary(
+            DashboardReceivableFilter filter,
+            List<PaymentDashboardRow> payments,
+            List<ReconciliationDashboardRow> reconciliations) {
+        List<PaymentDashboardRow> confirmedUnreconciled = payments.stream()
+                .filter(row -> paymentUnreconciledAmount(row).compareTo(ZERO) > 0)
+                .toList();
+        List<PaymentDashboardRow> unallocated = payments.stream()
+                .filter(row -> row.receivablePlanId() == null)
+                .filter(DashboardService::effectivePayment)
+                .toList();
+        List<PaymentDashboardRow> registered = payments.stream()
+                .filter(row -> Set.of("registered", "unconfirmed").contains(row.status()))
+                .toList();
+        List<PaymentDashboardRow> exceptions = payments.stream()
+                .filter(row -> "exception".equals(row.status()))
+                .toList();
+        List<PaymentDashboardRow> refunded = payments.stream()
+                .filter(row -> "refunded".equals(row.status()))
+                .toList();
+        BigDecimal reconciledAmount = reconciliations.stream()
+                .filter(row -> "active".equals(row.status()))
+                .map(ReconciliationDashboardRow::amount)
+                .reduce(ZERO, BigDecimal::add);
+        long activeReconciliationCount = reconciliations.stream()
+                .filter(row -> "active".equals(row.status()))
+                .count();
+        return List.of(
+                paymentSummary(
+                        "confirmed_unreconciled",
+                        "待核销到账",
+                        confirmedUnreconciled,
+                        "medium",
+                        "/reconciliations" + receivableQueryString(filter) + "&pending_only=true"),
+                paymentSummary(
+                        "unallocated_payment",
+                        "未分配到账",
+                        unallocated,
+                        "medium",
+                        "/reconciliations" + receivableQueryString(filter) + "&unallocated_only=true"),
+                paymentSummary(
+                        "registered_payment",
+                        "待确认到账",
+                        registered,
+                        "low",
+                        "/payments" + receivableQueryString(filter) + "&payment_status=registered"),
+                paymentSummary(
+                        "payment_exception",
+                        "异常到账",
+                        exceptions,
+                        "high",
+                        "/payments" + receivableQueryString(filter) + "&payment_status=exception"),
+                paymentSummary(
+                        "refunded_payment",
+                        "已退款到账",
+                        refunded,
+                        "low",
+                        "/payments" + receivableQueryString(filter) + "&payment_status=refunded"),
+                new DashboardReconciliationSummary(
+                        "active_reconciliation",
+                        "已核销金额",
+                        activeReconciliationCount,
+                        reconciledAmount,
+                        activeReconciliationCount == 0 ? "none" : "low",
+                        "/reconciliations" + receivableQueryString(filter) + "&reconciliation_status=active"));
+    }
+
+    private static DashboardReconciliationSummary paymentSummary(
+            String key,
+            String label,
+            List<PaymentDashboardRow> rows,
+            String levelWhenPresent,
+            String drilldownUrl) {
+        BigDecimal amount = rows.stream()
+                .map(row -> "confirmed_unreconciled".equals(key)
+                        ? paymentUnreconciledAmount(row)
+                        : amount(row.confirmedAmount()))
+                .reduce(ZERO, BigDecimal::add);
+        return new DashboardReconciliationSummary(
+                key,
+                label,
+                rows.size(),
+                amount,
+                rows.isEmpty() ? "none" : levelWhenPresent,
+                drilldownUrl);
+    }
+
+    private List<DashboardAttentionReceivable> attentionReceivables(
+            List<ReceivableDashboardRow> receivables,
+            List<PaymentDashboardRow> payments) {
+        OffsetDateTime now = OffsetDateTime.now(DEFAULT_OFFSET);
+        List<DashboardAttentionReceivable> items = new ArrayList<>();
+        receivables.stream()
+                .map(row -> attentionReceivable(row, now))
+                .filter(item -> item.reason() != null)
+                .forEach(items::add);
+        payments.stream()
+                .map(DashboardService::attentionPayment)
+                .filter(item -> item.reason() != null)
+                .forEach(items::add);
+        return items.stream()
+                .sorted(Comparator.comparing(DashboardAttentionReceivable::amount).reversed()
+                        .thenComparing(DashboardAttentionReceivable::occurred_at,
+                                Comparator.nullsLast(Comparator.naturalOrder())))
+                .limit(8)
+                .toList();
+    }
+
+    private DashboardAttentionReceivable attentionReceivable(ReceivableDashboardRow row, OffsetDateTime now) {
+        String reason = null;
+        if (overdueReceivable(row, now)) {
+            reason = "大额逾期未收";
+        } else if (openReceivable(row)
+                && row.plannedAt() != null
+                && !row.plannedAt().isBefore(now)
+                && row.plannedAt().isBefore(now.plusDays(30))) {
+            reason = "30天内到期未收";
+        }
+        return new DashboardAttentionReceivable(
+                "receivable_plan",
+                row.id(),
+                row.name(),
+                row.accountId(),
+                row.opportunityId(),
+                row.contractId(),
+                row.ownerUserId(),
+                row.status(),
+                row.unreceivedAmount(),
+                row.plannedAt(),
+                row.plannedAt(),
+                reason,
+                "/receivables?receivable_plan_id=" + row.id());
+    }
+
+    private static DashboardAttentionReceivable attentionPayment(PaymentDashboardRow row) {
+        String reason = null;
+        BigDecimal amount = paymentUnreconciledAmount(row);
+        if (amount.compareTo(ZERO) > 0) {
+            reason = "到账未核销";
+        }
+        if (row.receivablePlanId() == null && effectivePayment(row)) {
+            reason = "未分配到账";
+            amount = row.confirmedAmount();
+        }
+        return new DashboardAttentionReceivable(
+                "payment",
+                row.id(),
+                row.name(),
+                row.accountId(),
+                row.opportunityId(),
+                row.contractId(),
+                row.ownerUserId(),
+                row.status(),
+                amount,
+                null,
+                row.receivedAt(),
+                reason,
+                "/reconciliations?payment_id=" + row.id());
     }
 
     private List<DashboardMetricCard> invoiceMetricCards(
@@ -1506,6 +1829,113 @@ public class DashboardService {
                 params.toArray());
     }
 
+    private List<ReceivableDashboardRow> receivableRows(DashboardReceivableFilter filter, DomainAccess access) {
+        if (!access.visible()) {
+            return List.of();
+        }
+        List<Object> params = new ArrayList<>(access.parameters());
+        StringBuilder filters = new StringBuilder();
+        appendTimestampFilter(filters, params, "rp.planned_receivable_date", filter.date_from(), filter.date_to());
+        appendReceivableDashboardFilters(filters, params, filter);
+        return jdbcTemplate.query("""
+                select rp.id, rp.plan_name, rp.account_id, rp.opportunity_id, rp.contract_id, rp.owner_user_id,
+                       rp.receivable_status, rp.planned_amount, rp.planned_receivable_date,
+                       coalesce((
+                           select sum(p.confirmed_amount)
+                           from crm_payments p
+                           where p.deleted_at is null
+                             and p.receivable_plan_id = rp.id
+                             and p.payment_status in ('confirmed', 'partially_reconciled', 'reconciled')
+                       ), 0) as received_amount
+                from crm_receivable_plans rp
+                join crm_accounts a on a.id = rp.account_id and a.deleted_at is null
+                where rp.deleted_at is null
+                  and %s
+                  %s
+                """.formatted(access.clause(), filters),
+                (rs, rowNum) -> {
+                    BigDecimal plannedAmount = amount(rs.getBigDecimal("planned_amount"));
+                    BigDecimal receivedAmount = amount(rs.getBigDecimal("received_amount"));
+                    return new ReceivableDashboardRow(
+                            rs.getLong("id"),
+                            rs.getString("plan_name"),
+                            rs.getLong("account_id"),
+                            nullableLong(rs.getObject("opportunity_id")),
+                            nullableLong(rs.getObject("contract_id")),
+                            rs.getLong("owner_user_id"),
+                            rs.getString("receivable_status"),
+                            plannedAmount,
+                            receivedAmount,
+                            positiveGap(plannedAmount, receivedAmount),
+                            rs.getObject("planned_receivable_date", OffsetDateTime.class));
+                },
+                params.toArray());
+    }
+
+    private List<PaymentDashboardRow> paymentRows(DashboardReceivableFilter filter, DomainAccess access) {
+        if (!access.visible()) {
+            return List.of();
+        }
+        List<Object> params = new ArrayList<>(access.parameters());
+        StringBuilder filters = new StringBuilder();
+        appendTimestampFilter(filters, params, "p.received_at", filter.date_from(), filter.date_to());
+        appendPaymentDashboardFilters(filters, params, filter);
+        return jdbcTemplate.query("""
+                select p.id, p.payment_name, p.account_id, p.opportunity_id, p.contract_id, p.receivable_plan_id,
+                       p.owner_user_id, p.payment_status, p.received_amount, p.confirmed_amount,
+                       p.reconciled_amount, p.received_at
+                from crm_payments p
+                join crm_accounts a on a.id = p.account_id and a.deleted_at is null
+                where p.deleted_at is null
+                  and %s
+                  %s
+                """.formatted(access.clause(), filters),
+                (rs, rowNum) -> new PaymentDashboardRow(
+                        rs.getLong("id"),
+                        rs.getString("payment_name"),
+                        rs.getLong("account_id"),
+                        nullableLong(rs.getObject("opportunity_id")),
+                        nullableLong(rs.getObject("contract_id")),
+                        nullableLong(rs.getObject("receivable_plan_id")),
+                        rs.getLong("owner_user_id"),
+                        rs.getString("payment_status"),
+                        amount(rs.getBigDecimal("received_amount")),
+                        amount(rs.getBigDecimal("confirmed_amount")),
+                        amount(rs.getBigDecimal("reconciled_amount")),
+                        rs.getObject("received_at", OffsetDateTime.class)),
+                params.toArray());
+    }
+
+    private List<ReconciliationDashboardRow> reconciliationRows(DashboardReceivableFilter filter, DomainAccess access) {
+        if (!access.visible()) {
+            return List.of();
+        }
+        List<Object> params = new ArrayList<>(access.parameters());
+        StringBuilder filters = new StringBuilder();
+        appendTimestampFilter(filters, params, "r.reconciled_at", filter.date_from(), filter.date_to());
+        appendReconciliationDashboardFilters(filters, params, filter);
+        return jdbcTemplate.query("""
+                select r.id, r.account_id, r.opportunity_id, r.contract_id, r.payment_id, r.reconciled_by,
+                       r.reconciliation_status, r.reconciled_amount, r.reconciled_at
+                from crm_reconciliations r
+                join crm_accounts a on a.id = r.account_id and a.deleted_at is null
+                where r.deleted_at is null
+                  and %s
+                  %s
+                """.formatted(access.clause(), filters),
+                (rs, rowNum) -> new ReconciliationDashboardRow(
+                        rs.getLong("id"),
+                        rs.getLong("account_id"),
+                        nullableLong(rs.getObject("opportunity_id")),
+                        nullableLong(rs.getObject("contract_id")),
+                        rs.getLong("payment_id"),
+                        rs.getLong("reconciled_by"),
+                        rs.getString("reconciliation_status"),
+                        amount(rs.getBigDecimal("reconciled_amount")),
+                        rs.getObject("reconciled_at", OffsetDateTime.class)),
+                params.toArray());
+    }
+
     private static void appendContractDashboardFilters(
             StringBuilder sql,
             List<Object> params,
@@ -1531,6 +1961,56 @@ public class DashboardService {
         if (Boolean.TRUE.equals(filter.exception_only())) {
             appendEquals(sql, params, "i.invoice_status", "exception");
         }
+    }
+
+    private static void appendReceivableDashboardFilters(
+            StringBuilder sql,
+            List<Object> params,
+            DashboardReceivableFilter filter) {
+        appendEquals(sql, params, "a.owner_department_id", filter.department_id());
+        appendEquals(sql, params, "rp.owner_user_id", filter.owner_id());
+        appendEquals(sql, params, "rp.account_id", filter.account_id());
+        appendEquals(sql, params, "rp.opportunity_id", filter.opportunity_id());
+        appendEquals(sql, params, "rp.contract_id", filter.contract_id());
+        appendEquals(sql, params, "rp.receivable_status", filter.receivable_status());
+        if (Boolean.TRUE.equals(filter.overdue_only())) {
+            appendEquals(sql, params, "rp.receivable_status", "overdue");
+        }
+    }
+
+    private static void appendPaymentDashboardFilters(
+            StringBuilder sql,
+            List<Object> params,
+            DashboardReceivableFilter filter) {
+        appendEquals(sql, params, "a.owner_department_id", filter.department_id());
+        appendEquals(sql, params, "p.owner_user_id", filter.owner_id());
+        appendEquals(sql, params, "p.account_id", filter.account_id());
+        appendEquals(sql, params, "p.opportunity_id", filter.opportunity_id());
+        appendEquals(sql, params, "p.contract_id", filter.contract_id());
+        if (filter.receivable_status() != null || Boolean.TRUE.equals(filter.overdue_only())) {
+            sql.append("  and exists (select 1 from crm_receivable_plans rp where rp.id = p.receivable_plan_id");
+            sql.append(" and rp.deleted_at is null");
+            if (filter.receivable_status() != null) {
+                sql.append(" and rp.receivable_status = ?");
+                params.add(filter.receivable_status());
+            }
+            if (Boolean.TRUE.equals(filter.overdue_only())) {
+                sql.append(" and rp.receivable_status = ?");
+                params.add("overdue");
+            }
+            sql.append(")\n");
+        }
+    }
+
+    private static void appendReconciliationDashboardFilters(
+            StringBuilder sql,
+            List<Object> params,
+            DashboardReceivableFilter filter) {
+        appendEquals(sql, params, "a.owner_department_id", filter.department_id());
+        appendEquals(sql, params, "r.reconciled_by", filter.owner_id());
+        appendEquals(sql, params, "r.account_id", filter.account_id());
+        appendEquals(sql, params, "r.opportunity_id", filter.opportunity_id());
+        appendEquals(sql, params, "r.contract_id", filter.contract_id());
     }
 
     private static void appendFunnelOpportunityFilters(
@@ -1613,6 +2093,14 @@ public class DashboardService {
                 .orElse(status);
     }
 
+    private static String receivableStatusLabel(String status) {
+        return RECEIVABLE_STATUSES.stream()
+                .filter(item -> item.key().equals(status))
+                .map(ReceivableStatusDefinition::label)
+                .findFirst()
+                .orElse(status);
+    }
+
     private static BigDecimal invoiceActualAmount(InvoiceDashboardRow row) {
         if (Set.of("invoiced", "signed").contains(row.status())) {
             return row.actualAmount();
@@ -1633,6 +2121,26 @@ public class DashboardService {
 
     private static boolean isUnsignedInvoice(InvoiceDashboardRow row) {
         return "invoiced".equals(row.status()) && row.signedAt() == null;
+    }
+
+    private static boolean effectivePayment(PaymentDashboardRow row) {
+        return Set.of("confirmed", "partially_reconciled", "reconciled").contains(row.status());
+    }
+
+    private static BigDecimal paymentUnreconciledAmount(PaymentDashboardRow row) {
+        if (!effectivePayment(row)) {
+            return ZERO;
+        }
+        return positiveGap(row.confirmedAmount(), row.reconciledAmount());
+    }
+
+    private static boolean openReceivable(ReceivableDashboardRow row) {
+        return !Set.of("received", "terminated").contains(row.status());
+    }
+
+    private static boolean overdueReceivable(ReceivableDashboardRow row, OffsetDateTime now) {
+        return "overdue".equals(row.status())
+                || (row.plannedAt() != null && row.plannedAt().isBefore(now) && openReceivable(row));
     }
 
     private static boolean isHighContractRisk(String riskLevel) {
@@ -1870,6 +2378,34 @@ public class DashboardService {
         return "?" + String.join("&", parts);
     }
 
+    private static String receivableQueryString(DashboardReceivableFilter filter) {
+        List<String> parts = new ArrayList<>();
+        parts.add("date_from=" + filter.date_from());
+        parts.add("date_to=" + filter.date_to());
+        if (filter.department_id() != null) {
+            parts.add("department_id=" + filter.department_id());
+        }
+        if (filter.owner_id() != null) {
+            parts.add("owner_id=" + filter.owner_id());
+        }
+        if (filter.account_id() != null) {
+            parts.add("account_id=" + filter.account_id());
+        }
+        if (filter.opportunity_id() != null) {
+            parts.add("opportunity_id=" + filter.opportunity_id());
+        }
+        if (filter.contract_id() != null) {
+            parts.add("contract_id=" + filter.contract_id());
+        }
+        if (filter.receivable_status() != null) {
+            parts.add("receivable_status=" + filter.receivable_status());
+        }
+        if (filter.overdue_only() != null) {
+            parts.add("overdue_only=" + filter.overdue_only());
+        }
+        return "?" + String.join("&", parts);
+    }
+
     private static BigDecimal amount(BigDecimal amount) {
         return amount == null ? ZERO : amount;
     }
@@ -1888,6 +2424,9 @@ public class DashboardService {
     }
 
     private record InvoiceStatusDefinition(String key, String label) {
+    }
+
+    private record ReceivableStatusDefinition(String key, String label) {
     }
 
     private record FunnelOpportunityRow(
@@ -1944,6 +2483,47 @@ public class DashboardService {
             OffsetDateTime plannedInvoiceDate,
             OffsetDateTime invoiceDate,
             OffsetDateTime signedAt) {
+    }
+
+    private record ReceivableDashboardRow(
+            Long id,
+            String name,
+            Long accountId,
+            Long opportunityId,
+            Long contractId,
+            Long ownerUserId,
+            String status,
+            BigDecimal plannedAmount,
+            BigDecimal receivedAmount,
+            BigDecimal unreceivedAmount,
+            OffsetDateTime plannedAt) {
+    }
+
+    private record PaymentDashboardRow(
+            Long id,
+            String name,
+            Long accountId,
+            Long opportunityId,
+            Long contractId,
+            Long receivablePlanId,
+            Long ownerUserId,
+            String status,
+            BigDecimal receivedAmount,
+            BigDecimal confirmedAmount,
+            BigDecimal reconciledAmount,
+            OffsetDateTime receivedAt) {
+    }
+
+    private record ReconciliationDashboardRow(
+            Long id,
+            Long accountId,
+            Long opportunityId,
+            Long contractId,
+            Long paymentId,
+            Long reconciledBy,
+            String status,
+            BigDecimal amount,
+            OffsetDateTime reconciledAt) {
     }
 
     private static final class StageAccumulator {
@@ -2037,6 +2617,64 @@ public class DashboardService {
 
         BigDecimal gapAmount() {
             return positiveGap(plannedAmount, invoicedAmount);
+        }
+    }
+
+    private static final class ReceivableStatusAccumulator {
+        private long count;
+        private BigDecimal plannedAmount = ZERO;
+        private BigDecimal receivedAmount = ZERO;
+        private BigDecimal unreceivedAmount = ZERO;
+
+        void add(BigDecimal plannedAmountToAdd, BigDecimal receivedAmountToAdd, BigDecimal unreceivedAmountToAdd) {
+            count++;
+            plannedAmount = plannedAmount.add(DashboardService.amount(plannedAmountToAdd));
+            receivedAmount = receivedAmount.add(DashboardService.amount(receivedAmountToAdd));
+            unreceivedAmount = unreceivedAmount.add(DashboardService.amount(unreceivedAmountToAdd));
+        }
+
+        long count() {
+            return count;
+        }
+
+        BigDecimal plannedAmount() {
+            return plannedAmount;
+        }
+
+        BigDecimal receivedAmount() {
+            return receivedAmount;
+        }
+
+        BigDecimal unreceivedAmount() {
+            return unreceivedAmount;
+        }
+    }
+
+    private static final class ReceivableGapAccumulator {
+        private long count;
+        private BigDecimal plannedAmount = ZERO;
+        private BigDecimal receivedAmount = ZERO;
+
+        void add(BigDecimal plannedAmountToAdd, BigDecimal receivedAmountToAdd) {
+            count++;
+            plannedAmount = plannedAmount.add(DashboardService.amount(plannedAmountToAdd));
+            receivedAmount = receivedAmount.add(DashboardService.amount(receivedAmountToAdd));
+        }
+
+        long count() {
+            return count;
+        }
+
+        BigDecimal plannedAmount() {
+            return plannedAmount;
+        }
+
+        BigDecimal receivedAmount() {
+            return receivedAmount;
+        }
+
+        BigDecimal gapAmount() {
+            return positiveGap(plannedAmount, receivedAmount);
         }
     }
 

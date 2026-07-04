@@ -215,6 +215,178 @@ paths:
       responses:
         '200':
           description: Invoice metrics, status distribution, gap trend, risk summary, and attention invoices.
+  /api/dashboard/receivables:
+    get:
+      tags: [Dashboard]
+      summary: V3 receivable and reconciliation dashboard
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: owner_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: receivable_status
+          in: query
+          schema:
+            type: string
+        - name: overdue_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Receivable metrics, status distribution, gap trend, reconciliation summary, and attention receivables.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [filters, metric_cards, status_distribution, gap_trend, reconciliation_summary, attention_receivables]
+                properties:
+                  filters:
+                    type: object
+                    additionalProperties: true
+                  metric_cards:
+                    type: array
+                    items:
+                      type: object
+                      required: [key, label, value, unit, drilldown_url]
+                      properties:
+                        key:
+                          type: string
+                        label:
+                          type: string
+                        value:
+                          type: number
+                        unit:
+                          type: string
+                        drilldown_url:
+                          type: string
+                  status_distribution:
+                    type: array
+                    items:
+                      type: object
+                      required: [status, label, count, amount, ratio, drilldown_url]
+                      properties:
+                        status:
+                          type: string
+                        label:
+                          type: string
+                        count:
+                          type: integer
+                        amount:
+                          type: number
+                        ratio:
+                          type: number
+                        drilldown_url:
+                          type: string
+                  gap_trend:
+                    type: array
+                    items:
+                      type: object
+                      required: [bucket, planned_amount, confirmed_received_amount, unreceived_amount, overdue_amount, drilldown_url]
+                      properties:
+                        bucket:
+                          type: string
+                        planned_amount:
+                          type: number
+                        confirmed_received_amount:
+                          type: number
+                        unreceived_amount:
+                          type: number
+                        overdue_amount:
+                          type: number
+                        drilldown_url:
+                          type: string
+                  reconciliation_summary:
+                    type: array
+                    items:
+                      type: object
+                      required: [key, label, count, amount, risk_level, drilldown_url]
+                      properties:
+                        key:
+                          type: string
+                        label:
+                          type: string
+                        count:
+                          type: integer
+                        amount:
+                          type: number
+                        risk_level:
+                          type: string
+                        drilldown_url:
+                          type: string
+                  attention_receivables:
+                    type: array
+                    items:
+                      type: object
+                      required: [object_type, object_id, object_name, account_id, contract_id, owner_user_id, status, amount, reason, drilldown_url]
+                      properties:
+                        object_type:
+                          type: string
+                        object_id:
+                          type: integer
+                          format: int64
+                        object_name:
+                          type: string
+                        account_id:
+                          type: integer
+                          format: int64
+                        opportunity_id:
+                          type: integer
+                          format: int64
+                          nullable: true
+                        contract_id:
+                          type: integer
+                          format: int64
+                        owner_user_id:
+                          type: integer
+                          format: int64
+                        status:
+                          type: string
+                        amount:
+                          type: number
+                        due_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        occurred_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        reason:
+                          type: string
+                        drilldown_url:
+                          type: string
   /api/auth/login:
     post:
       tags: [Auth]

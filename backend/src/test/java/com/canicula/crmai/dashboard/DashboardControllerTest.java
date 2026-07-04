@@ -348,6 +348,97 @@ class DashboardControllerTest {
     }
 
     @Test
+    void receivablesDashboardReturnsMetricsStatusGapReconciliationAndAttentionReceivables() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("dashboard-receivable-dept-" + suffix);
+        TestUser user = createLoginReadyUser(
+                "dashboard_receivable_" + suffix,
+                departmentId,
+                allDashboardPermissions(),
+                List.of("global"));
+        DashboardFixture fixture = createCompleteFixture(suffix, departmentId, user.userId());
+
+        try {
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    "/api/dashboard/receivables?date_from=2026-07-01&date_to=2026-07-31&account_id="
+                            + fixture.accountId(),
+                    HttpMethod.GET,
+                    new HttpEntity<>(authHeaders(user.token(), "dashboard-receivable-trace-001")),
+                    JsonNode.class);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode data = response.getBody().path("data");
+            assertThat(data.path("filters").path("date_from").asText()).isEqualTo("2026-07-01");
+            assertThat(data.path("filters").path("date_to").asText()).isEqualTo("2026-07-31");
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("planned_receivable_amount");
+                assertThat(card.path("label").asText()).isEqualTo("计划应收金额");
+                assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(260000));
+                assertThat(card.path("drilldown_url").asText()).startsWith("/receivables");
+            });
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("confirmed_received_amount");
+                assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(180000));
+            });
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("unreceived_amount");
+                assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(80000));
+            });
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("pending_reconciliation_amount");
+                assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(60000));
+            });
+            assertThat(data.path("status_distribution")).anySatisfy(status -> {
+                assertThat(status.path("status").asText()).isEqualTo("overdue");
+                assertThat(status.path("label").asText()).isEqualTo("已逾期");
+                assertThat(status.path("count").asLong()).isEqualTo(1);
+                assertThat(status.path("planned_amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(260000));
+                assertThat(status.path("received_amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(180000));
+                assertThat(status.path("unreceived_amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(80000));
+            });
+            assertThat(data.path("gap_trend")).anySatisfy(point -> {
+                assertThat(point.path("period").asText()).isEqualTo("2026-07");
+                assertThat(point.path("planned_amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(260000));
+                assertThat(point.path("received_amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(180000));
+                assertThat(point.path("gap_amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(80000));
+            });
+            assertThat(data.path("reconciliation_summary")).anySatisfy(summary -> {
+                assertThat(summary.path("key").asText()).isEqualTo("confirmed_unreconciled");
+                assertThat(summary.path("label").asText()).isEqualTo("待核销到账");
+                assertThat(summary.path("amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(60000));
+            });
+            assertThat(data.path("attention_receivables")).anySatisfy(item -> {
+                assertThat(item.path("object_type").asText()).isEqualTo("receivable_plan");
+                assertThat(item.path("object_id").asLong()).isEqualTo(fixture.receivablePlanId());
+                assertThat(item.path("reason").asText()).contains("逾期");
+                assertThat(item.path("drilldown_url").asText()).isEqualTo("/receivables?receivable_plan_id=" + fixture.receivablePlanId());
+            });
+        } finally {
+            deleteFixture(fixture);
+        }
+    }
+
+    @Test
+    void receivablesDashboardRequiresDashboardReceivablesReadPermission() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("dashboard-receivable-forbidden-dept-" + suffix);
+        TestUser user = createLoginReadyUser(
+                "dashboard_receivable_forbidden_" + suffix,
+                departmentId,
+                List.of("dashboard.read", "dashboard.funnel.read", "dashboard.contracts.read",
+                        "dashboard.invoices.read", "receivable.read", "payment.read", "reconciliation.read"),
+                List.of("global"));
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/dashboard/receivables",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(user.token(), "dashboard-receivable-forbidden-trace-001")),
+                JsonNode.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     void overviewDateFilterNarrowsMetrics() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         Long departmentId = createDepartment("dashboard-date-dept-" + suffix);
@@ -661,6 +752,7 @@ class DashboardControllerTest {
                 "dashboard.funnel.read",
                 "dashboard.contracts.read",
                 "dashboard.invoices.read",
+                "dashboard.receivables.read",
                 "opportunity.read",
                 "contract.read",
                 "invoice.read",

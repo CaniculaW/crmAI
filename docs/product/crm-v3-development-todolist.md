@@ -73,19 +73,19 @@ V3 当前进度：
 | 4 | Done | 销售漏斗与商机预测 | `/dashboard/funnel`、漏斗 API、阶段转化、预计成交、预测金额、停滞/高风险关注 | 判断销售前端是否健康、未来收入是否可预期 | 权限、后端 API、OpenAPI、前端页面、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-funnel-forecast-uat-20260703.png` |
 | 5 | Done | 合同看板 | `/dashboard/contracts`、合同金额、状态、节点、变更、履约风险 | 判断已成交合同资产和履约节点风险 | 权限、后端 API、OpenAPI、前端页面、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-contract-dashboard-uat-20260703.png` |
 | 6 | Done | 开票看板 | 应开、已开、待开、异常、签收、作废 | 判断合同到开票的执行效率和异常 | 权限、后端 API、OpenAPI、前端页面、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-invoice-dashboard-uat-20260704.png` |
-| 7 | Current | 回款看板 | 应收、实收、逾期、到账、核销、未分配 | 判断现金回收、逾期和核销质量 | 回款率、逾期金额、未核销金额和下钻可用 |
-| 8 | Pending | 风险预警与数据下钻 | 商机停滞、合同节点逾期、开票异常、回款逾期、核销异常 | 把管理分析落到可处理的业务对象 | 风险列表、优先级、责任人和业务页面跳转可用 |
+| 7 | Done | 回款看板 | `/dashboard/receivables`、应收、实收、逾期、到账、核销、未分配 | 判断现金回收、逾期和核销质量 | 权限、后端 API、OpenAPI、前端页面、到账/回款/核销下钻、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-receivable-dashboard-uat-20260704.png`、`docs/testing/evidence/artifacts/v3-receivable-drilldown-uat-20260704.png` |
+| 8 | Current | 风险预警与数据下钻 | 商机停滞、合同节点逾期、开票异常、回款逾期、核销异常 | 把管理分析落到可处理的业务对象 | 风险列表、优先级、责任人和业务页面跳转可用 |
 | 9 | Pending | V3 全链路回归与 UAT | 经营总览 -> 漏斗/预测 -> 合同/开票/回款 -> 风险下钻 | 验证 V3 管理分析闭环可跑通 | 前后端回归、构建、浏览器 Smoke 与 UAT 证据归档 |
 
 ## 3. 当前任务
 
-当前任务：`v3-receivable-dashboard-design`
+当前任务：`v3-risk-warning-design`
 
 状态：Ready
 
 责任侧：AI 研发主力推进；沈思维作为最终版本确认人，重点确认 V3 页面逻辑、指标口径和验收口径。
 
-当前模块：回款看板
+当前模块：风险预警与数据下钻
 
 当前 TODO：
 
@@ -112,32 +112,32 @@ V3 当前进度：
 - [x] Step 21：进入开票看板模块设计与实现计划。
 - [x] Step 22：按实现计划实施开票看板。
 - [x] Step 23：进入回款看板模块设计与实现计划。
-- [ ] Step 24：按实现计划实施回款看板。
+- [x] Step 24：按实现计划实施回款看板。
+- [ ] Step 25：进入风险预警与数据下钻模块设计。
 
 完成标准：
 
-- 回款看板权限、后端聚合 API、OpenAPI、前端页面和下钻联动完成。
-- 后端定向测试、前端定向测试、构建和全量验证通过。
-- 浏览器 UAT 通过并留存截图证据。
-- 模块 7 Done，模块 8 风险预警进入 Current。
+- 风险预警与数据下钻页面逻辑、指标口径、API 范围和验收方式完成。
+- 明确风险列表、优先级、责任人、金额、时间和业务页面跳转规则。
+- 输出模块设计说明与实现计划后进入实现。
 
 ## 4. 当前进度快照
 
 ```text
 V3 当前进度：
 - 总模块：9
-- 已完成：6
-- 当前模块：回款看板
-- 当前步骤：Step 24 按实现计划实施回款看板
-- 当前 TODO：按 `docs/superpowers/plans/2026-07-04-v3-receivable-dashboard.md` 执行权限迁移、后端 API、OpenAPI、前端页面、UAT 证据
-- 完成标准：回款看板页面 `/dashboard/receivables` 可用，自动化验证和浏览器 UAT 通过
-- 本轮预计产出：代码实现、测试、证据、提交与推送
+- 已完成：7
+- 当前模块：风险预警与数据下钻
+- 当前步骤：Step 25 进入风险预警与数据下钻模块设计
+- 当前 TODO：输出风险预警与数据下钻的页面逻辑、指标口径、API 范围、下钻规则和实现计划
+- 完成标准：风险预警设计说明与实现计划输出，确认后进入实现
+- 本轮预计产出：模块 8 设计与任务拆分
 
 上一模块：
-- 状态：回款看板设计与实现计划 Done
-- 验证结果：设计说明 `docs/superpowers/specs/2026-07-04-v3-receivable-dashboard-design.md` 与实现计划 `docs/superpowers/plans/2026-07-04-v3-receivable-dashboard.md` 已输出；页面职责、回款金额口径、状态分布、缺口趋势、到账与核销风险、API 响应、任务拆分和验收方式已明确
+- 状态：回款看板 Done
+- 验证结果：`mvn -Dtest=DatabaseMigrationTest,DashboardControllerTest,OpenApiContractCoverageTest test` 通过；`mvn -Dtest=PostgresMigrationIT test` 通过；`npm test -- --run src/App.test.tsx` 45/45 通过；`npm run build` 通过；API smoke `GET /api/dashboard/receivables` 返回 200，metricCards=6、statuses=5、gapTrend=1、reconciliation=6、attention=2；浏览器 UAT 覆盖回款看板、到账流水、回款详情、核销下钻，控制台错误 0
 - 提交号：本次提交
-- 证据：待实现阶段归档
+- 证据：`docs/testing/evidence/artifacts/v3-receivable-dashboard-uat-20260704.png`、`docs/testing/evidence/artifacts/v3-receivable-drilldown-uat-20260704.png`
 - 遗留问题：无
 ```
 

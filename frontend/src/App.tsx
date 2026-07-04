@@ -64,6 +64,11 @@ import {
   type DashboardInvoiceStatusItem,
   type DashboardMetricCard,
   type DashboardOverview,
+  type DashboardAttentionReceivable,
+  type DashboardReceivableGapTrendPoint,
+  type DashboardReceivables,
+  type DashboardReceivableStatusItem,
+  type DashboardReconciliationSummary,
   type DashboardRiskItem,
   type DashboardRiskSummary,
   type DictionaryType,
@@ -116,7 +121,8 @@ const navItems: NavItem[] = [
       { key: "/dashboard", label: "经营总览", permission: "dashboard.read" },
       { key: "/dashboard/funnel", label: "销售漏斗", permission: "dashboard.funnel.read" },
       { key: "/dashboard/contracts", label: "合同看板", permission: "dashboard.contracts.read" },
-      { key: "/dashboard/invoices", label: "开票看板", permission: "dashboard.invoices.read" }
+      { key: "/dashboard/invoices", label: "开票看板", permission: "dashboard.invoices.read" },
+      { key: "/dashboard/receivables", label: "回款看板", permission: "dashboard.receivables.read" }
     ]
   },
   { key: "/accounts", label: "客户池", icon: <Users size={18} />, permission: "account.read" },
@@ -126,6 +132,7 @@ const navItems: NavItem[] = [
   { key: "/contracts", label: "合同", icon: <FileSignature size={18} />, permission: "contract.read" },
   { key: "/invoices", label: "开票管理", icon: <ReceiptText size={18} />, permission: "invoice.read" },
   { key: "/receivables", label: "回款管理", icon: <CircleDollarSign size={18} />, permission: "receivable.read" },
+  { key: "/payments", label: "到账流水", icon: <CircleDollarSign size={18} />, permission: "payment.read" },
   { key: "/reconciliations", label: "核销工作台", icon: <ReceiptText size={18} />, permission: "reconciliation.read" },
   { key: "/activities", label: "销售行动", icon: <CalendarCheck size={18} />, permission: "activity.read" },
   { key: "/weekly-progress", label: "周进展", icon: <BarChart3 size={18} />, permission: "weekly_progress.read" },
@@ -419,6 +426,7 @@ function CrmShell() {
             <Route path="/dashboard/funnel" element={<DashboardFunnelPage />} />
             <Route path="/dashboard/contracts" element={<DashboardContractsPage />} />
             <Route path="/dashboard/invoices" element={<DashboardInvoicesPage />} />
+            <Route path="/dashboard/receivables" element={<DashboardReceivablesPage />} />
             <Route path="/accounts" element={<AccountsPage currentUser={user} />} />
             <Route path="/contacts" element={<ContactsPage currentUser={user} />} />
             <Route path="/opportunities" element={<OpportunitiesPage currentUser={user} />} />
@@ -426,6 +434,7 @@ function CrmShell() {
             <Route path="/contracts" element={<ContractsPage currentUser={user} />} />
             <Route path="/invoices" element={<InvoicesPage currentUser={user} />} />
             <Route path="/receivables" element={<ReceivablesPage currentUser={user} />} />
+            <Route path="/payments" element={<PaymentsPage />} />
             <Route path="/reconciliations" element={<ReconciliationWorkbenchPage />} />
             <Route path="/activities" element={<ActivitiesPage currentUser={user} />} />
             <Route path="/weekly-progress" element={<WeeklyProgressPage />} />
@@ -826,6 +835,72 @@ function DashboardInvoicesPage() {
   );
 }
 
+function DashboardReceivablesPage() {
+  const { data, loading, error, refresh } = useObjectResource<DashboardReceivables>(
+    crmApi.dashboard.receivables,
+    emptyDashboardReceivables,
+    []
+  );
+  const maxStatusAmount = Math.max(1, ...data.status_distribution.map((status) => status.planned_amount));
+
+  return (
+    <section className="workspace dashboard-overview dashboard-receivables">
+      <PageTitle
+        title="回款看板"
+        description="查看计划应收、已确认回款、未收缺口、逾期和到账核销质量。"
+        action={<RefreshButton onClick={refresh} loading={loading} />}
+      />
+      {error ? <div className="error-banner">{error}</div> : null}
+
+      <div className="dashboard-overview__metrics">
+        {data.metric_cards.map((metric) => (
+          <DashboardMetricCardView key={metric.key} metric={metric} />
+        ))}
+      </div>
+
+      <div className="dashboard-funnel__layout">
+        <Card title={<Typography.Title level={3}>回款状态分布</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-receivables__status-list">
+            {data.status_distribution.map((status) => (
+              <DashboardReceivableStatusRow key={status.status} status={status} maxAmount={maxStatusAmount} />
+            ))}
+            {data.status_distribution.length === 0 ? <span className="muted">暂无回款状态数据</span> : null}
+          </div>
+        </Card>
+
+        <Card title={<Typography.Title level={3}>回款缺口趋势</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-receivables__gap-trend">
+            {data.gap_trend.map((point) => (
+              <DashboardReceivableGapTrendRow key={point.period} point={point} />
+            ))}
+            {data.gap_trend.length === 0 ? <span className="muted">暂无回款缺口趋势</span> : null}
+          </div>
+        </Card>
+      </div>
+
+      <div className="dashboard-funnel__layout">
+        <Card title={<Typography.Title level={3}>到账与核销概览</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-receivables__summary-list">
+            {data.reconciliation_summary.map((summary) => (
+              <DashboardReconciliationSummaryRow key={summary.key} summary={summary} />
+            ))}
+            {data.reconciliation_summary.length === 0 ? <span className="muted">暂无到账核销数据</span> : null}
+          </div>
+        </Card>
+
+        <Card title={<Typography.Title level={3}>重点关注回款</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-funnel__attention">
+            {data.attention_receivables.map((item) => (
+              <DashboardAttentionReceivableRow key={`${item.object_type}-${item.object_id}`} item={item} />
+            ))}
+            {data.attention_receivables.length === 0 ? <span className="muted">暂无需要重点关注的回款</span> : null}
+          </div>
+        </Card>
+      </div>
+    </section>
+  );
+}
+
 function DashboardMetricCardView({ metric }: { metric: DashboardMetricCard }) {
   return (
     <Link className="dashboard-overview__metric" to={metric.drilldown_url}>
@@ -996,6 +1071,73 @@ function DashboardAttentionInvoiceRow({ invoice }: { invoice: DashboardAttention
   );
 }
 
+function DashboardReceivableStatusRow({
+  status,
+  maxAmount
+}: {
+  status: DashboardReceivableStatusItem;
+  maxAmount: number;
+}) {
+  const width = Math.max(4, Math.round((status.planned_amount / maxAmount) * 100));
+  return (
+    <Link className="dashboard-receivables__status-row" to={status.drilldown_url}>
+      <span>
+        <strong>{status.label}</strong>
+        <small>{status.count} 项</small>
+      </span>
+      <div className="dashboard-funnel__bar" aria-hidden="true">
+        <i style={{ width: `${width}%` }} />
+      </div>
+      <small>
+        应收 {currencyText(status.planned_amount)} · 已收 {currencyText(status.received_amount)} · 未收{" "}
+        {currencyText(status.unreceived_amount)}
+      </small>
+    </Link>
+  );
+}
+
+function DashboardReceivableGapTrendRow({ point }: { point: DashboardReceivableGapTrendPoint }) {
+  return (
+    <div className="dashboard-funnel__trend-row">
+      <strong>{point.period}</strong>
+      <span>{currencyText(point.gap_amount)}</span>
+      <small>
+        应收 {currencyText(point.planned_amount)} · 已收 {currencyText(point.received_amount)} · {point.receivable_count} 项
+      </small>
+    </div>
+  );
+}
+
+function DashboardReconciliationSummaryRow({ summary }: { summary: DashboardReconciliationSummary }) {
+  const color = summary.level === "high" ? "red" : summary.level === "medium" ? "orange" : "blue";
+  return (
+    <Link className="dashboard-receivables__summary-row" to={summary.drilldown_url}>
+      <span>
+        <strong>{summary.label}</strong>
+        <Tag color={color}>{summary.count} 项</Tag>
+      </span>
+      <small>{currencyText(summary.amount)}</small>
+    </Link>
+  );
+}
+
+function DashboardAttentionReceivableRow({ item }: { item: DashboardAttentionReceivable }) {
+  return (
+    <Link className="dashboard-funnel__attention-row" to={item.drilldown_url}>
+      <span>
+        <strong>{item.title}</strong>
+        <Tag color={item.reason.includes("逾期") ? "red" : item.reason.includes("核销") ? "orange" : "blue"}>
+          {item.reason}
+        </Tag>
+      </span>
+      <small>
+        {currencyText(item.amount)} · {receivableStatusText(item.status)}
+        {item.planned_at ? ` · ${dateText(item.planned_at)}` : ""}
+      </small>
+    </Link>
+  );
+}
+
 function DashboardFlowStep({ item }: { item: DashboardBusinessFlowItem }) {
   return (
     <Link className="dashboard-overview__flow-step" to={item.drilldown_url}>
@@ -1087,6 +1229,17 @@ function emptyDashboardInvoices(): DashboardInvoices {
     gap_trend: [],
     risk_summary: [],
     attention_invoices: []
+  };
+}
+
+function emptyDashboardReceivables(): DashboardReceivables {
+  return {
+    filters: {},
+    metric_cards: [],
+    status_distribution: [],
+    gap_trend: [],
+    reconciliation_summary: [],
+    attention_receivables: []
   };
 }
 
@@ -3115,8 +3268,20 @@ function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
 }
 
 function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
-  const initialFilters = useInitialQueryFilters(["account_id", "opportunity_id", "contract_id"]);
-  const [filters, setFilters] = useState<Record<string, unknown>>(initialFilters);
+  const initialQueryFilters = useInitialQueryFilters([
+    "account_id",
+    "opportunity_id",
+    "contract_id",
+    "receivable_status",
+    "receivable_plan_id",
+    "owner_id",
+    "owner_user_id",
+    "date_from",
+    "date_to",
+    "overdue_only"
+  ]);
+  const initialPlanId = numericFilterValue(initialQueryFilters.receivable_plan_id);
+  const [filters, setFilters] = useState<Record<string, unknown>>(() => toReceivableListFilters(initialQueryFilters));
   const receivables = useResource(() => crmApi.receivablePlans.list(filters), [filters]);
   const accounts = useResource(crmApi.accounts.list, []);
   const contracts = useResource(crmApi.contracts.list, []);
@@ -3152,6 +3317,12 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
       setDetailLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (initialPlanId) {
+      void loadReceivableDetail(initialPlanId);
+    }
+  }, [initialPlanId, loadReceivableDetail]);
 
   useEffect(() => {
     if (!selected) {
@@ -3528,16 +3699,108 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
   );
 }
 
+function PaymentsPage() {
+  const initialQueryFilters = useInitialQueryFilters([
+    "account_id",
+    "opportunity_id",
+    "contract_id",
+    "receivable_plan_id",
+    "payment_status",
+    "payment_method",
+    "owner_id",
+    "owner_user_id",
+    "date_from",
+    "date_to",
+    "received_from",
+    "received_to",
+    "exception_only"
+  ]);
+  const [filters, setFilters] = useState<Record<string, unknown>>(() => toPaymentListFilters(initialQueryFilters));
+  const payments = useResource(() => crmApi.payments.list(filters), [filters]);
+  const accounts = useResource(crmApi.accounts.list, []);
+  const contracts = useResource(crmApi.contracts.list, []);
+  const receivables = useResource(crmApi.receivablePlans.list, []);
+  const accountOptions = toAccountOptions(accounts.data);
+  const contractOptions = contracts.data.map((contract) => ({ label: contract.contract_name, value: contract.id }));
+  const receivableById = useMemo(() => new Map(receivables.data.map((plan) => [plan.id, plan])), [receivables.data]);
+  const accountById = useMemo(() => new Map(accounts.data.map((account) => [account.id, account])), [accounts.data]);
+  const contractById = useMemo(() => new Map(contracts.data.map((contract) => [contract.id, contract])), [contracts.data]);
+
+  const columns: ColumnsType<Payment> = [
+    { title: "到账流水", dataIndex: "payment_name" },
+    { title: "客户", dataIndex: "account_id", render: (value) => accountById.get(Number(value))?.account_name ?? value },
+    { title: "合同", dataIndex: "contract_id", render: (value) => contractById.get(Number(value))?.contract_name ?? `合同 ${value}` },
+    {
+      title: "回款计划",
+      dataIndex: "receivable_plan_id",
+      render: (value) => (value ? receivableById.get(Number(value))?.plan_name ?? `计划 ${value}` : "-")
+    },
+    { title: "状态", dataIndex: "payment_status", render: paymentStatusTag },
+    { title: "到账时间", dataIndex: "received_at", render: dateText },
+    { title: "到账金额", dataIndex: "received_amount", render: moneyText },
+    { title: "确认金额", dataIndex: "confirmed_amount", render: moneyText },
+    { title: "未核销", dataIndex: "unreconciled_amount", render: moneyText },
+    { title: "付款方", dataIndex: "payer_name", render: textOrDash },
+    { title: "流水号", dataIndex: "bank_flow_no", render: textOrDash }
+  ];
+
+  return (
+    <DataWorkspace
+      title="到账流水"
+      description="按客户、合同、回款计划和到账状态查看客户付款记录。"
+      guide="从回款看板下钻后可直接定位待确认、异常、退款或未核销到账；财务核对后回到回款或核销工作台处理后续动作。"
+      loading={payments.loading}
+      error={payments.error}
+      refresh={payments.refresh}
+    >
+      <FilterBar
+        initialValues={filters}
+        onSearch={(values) => setFilters(withoutEmpty(values, []))}
+        onReset={() => setFilters({})}
+      >
+        <Form.Item name="keyword" label="关键词">
+          <Input allowClear placeholder="到账名称/流水号" />
+        </Form.Item>
+        <Form.Item name="account_id" label="客户">
+          <Select allowClear options={accountOptions} loading={accounts.loading} className="filter-select" />
+        </Form.Item>
+        <Form.Item name="contract_id" label="合同">
+          <Select allowClear options={contractOptions} loading={contracts.loading} className="filter-select" />
+        </Form.Item>
+        <Form.Item name="payment_status" label="状态">
+          <Select allowClear options={paymentStatusOptions()} />
+        </Form.Item>
+        <Form.Item name="payment_method" label="到账方式">
+          <Select allowClear options={paymentMethodOptions()} />
+        </Form.Item>
+      </FilterBar>
+
+      <Table rowKey="id" dataSource={payments.data} columns={columns} pagination={{ pageSize: 8 }} locale={{ emptyText: "暂无到账流水" }} />
+    </DataWorkspace>
+  );
+}
+
 function ReconciliationWorkbenchPage() {
-  const initialFilters = useInitialQueryFilters(["account_id", "opportunity_id", "contract_id"]);
-  const [filters, setFilters] = useState<Record<string, unknown>>(initialFilters);
+  const initialQueryFilters = useInitialQueryFilters([
+    "account_id",
+    "opportunity_id",
+    "contract_id",
+    "payment_id",
+    "reconciliation_status",
+    "pending_only",
+    "unallocated_only"
+  ]);
+  const initialPaymentId = numericFilterValue(initialQueryFilters.payment_id);
+  const [filters, setFilters] = useState<Record<string, unknown>>(() => toReconciliationWorkbenchFilters(initialQueryFilters));
+  const reconciliationListFilters = useMemo(() => toReconciliationListFilters(initialQueryFilters), [initialQueryFilters]);
+  const filteredReconciliations = useResource(() => crmApi.reconciliations.list(reconciliationListFilters), [reconciliationListFilters]);
   const [workbench, setWorkbench] = useState<ReconciliationWorkbench>(() => emptyReconciliationWorkbench());
   const [loadingWorkbench, setLoadingWorkbench] = useState(false);
   const [workbenchError, setWorkbenchError] = useState("");
   const accounts = useResource(crmApi.accounts.list, []);
   const contracts = useResource(crmApi.contracts.list, []);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
-  const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(initialPaymentId ?? null);
   const [voiding, setVoiding] = useState<Reconciliation | null>(null);
   const [form] = Form.useForm();
   const [voidForm] = Form.useForm();
@@ -3548,6 +3811,9 @@ function ReconciliationWorkbenchPage() {
   const contractById = useMemo(() => new Map(contracts.data.map((contract) => [contract.id, contract])), [contracts.data]);
   const selectedInvoice = data.pending_invoices.find((invoice) => invoice.id === selectedInvoiceId);
   const selectedPayment = data.pending_payments.find((payment) => payment.id === selectedPaymentId);
+  const recentReconciliations = hasAnyFilter(reconciliationListFilters)
+    ? filteredReconciliations.data
+    : data.recent_reconciliations;
 
   const refreshWorkbench = useCallback(async () => {
     setLoadingWorkbench(true);
@@ -3566,10 +3832,10 @@ function ReconciliationWorkbenchPage() {
   }, [refreshWorkbench]);
 
   useEffect(() => {
-    if (selectedInvoiceId && !data.pending_invoices.some((invoice) => invoice.id === selectedInvoiceId)) {
+    if (data.pending_invoices.length > 0 && selectedInvoiceId && !data.pending_invoices.some((invoice) => invoice.id === selectedInvoiceId)) {
       setSelectedInvoiceId(null);
     }
-    if (selectedPaymentId && !data.pending_payments.some((payment) => payment.id === selectedPaymentId)) {
+    if (data.pending_payments.length > 0 && selectedPaymentId && !data.pending_payments.some((payment) => payment.id === selectedPaymentId)) {
       setSelectedPaymentId(null);
     }
   }, [data.pending_invoices, data.pending_payments, selectedInvoiceId, selectedPaymentId]);
@@ -3772,7 +4038,8 @@ function ReconciliationWorkbenchPage() {
         <Table
           rowKey="id"
           size="small"
-          dataSource={data.recent_reconciliations}
+          loading={hasAnyFilter(reconciliationListFilters) && filteredReconciliations.loading}
+          dataSource={recentReconciliations}
           columns={reconciliationColumns}
           pagination={{ pageSize: 6 }}
           locale={{ emptyText: "暂无核销记录" }}
@@ -5476,6 +5743,75 @@ function queryFiltersFromSearch(search: string, keys: string[]) {
   );
 }
 
+function numericFilterValue(value: unknown) {
+  return typeof value === "number" ? value : undefined;
+}
+
+function toReceivableListFilters(query: Record<string, unknown>) {
+  const filters = normalizeDashboardListFilters(query, "planned_from", "planned_to");
+  delete filters.receivable_plan_id;
+  return filters;
+}
+
+function toPaymentListFilters(query: Record<string, unknown>) {
+  return normalizeDashboardListFilters(query, "received_from", "received_to");
+}
+
+function toReconciliationWorkbenchFilters(query: Record<string, unknown>) {
+  return withoutEmpty(
+    {
+      account_id: query.account_id,
+      opportunity_id: query.opportunity_id,
+      contract_id: query.contract_id,
+      pending_only: query.pending_only ?? query.unallocated_only
+    },
+    []
+  );
+}
+
+function toReconciliationListFilters(query: Record<string, unknown>) {
+  return withoutEmpty(
+    {
+      account_id: query.account_id,
+      opportunity_id: query.opportunity_id,
+      contract_id: query.contract_id,
+      payment_id: query.payment_id,
+      reconciliation_status: query.reconciliation_status
+    },
+    []
+  );
+}
+
+function normalizeDashboardListFilters(query: Record<string, unknown>, fromKey: string, toKey: string) {
+  const filters = { ...query };
+  if (filters.owner_id !== undefined && filters.owner_user_id === undefined) {
+    filters.owner_user_id = filters.owner_id;
+  }
+  if (filters.date_from !== undefined && filters[fromKey] === undefined) {
+    filters[fromKey] = startOfDateFilter(filters.date_from);
+  }
+  if (filters.date_to !== undefined && filters[toKey] === undefined) {
+    filters[toKey] = endOfDateFilter(filters.date_to);
+  }
+  delete filters.owner_id;
+  delete filters.date_from;
+  delete filters.date_to;
+  delete filters.department_id;
+  return withoutEmpty(filters, []);
+}
+
+function startOfDateFilter(value: unknown) {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00+08:00` : value;
+}
+
+function endOfDateFilter(value: unknown) {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T23:59:59+08:00` : value;
+}
+
+function hasAnyFilter(filters: Record<string, unknown>) {
+  return Object.keys(filters).length > 0;
+}
+
 function sumBy<T>(items: T[], selector: (item: T) => number | null | undefined) {
   return items.reduce((total, item) => total + Number(selector(item) ?? 0), 0);
 }
@@ -6102,6 +6438,13 @@ function paymentStatusText(status?: string) {
     refunded: "已退款"
   };
   return labels[status] ?? status;
+}
+
+function paymentStatusOptions() {
+  return ["registered", "confirmed", "partially_reconciled", "reconciled", "exception", "refunded"].map((value) => ({
+    label: paymentStatusText(value),
+    value
+  }));
 }
 
 function paymentStatusTag(status?: string) {

@@ -366,7 +366,10 @@ body {
 .dashboard-contracts__changes,
 .dashboard-invoices__status-list,
 .dashboard-invoices__gap-trend,
-.dashboard-invoices__risks {
+.dashboard-invoices__risks,
+.dashboard-receivables__status-list,
+.dashboard-receivables__gap-trend,
+.dashboard-receivables__summary-list {
   display: grid;
   gap: 10px;
 }
@@ -376,7 +379,9 @@ body {
 .dashboard-contracts__status-row,
 .dashboard-contracts__milestone,
 .dashboard-invoices__status-row,
-.dashboard-invoices__risk-row {
+.dashboard-invoices__risk-row,
+.dashboard-receivables__status-row,
+.dashboard-receivables__summary-row {
   display: grid;
   gap: 8px;
   padding: 12px;
@@ -391,7 +396,9 @@ body {
 .dashboard-contracts__status-row:hover,
 .dashboard-contracts__milestone:hover,
 .dashboard-invoices__status-row:hover,
-.dashboard-invoices__risk-row:hover {
+.dashboard-invoices__risk-row:hover,
+.dashboard-receivables__status-row:hover,
+.dashboard-receivables__summary-row:hover {
   border-color: #1f5eff;
   color: #1f5eff;
 }
@@ -400,7 +407,9 @@ body {
 .dashboard-funnel__attention-row span,
 .dashboard-contracts__status-row span,
 .dashboard-invoices__status-row span,
-.dashboard-invoices__risk-row span {
+.dashboard-invoices__risk-row span,
+.dashboard-receivables__status-row span,
+.dashboard-receivables__summary-row span {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -411,7 +420,9 @@ body {
 .dashboard-funnel__attention-row strong,
 .dashboard-contracts__status-row strong,
 .dashboard-invoices__status-row strong,
-.dashboard-invoices__risk-row strong {
+.dashboard-invoices__risk-row strong,
+.dashboard-receivables__status-row strong,
+.dashboard-receivables__summary-row strong {
   min-width: 0;
   word-break: break-word;
 }
@@ -421,7 +432,9 @@ body {
 .dashboard-funnel__trend-row small,
 .dashboard-contracts__status-row small,
 .dashboard-invoices__status-row small,
-.dashboard-invoices__risk-row small {
+.dashboard-invoices__risk-row small,
+.dashboard-receivables__status-row small,
+.dashboard-receivables__summary-row small {
   color: #667085;
 }
 

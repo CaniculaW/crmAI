@@ -671,6 +671,58 @@ export type DashboardInvoices = {
   attention_invoices: DashboardAttentionInvoice[];
 };
 
+export type DashboardReceivableStatusItem = {
+  status: string;
+  label: string;
+  count: number;
+  planned_amount: number;
+  received_amount: number;
+  unreceived_amount: number;
+  drilldown_url: string;
+};
+
+export type DashboardReceivableGapTrendPoint = {
+  period: string;
+  planned_amount: number;
+  received_amount: number;
+  gap_amount: number;
+  receivable_count: number;
+};
+
+export type DashboardReconciliationSummary = {
+  key: string;
+  label: string;
+  count: number;
+  amount: number;
+  level: string;
+  drilldown_url: string;
+};
+
+export type DashboardAttentionReceivable = {
+  object_type: string;
+  object_id: number;
+  title: string;
+  account_id?: number;
+  opportunity_id?: number;
+  contract_id?: number;
+  owner_user_id?: number;
+  status: string;
+  amount: number;
+  planned_at?: string;
+  occurred_at?: string;
+  reason: string;
+  drilldown_url: string;
+};
+
+export type DashboardReceivables = {
+  filters: Record<string, unknown>;
+  metric_cards: DashboardMetricCard[];
+  status_distribution: DashboardReceivableStatusItem[];
+  gap_trend: DashboardReceivableGapTrendPoint[];
+  reconciliation_summary: DashboardReconciliationSummary[];
+  attention_receivables: DashboardAttentionReceivable[];
+};
+
 function withQuery(path: string, query?: QueryParams) {
   if (!query) {
     return path;
@@ -725,7 +777,9 @@ export const crmApi = {
     overview: (query?: QueryParams) => requestJson<DashboardOverview>(withQuery("/api/dashboard/overview", query)),
     funnel: (query?: QueryParams) => requestJson<DashboardFunnel>(withQuery("/api/dashboard/funnel", query)),
     contracts: (query?: QueryParams) => requestJson<DashboardContracts>(withQuery("/api/dashboard/contracts", query)),
-    invoices: (query?: QueryParams) => requestJson<DashboardInvoices>(withQuery("/api/dashboard/invoices", query))
+    invoices: (query?: QueryParams) => requestJson<DashboardInvoices>(withQuery("/api/dashboard/invoices", query)),
+    receivables: (query?: QueryParams) =>
+      requestJson<DashboardReceivables>(withQuery("/api/dashboard/receivables", query))
   },
   accounts: {
     list: (query?: QueryParams) => requestJson<Account[]>(withQuery("/api/accounts", query)),

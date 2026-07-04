@@ -107,6 +107,35 @@ public class DashboardController {
                         exceptionOnly));
     }
 
+    @RequirePermission("dashboard.receivables.read")
+    @GetMapping("/api/dashboard/receivables")
+    DashboardReceivableResponse receivables(
+            @RequestParam(name = "date_from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                    LocalDate dateFrom,
+            @RequestParam(name = "date_to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                    LocalDate dateTo,
+            @RequestParam(name = "department_id", required = false) Long departmentId,
+            @RequestParam(name = "owner_id", required = false) Long ownerId,
+            @RequestParam(name = "account_id", required = false) Long accountId,
+            @RequestParam(name = "opportunity_id", required = false) Long opportunityId,
+            @RequestParam(name = "contract_id", required = false) Long contractId,
+            @RequestParam(name = "receivable_status", required = false) String receivableStatus,
+            @RequestParam(name = "overdue_only", required = false) Boolean overdueOnly,
+            HttpServletRequest httpRequest) {
+        return dashboardService.receivables(
+                currentUserId(httpRequest),
+                new DashboardReceivableFilter(
+                        dateFrom,
+                        dateTo,
+                        departmentId,
+                        ownerId,
+                        accountId,
+                        opportunityId,
+                        contractId,
+                        receivableStatus,
+                        overdueOnly));
+    }
+
     private static Long currentUserId(HttpServletRequest request) {
         return (Long) request.getAttribute("crm.currentUserId");
     }

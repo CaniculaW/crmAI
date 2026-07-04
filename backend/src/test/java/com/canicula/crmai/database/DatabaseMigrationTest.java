@@ -264,7 +264,7 @@ class DatabaseMigrationTest {
                 Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(24);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(25);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -350,6 +350,21 @@ class DatabaseMigrationTest {
                 from sys_permissions
                 where permission_code = 'dashboard.invoices.read'
                   and permission_name = '查看开票看板'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void createsDashboardReceivablesReadPermission() {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.receivables.read'
+                  and permission_name = '查看回款看板'
                   and module_code = 'dashboard'
                 """,
                 Integer.class);
