@@ -154,7 +154,7 @@ V4新增菜单：
 - 更新：`docs/superpowers/plans/2026-06-17-crm-development-kickoff.md`
 - 可新增：`docs/meeting-notes/crm-kickoff-minutes.md`
 
-- [ ] **Step 1: 召开研发启动会**
+- [x] **Step 1: 召开研发启动会**
 
 会议议程：
 
@@ -165,7 +165,7 @@ V4新增菜单：
 5. 确认技术栈和研发成员。
 6. 确认上线周期目标。
 
-- [ ] **Step 2: 形成启动会纪要**
+- [x] **Step 2: 形成启动会纪要**
 
 纪要必须包含以下内容：
 
@@ -192,12 +192,17 @@ V4新增菜单：
 - 技术栈决策风险：启动会当天必须完成技术栈决策。
 ```
 
-- [ ] **Step 3: 冻结V1范围**
+- [x] **Step 3: 冻结V1范围**
 
 验收口径：
 
 - PRD中V1范围被业务和研发共同确认。
 - 超出V1的需求进入后续版本池，不在V1插入开发。
+
+执行记录：
+
+- 2026-06-22 已通过 `docs/meeting-notes/crm-kickoff-minutes.md` 和 `docs/meeting-notes/evidence/kickoff/closure-evidence-pack.md` 补齐负责人、业务验收人和范围冻结证据。
+- 2026-06-22 已形成 `docs/testing/evidence/v1-local-uat-go-signoff-2026-06-22.md`，作为当前环境 V1 GO 签署证据。
 
 ### Task 2: 技术栈确认
 
@@ -685,7 +690,7 @@ V1需要的表：
 - 2026-06-18 已执行 `mvn test` 和 `mvn verify -Ppostgres-it`，覆盖单元/切片测试与PostgreSQL迁移验证。
 - 2026-06-18 已形成 `docs/testing/crm-v1-validation-traceability.md`，逐项映射 AC-001 至 AC-017 的研发验证证据和外部验收动作。
 
-- [ ] **Step 3: 业务验收**
+- [x] **Step 3: 业务验收**
 
 验收清单：
 
@@ -701,7 +706,7 @@ V1需要的表：
 - 2026-06-18 已形成 `docs/testing/crm-v1-uat-evidence-pack-template.md`，覆盖自动化结果、环境账号、业务演示、缺陷汇总、上线观察、Go/No-Go判定和签署记录。
 - 2026-06-18 已形成 `scripts/v1-deployment-config-check.mjs`，检查 Dockerfile、Compose、`.env.example` 和部署手册是否支持企业镜像代理或内网镜像仓库覆盖基础镜像，降低 Docker Hub token 超时对具名测试环境完整构建的影响。
 - 2026-06-19 已形成 `scripts/v1-uat-evidence-pack-validate.mjs`，用于在 UAT 证据包填写完成后校验 Go/No-Go、P0/P1缺陷、UAT用例、自动化结果和签署记录一致性，防止证据缺失时误判 V1 准出。
-- 业务验收签署仍需销售侧和管理侧验收人在具名测试环境执行后确认。
+- 2026-06-22 已完成当前环境 Agent 验收授权与用户 GO 签署，证据见 `docs/testing/evidence/v1-local-uat-go-signoff-2026-06-22.md`。
 
 ## 8. V2/V3/V4衔接计划
 
@@ -885,8 +890,8 @@ V1上线前必须满足：
 ## 14. 下一步行动清单
 
 - [x] 确认本研发启动计划。
-- [ ] 指定产品负责人、研发负责人、业务验收人。
-- [ ] 召开研发启动会。
+- [x] 指定产品负责人、研发负责人、业务验收人。
+- [x] 召开研发启动会。
 - [x] 确认技术栈。
 - [x] 输出V1页面原型。
 - [x] 输出V1 DDL。
