@@ -105,7 +105,11 @@ function readPreviousGitCommit(rootDir) {
 }
 
 function allowedValidationStatusCommits(rootDir) {
-  return [readGitCommit(rootDir), readPreviousGitCommit(rootDir)].filter((commit) => commit !== "unknown");
+  return [
+    readGitCommit(rootDir),
+    readPreviousGitCommit(rootDir),
+    process.env.GITHUB_HEAD_SHA
+  ].filter((commit, index, commits) => commit && commit !== "unknown" && commits.indexOf(commit) === index);
 }
 
 export function selectValidationStatusGitCommit({
