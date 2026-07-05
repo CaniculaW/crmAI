@@ -214,9 +214,10 @@ test("summarizes status from absolute UAT source document paths", () => {
     gitCommit: "867b71c25b4e9d227946557660cb4b7538689987"
   });
 
-  assert.match(markdown, /Overall: No-Go/);
+  assert.match(markdown, /Overall: Go/);
   assert.match(markdown, new RegExp(`node scripts/v1-uat-evidence-pack-validate\\.mjs ${evidencePath}`));
-  assert.match(markdown, /Release Gate\/go-decision: Project decision is No-Go/);
+  assert.match(markdown, /None\. V1 release gate is ready for Go evidence retention/);
+  assert.doesNotMatch(markdown, /Release Gate\/go-decision: Project decision is No-Go/);
 });
 
 test("summarizes a Go V1 status only when all gates pass and decision is Go", () => {

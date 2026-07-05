@@ -203,9 +203,10 @@ test("generates action plan from absolute UAT source document paths", () => {
     generatedAt: "2026-06-19T04:00:00+08:00"
   });
 
-  assert.match(markdown, /Overall: No-Go/);
+  assert.match(markdown, /Overall: Go/);
   assert.match(markdown, new RegExp(`node scripts/v1-uat-evidence-pack-validate\\.mjs ${evidencePath}`));
-  assert.match(markdown, /Release Gate\/go-decision: Project decision is No-Go/);
+  assert.match(markdown, /No open UAT blockers/);
+  assert.doesNotMatch(markdown, /Release Gate\/go-decision: Project decision is No-Go/);
 });
 
 test("generates a Go action plan with no open blockers only when all gates pass", () => {

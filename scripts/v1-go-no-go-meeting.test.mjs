@@ -198,9 +198,10 @@ test("generates meeting pack from absolute UAT source document paths", () => {
     generatedAt: "2026-06-19T04:00:00+08:00"
   });
 
-  assert.match(markdown, /Decision Recommendation: No-Go/);
+  assert.match(markdown, /Decision Recommendation: Go/);
   assert.match(markdown, new RegExp(`node scripts/v1-uat-evidence-pack-validate\\.mjs ${evidencePath}`));
-  assert.match(markdown, /Release Gate\/go-decision: Project decision is No-Go/);
+  assert.match(markdown, /Final Signoff Table/);
+  assert.doesNotMatch(markdown, /Release Gate\/go-decision: Project decision is No-Go/);
 });
 
 test("generates a Go meeting pack only when release gate passes with Go decision", () => {

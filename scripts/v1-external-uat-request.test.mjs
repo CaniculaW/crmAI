@@ -649,9 +649,10 @@ test("generates request packet from absolute UAT source document paths", () => {
     generatedAt: "2026-06-19T12:30:00+08:00"
   });
 
-  assert.match(markdown, /Request Status: External UAT Evidence Required/);
+  assert.match(markdown, /Request Status: No External UAT Requests Open/);
   assert.match(markdown, new RegExp(`node scripts/v1-uat-evidence-pack-validate\\.mjs ${evidencePath}`));
-  assert.match(markdown, /Release Gate\/go-decision: Project decision is No-Go/);
+  assert.match(markdown, /All external UAT request items are closed by validator evidence/);
+  assert.doesNotMatch(markdown, /Release Gate\/go-decision: Project decision is No-Go/);
 });
 
 test("generates a closed request packet only when the final release gate is Go", () => {

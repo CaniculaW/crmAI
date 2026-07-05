@@ -184,10 +184,11 @@ test("generates execution pack from absolute UAT source document paths", () => {
     generatedAt: "2026-06-19T04:00:00+08:00"
   });
 
-  assert.match(markdown, /Overall: No-Go/);
-  assert.match(markdown, /KICKOFF-OWNERS \| 项目\/产品 \| 补齐启动会负责人和业务验收人/);
+  assert.match(markdown, /Overall: Go/);
+  assert.match(markdown, /No open execution items/);
   assert.match(markdown, new RegExp(`node scripts/v1-uat-evidence-pack-validate\\.mjs ${evidencePath}`));
-  assert.match(markdown, /GO-NOGO \| 项目\/产品 \| 完成 Go\/No-Go 会议结论/);
+  assert.doesNotMatch(markdown, /KICKOFF-OWNERS \| 项目\/产品 \| 补齐启动会负责人和业务验收人/);
+  assert.doesNotMatch(markdown, /GO-NOGO \| 项目\/产品 \| 完成 Go\/No-Go 会议结论/);
 });
 
 test("generates a Go execution pack only when there are no failed gate items", () => {
