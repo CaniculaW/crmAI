@@ -81,11 +81,11 @@ V3 当前进度：
 
 当前任务：`v3-full-chain-regression-uat`
 
-状态：UAT Verified，等待沈思维最终确认
+状态：Conditional Go，签署材料已生成，等待沈思维最终确认
 
 责任侧：AI 研发主力推进；沈思维作为最终版本确认人，重点确认 V3 页面逻辑、指标口径和验收口径。
 
-当前模块：V3 最终确认
+当前模块：V3 签署与合并准备
 
 当前 TODO：
 
@@ -116,6 +116,8 @@ V3 当前进度：
 - [x] Step 25：进入风险预警与数据下钻模块设计。
 - [x] Step 26：按实现计划实施风险预警与数据下钻。
 - [x] Step 27：完成 V3 全链路回归与 UAT。
+- [x] Step 28：生成 V3 Go/No-Go 签署记录。
+- [ ] Step 29：沈思维最终确认 V3 Go/No-Go 结论。
 
 完成标准：
 
@@ -129,17 +131,17 @@ V3 当前进度：
 V3 当前进度：
 - 总模块：9
 - 已完成：9
-- 当前模块：V3 最终确认
-- 当前步骤：等待沈思维最终确认 V3 验收结果
-- 当前 TODO：人工确认 V3 页面逻辑、指标口径和业务闭环是否可作为版本验收结论
-- 完成标准：沈思维确认后，V3 进入版本签署/合并准备
-- 本轮预计产出：V3 全链路 UAT 已验证版本
+- 当前模块：V3 签署与合并准备
+- 当前步骤：Step 29 等待沈思维最终确认 V3 Go/No-Go 结论
+- 当前 TODO：确认 V3 页面逻辑、指标口径和业务闭环是否可签署为 Go
+- 完成标准：沈思维确认后，V3 从 Conditional Go 调整为 Go，并进入分支合并或 PR 流程
+- 本轮预计产出：V3 Go/No-Go 签署记录
 
 上一模块：
 - 状态：V3 全链路回归与 UAT Done
 - 验证结果：`mvn -Dtest=DatabaseMigrationTest,DashboardControllerTest,OpenApiContractCoverageTest test` 21/21 通过；`mvn -Dtest=PostgresMigrationIT test` 7/7 通过；`npm test -- --run App.test.tsx` 49/49 通过；`npm run build` 通过；API smoke 覆盖 `/api/dashboard/overview`、`/api/dashboard/funnel`、`/api/dashboard/contracts`、`/api/dashboard/invoices`、`/api/dashboard/receivables`、`/api/dashboard/risks`，全部返回 200/OK；浏览器 UAT 覆盖 `/dashboard`、`/dashboard/funnel`、`/dashboard/contracts`、`/dashboard/invoices`、`/dashboard/receivables`、`/dashboard/risks` 与风险项下钻到 `opportunities?opportunity_id=1`，控制台应用错误 0
 - 提交号：本次提交见 Git 记录
-- 证据：`docs/testing/evidence/artifacts/v3-full-chain-uat-20260705.png`
+- 证据：`docs/testing/evidence/artifacts/v3-full-chain-uat-20260705.png`、`docs/testing/evidence/v3-go-no-go-signoff-2026-07-05.md`
 - 遗留问题：无
 
 本模块设计与计划：
