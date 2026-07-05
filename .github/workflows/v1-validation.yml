@@ -138,6 +138,9 @@ jobs:
       - name: Generate V1 progress TODO board
         run: node scripts/v1-progress-todo.mjs --output docs/testing/v1-progress-todo.md
 
+      - name: Generate V1 validation status for current PR head
+        run: node scripts/v1-validation-status.mjs --git-commit "${GITHUB_HEAD_SHA:-$GITHUB_SHA}" --output docs/testing/v1-validation-status.md
+
       - name: Run V1 generated docs consistency tests
         run: node --test scripts/v1-generated-docs-check.test.mjs
 
