@@ -75,17 +75,17 @@ V3 当前进度：
 | 6 | Done | 开票看板 | 应开、已开、待开、异常、签收、作废 | 判断合同到开票的执行效率和异常 | 权限、后端 API、OpenAPI、前端页面、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-invoice-dashboard-uat-20260704.png` |
 | 7 | Done | 回款看板 | `/dashboard/receivables`、应收、实收、逾期、到账、核销、未分配 | 判断现金回收、逾期和核销质量 | 权限、后端 API、OpenAPI、前端页面、到账/回款/核销下钻、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-receivable-dashboard-uat-20260704.png`、`docs/testing/evidence/artifacts/v3-receivable-drilldown-uat-20260704.png` |
 | 8 | Done | 风险预警与数据下钻 | `/dashboard/risks`、商机停滞、合同节点逾期、开票异常、回款逾期、未核销回款 | 把管理分析落到可处理的业务对象 | 权限、后端 API、OpenAPI、前端页面、商机/合同/开票/回款下钻、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-risk-warning-uat-20260705.png` |
-| 9 | Current | V3 全链路回归与 UAT | 经营总览 -> 漏斗/预测 -> 合同/开票/回款 -> 风险下钻 | 验证 V3 管理分析闭环可跑通 | 前后端回归、构建、浏览器 Smoke 与 UAT 证据归档 |
+| 9 | Done | V3 全链路回归与 UAT | 经营总览 -> 漏斗/预测 -> 合同/开票/回款 -> 风险下钻 | 验证 V3 管理分析闭环可跑通 | 前后端回归、构建、API Smoke、浏览器全链路 UAT 与证据归档已完成；证据：`docs/testing/evidence/artifacts/v3-full-chain-uat-20260705.png` |
 
 ## 3. 当前任务
 
-当前任务：`v3-risk-warning-implementation`
+当前任务：`v3-full-chain-regression-uat`
 
-状态：Implementation Verified
+状态：UAT Verified，等待沈思维最终确认
 
 责任侧：AI 研发主力推进；沈思维作为最终版本确认人，重点确认 V3 页面逻辑、指标口径和验收口径。
 
-当前模块：V3 全链路回归与 UAT
+当前模块：V3 最终确认
 
 当前 TODO：
 
@@ -115,31 +115,31 @@ V3 当前进度：
 - [x] Step 24：按实现计划实施回款看板。
 - [x] Step 25：进入风险预警与数据下钻模块设计。
 - [x] Step 26：按实现计划实施风险预警与数据下钻。
-- [ ] Step 27：进入 V3 全链路回归与 UAT。
+- [x] Step 27：完成 V3 全链路回归与 UAT。
 
 完成标准：
 
-- `/dashboard/risks` 风险预警页面、`/api/dashboard/risks`、`dashboard.risks.read` 权限、OpenAPI、自动化测试和浏览器 UAT 完成。
-- 五类风险可展示、可排序、可按负责人追责，并能下钻到商机、合同、开票、回款、核销处理页面。
-- 输出 UAT 证据后进入 V3 全链路回归与 UAT。
+- 经营总览、销售漏斗、合同看板、开票看板、回款看板、风险预警六个 V3 页面均可访问。
+- 六个驾驶舱 API 均返回 200，页面无服务端异常和前端应用错误。
+- 风险项可下钻到业务处理页面，UAT 证据已归档。
 
 ## 4. 当前进度快照
 
 ```text
 V3 当前进度：
 - 总模块：9
-- 已完成：8
-- 当前模块：V3 全链路回归与 UAT
-- 当前步骤：Step 27 进入 V3 全链路回归与 UAT
-- 当前 TODO：全量后端回归、前端回归、构建、浏览器 Smoke 与 V3 验收证据归档
-- 完成标准：V3 经营总览、漏斗、合同、开票、回款、风险预警全链路可访问、可下钻、无服务端异常和前端控制台应用错误
-- 本轮预计产出：V3 全链路 UAT 候选版本
+- 已完成：9
+- 当前模块：V3 最终确认
+- 当前步骤：等待沈思维最终确认 V3 验收结果
+- 当前 TODO：人工确认 V3 页面逻辑、指标口径和业务闭环是否可作为版本验收结论
+- 完成标准：沈思维确认后，V3 进入版本签署/合并准备
+- 本轮预计产出：V3 全链路 UAT 已验证版本
 
 上一模块：
-- 状态：风险预警与数据下钻 Done
-- 验证结果：`mvn -Dtest=DatabaseMigrationTest,DashboardControllerTest,OpenApiContractCoverageTest test` 21/21 通过；`mvn -Dtest=PostgresMigrationIT test` 7/7 通过；`npm test -- --run App.test.tsx` 49/49 通过；`npm run build` 通过；API smoke `GET /api/dashboard/risks` 返回 200，metricCards=6、summary=1、trend=1、owners=1、items=1；浏览器 UAT 覆盖风险预警页和风险项下钻到商机推进入口，控制台应用错误 0
+- 状态：V3 全链路回归与 UAT Done
+- 验证结果：`mvn -Dtest=DatabaseMigrationTest,DashboardControllerTest,OpenApiContractCoverageTest test` 21/21 通过；`mvn -Dtest=PostgresMigrationIT test` 7/7 通过；`npm test -- --run App.test.tsx` 49/49 通过；`npm run build` 通过；API smoke 覆盖 `/api/dashboard/overview`、`/api/dashboard/funnel`、`/api/dashboard/contracts`、`/api/dashboard/invoices`、`/api/dashboard/receivables`、`/api/dashboard/risks`，全部返回 200/OK；浏览器 UAT 覆盖 `/dashboard`、`/dashboard/funnel`、`/dashboard/contracts`、`/dashboard/invoices`、`/dashboard/receivables`、`/dashboard/risks` 与风险项下钻到 `opportunities?opportunity_id=1`，控制台应用错误 0
 - 提交号：本次提交见 Git 记录
-- 证据：`docs/testing/evidence/artifacts/v3-risk-warning-uat-20260705.png`
+- 证据：`docs/testing/evidence/artifacts/v3-full-chain-uat-20260705.png`
 - 遗留问题：无
 
 本模块设计与计划：
