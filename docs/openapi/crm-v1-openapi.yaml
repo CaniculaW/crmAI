@@ -387,6 +387,181 @@ paths:
                           type: string
                         drilldown_url:
                           type: string
+  /api/dashboard/risks:
+    get:
+      tags: [Dashboard]
+      summary: V3 risk warning and drilldown dashboard
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: owner_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: risk_type
+          in: query
+          schema:
+            type: string
+        - name: risk_level
+          in: query
+          schema:
+            type: string
+        - name: object_type
+          in: query
+          schema:
+            type: string
+        - name: high_priority_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Risk metric cards, summary, trend, owner ranking, and normalized risk work items.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [filters, metric_cards, risk_summary, risk_trend, owner_ranking, risk_items]
+                properties:
+                  filters:
+                    type: object
+                    additionalProperties: true
+                  metric_cards:
+                    type: array
+                    items:
+                      type: object
+                      required: [key, label, value, unit, drilldown_url]
+                      properties:
+                        key:
+                          type: string
+                        label:
+                          type: string
+                        value:
+                          type: number
+                        unit:
+                          type: string
+                        drilldown_url:
+                          type: string
+                  risk_summary:
+                    type: array
+                    items:
+                      type: object
+                      required: [risk_type, label, count, amount, highest_level, drilldown_url]
+                      properties:
+                        risk_type:
+                          type: string
+                        label:
+                          type: string
+                        count:
+                          type: integer
+                        amount:
+                          type: number
+                        highest_level:
+                          type: string
+                        drilldown_url:
+                          type: string
+                  risk_trend:
+                    type: array
+                    items:
+                      type: object
+                      required: [period, count, amount, high_count, drilldown_url]
+                      properties:
+                        period:
+                          type: string
+                        count:
+                          type: integer
+                        amount:
+                          type: number
+                        high_count:
+                          type: integer
+                        drilldown_url:
+                          type: string
+                  owner_ranking:
+                    type: array
+                    items:
+                      type: object
+                      required: [owner_user_id, owner_name, count, amount, highest_priority_score, drilldown_url]
+                      properties:
+                        owner_user_id:
+                          type: integer
+                          format: int64
+                        owner_name:
+                          type: string
+                        count:
+                          type: integer
+                        amount:
+                          type: number
+                        highest_priority_score:
+                          type: integer
+                        drilldown_url:
+                          type: string
+                  risk_items:
+                    type: array
+                    items:
+                      type: object
+                      required: [risk_type, risk_label, risk_level, title, amount, object_type, object_id, owner_user_id, owner_name, account_id, account_name, priority_score, suggested_action, drilldown_url]
+                      properties:
+                        risk_type:
+                          type: string
+                        risk_label:
+                          type: string
+                        risk_level:
+                          type: string
+                        title:
+                          type: string
+                        amount:
+                          type: number
+                        object_type:
+                          type: string
+                        object_id:
+                          type: integer
+                          format: int64
+                        owner_user_id:
+                          type: integer
+                          format: int64
+                        owner_name:
+                          type: string
+                        account_id:
+                          type: integer
+                          format: int64
+                        account_name:
+                          type: string
+                        opportunity_id:
+                          type: integer
+                          format: int64
+                        priority_score:
+                          type: integer
+                        suggested_action:
+                          type: string
+                        occurred_at:
+                          type: string
+                          format: date-time
+                        drilldown_url:
+                          type: string
   /api/auth/login:
     post:
       tags: [Auth]

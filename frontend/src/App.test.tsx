@@ -15,6 +15,7 @@ const apiData = {
       "dashboard.contracts.read",
       "dashboard.invoices.read",
       "dashboard.receivables.read",
+      "dashboard.risks.read",
       "contact.read",
       "contact.create",
       "opportunity.read",
@@ -422,6 +423,65 @@ const apiData = {
         amount: 80000,
         planned_at: "2026-07-20T10:00:00+08:00",
         reason: "大额逾期未收",
+        drilldown_url: "/receivables?receivable_plan_id=601"
+      }
+    ]
+  },
+  dashboardRisks: {
+    filters: {},
+    metric_cards: [
+      { key: "risk_count", label: "风险总数", value: 2, unit: "COUNT", drilldown_url: "/dashboard/risks" },
+      { key: "high_risk_count", label: "高风险", value: 1, unit: "COUNT", drilldown_url: "/dashboard/risks?risk_level=high" },
+      { key: "risk_amount", label: "风险金额", value: 200000, unit: "CNY", drilldown_url: "/dashboard/risks" }
+    ],
+    risk_summary: [
+      {
+        risk_type: "receivable_overdue",
+        label: "回款逾期",
+        count: 1,
+        amount: 80000,
+        highest_level: "high",
+        drilldown_url: "/dashboard/risks?risk_type=receivable_overdue"
+      },
+      {
+        risk_type: "unreconciled_payment",
+        label: "未核销回款",
+        count: 1,
+        amount: 120000,
+        highest_level: "medium",
+        drilldown_url: "/dashboard/risks?risk_type=unreconciled_payment"
+      }
+    ],
+    risk_trend: [
+      { period: "2026-07", count: 2, amount: 200000, high_count: 1, drilldown_url: "/dashboard/risks?date_from=2026-07-01&date_to=2026-07-31" }
+    ],
+    owner_ranking: [
+      {
+        owner_user_id: 1001,
+        owner_name: "销售一号",
+        count: 2,
+        amount: 200000,
+        highest_priority_score: 343,
+        drilldown_url: "/dashboard/risks?owner_id=1001"
+      }
+    ],
+    risk_items: [
+      {
+        risk_type: "receivable_overdue",
+        risk_label: "回款逾期",
+        risk_level: "high",
+        title: "V2 UAT 首付款回款",
+        amount: 80000,
+        object_type: "receivable_plan",
+        object_id: 601,
+        owner_user_id: 1001,
+        owner_name: "销售一号",
+        account_id: 1,
+        account_name: "测试客户A",
+        opportunity_id: 10,
+        priority_score: 343,
+        suggested_action: "跟进客户回款安排，补充回款跟进记录",
+        occurred_at: "2026-07-20T10:00:00+08:00",
         drilldown_url: "/receivables?receivable_plan_id=601"
       }
     ]
@@ -860,6 +920,27 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
+  it("renders the V3 risk warning dashboard page", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/dashboard/risks");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "风险预警" })).toBeInTheDocument();
+    expect(screen.getByText("风险总数")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "风险类型" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "风险趋势" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "责任人排行" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "风险处置清单" })).toBeInTheDocument();
+    expect(screen.getAllByText("销售一号").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("跟进客户回款安排，补充回款跟进记录")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/dashboard/risks"), expect.anything());
+    });
+  });
+
   it("opens receivable drilldown links with the plan detail selected", async () => {
     const fetchMock = mockCrmFetch();
     const user = userEvent.setup();
@@ -877,6 +958,54 @@ describe("CRM frontend V1 workflow", () => {
         expect.anything()
       );
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/receivable-plans/601"), expect.anything());
+    });
+  });
+
+  it("opens opportunity drilldown links with the opportunity detail selected", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/opportunities?opportunity_id=10");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "商机" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "商机推进入口" })).toBeInTheDocument();
+    expect(screen.getAllByText("测试商机A").length).toBeGreaterThanOrEqual(1);
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/opportunities/10"), expect.anything());
+    });
+  });
+
+  it("opens contract drilldown links with the contract detail selected", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/contracts?contract_id=301");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "合同" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "合同执行台" })).toBeInTheDocument();
+    expect(screen.getAllByText("CRM-V2-20260629").length).toBeGreaterThanOrEqual(1);
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/contracts/301"), expect.anything());
+    });
+  });
+
+  it("opens invoice drilldown links with the invoice detail selected", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/invoices?invoice_id=401");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "开票管理" })).toBeInTheDocument();
+    expect(await screen.findByText("V2 UAT 首期开票")).toBeInTheDocument();
+    expect(screen.getAllByText("INV-401").length).toBeGreaterThanOrEqual(1);
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/invoices/401"), expect.anything());
     });
   });
 
@@ -1791,6 +1920,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     if (path.endsWith("/api/dashboard/receivables")) {
       return jsonResponse({ code: "OK", data: data.dashboardReceivables });
     }
+    if (path.endsWith("/api/dashboard/risks")) {
+      return jsonResponse({ code: "OK", data: data.dashboardRisks });
+    }
     if (path.endsWith("/api/accounts/1") && method === "PATCH") {
       return jsonResponse({ code: "OK", data: { ...data.accounts[0], remark: "重点推进" } });
     }
@@ -1803,6 +1935,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     if (path.endsWith("/api/contacts")) {
       return jsonResponse({ code: "OK", data: data.contacts });
     }
+    if (path.endsWith("/api/opportunities/10")) {
+      return jsonResponse({ code: "OK", data: data.opportunities[0] });
+    }
     if (path.endsWith("/api/opportunities")) {
       return jsonResponse({ code: "OK", data: data.opportunities });
     }
@@ -1814,6 +1949,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/contracts/301/milestones")) {
       return jsonResponse({ code: "OK", data: data.contractMilestones });
+    }
+    if (path.endsWith("/api/contracts/301")) {
+      return jsonResponse({ code: "OK", data: data.contracts[0] });
     }
     if (path.endsWith("/api/contracts")) {
       return jsonResponse({ code: "OK", data: data.contracts });

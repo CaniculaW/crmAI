@@ -136,6 +136,37 @@ public class DashboardController {
                         overdueOnly));
     }
 
+    @RequirePermission("dashboard.risks.read")
+    @GetMapping("/api/dashboard/risks")
+    DashboardRiskResponse risks(
+            @RequestParam(name = "date_from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                    LocalDate dateFrom,
+            @RequestParam(name = "date_to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                    LocalDate dateTo,
+            @RequestParam(name = "department_id", required = false) Long departmentId,
+            @RequestParam(name = "owner_id", required = false) Long ownerId,
+            @RequestParam(name = "account_id", required = false) Long accountId,
+            @RequestParam(name = "opportunity_id", required = false) Long opportunityId,
+            @RequestParam(name = "risk_type", required = false) String riskType,
+            @RequestParam(name = "risk_level", required = false) String riskLevel,
+            @RequestParam(name = "object_type", required = false) String objectType,
+            @RequestParam(name = "high_priority_only", required = false) Boolean highPriorityOnly,
+            HttpServletRequest httpRequest) {
+        return dashboardService.risks(
+                currentUserId(httpRequest),
+                new DashboardRiskFilter(
+                        dateFrom,
+                        dateTo,
+                        departmentId,
+                        ownerId,
+                        accountId,
+                        opportunityId,
+                        riskType,
+                        riskLevel,
+                        objectType,
+                        highPriorityOnly));
+    }
+
     private static Long currentUserId(HttpServletRequest request) {
         return (Long) request.getAttribute("crm.currentUserId");
     }

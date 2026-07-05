@@ -369,7 +369,11 @@ body {
 .dashboard-invoices__risks,
 .dashboard-receivables__status-list,
 .dashboard-receivables__gap-trend,
-.dashboard-receivables__summary-list {
+.dashboard-receivables__summary-list,
+.dashboard-risks__summary-list,
+.dashboard-risks__trend,
+.dashboard-risks__owners,
+.dashboard-risks__items {
   display: grid;
   gap: 10px;
 }
@@ -381,7 +385,10 @@ body {
 .dashboard-invoices__status-row,
 .dashboard-invoices__risk-row,
 .dashboard-receivables__status-row,
-.dashboard-receivables__summary-row {
+.dashboard-receivables__summary-row,
+.dashboard-risks__trend-row,
+.dashboard-risks__owner-row,
+.dashboard-risks__work-item {
   display: grid;
   gap: 8px;
   padding: 12px;
@@ -398,7 +405,10 @@ body {
 .dashboard-invoices__status-row:hover,
 .dashboard-invoices__risk-row:hover,
 .dashboard-receivables__status-row:hover,
-.dashboard-receivables__summary-row:hover {
+.dashboard-receivables__summary-row:hover,
+.dashboard-risks__trend-row:hover,
+.dashboard-risks__owner-row:hover,
+.dashboard-risks__work-item:hover {
   border-color: #1f5eff;
   color: #1f5eff;
 }
@@ -409,7 +419,10 @@ body {
 .dashboard-invoices__status-row span,
 .dashboard-invoices__risk-row span,
 .dashboard-receivables__status-row span,
-.dashboard-receivables__summary-row span {
+.dashboard-receivables__summary-row span,
+.dashboard-risks__trend-row span,
+.dashboard-risks__owner-row span,
+.dashboard-risks__work-main {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -422,7 +435,10 @@ body {
 .dashboard-invoices__status-row strong,
 .dashboard-invoices__risk-row strong,
 .dashboard-receivables__status-row strong,
-.dashboard-receivables__summary-row strong {
+.dashboard-receivables__summary-row strong,
+.dashboard-risks__trend-row strong,
+.dashboard-risks__owner-row strong,
+.dashboard-risks__work-item strong {
   min-width: 0;
   word-break: break-word;
 }
@@ -434,8 +450,26 @@ body {
 .dashboard-invoices__status-row small,
 .dashboard-invoices__risk-row small,
 .dashboard-receivables__status-row small,
-.dashboard-receivables__summary-row small {
+.dashboard-receivables__summary-row small,
+.dashboard-risks__trend-row small,
+.dashboard-risks__owner-row small,
+.dashboard-risks__work-item small {
   color: #667085;
+}
+
+.dashboard-risks__lower {
+  grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.28fr);
+}
+
+.dashboard-risks__items-card .ant-card-body {
+  max-height: 560px;
+  overflow: auto;
+}
+
+.dashboard-risks__work-item em {
+  color: #475467;
+  font-style: normal;
+  line-height: 1.45;
 }
 
 .dashboard-contracts__milestone {

@@ -723,6 +723,51 @@ export type DashboardReceivables = {
   attention_receivables: DashboardAttentionReceivable[];
 };
 
+export type DashboardRiskTrendPoint = {
+  period: string;
+  count: number;
+  amount: number;
+  high_count: number;
+  drilldown_url: string;
+};
+
+export type DashboardRiskOwnerSummary = {
+  owner_user_id: number;
+  owner_name: string;
+  count: number;
+  amount: number;
+  highest_priority_score: number;
+  drilldown_url: string;
+};
+
+export type DashboardRiskWorkItem = {
+  risk_type: string;
+  risk_label: string;
+  risk_level: string;
+  title: string;
+  amount: number;
+  object_type: string;
+  object_id: number;
+  owner_user_id?: number;
+  owner_name?: string;
+  account_id?: number;
+  account_name?: string;
+  opportunity_id?: number;
+  priority_score: number;
+  suggested_action: string;
+  occurred_at?: string;
+  drilldown_url: string;
+};
+
+export type DashboardRisks = {
+  filters: Record<string, unknown>;
+  metric_cards: DashboardMetricCard[];
+  risk_summary: DashboardRiskSummary[];
+  risk_trend: DashboardRiskTrendPoint[];
+  owner_ranking: DashboardRiskOwnerSummary[];
+  risk_items: DashboardRiskWorkItem[];
+};
+
 function withQuery(path: string, query?: QueryParams) {
   if (!query) {
     return path;
@@ -779,7 +824,8 @@ export const crmApi = {
     contracts: (query?: QueryParams) => requestJson<DashboardContracts>(withQuery("/api/dashboard/contracts", query)),
     invoices: (query?: QueryParams) => requestJson<DashboardInvoices>(withQuery("/api/dashboard/invoices", query)),
     receivables: (query?: QueryParams) =>
-      requestJson<DashboardReceivables>(withQuery("/api/dashboard/receivables", query))
+      requestJson<DashboardReceivables>(withQuery("/api/dashboard/receivables", query)),
+    risks: (query?: QueryParams) => requestJson<DashboardRisks>(withQuery("/api/dashboard/risks", query))
   },
   accounts: {
     list: (query?: QueryParams) => requestJson<Account[]>(withQuery("/api/accounts", query)),

@@ -439,6 +439,79 @@ class DashboardControllerTest {
     }
 
     @Test
+    void risksDashboardReturnsMetricsSummaryTrendOwnersAndItems() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("dashboard-risk-dept-" + suffix);
+        TestUser user = createLoginReadyUser(
+                "dashboard_risk_" + suffix,
+                departmentId,
+                allDashboardPermissions(),
+                List.of("global"));
+        DashboardFixture fixture = createCompleteFixture(suffix, departmentId, user.userId());
+
+        try {
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    "/api/dashboard/risks?date_from=2026-07-01&date_to=2026-07-31&account_id="
+                            + fixture.accountId(),
+                    HttpMethod.GET,
+                    new HttpEntity<>(authHeaders(user.token(), "dashboard-risk-trace-001")),
+                    JsonNode.class);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode data = response.getBody().path("data");
+            assertThat(data.path("filters").path("date_from").asText()).isEqualTo("2026-07-01");
+            assertThat(data.path("filters").path("date_to").asText()).isEqualTo("2026-07-31");
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("risk_count");
+                assertThat(card.path("label").asText()).isEqualTo("风险总数");
+                assertThat(card.path("value").asLong()).isGreaterThanOrEqualTo(1);
+                assertThat(card.path("drilldown_url").asText()).startsWith("/dashboard/risks");
+            });
+            assertThat(data.path("risk_summary")).anySatisfy(summary -> {
+                assertThat(summary.path("risk_type").asText()).isEqualTo("receivable_overdue");
+                assertThat(summary.path("label").asText()).isEqualTo("回款逾期");
+                assertThat(summary.path("highest_level").asText()).isEqualTo("high");
+            });
+            assertThat(data.path("risk_trend")).isNotEmpty();
+            assertThat(data.path("owner_ranking")).anySatisfy(owner -> {
+                assertThat(owner.path("owner_user_id").asLong()).isEqualTo(user.userId());
+                assertThat(owner.path("owner_name").asText()).isNotBlank();
+            });
+            assertThat(data.path("risk_items")).anySatisfy(item -> {
+                assertThat(item.path("risk_type").asText()).isEqualTo("receivable_overdue");
+                assertThat(item.path("risk_level").asText()).isEqualTo("high");
+                assertThat(item.path("priority_score").asInt()).isGreaterThanOrEqualTo(300);
+                assertThat(item.path("suggested_action").asText()).contains("回款");
+                assertThat(item.path("drilldown_url").asText()).isEqualTo(
+                        "/receivables?receivable_plan_id=" + fixture.receivablePlanId());
+            });
+        } finally {
+            deleteFixture(fixture);
+        }
+    }
+
+    @Test
+    void risksDashboardRequiresDashboardRisksReadPermission() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("dashboard-risk-forbidden-dept-" + suffix);
+        TestUser user = createLoginReadyUser(
+                "dashboard_risk_forbidden_" + suffix,
+                departmentId,
+                List.of("dashboard.read", "dashboard.funnel.read", "dashboard.contracts.read",
+                        "dashboard.invoices.read", "dashboard.receivables.read", "opportunity.read",
+                        "contract.read", "invoice.read", "receivable.read", "payment.read", "reconciliation.read"),
+                List.of("global"));
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/dashboard/risks",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(user.token(), "dashboard-risk-forbidden-trace-001")),
+                JsonNode.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     void overviewDateFilterNarrowsMetrics() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         Long departmentId = createDepartment("dashboard-date-dept-" + suffix);
@@ -753,6 +826,7 @@ class DashboardControllerTest {
                 "dashboard.contracts.read",
                 "dashboard.invoices.read",
                 "dashboard.receivables.read",
+                "dashboard.risks.read",
                 "opportunity.read",
                 "contract.read",
                 "invoice.read",

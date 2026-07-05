@@ -70,7 +70,11 @@ import {
   type DashboardReceivableStatusItem,
   type DashboardReconciliationSummary,
   type DashboardRiskItem,
+  type DashboardRisks,
+  type DashboardRiskOwnerSummary,
   type DashboardRiskSummary,
+  type DashboardRiskTrendPoint,
+  type DashboardRiskWorkItem,
   type DictionaryType,
   type Invoice,
   type Opportunity,
@@ -122,7 +126,8 @@ const navItems: NavItem[] = [
       { key: "/dashboard/funnel", label: "销售漏斗", permission: "dashboard.funnel.read" },
       { key: "/dashboard/contracts", label: "合同看板", permission: "dashboard.contracts.read" },
       { key: "/dashboard/invoices", label: "开票看板", permission: "dashboard.invoices.read" },
-      { key: "/dashboard/receivables", label: "回款看板", permission: "dashboard.receivables.read" }
+      { key: "/dashboard/receivables", label: "回款看板", permission: "dashboard.receivables.read" },
+      { key: "/dashboard/risks", label: "风险预警", permission: "dashboard.risks.read" }
     ]
   },
   { key: "/accounts", label: "客户池", icon: <Users size={18} />, permission: "account.read" },
@@ -427,6 +432,7 @@ function CrmShell() {
             <Route path="/dashboard/contracts" element={<DashboardContractsPage />} />
             <Route path="/dashboard/invoices" element={<DashboardInvoicesPage />} />
             <Route path="/dashboard/receivables" element={<DashboardReceivablesPage />} />
+            <Route path="/dashboard/risks" element={<DashboardRisksPage />} />
             <Route path="/accounts" element={<AccountsPage currentUser={user} />} />
             <Route path="/contacts" element={<ContactsPage currentUser={user} />} />
             <Route path="/opportunities" element={<OpportunitiesPage currentUser={user} />} />
@@ -901,6 +907,71 @@ function DashboardReceivablesPage() {
   );
 }
 
+function DashboardRisksPage() {
+  const { data, loading, error, refresh } = useObjectResource<DashboardRisks>(
+    crmApi.dashboard.risks,
+    emptyDashboardRisks,
+    []
+  );
+
+  return (
+    <section className="workspace dashboard-overview dashboard-risks">
+      <PageTitle
+        title="风险预警"
+        description="集中查看商机、合同、开票、回款和核销风险，按责任人和优先级推进处理。"
+        action={<RefreshButton onClick={refresh} loading={loading} />}
+      />
+      {error ? <div className="error-banner">{error}</div> : null}
+
+      <div className="dashboard-overview__metrics">
+        {data.metric_cards.map((metric) => (
+          <DashboardMetricCardView key={metric.key} metric={metric} />
+        ))}
+      </div>
+
+      <div className="dashboard-funnel__layout">
+        <Card title={<Typography.Title level={3}>风险类型</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-risks__summary-list">
+            {data.risk_summary.map((risk) => (
+              <DashboardRiskSummaryRow key={risk.risk_type} risk={risk} />
+            ))}
+            {data.risk_summary.length === 0 ? <span className="muted">暂无风险类型数据</span> : null}
+          </div>
+        </Card>
+
+        <Card title={<Typography.Title level={3}>风险趋势</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-risks__trend">
+            {data.risk_trend.map((point) => (
+              <DashboardRiskTrendRow key={point.period} point={point} />
+            ))}
+            {data.risk_trend.length === 0 ? <span className="muted">暂无风险趋势</span> : null}
+          </div>
+        </Card>
+      </div>
+
+      <div className="dashboard-funnel__layout dashboard-risks__lower">
+        <Card title={<Typography.Title level={3}>责任人排行</Typography.Title>} className="dashboard-overview__card">
+          <div className="dashboard-risks__owners">
+            {data.owner_ranking.map((owner) => (
+              <DashboardRiskOwnerRow key={owner.owner_user_id} owner={owner} />
+            ))}
+            {data.owner_ranking.length === 0 ? <span className="muted">暂无责任人风险</span> : null}
+          </div>
+        </Card>
+
+        <Card title={<Typography.Title level={3}>风险处置清单</Typography.Title>} className="dashboard-overview__card dashboard-risks__items-card">
+          <div className="dashboard-risks__items">
+            {data.risk_items.map((item) => (
+              <DashboardRiskWorkItemRow key={`${item.risk_type}-${item.object_type}-${item.object_id}`} item={item} />
+            ))}
+            {data.risk_items.length === 0 ? <span className="muted">暂无待处置风险</span> : null}
+          </div>
+        </Card>
+      </div>
+    </section>
+  );
+}
+
 function DashboardMetricCardView({ metric }: { metric: DashboardMetricCard }) {
   return (
     <Link className="dashboard-overview__metric" to={metric.drilldown_url}>
@@ -1138,6 +1209,55 @@ function DashboardAttentionReceivableRow({ item }: { item: DashboardAttentionRec
   );
 }
 
+function DashboardRiskTrendRow({ point }: { point: DashboardRiskTrendPoint }) {
+  return (
+    <Link className="dashboard-risks__trend-row" to={point.drilldown_url}>
+      <span>
+        <strong>{point.period}</strong>
+        <Tag color={point.high_count > 0 ? "red" : "blue"}>{point.high_count} 个高风险</Tag>
+      </span>
+      <small>
+        {point.count} 项 · {currencyText(point.amount)}
+      </small>
+    </Link>
+  );
+}
+
+function DashboardRiskOwnerRow({ owner }: { owner: DashboardRiskOwnerSummary }) {
+  return (
+    <Link className="dashboard-risks__owner-row" to={owner.drilldown_url}>
+      <span>
+        <strong>{owner.owner_name}</strong>
+        <Tag color={owner.highest_priority_score >= 300 ? "red" : "orange"}>{owner.count} 项</Tag>
+      </span>
+      <small>
+        {currencyText(owner.amount)} · 优先级 {owner.highest_priority_score}
+      </small>
+    </Link>
+  );
+}
+
+function DashboardRiskWorkItemRow({ item }: { item: DashboardRiskWorkItem }) {
+  return (
+    <Link className="dashboard-risks__work-item" to={item.drilldown_url}>
+      <span className="dashboard-risks__work-main">
+        <strong>{item.title}</strong>
+        <span>
+          <Tag color={item.risk_level === "high" ? "red" : item.risk_level === "medium" ? "orange" : "blue"}>
+            {item.risk_label}
+          </Tag>
+          <Tag color="purple">P{item.priority_score}</Tag>
+        </span>
+      </span>
+      <small>
+        {item.account_name || "未关联客户"} · {item.owner_name || "未分配"} · {currencyText(item.amount)}
+        {item.occurred_at ? ` · ${dateText(item.occurred_at)}` : ""}
+      </small>
+      <em>{item.suggested_action}</em>
+    </Link>
+  );
+}
+
 function DashboardFlowStep({ item }: { item: DashboardBusinessFlowItem }) {
   return (
     <Link className="dashboard-overview__flow-step" to={item.drilldown_url}>
@@ -1240,6 +1360,17 @@ function emptyDashboardReceivables(): DashboardReceivables {
     gap_trend: [],
     reconciliation_summary: [],
     attention_receivables: []
+  };
+}
+
+function emptyDashboardRisks(): DashboardRisks {
+  return {
+    filters: {},
+    metric_cards: [],
+    risk_summary: [],
+    risk_trend: [],
+    owner_ranking: [],
+    risk_items: []
   };
 }
 
@@ -1826,7 +1957,9 @@ function toRelationshipBuckets(buckets: Map<string, CrmContact[]>): Relationship
 }
 
 function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
-  const [filters, setFilters] = useState<Record<string, unknown>>({ default_following: true });
+  const initialQueryFilters = useInitialQueryFilters(["account_id", "opportunity_id"], { default_following: true });
+  const initialOpportunityId = numericFilterValue(initialQueryFilters.opportunity_id);
+  const [filters, setFilters] = useState<Record<string, unknown>>(() => toOpportunityListFilters(initialQueryFilters));
   const opportunities = useResource(() => crmApi.opportunities.list(filters), [filters]);
   const accounts = useResource(crmApi.accounts.list, []);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -1838,6 +1971,17 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
   const [closeForm] = Form.useForm();
   const accountOptions = toAccountOptions(accounts.data);
   const accountById = useMemo(() => new Map(accounts.data.map((account) => [account.id, account])), [accounts.data]);
+
+  const loadOpportunityDetail = useCallback(async (opportunityId: number) => {
+    const nextOpportunity = await crmApi.opportunities.detail(opportunityId);
+    setSelected(nextOpportunity);
+  }, []);
+
+  useEffect(() => {
+    if (initialOpportunityId) {
+      void loadOpportunityDetail(initialOpportunityId);
+    }
+  }, [initialOpportunityId, loadOpportunityDetail]);
 
   const columns: ColumnsType<Opportunity> = [
     {
@@ -2446,8 +2590,9 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
 }
 
 function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
-  const initialFilters = useInitialQueryFilters(["account_id", "opportunity_id"]);
-  const [filters, setFilters] = useState<Record<string, unknown>>(initialFilters);
+  const initialFilters = useInitialQueryFilters(["account_id", "opportunity_id", "contract_id"]);
+  const initialContractId = numericFilterValue(initialFilters.contract_id);
+  const [filters, setFilters] = useState<Record<string, unknown>>(() => toContractListFilters(initialFilters));
   const contracts = useResource(() => crmApi.contracts.list(filters), [filters]);
   const accounts = useResource(crmApi.accounts.list, []);
   const opportunities = useResource(crmApi.opportunities.list, []);
@@ -2488,6 +2633,11 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
     }
   }, []);
 
+  const openContractDetail = useCallback(async (contractId: number) => {
+    const nextContract = await crmApi.contracts.detail(contractId);
+    setSelected(nextContract);
+  }, []);
+
   useEffect(() => {
     if (!selected) {
       setChanges([]);
@@ -2497,6 +2647,12 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
     }
     void loadContractDetail(selected.id);
   }, [loadContractDetail, selected]);
+
+  useEffect(() => {
+    if (initialContractId) {
+      void openContractDetail(initialContractId);
+    }
+  }, [initialContractId, openContractDetail]);
 
   const columns: ColumnsType<CrmContract> = [
     {
@@ -2790,8 +2946,9 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
 }
 
 function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
-  const initialFilters = useInitialQueryFilters(["account_id", "opportunity_id", "contract_id"]);
-  const [filters, setFilters] = useState<Record<string, unknown>>(initialFilters);
+  const initialFilters = useInitialQueryFilters(["account_id", "opportunity_id", "contract_id", "invoice_id"]);
+  const initialInvoiceId = numericFilterValue(initialFilters.invoice_id);
+  const [filters, setFilters] = useState<Record<string, unknown>>(() => toInvoiceListFilters(initialFilters));
   const invoices = useResource(() => crmApi.invoices.list(filters), [filters]);
   const accounts = useResource(crmApi.accounts.list, []);
   const opportunities = useResource(crmApi.opportunities.list, []);
@@ -2845,6 +3002,12 @@ function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
     }
     void loadInvoiceDetail(selected.id);
   }, [loadInvoiceDetail, selected?.id]);
+
+  useEffect(() => {
+    if (initialInvoiceId) {
+      void loadInvoiceDetail(initialInvoiceId);
+    }
+  }, [initialInvoiceId, loadInvoiceDetail]);
 
   const columns: ColumnsType<Invoice> = [
     {
@@ -5745,6 +5908,24 @@ function queryFiltersFromSearch(search: string, keys: string[]) {
 
 function numericFilterValue(value: unknown) {
   return typeof value === "number" ? value : undefined;
+}
+
+function toOpportunityListFilters(query: Record<string, unknown>) {
+  const filters = { ...query };
+  delete filters.opportunity_id;
+  return filters;
+}
+
+function toContractListFilters(query: Record<string, unknown>) {
+  const filters = { ...query };
+  delete filters.contract_id;
+  return filters;
+}
+
+function toInvoiceListFilters(query: Record<string, unknown>) {
+  const filters = { ...query };
+  delete filters.invoice_id;
+  return filters;
 }
 
 function toReceivableListFilters(query: Record<string, unknown>) {

@@ -8,6 +8,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -160,6 +161,34 @@ public class DashboardService {
                 attentionReceivables(receivables, payments));
     }
 
+    public DashboardRiskResponse risks(Long userId, DashboardRiskFilter requestedFilter) {
+        DashboardRiskFilter filter = normalizeRiskFilter(requestedFilter);
+        DashboardFilter baseFilter = riskBaseFilter(filter);
+        DomainAccess opportunity = access(userId, "opportunity", "opportunity.read", OPPORTUNITY_COLUMNS);
+        DomainAccess contract = access(userId, "contract", "contract.read", CONTRACT_COLUMNS);
+        DomainAccess invoice = access(userId, "invoice", "invoice.read", INVOICE_COLUMNS);
+        DomainAccess receivable = access(userId, "receivable", "receivable.read", RECEIVABLE_COLUMNS);
+        DomainAccess payment = access(userId, "payment", "payment.read", PAYMENT_COLUMNS);
+
+        List<DashboardRiskWorkItem> workItems = riskItems(baseFilter, opportunity, contract, invoice, receivable, payment)
+                .stream()
+                .map(this::riskWorkItem)
+                .filter(item -> matchesRiskFilter(item, filter))
+                .sorted(Comparator.comparingInt(DashboardRiskWorkItem::priority_score)
+                        .reversed()
+                        .thenComparing(DashboardRiskWorkItem::amount, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(DashboardRiskWorkItem::occurred_at, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+
+        return new DashboardRiskResponse(
+                riskFilterMap(filter),
+                riskMetricCards(filter, workItems),
+                riskDashboardSummary(filter, workItems),
+                riskTrend(filter, workItems),
+                riskOwnerRanking(filter, workItems),
+                workItems);
+    }
+
     private DashboardFilter normalizeFilter(DashboardFilter filter) {
         LocalDate today = LocalDate.now();
         LocalDate defaultFrom = today.withDayOfMonth(1);
@@ -247,6 +276,36 @@ public class DashboardService {
                 filter.overdue_only());
     }
 
+    private DashboardRiskFilter normalizeRiskFilter(DashboardRiskFilter filter) {
+        LocalDate today = LocalDate.now();
+        int quarterStartMonth = ((today.getMonthValue() - 1) / 3) * 3 + 1;
+        LocalDate defaultFrom = LocalDate.of(today.getYear(), quarterStartMonth, 1);
+        LocalDate defaultTo = defaultFrom.plusMonths(3).minusDays(1);
+        LocalDate dateFrom = filter.date_from() == null ? defaultFrom : filter.date_from();
+        LocalDate dateTo = filter.date_to() == null ? defaultTo : filter.date_to();
+        return new DashboardRiskFilter(
+                dateFrom,
+                dateTo,
+                filter.department_id(),
+                filter.owner_id(),
+                filter.account_id(),
+                filter.opportunity_id(),
+                filter.risk_type(),
+                filter.risk_level(),
+                filter.object_type(),
+                filter.high_priority_only());
+    }
+
+    private static DashboardFilter riskBaseFilter(DashboardRiskFilter filter) {
+        return new DashboardFilter(
+                filter.date_from(),
+                filter.date_to(),
+                filter.department_id(),
+                filter.owner_id(),
+                filter.account_id(),
+                filter.opportunity_id());
+    }
+
     private Map<String, Object> filterMap(DashboardFilter filter) {
         Map<String, Object> filters = new LinkedHashMap<>();
         filters.put("date_from", filter.date_from());
@@ -308,6 +367,80 @@ public class DashboardService {
         filters.put("receivable_status", filter.receivable_status());
         filters.put("overdue_only", filter.overdue_only());
         return filters;
+    }
+
+    private Map<String, Object> riskFilterMap(DashboardRiskFilter filter) {
+        Map<String, Object> filters = new LinkedHashMap<>();
+        filters.put("date_from", filter.date_from());
+        filters.put("date_to", filter.date_to());
+        filters.put("department_id", filter.department_id());
+        filters.put("owner_id", filter.owner_id());
+        filters.put("account_id", filter.account_id());
+        filters.put("opportunity_id", filter.opportunity_id());
+        filters.put("risk_type", filter.risk_type());
+        filters.put("risk_level", filter.risk_level());
+        filters.put("object_type", filter.object_type());
+        filters.put("high_priority_only", filter.high_priority_only());
+        return filters;
+    }
+
+    private List<DashboardRiskMetricCard> riskMetricCards(
+            DashboardRiskFilter filter,
+            List<DashboardRiskWorkItem> items) {
+        BigDecimal riskAmount = items.stream()
+                .map(DashboardRiskWorkItem::amount)
+                .reduce(ZERO, BigDecimal::add);
+        long highRiskCount = items.stream()
+                .filter(item -> "high".equals(item.risk_level()))
+                .count();
+        long overdueRiskCount = items.stream()
+                .filter(item -> Set.of("contract_milestone_overdue", "receivable_overdue").contains(item.risk_type()))
+                .count();
+        long exceptionRiskCount = items.stream()
+                .filter(item -> "invoice_exception".equals(item.risk_type()))
+                .count();
+        long ownerCount = items.stream()
+                .map(DashboardRiskWorkItem::owner_user_id)
+                .filter(id -> id != null)
+                .distinct()
+                .count();
+        return List.of(
+                new DashboardRiskMetricCard(
+                        "risk_count",
+                        "风险总数",
+                        BigDecimal.valueOf(items.size()),
+                        "COUNT",
+                        "/dashboard/risks" + riskQueryString(filter)),
+                new DashboardRiskMetricCard(
+                        "high_risk_count",
+                        "高风险",
+                        BigDecimal.valueOf(highRiskCount),
+                        "COUNT",
+                        "/dashboard/risks" + riskQueryString(filter, "risk_level", "high")),
+                new DashboardRiskMetricCard(
+                        "risk_amount",
+                        "风险金额",
+                        riskAmount,
+                        "CNY",
+                        "/dashboard/risks" + riskQueryString(filter)),
+                new DashboardRiskMetricCard(
+                        "overdue_risk_count",
+                        "逾期风险",
+                        BigDecimal.valueOf(overdueRiskCount),
+                        "COUNT",
+                        "/dashboard/risks" + riskQueryString(filter)),
+                new DashboardRiskMetricCard(
+                        "exception_risk_count",
+                        "异常风险",
+                        BigDecimal.valueOf(exceptionRiskCount),
+                        "COUNT",
+                        "/dashboard/risks" + riskQueryString(filter, "risk_type", "invoice_exception")),
+                new DashboardRiskMetricCard(
+                        "owner_count",
+                        "责任人数",
+                        BigDecimal.valueOf(ownerCount),
+                        "COUNT",
+                        "/dashboard/risks" + riskQueryString(filter)));
     }
 
     private List<DashboardMetricCard> receivableMetricCards(
@@ -1211,18 +1344,184 @@ public class DashboardService {
             DomainAccess invoice,
             DomainAccess receivable,
             DomainAccess payment) {
+        return riskItems(filter, opportunity, contract, invoice, receivable, payment).stream()
+                .sorted(Comparator.comparing(DashboardRiskItem::amount, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .reversed()
+                        .thenComparing(DashboardRiskItem::occurred_at, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(8)
+                .toList();
+    }
+
+    private List<DashboardRiskItem> riskItems(
+            DashboardFilter filter,
+            DomainAccess opportunity,
+            DomainAccess contract,
+            DomainAccess invoice,
+            DomainAccess receivable,
+            DomainAccess payment) {
         List<DashboardRiskItem> risks = new ArrayList<>();
         risks.addAll(opportunityRiskItems(filter, opportunity));
         risks.addAll(contractRiskItems(filter, contract));
         risks.addAll(invoiceRiskItems(filter, invoice));
         risks.addAll(receivableRiskItems(filter, receivable));
         risks.addAll(paymentRiskItems(filter, payment));
-        return risks.stream()
-                .sorted(Comparator.comparing(DashboardRiskItem::amount, Comparator.nullsLast(Comparator.naturalOrder()))
-                        .reversed()
-                        .thenComparing(DashboardRiskItem::occurred_at, Comparator.nullsLast(Comparator.reverseOrder())))
-                .limit(8)
+        return risks;
+    }
+
+    private List<DashboardRiskSummary> riskDashboardSummary(
+            DashboardRiskFilter filter,
+            List<DashboardRiskWorkItem> items) {
+        Map<String, RiskAccumulator> accumulators = new LinkedHashMap<>();
+        items.forEach(item -> accumulators
+                .computeIfAbsent(item.risk_type(), ignored -> new RiskAccumulator(item.risk_label()))
+                .add(item.amount(), item.risk_level()));
+        return accumulators.entrySet().stream()
+                .map(entry -> new DashboardRiskSummary(
+                        entry.getKey(),
+                        entry.getValue().label(),
+                        entry.getValue().count(),
+                        entry.getValue().amount(),
+                        entry.getValue().highestLevel(),
+                        "/dashboard/risks" + riskQueryString(filter, "risk_type", entry.getKey())))
                 .toList();
+    }
+
+    private List<DashboardRiskTrendPoint> riskTrend(DashboardRiskFilter filter, List<DashboardRiskWorkItem> items) {
+        Map<String, RiskTrendAccumulator> accumulators = new LinkedHashMap<>();
+        items.stream()
+                .sorted(Comparator.comparing(DashboardRiskWorkItem::occurred_at, Comparator.nullsLast(Comparator.naturalOrder())))
+                .forEach(item -> {
+                    String period = item.occurred_at() == null
+                            ? YearMonth.from(filter.date_from()).toString()
+                            : YearMonth.from(item.occurred_at()).toString();
+                    accumulators.computeIfAbsent(period, ignored -> new RiskTrendAccumulator())
+                            .add(item.amount(), item.risk_level());
+                });
+        return accumulators.entrySet().stream()
+                .map(entry -> new DashboardRiskTrendPoint(
+                        entry.getKey(),
+                        entry.getValue().count(),
+                        entry.getValue().amount(),
+                        entry.getValue().highCount(),
+                        "/dashboard/risks" + riskQueryString(filter)))
+                .toList();
+    }
+
+    private List<DashboardRiskOwnerSummary> riskOwnerRanking(
+            DashboardRiskFilter filter,
+            List<DashboardRiskWorkItem> items) {
+        Map<Long, RiskOwnerAccumulator> accumulators = new LinkedHashMap<>();
+        items.stream()
+                .filter(item -> item.owner_user_id() != null)
+                .forEach(item -> accumulators
+                        .computeIfAbsent(item.owner_user_id(), ignored -> new RiskOwnerAccumulator(item.owner_name()))
+                        .add(item.amount(), item.priority_score()));
+        return accumulators.entrySet().stream()
+                .map(entry -> new DashboardRiskOwnerSummary(
+                        entry.getKey(),
+                        entry.getValue().ownerName(),
+                        entry.getValue().count(),
+                        entry.getValue().amount(),
+                        entry.getValue().highestPriorityScore(),
+                        "/dashboard/risks" + riskQueryString(filter, "owner_id", entry.getKey().toString())))
+                .sorted(Comparator.comparingInt(DashboardRiskOwnerSummary::highest_priority_score)
+                        .reversed()
+                        .thenComparing(DashboardRiskOwnerSummary::amount, Comparator.reverseOrder()))
+                .limit(10)
+                .toList();
+    }
+
+    private DashboardRiskWorkItem riskWorkItem(DashboardRiskItem item) {
+        int priorityScore = priorityScore(item);
+        return new DashboardRiskWorkItem(
+                item.risk_type(),
+                riskLabel(item.risk_type()),
+                item.risk_level(),
+                item.title(),
+                item.amount(),
+                item.object_type(),
+                item.object_id(),
+                item.owner_user_id(),
+                userName(item.owner_user_id()),
+                item.account_id(),
+                accountName(item.account_id()),
+                item.opportunity_id(),
+                priorityScore,
+                suggestedAction(item.risk_type()),
+                item.occurred_at(),
+                item.drilldown_url());
+    }
+
+    private static boolean matchesRiskFilter(DashboardRiskWorkItem item, DashboardRiskFilter filter) {
+        if (filter.risk_type() != null && !filter.risk_type().equals(item.risk_type())) {
+            return false;
+        }
+        if (filter.risk_level() != null && !filter.risk_level().equals(item.risk_level())) {
+            return false;
+        }
+        if (filter.object_type() != null && !filter.object_type().equals(item.object_type())) {
+            return false;
+        }
+        return !Boolean.TRUE.equals(filter.high_priority_only()) || item.priority_score() >= 300;
+    }
+
+    private static int priorityScore(DashboardRiskItem item) {
+        int levelScore = switch (item.risk_level()) {
+            case "high" -> 300;
+            case "medium" -> 200;
+            case "low" -> 100;
+            default -> 0;
+        };
+        int amountScore = item.amount().compareTo(new BigDecimal("500000")) >= 0 ? 80
+                : item.amount().compareTo(new BigDecimal("100000")) >= 0 ? 40 : 10;
+        int ageScore = item.occurred_at() == null ? 0
+                : (int) Math.min(60, Math.max(0, LocalDate.now().toEpochDay()
+                        - item.occurred_at().toLocalDate().toEpochDay()));
+        return levelScore + amountScore + ageScore;
+    }
+
+    private static String riskLabel(String riskType) {
+        return switch (riskType) {
+            case "opportunity_stalled" -> "商机停滞";
+            case "contract_milestone_overdue" -> "合同节点逾期";
+            case "invoice_exception" -> "开票异常";
+            case "receivable_overdue" -> "回款逾期";
+            case "unreconciled_payment" -> "未核销回款";
+            default -> "风险";
+        };
+    }
+
+    private static String suggestedAction(String riskType) {
+        return switch (riskType) {
+            case "opportunity_stalled" -> "补充客户触达记录，确认下一步推进动作";
+            case "contract_milestone_overdue" -> "确认合同节点责任人与延期处理方案";
+            case "invoice_exception" -> "核对开票异常原因并推进更正或作废";
+            case "receivable_overdue" -> "跟进客户回款安排，补充回款跟进记录";
+            case "unreconciled_payment" -> "核对到账与发票，完成核销处理";
+            default -> "确认风险原因并更新处理进展";
+        };
+    }
+
+    private String userName(Long userId) {
+        if (userId == null) {
+            return "";
+        }
+        List<String> names = jdbcTemplate.query(
+                "select name from sys_users where id = ?",
+                (rs, rowNum) -> rs.getString("name"),
+                userId);
+        return names.isEmpty() ? "用户#" + userId : names.get(0);
+    }
+
+    private String accountName(Long accountId) {
+        if (accountId == null) {
+            return "";
+        }
+        List<String> names = jdbcTemplate.query(
+                "select account_name from crm_accounts where id = ?",
+                (rs, rowNum) -> rs.getString("account_name"),
+                accountId);
+        return names.isEmpty() ? "客户#" + accountId : names.get(0);
     }
 
     private BigDecimal sumOpportunityForecast(DashboardFilter filter, DomainAccess access) {
@@ -1553,7 +1852,7 @@ public class DashboardService {
         appendTimestampFilter(filters, params, "m.planned_at", filter.date_from(), filter.date_to());
         appendContractFilters(filters, params, filter);
         return jdbcTemplate.query("""
-                select m.id, m.milestone_name, c.contract_amount, c.owner_user_id, c.account_id,
+                select m.id, m.milestone_name, c.id as contract_id, c.contract_amount, c.owner_user_id, c.account_id,
                        c.opportunity_id, m.planned_at as occurred_at
                 from crm_contract_milestones m
                 join crm_contracts c on c.id = m.contract_id and c.deleted_at is null
@@ -1574,7 +1873,7 @@ public class DashboardService {
                         rs.getLong("account_id"),
                         nullableLong(rs.getObject("opportunity_id")),
                         rs.getObject("occurred_at", OffsetDateTime.class),
-                        "/contracts"),
+                        "/contracts?contract_id=" + rs.getLong("contract_id")),
                 params.toArray());
     }
 
@@ -2406,6 +2705,40 @@ public class DashboardService {
         return "?" + String.join("&", parts);
     }
 
+    private static String riskQueryString(DashboardRiskFilter filter) {
+        return riskQueryString(filter, null, null);
+    }
+
+    private static String riskQueryString(DashboardRiskFilter filter, String overrideKey, String overrideValue) {
+        List<String> parts = new ArrayList<>();
+        parts.add("date_from=" + filter.date_from());
+        parts.add("date_to=" + filter.date_to());
+        appendQueryPart(parts, "department_id", filter.department_id(), overrideKey, overrideValue);
+        appendQueryPart(parts, "owner_id", filter.owner_id(), overrideKey, overrideValue);
+        appendQueryPart(parts, "account_id", filter.account_id(), overrideKey, overrideValue);
+        appendQueryPart(parts, "opportunity_id", filter.opportunity_id(), overrideKey, overrideValue);
+        appendQueryPart(parts, "risk_type", filter.risk_type(), overrideKey, overrideValue);
+        appendQueryPart(parts, "risk_level", filter.risk_level(), overrideKey, overrideValue);
+        appendQueryPart(parts, "object_type", filter.object_type(), overrideKey, overrideValue);
+        appendQueryPart(parts, "high_priority_only", filter.high_priority_only(), overrideKey, overrideValue);
+        if (overrideKey != null && parts.stream().noneMatch(part -> part.startsWith(overrideKey + "="))) {
+            parts.add(overrideKey + "=" + overrideValue);
+        }
+        return "?" + String.join("&", parts);
+    }
+
+    private static void appendQueryPart(
+            List<String> parts,
+            String key,
+            Object value,
+            String overrideKey,
+            String overrideValue) {
+        Object effectiveValue = key.equals(overrideKey) ? overrideValue : value;
+        if (effectiveValue != null) {
+            parts.add(key + "=" + effectiveValue);
+        }
+    }
+
     private static BigDecimal amount(BigDecimal amount) {
         return amount == null ? ZERO : amount;
     }
@@ -2676,6 +3009,109 @@ public class DashboardService {
         BigDecimal gapAmount() {
             return positiveGap(plannedAmount, receivedAmount);
         }
+    }
+
+    private static final class RiskAccumulator {
+        private final String label;
+        private long count;
+        private BigDecimal amount = ZERO;
+        private String highestLevel = "none";
+
+        private RiskAccumulator(String label) {
+            this.label = label;
+        }
+
+        void add(BigDecimal amountToAdd, String level) {
+            count++;
+            amount = amount.add(DashboardService.amount(amountToAdd));
+            if (riskLevelWeight(level) > riskLevelWeight(highestLevel)) {
+                highestLevel = level;
+            }
+        }
+
+        String label() {
+            return label;
+        }
+
+        long count() {
+            return count;
+        }
+
+        BigDecimal amount() {
+            return amount;
+        }
+
+        String highestLevel() {
+            return highestLevel;
+        }
+    }
+
+    private static final class RiskTrendAccumulator {
+        private long count;
+        private BigDecimal amount = ZERO;
+        private long highCount;
+
+        void add(BigDecimal amountToAdd, String level) {
+            count++;
+            amount = amount.add(DashboardService.amount(amountToAdd));
+            if ("high".equals(level)) {
+                highCount++;
+            }
+        }
+
+        long count() {
+            return count;
+        }
+
+        BigDecimal amount() {
+            return amount;
+        }
+
+        long highCount() {
+            return highCount;
+        }
+    }
+
+    private static final class RiskOwnerAccumulator {
+        private final String ownerName;
+        private long count;
+        private BigDecimal amount = ZERO;
+        private int highestPriorityScore;
+
+        private RiskOwnerAccumulator(String ownerName) {
+            this.ownerName = ownerName;
+        }
+
+        void add(BigDecimal amountToAdd, int priorityScore) {
+            count++;
+            amount = amount.add(DashboardService.amount(amountToAdd));
+            highestPriorityScore = Math.max(highestPriorityScore, priorityScore);
+        }
+
+        String ownerName() {
+            return ownerName;
+        }
+
+        long count() {
+            return count;
+        }
+
+        BigDecimal amount() {
+            return amount;
+        }
+
+        int highestPriorityScore() {
+            return highestPriorityScore;
+        }
+    }
+
+    private static int riskLevelWeight(String level) {
+        return switch (level) {
+            case "high" -> 3;
+            case "medium" -> 2;
+            case "low" -> 1;
+            default -> 0;
+        };
     }
 
     private record DomainAccess(boolean visible, String clause, List<Object> parameters) {
