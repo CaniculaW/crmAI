@@ -11,6 +11,9 @@ import com.canicula.crmai.auth.ForbiddenException;
 import com.canicula.crmai.contact.ContactCreateRequest;
 import com.canicula.crmai.contact.ContactResponse;
 import com.canicula.crmai.contact.ContactService;
+import com.canicula.crmai.identity.DataPermissionColumns;
+import com.canicula.crmai.identity.DataPermissionCondition;
+import com.canicula.crmai.identity.DataPermissionService;
 import com.canicula.crmai.opportunity.OpportunityCreateRequest;
 import com.canicula.crmai.opportunity.OpportunityResponse;
 import com.canicula.crmai.opportunity.OpportunityService;
@@ -31,7 +34,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 public class AiDraftService {
@@ -40,27 +46,42 @@ public class AiDraftService {
     };
     private static final TypeReference<List<String>> STRING_LIST_TYPE = new TypeReference<>() {
     };
+    private static final DataPermissionColumns ACCOUNT_PERMISSION_COLUMNS = new DataPermissionColumns(
+            "a.owner_user_id",
+            "a.owner_department_id",
+            "exists (select 1 from crm_account_collaborators ac where ac.account_id = a.id and ac.user_id = ?)");
+    private static final DataPermissionColumns OPPORTUNITY_PERMISSION_COLUMNS = new DataPermissionColumns(
+            "o.owner_user_id",
+            "o.owner_department_id",
+            "exists (select 1 from crm_opportunity_collaborators oc where oc.opportunity_id = o.id and oc.user_id = ?)");
 
     private final AccountService accountService;
     private final ContactService contactService;
     private final OpportunityService opportunityService;
     private final ActivityService activityService;
+    private final DataPermissionService dataPermissionService;
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
+    private final TransactionTemplate auditLogTransactionTemplate;
 
     AiDraftService(
             AccountService accountService,
             ContactService contactService,
             OpportunityService opportunityService,
             ActivityService activityService,
+            DataPermissionService dataPermissionService,
             JdbcTemplate jdbcTemplate,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            PlatformTransactionManager transactionManager) {
         this.accountService = accountService;
         this.contactService = contactService;
         this.opportunityService = opportunityService;
         this.activityService = activityService;
+        this.dataPermissionService = dataPermissionService;
         this.jdbcTemplate = jdbcTemplate;
         this.objectMapper = objectMapper;
+        this.auditLogTransactionTemplate = new TransactionTemplate(transactionManager);
+        this.auditLogTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     @Transactional
@@ -124,6 +145,7 @@ public class AiDraftService {
         if (!draft.missing_fields().isEmpty()) {
             throw new BusinessRuleException("草稿仍有缺失字段，不能写入");
         }
+        claimDraftForWriting(draftId, userId);
         try {
             WriteResult writeResult = writeDraft(draft, userId);
             jdbcTemplate.update(
@@ -135,15 +157,18 @@ public class AiDraftService {
                         confirmed_by = ?,
                         confirmed_at = current_timestamp
                     where id = ?
+                      and created_by = ?
+                      and status = 'writing'
                     """,
                     writeResult.objectType(),
                     writeResult.objectId(),
                     userId,
-                    draftId);
+                    draftId,
+                    userId);
             insertWriteLog(draft, "confirm", writeResult.objectType(), writeResult.objectId(), "success", null, userId, traceId);
             return findOwnedDraft(draftId, userId);
         } catch (RuntimeException exception) {
-            insertWriteLog(draft, "confirm", draft.draft_type(), null, "failed", exception.getMessage(), userId, traceId);
+            insertWriteLogInNewTransaction(draft, "confirm", draft.draft_type(), null, "failed", exception.getMessage(), userId, traceId);
             throw exception;
         }
     }
@@ -154,7 +179,7 @@ public class AiDraftService {
         if (!Set.of("pending_confirmation", "need_more_info").contains(draft.status())) {
             throw new BusinessRuleException("只有未处理草稿可以拒绝");
         }
-        jdbcTemplate.update(
+        int updatedRows = jdbcTemplate.update(
                 """
                 update ai_extraction_drafts
                 set status = 'rejected',
@@ -162,10 +187,16 @@ public class AiDraftService {
                     rejected_by = ?,
                     rejected_at = current_timestamp
                 where id = ?
+                  and created_by = ?
+                  and status in ('pending_confirmation', 'need_more_info')
                 """,
                 blankToDefault(reason, "用户拒绝草稿"),
                 userId,
-                draftId);
+                draftId,
+                userId);
+        if (updatedRows != 1) {
+            throw new BusinessRuleException("草稿已被处理，请刷新后重试");
+        }
         insertWriteLog(draft, "reject", draft.draft_type(), null, "success", null, userId, traceId);
         return findOwnedDraft(draftId, userId);
     }
@@ -208,7 +239,7 @@ public class AiDraftService {
         put(payload, "key_needs", firstValue(values, "需求", "痛点"));
         put(payload, "remark", "AI文本录入草稿");
         List<String> missing = missing(payload, "account_name", "owner_department_id", "owner_user_id");
-        List<String> conflicts = accountName == null ? List.of() : accountConflicts(accountName);
+        List<String> conflicts = accountName == null ? List.of() : accountConflicts(accountName, userId);
         return new ParsedDraft(
                 "account",
                 missing.isEmpty() ? "pending_confirmation" : "need_more_info",
@@ -222,7 +253,7 @@ public class AiDraftService {
     private ParsedDraft contactDraft(String line, Long userId) {
         Map<String, String> values = splitFields(line, "联系人");
         String contactName = firstValue(values, "联系人", "姓名", "联系人姓名");
-        Long accountId = findAccountId(firstValue(values, "客户", "客户名称"));
+        Long accountId = findAccountId(firstValue(values, "客户", "客户名称"), userId);
         Map<String, Object> payload = new LinkedHashMap<>();
         put(payload, "account_id", accountId);
         put(payload, "name", contactName);
@@ -252,7 +283,7 @@ public class AiDraftService {
     private ParsedDraft opportunityDraft(String line, Long userId) {
         Map<String, String> values = splitFields(line, line.startsWith("线索") ? "线索" : "商机");
         String opportunityName = firstValue(values, "商机", "线索", "商机名称", "名称");
-        Long accountId = findAccountId(firstValue(values, "客户", "客户名称"));
+        Long accountId = findAccountId(firstValue(values, "客户", "客户名称"), userId);
         Map<String, Object> payload = new LinkedHashMap<>();
         put(payload, "account_id", accountId);
         put(payload, "opportunity_name", opportunityName);
@@ -284,8 +315,8 @@ public class AiDraftService {
     private ParsedDraft activityDraft(String line, Long userId) {
         Map<String, String> values = splitFields(line, line.startsWith("拜访") ? "拜访" : "行动");
         String subject = firstValue(values, "行动", "拜访", "主题", "行动主题");
-        Long accountId = findAccountId(firstValue(values, "客户", "客户名称"));
-        Long opportunityId = findOpportunityId(firstValue(values, "商机", "商机名称"), accountId);
+        Long accountId = findAccountId(firstValue(values, "客户", "客户名称"), userId);
+        Long opportunityId = findOpportunityId(firstValue(values, "商机", "商机名称"), accountId, userId);
         Map<String, Object> payload = new LinkedHashMap<>();
         put(payload, "account_id", accountId);
         put(payload, "opportunity_id", opportunityId);
@@ -457,6 +488,22 @@ public class AiDraftService {
         return findOwnedDraft(keyHolder.getKey().longValue(), userId);
     }
 
+    private void claimDraftForWriting(Long draftId, Long userId) {
+        int updatedRows = jdbcTemplate.update(
+                """
+                update ai_extraction_drafts
+                set status = 'writing'
+                where id = ?
+                  and created_by = ?
+                  and status = 'pending_confirmation'
+                """,
+                draftId,
+                userId);
+        if (updatedRows != 1) {
+            throw new BusinessRuleException("草稿已被处理，请刷新后重试");
+        }
+    }
+
     private AiDraftResponse findOwnedDraft(Long draftId, Long userId) {
         return jdbcTemplate.queryForObject(
                 """
@@ -518,6 +565,19 @@ public class AiDraftService {
                 traceId);
     }
 
+    private void insertWriteLogInNewTransaction(
+            AiDraftResponse draft,
+            String operation,
+            String objectType,
+            Long objectId,
+            String status,
+            String errorMessage,
+            Long userId,
+            String traceId) {
+        auditLogTransactionTemplate.executeWithoutResult(statusContext ->
+                insertWriteLog(draft, operation, objectType, objectId, status, errorMessage, userId, traceId));
+    }
+
     private Map<String, String> splitFields(String line, String firstKey) {
         Map<String, String> values = new LinkedHashMap<>();
         String normalized = line.replace('，', ',').replace('：', ':');
@@ -537,46 +597,62 @@ public class AiDraftService {
         return values;
     }
 
-    private Long findAccountId(String accountName) {
+    private Long findAccountId(String accountName, Long userId) {
         if (accountName == null || accountName.isBlank()) {
             return null;
         }
-        List<Long> ids = jdbcTemplate.queryForList(
+        DataPermissionCondition condition = dataPermissionService.buildCondition(
+                userId,
+                "account",
+                ACCOUNT_PERMISSION_COLUMNS);
+        List<Object> parameters = new ArrayList<>();
+        parameters.add(accountName);
+        parameters.addAll(condition.parameters());
+        List<Long> ids = jdbcTemplate.query(
                 """
-                select id
-                from crm_accounts
-                where account_name = ?
-                  and deleted_at is null
+                select a.id
+                from crm_accounts a
+                where a.account_name = ?
+                  and a.deleted_at is null
+                  and %s
                 order by id desc
                 limit 1
-                """,
-                Long.class,
-                accountName);
+                """.formatted(condition.clause()),
+                (rs, rowNum) -> rs.getLong("id"),
+                parameters.toArray());
         return ids.isEmpty() ? null : ids.get(0);
     }
 
-    private Long findOpportunityId(String opportunityName, Long accountId) {
+    private Long findOpportunityId(String opportunityName, Long accountId, Long userId) {
         if (opportunityName == null || opportunityName.isBlank() || accountId == null) {
             return null;
         }
-        List<Long> ids = jdbcTemplate.queryForList(
+        DataPermissionCondition condition = dataPermissionService.buildCondition(
+                userId,
+                "opportunity",
+                OPPORTUNITY_PERMISSION_COLUMNS);
+        List<Object> parameters = new ArrayList<>();
+        parameters.add(accountId);
+        parameters.add(opportunityName);
+        parameters.addAll(condition.parameters());
+        List<Long> ids = jdbcTemplate.query(
                 """
-                select id
-                from crm_opportunities
-                where account_id = ?
-                  and opportunity_name = ?
-                  and deleted_at is null
+                select o.id
+                from crm_opportunities o
+                where o.account_id = ?
+                  and o.opportunity_name = ?
+                  and o.deleted_at is null
+                  and %s
                 order by id desc
                 limit 1
-                """,
-                Long.class,
-                accountId,
-                opportunityName);
+                """.formatted(condition.clause()),
+                (rs, rowNum) -> rs.getLong("id"),
+                parameters.toArray());
         return ids.isEmpty() ? null : ids.get(0);
     }
 
-    private List<String> accountConflicts(String accountName) {
-        Long accountId = findAccountId(accountName);
+    private List<String> accountConflicts(String accountName, Long userId) {
+        Long accountId = findAccountId(accountName, userId);
         return accountId == null ? List.of() : List.of("客户名称已存在，需确认是否新建");
     }
 

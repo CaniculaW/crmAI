@@ -194,10 +194,116 @@ class AiDraftControllerTest {
         assertThat(existingAccount.id()).isPositive();
     }
 
+    @Test
+    void parseOnlyResolvesReadableRelatedObjects() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long hiddenDepartmentId = createDepartment("ai-draft-hidden-dept-" + suffix);
+        Long visibleDepartmentId = createDepartment("ai-draft-visible-dept-" + suffix);
+        TestUser hiddenUser = createLoginReadyUser(
+                "ai_draft_hidden_" + suffix,
+                hiddenDepartmentId,
+                List.of("account.create", "account.read", "opportunity.create", "opportunity.read"),
+                List.of("account", "opportunity"),
+                List.of("department"));
+        TestUser visibleUser = createLoginReadyUser(
+                "ai_draft_visible_" + suffix,
+                visibleDepartmentId,
+                List.of(
+                        "ai.draft.manage",
+                        "contact.create",
+                        "contact.read",
+                        "activity.create",
+                        "activity.read",
+                        "account.read",
+                        "opportunity.read"),
+                List.of("account", "opportunity", "contact", "activity"),
+                List.of("department"));
+        AccountResponse hiddenAccount = createAccount("AI草稿隐藏客户-" + suffix, hiddenDepartmentId, hiddenUser.userId());
+        OpportunityResponse hiddenOpportunity = createOpportunity(
+                hiddenAccount.id(),
+                "AI草稿隐藏商机-" + suffix,
+                hiddenDepartmentId,
+                hiddenUser.userId());
+        String sourceText = """
+                联系人：隐藏联系人-%s，客户：AI草稿隐藏客户-%s，职务：采购负责人
+                行动：隐藏商机拜访-%s，客户：AI草稿隐藏客户-%s，商机：AI草稿隐藏商机-%s，时间：2026-07-07T10:00:00+08:00，内容：不可见对象不应被解析
+                """.formatted(suffix, suffix, suffix, suffix, suffix);
+
+        ResponseEntity<JsonNode> parseResponse = restTemplate.exchange(
+                "/api/ai-drafts/parse",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("source_text", sourceText), authHeaders(visibleUser.token(), "ai-draft-readable-parse-trace-001")),
+                JsonNode.class);
+
+        assertThat(parseResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode drafts = parseResponse.getBody().path("data").path("drafts");
+        JsonNode contactDraft = findDraft(drafts, "contact");
+        JsonNode activityDraft = findDraft(drafts, "activity");
+        assertThat(contactDraft.path("status").asText()).isEqualTo("need_more_info");
+        assertThat(contactDraft.path("missing_fields")).anySatisfy(field ->
+                assertThat(field.asText()).isEqualTo("account_id"));
+        assertThat(contactDraft.path("payload").has("account_id")).isFalse();
+        assertThat(activityDraft.path("status").asText()).isEqualTo("need_more_info");
+        assertThat(activityDraft.path("payload").has("account_id")).isFalse();
+        assertThat(activityDraft.path("payload").has("opportunity_id")).isFalse();
+        assertThat(hiddenOpportunity.id()).isPositive();
+    }
+
+    @Test
+    void confirmingDraftTwiceDoesNotDuplicateBusinessWrite() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("ai-draft-repeat-dept-" + suffix);
+        TestUser user = createLoginReadyUser(
+                "ai_draft_repeat_" + suffix,
+                departmentId,
+                List.of("ai.draft.manage", "account.create", "account.read"),
+                List.of("account"),
+                List.of("department"));
+        String accountName = "AI草稿重复确认客户-" + suffix;
+        JsonNode drafts = restTemplate.exchange(
+                        "/api/ai-drafts/parse",
+                        HttpMethod.POST,
+                        new HttpEntity<>(Map.of("source_text", "客户：" + accountName + "，行业：软件，地区：北京"),
+                                authHeaders(user.token(), "ai-draft-repeat-parse-trace-001")),
+                        JsonNode.class)
+                .getBody()
+                .path("data")
+                .path("drafts");
+        long accountDraftId = findDraftId(drafts, "account");
+
+        ResponseEntity<JsonNode> firstConfirm = restTemplate.exchange(
+                "/api/ai-drafts/" + accountDraftId + "/confirm",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(), authHeaders(user.token(), "ai-draft-repeat-confirm-001")),
+                JsonNode.class);
+        ResponseEntity<JsonNode> secondConfirm = restTemplate.exchange(
+                "/api/ai-drafts/" + accountDraftId + "/confirm",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(), authHeaders(user.token(), "ai-draft-repeat-confirm-002")),
+                JsonNode.class);
+
+        assertThat(firstConfirm.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(secondConfirm.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        Integer accountCount = jdbcTemplate.queryForObject(
+                "select count(*) from crm_accounts where account_name = ? and deleted_at is null",
+                Integer.class,
+                accountName);
+        Integer successLogCount = jdbcTemplate.queryForObject(
+                "select count(*) from ai_write_logs where draft_id = ? and operation = 'confirm' and status = 'success'",
+                Integer.class,
+                accountDraftId);
+        assertThat(accountCount).isEqualTo(1);
+        assertThat(successLogCount).isEqualTo(1);
+    }
+
     private static long findDraftId(JsonNode drafts, String draftType) {
+        return findDraft(drafts, draftType).path("id").asLong();
+    }
+
+    private static JsonNode findDraft(JsonNode drafts, String draftType) {
         for (JsonNode draft : drafts) {
             if (draft.path("draft_type").asText().equals(draftType)) {
-                return draft.path("id").asLong();
+                return draft;
             }
         }
         throw new AssertionError("Missing draft type " + draftType);

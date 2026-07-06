@@ -863,6 +863,20 @@ const apiData = {
       permission_name: "查看审计日志",
       permission_type: "operation",
       module_code: "system"
+    },
+    {
+      id: 4301,
+      permission_code: "ai.context.read",
+      permission_name: "查看AI上下文",
+      permission_type: "operation",
+      module_code: "ai"
+    },
+    {
+      id: 4302,
+      permission_code: "ai.draft.manage",
+      permission_name: "管理AI草稿",
+      permission_type: "operation",
+      module_code: "ai"
     }
   ]
 };
@@ -1950,6 +1964,21 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByLabelText("登记发票")).toBeInTheDocument();
     expect(screen.getByText("V2 核销")).toBeInTheDocument();
     expect(screen.getByLabelText("撤销核销")).toBeInTheDocument();
+  });
+
+  it("shows AI permissions in role authorization", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getAllByRole("link", { name: "角色权限" })[0]);
+    await user.click(screen.getByRole("button", { name: "授权" }));
+
+    expect(await screen.findByText("AI 助手")).toBeInTheDocument();
+    expect(screen.getByLabelText("查看AI上下文")).toBeInTheDocument();
+    expect(screen.getByLabelText("管理AI草稿")).toBeInTheDocument();
   });
 
   it("filters audit logs by V2 quick actions", async () => {

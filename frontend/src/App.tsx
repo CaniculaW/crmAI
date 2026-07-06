@@ -214,6 +214,7 @@ const permissionGroups = [
   { label: "V2 回款", modules: ["receivable", "payment"] },
   { label: "V2 核销", modules: ["reconciliation"] },
   { label: "附件", modules: ["attachment"] },
+  { label: "AI 助手", modules: ["ai"] },
   { label: "系统管理", modules: ["system"] }
 ];
 
