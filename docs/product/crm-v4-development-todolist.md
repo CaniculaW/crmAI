@@ -128,7 +128,7 @@ V4 当前进度：
 上一模块：
 - 状态：Done
 - 验证结果：AI 文本录入与草稿确认后端、OpenAPI、前端、构建、PostgreSQL 迁移和浏览器 UAT 已通过；证据截图：`docs/testing/evidence/artifacts/v4-ai-drafts-uat-20260706.png`
-- 提交号：d3851d377f83d4ebcfd2a77e026cb0e514e32f79
+- 提交号：d3851d377f83d4ebcfd2a77e026cb0e514e32f79、848aa2e28b58d153ecbfd411913780087002ffda
 - 遗留问题：无
 ```
 
