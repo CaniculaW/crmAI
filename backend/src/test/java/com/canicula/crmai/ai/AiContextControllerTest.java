@@ -102,7 +102,7 @@ class AiContextControllerTest {
                         "contract.read",
                         "receivable.read"),
                 List.of("account", "contact", "opportunity", "activity", "solution", "contract", "receivable"),
-                List.of("global"));
+                List.of("department"));
         SalesFixture fixture = createSalesFixture(suffix, departmentId, user.userId());
 
         ResponseEntity<JsonNode> response = restTemplate.exchange(
@@ -143,7 +143,7 @@ class AiContextControllerTest {
                         "contract.read",
                         "receivable.read"),
                 List.of("account", "contact", "opportunity", "activity", "solution", "contract", "receivable"),
-                List.of("global"));
+                List.of("department"));
         SalesFixture fixture = createSalesFixture(suffix, departmentId, user.userId());
 
         ResponseEntity<JsonNode> response = restTemplate.exchange(
@@ -188,7 +188,7 @@ class AiContextControllerTest {
                         "contract.read",
                         "receivable.read"),
                 List.of("account", "contact", "opportunity", "activity", "solution", "contract", "receivable"),
-                List.of("global"));
+                List.of("department"));
         SalesFixture fixture = createSalesFixture(suffix, departmentId, user.userId());
 
         ResponseEntity<JsonNode> response = restTemplate.exchange(
@@ -224,7 +224,7 @@ class AiContextControllerTest {
                 departmentId,
                 List.of("account.read", "contact.read", "opportunity.read", "activity.read"),
                 List.of("account", "contact", "opportunity", "activity"),
-                List.of("global"));
+                List.of("department"));
 
         ResponseEntity<JsonNode> response = restTemplate.exchange(
                 "/api/ai-context/summary",
@@ -252,14 +252,14 @@ class AiContextControllerTest {
                         "contract.read",
                         "receivable.read"),
                 List.of("account", "contact", "opportunity", "activity", "solution", "contract", "receivable"),
-                List.of("global"));
+                List.of("department"));
         SalesFixture fixture = createSalesFixture(suffix, departmentId, owner.userId());
         TestUser limitedUser = createLoginReadyUser(
                 "ai_context_limited_" + suffix,
                 departmentId,
                 List.of("ai.context.read", "account.read", "opportunity.read", "activity.read"),
                 List.of("account", "opportunity", "activity", "contact", "solution", "contract", "receivable"),
-                List.of("global"));
+                List.of("department"));
 
         ResponseEntity<JsonNode> summaryResponse = restTemplate.exchange(
                 "/api/ai-context/summary",
@@ -306,20 +306,20 @@ class AiContextControllerTest {
                         "contract.read",
                         "receivable.read"),
                 List.of("account", "contact", "opportunity", "activity", "solution", "contract", "receivable"),
-                List.of("global"));
+                List.of("department"));
         SalesFixture fixture = createSalesFixture(suffix, departmentId, owner.userId());
         TestUser noAccountRead = createLoginReadyUser(
                 "ai_context_no_account_" + suffix,
                 departmentId,
                 List.of("ai.context.read", "opportunity.read"),
                 List.of("account", "opportunity"),
-                List.of("global"));
+                List.of("department"));
         TestUser noOpportunityRead = createLoginReadyUser(
                 "ai_context_no_opportunity_" + suffix,
                 departmentId,
                 List.of("ai.context.read", "account.read"),
                 List.of("account", "opportunity"),
-                List.of("global"));
+                List.of("department"));
 
         ResponseEntity<JsonNode> accountResponse = restTemplate.exchange(
                 "/api/ai-context/accounts/" + fixture.accountId(),

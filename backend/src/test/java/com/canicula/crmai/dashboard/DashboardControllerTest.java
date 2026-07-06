@@ -53,53 +53,57 @@ class DashboardControllerTest {
                 "dashboard_all_" + suffix,
                 departmentId,
                 allDashboardPermissions(),
-                List.of("global"));
+                List.of("department"));
         DashboardFixture fixture = createCompleteFixture(suffix, departmentId, user.userId());
 
-        ResponseEntity<JsonNode> response = restTemplate.exchange(
-                "/api/dashboard/overview?date_from=2026-07-01&date_to=2026-07-31",
-                HttpMethod.GET,
-                new HttpEntity<>(authHeaders(user.token(), "dashboard-overview-trace-001")),
-                JsonNode.class);
+        try {
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    "/api/dashboard/overview?date_from=2026-07-01&date_to=2026-07-31",
+                    HttpMethod.GET,
+                    new HttpEntity<>(authHeaders(user.token(), "dashboard-overview-trace-001")),
+                    JsonNode.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        JsonNode data = response.getBody().path("data");
-        assertThat(data.path("filters").path("date_from").asText()).isEqualTo("2026-07-01");
-        assertThat(data.path("filters").path("date_to").asText()).isEqualTo("2026-07-31");
-        assertThat(data.path("metric_cards")).anySatisfy(card -> {
-            assertThat(card.path("key").asText()).isEqualTo("forecast_amount");
-            assertThat(card.path("label").asText()).isEqualTo("预测金额");
-            assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(900000));
-            assertThat(card.path("unit").asText()).isEqualTo("CNY");
-            assertThat(card.path("drilldown_url").asText()).startsWith("/opportunities");
-        });
-        assertThat(data.path("metric_cards")).anySatisfy(card -> {
-            assertThat(card.path("key").asText()).isEqualTo("received_amount");
-            assertThat(card.path("label").asText()).isEqualTo("已回款金额");
-            assertThat(card.path("drilldown_url").asText()).startsWith("/receivables");
-        });
-        assertThat(data.path("business_flow")).anySatisfy(item -> {
-            assertThat(item.path("key").asText()).isEqualTo("opportunity");
-            assertThat(item.path("label").asText()).isEqualTo("商机预测");
-        });
-        assertThat(data.path("business_flow")).anySatisfy(item -> {
-            assertThat(item.path("key").asText()).isEqualTo("receivable");
-            assertThat(item.path("label").asText()).isEqualTo("回款");
-            assertThat(item.path("drilldown_url").asText()).startsWith("/receivables");
-        });
-        assertThat(data.path("risk_summary")).anySatisfy(summary -> {
-            assertThat(summary.path("risk_type").asText()).isEqualTo("receivable_overdue");
-            assertThat(summary.path("label").asText()).isEqualTo("回款逾期");
-            assertThat(summary.path("count").asLong()).isGreaterThan(0);
-            assertThat(summary.path("amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(260000));
-            assertThat(summary.path("drilldown_url").asText()).startsWith("/receivables");
-        });
-        assertThat(data.path("top_risks")).isNotEmpty();
-        assertThat(data.path("top_risks").size()).isLessThanOrEqualTo(8);
-        data.path("top_risks").forEach(risk ->
-                assertThat(risk.path("drilldown_url").asText()).startsWith("/"));
-        assertThat(data.path("top_risks")).anySatisfy(risk ->
-                assertThat(risk.path("object_id").asLong()).isEqualTo(fixture.receivablePlanId()));
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode data = response.getBody().path("data");
+            assertThat(data.path("filters").path("date_from").asText()).isEqualTo("2026-07-01");
+            assertThat(data.path("filters").path("date_to").asText()).isEqualTo("2026-07-31");
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("forecast_amount");
+                assertThat(card.path("label").asText()).isEqualTo("预测金额");
+                assertThat(card.path("value").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(900000));
+                assertThat(card.path("unit").asText()).isEqualTo("CNY");
+                assertThat(card.path("drilldown_url").asText()).startsWith("/opportunities");
+            });
+            assertThat(data.path("metric_cards")).anySatisfy(card -> {
+                assertThat(card.path("key").asText()).isEqualTo("received_amount");
+                assertThat(card.path("label").asText()).isEqualTo("已回款金额");
+                assertThat(card.path("drilldown_url").asText()).startsWith("/receivables");
+            });
+            assertThat(data.path("business_flow")).anySatisfy(item -> {
+                assertThat(item.path("key").asText()).isEqualTo("opportunity");
+                assertThat(item.path("label").asText()).isEqualTo("商机预测");
+            });
+            assertThat(data.path("business_flow")).anySatisfy(item -> {
+                assertThat(item.path("key").asText()).isEqualTo("receivable");
+                assertThat(item.path("label").asText()).isEqualTo("回款");
+                assertThat(item.path("drilldown_url").asText()).startsWith("/receivables");
+            });
+            assertThat(data.path("risk_summary")).anySatisfy(summary -> {
+                assertThat(summary.path("risk_type").asText()).isEqualTo("receivable_overdue");
+                assertThat(summary.path("label").asText()).isEqualTo("回款逾期");
+                assertThat(summary.path("count").asLong()).isGreaterThan(0);
+                assertThat(summary.path("amount").decimalValue()).isEqualByComparingTo(BigDecimal.valueOf(260000));
+                assertThat(summary.path("drilldown_url").asText()).startsWith("/receivables");
+            });
+            assertThat(data.path("top_risks")).isNotEmpty();
+            assertThat(data.path("top_risks").size()).isLessThanOrEqualTo(8);
+            data.path("top_risks").forEach(risk ->
+                    assertThat(risk.path("drilldown_url").asText()).startsWith("/"));
+            assertThat(data.path("top_risks")).anySatisfy(risk ->
+                    assertThat(risk.path("object_id").asLong()).isEqualTo(fixture.receivablePlanId()));
+        } finally {
+            deleteFixture(fixture);
+        }
     }
 
     @Test
@@ -110,7 +114,7 @@ class DashboardControllerTest {
                 "dashboard_forbidden_" + suffix,
                 departmentId,
                 List.of("opportunity.read", "contract.read", "invoice.read", "receivable.read", "payment.read", "reconciliation.read"),
-                List.of("global"));
+                List.of("department"));
 
         ResponseEntity<JsonNode> response = restTemplate.exchange(
                 "/api/dashboard/overview",
@@ -129,7 +133,7 @@ class DashboardControllerTest {
                 "dashboard_funnel_" + suffix,
                 departmentId,
                 allDashboardPermissions(),
-                List.of("global"));
+                List.of("department"));
         DashboardFixture fixture = createCompleteFixture(suffix, departmentId, user.userId());
 
         try {
@@ -186,7 +190,7 @@ class DashboardControllerTest {
                 "dashboard_funnel_forbidden_" + suffix,
                 departmentId,
                 List.of("dashboard.read", "opportunity.read"),
-                List.of("global"));
+                List.of("department"));
 
         ResponseEntity<JsonNode> response = restTemplate.exchange(
                 "/api/dashboard/funnel",
@@ -205,7 +209,7 @@ class DashboardControllerTest {
                 "dashboard_contract_" + suffix,
                 departmentId,
                 allDashboardPermissions(),
-                List.of("global"));
+                List.of("department"));
         DashboardFixture fixture = createCompleteFixture(suffix, departmentId, user.userId());
 
         try {
@@ -257,7 +261,7 @@ class DashboardControllerTest {
                 "dashboard_contract_forbidden_" + suffix,
                 departmentId,
                 List.of("dashboard.read", "dashboard.funnel.read", "contract.read"),
-                List.of("global"));
+                List.of("department"));
 
         ResponseEntity<JsonNode> response = restTemplate.exchange(
                 "/api/dashboard/contracts",
@@ -276,7 +280,7 @@ class DashboardControllerTest {
                 "dashboard_invoice_" + suffix,
                 departmentId,
                 allDashboardPermissions(),
-                List.of("global"));
+                List.of("department"));
         DashboardFixture fixture = createCompleteFixture(suffix, departmentId, user.userId());
 
         try {
@@ -336,7 +340,7 @@ class DashboardControllerTest {
                 "dashboard_invoice_forbidden_" + suffix,
                 departmentId,
                 List.of("dashboard.read", "dashboard.funnel.read", "dashboard.contracts.read", "invoice.read"),
-                List.of("global"));
+                List.of("department"));
 
         ResponseEntity<JsonNode> response = restTemplate.exchange(
                 "/api/dashboard/invoices",
@@ -355,7 +359,7 @@ class DashboardControllerTest {
                 "dashboard_receivable_" + suffix,
                 departmentId,
                 allDashboardPermissions(),
-                List.of("global"));
+                List.of("department"));
         DashboardFixture fixture = createCompleteFixture(suffix, departmentId, user.userId());
 
         try {
@@ -427,7 +431,7 @@ class DashboardControllerTest {
                 departmentId,
                 List.of("dashboard.read", "dashboard.funnel.read", "dashboard.contracts.read",
                         "dashboard.invoices.read", "receivable.read", "payment.read", "reconciliation.read"),
-                List.of("global"));
+                List.of("department"));
 
         ResponseEntity<JsonNode> response = restTemplate.exchange(
                 "/api/dashboard/receivables",
@@ -446,7 +450,7 @@ class DashboardControllerTest {
                 "dashboard_risk_" + suffix,
                 departmentId,
                 allDashboardPermissions(),
-                List.of("global"));
+                List.of("department"));
         DashboardFixture fixture = createCompleteFixture(suffix, departmentId, user.userId());
 
         try {
@@ -500,7 +504,7 @@ class DashboardControllerTest {
                 List.of("dashboard.read", "dashboard.funnel.read", "dashboard.contracts.read",
                         "dashboard.invoices.read", "dashboard.receivables.read", "opportunity.read",
                         "contract.read", "invoice.read", "receivable.read", "payment.read", "reconciliation.read"),
-                List.of("global"));
+                List.of("department"));
 
         ResponseEntity<JsonNode> response = restTemplate.exchange(
                 "/api/dashboard/risks",
@@ -519,24 +523,28 @@ class DashboardControllerTest {
                 "dashboard_date_" + suffix,
                 departmentId,
                 allDashboardPermissions(),
-                List.of("global"));
-        createCompleteFixture(suffix, departmentId, user.userId());
+                List.of("department"));
+        DashboardFixture fixture = createCompleteFixture(suffix, departmentId, user.userId());
 
-        ResponseEntity<JsonNode> julyResponse = restTemplate.exchange(
-                "/api/dashboard/overview?date_from=2026-07-01&date_to=2026-07-31",
-                HttpMethod.GET,
-                new HttpEntity<>(authHeaders(user.token(), "dashboard-july-trace-001")),
-                JsonNode.class);
-        ResponseEntity<JsonNode> augustResponse = restTemplate.exchange(
-                "/api/dashboard/overview?date_from=2026-08-01&date_to=2026-08-31",
-                HttpMethod.GET,
-                new HttpEntity<>(authHeaders(user.token(), "dashboard-august-trace-001")),
-                JsonNode.class);
+        try {
+            ResponseEntity<JsonNode> julyResponse = restTemplate.exchange(
+                    "/api/dashboard/overview?date_from=2026-07-01&date_to=2026-07-31",
+                    HttpMethod.GET,
+                    new HttpEntity<>(authHeaders(user.token(), "dashboard-july-trace-001")),
+                    JsonNode.class);
+            ResponseEntity<JsonNode> augustResponse = restTemplate.exchange(
+                    "/api/dashboard/overview?date_from=2026-08-01&date_to=2026-08-31",
+                    HttpMethod.GET,
+                    new HttpEntity<>(authHeaders(user.token(), "dashboard-august-trace-001")),
+                    JsonNode.class);
 
-        assertThat(julyResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(augustResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(metricValue(julyResponse.getBody(), "forecast_amount")).isGreaterThan(BigDecimal.ZERO);
-        assertThat(metricValue(augustResponse.getBody(), "forecast_amount")).isEqualByComparingTo(BigDecimal.ZERO);
+            assertThat(julyResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(augustResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(metricValue(julyResponse.getBody(), "forecast_amount")).isGreaterThan(BigDecimal.ZERO);
+            assertThat(metricValue(augustResponse.getBody(), "forecast_amount")).isEqualByComparingTo(BigDecimal.ZERO);
+        } finally {
+            deleteFixture(fixture);
+        }
     }
 
     private DashboardFixture createCompleteFixture(String suffix, Long departmentId, Long ownerUserId) {
