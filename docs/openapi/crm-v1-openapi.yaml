@@ -14,10 +14,15 @@ tags:
   - name: Contacts
   - name: Opportunities
   - name: SolutionDocuments
+  - name: Contracts
+  - name: Invoices
+  - name: Receivables
+  - name: Payments
   - name: Activities
   - name: WeeklyProgress
   - name: Attachments
   - name: Reminders
+  - name: Dashboard
 paths:
   /api/health:
     get:
@@ -38,6 +43,525 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiBootstrapResponse'
+  /api/dashboard/overview:
+    get:
+      tags: [Dashboard]
+      summary: V3 management dashboard overview
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: owner_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Dashboard overview metrics, flow, and risks.
+  /api/dashboard/funnel:
+    get:
+      tags: [Dashboard]
+      summary: V3 sales funnel and forecast dashboard
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: owner_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: risk_status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sales funnel stages, forecast trend, and attention opportunities.
+  /api/dashboard/contracts:
+    get:
+      tags: [Dashboard]
+      summary: V3 contract execution dashboard
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: owner_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_status
+          in: query
+          schema:
+            type: string
+        - name: risk_level
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Contract metrics, status distribution, milestones, changes, and attention contracts.
+  /api/dashboard/invoices:
+    get:
+      tags: [Dashboard]
+      summary: V3 invoice execution dashboard
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: owner_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: invoice_status
+          in: query
+          schema:
+            type: string
+        - name: exception_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Invoice metrics, status distribution, gap trend, risk summary, and attention invoices.
+  /api/dashboard/receivables:
+    get:
+      tags: [Dashboard]
+      summary: V3 receivable and reconciliation dashboard
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: owner_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: receivable_status
+          in: query
+          schema:
+            type: string
+        - name: overdue_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Receivable metrics, status distribution, gap trend, reconciliation summary, and attention receivables.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [filters, metric_cards, status_distribution, gap_trend, reconciliation_summary, attention_receivables]
+                properties:
+                  filters:
+                    type: object
+                    additionalProperties: true
+                  metric_cards:
+                    type: array
+                    items:
+                      type: object
+                      required: [key, label, value, unit, drilldown_url]
+                      properties:
+                        key:
+                          type: string
+                        label:
+                          type: string
+                        value:
+                          type: number
+                        unit:
+                          type: string
+                        drilldown_url:
+                          type: string
+                  status_distribution:
+                    type: array
+                    items:
+                      type: object
+                      required: [status, label, count, amount, ratio, drilldown_url]
+                      properties:
+                        status:
+                          type: string
+                        label:
+                          type: string
+                        count:
+                          type: integer
+                        amount:
+                          type: number
+                        ratio:
+                          type: number
+                        drilldown_url:
+                          type: string
+                  gap_trend:
+                    type: array
+                    items:
+                      type: object
+                      required: [bucket, planned_amount, confirmed_received_amount, unreceived_amount, overdue_amount, drilldown_url]
+                      properties:
+                        bucket:
+                          type: string
+                        planned_amount:
+                          type: number
+                        confirmed_received_amount:
+                          type: number
+                        unreceived_amount:
+                          type: number
+                        overdue_amount:
+                          type: number
+                        drilldown_url:
+                          type: string
+                  reconciliation_summary:
+                    type: array
+                    items:
+                      type: object
+                      required: [key, label, count, amount, risk_level, drilldown_url]
+                      properties:
+                        key:
+                          type: string
+                        label:
+                          type: string
+                        count:
+                          type: integer
+                        amount:
+                          type: number
+                        risk_level:
+                          type: string
+                        drilldown_url:
+                          type: string
+                  attention_receivables:
+                    type: array
+                    items:
+                      type: object
+                      required: [object_type, object_id, object_name, account_id, contract_id, owner_user_id, status, amount, reason, drilldown_url]
+                      properties:
+                        object_type:
+                          type: string
+                        object_id:
+                          type: integer
+                          format: int64
+                        object_name:
+                          type: string
+                        account_id:
+                          type: integer
+                          format: int64
+                        opportunity_id:
+                          type: integer
+                          format: int64
+                          nullable: true
+                        contract_id:
+                          type: integer
+                          format: int64
+                        owner_user_id:
+                          type: integer
+                          format: int64
+                        status:
+                          type: string
+                        amount:
+                          type: number
+                        due_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        occurred_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        reason:
+                          type: string
+                        drilldown_url:
+                          type: string
+  /api/dashboard/risks:
+    get:
+      tags: [Dashboard]
+      summary: V3 risk warning and drilldown dashboard
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: department_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: owner_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: risk_type
+          in: query
+          schema:
+            type: string
+        - name: risk_level
+          in: query
+          schema:
+            type: string
+        - name: object_type
+          in: query
+          schema:
+            type: string
+        - name: high_priority_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Risk metric cards, summary, trend, owner ranking, and normalized risk work items.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [filters, metric_cards, risk_summary, risk_trend, owner_ranking, risk_items]
+                properties:
+                  filters:
+                    type: object
+                    additionalProperties: true
+                  metric_cards:
+                    type: array
+                    items:
+                      type: object
+                      required: [key, label, value, unit, drilldown_url]
+                      properties:
+                        key:
+                          type: string
+                        label:
+                          type: string
+                        value:
+                          type: number
+                        unit:
+                          type: string
+                        drilldown_url:
+                          type: string
+                  risk_summary:
+                    type: array
+                    items:
+                      type: object
+                      required: [risk_type, label, count, amount, highest_level, drilldown_url]
+                      properties:
+                        risk_type:
+                          type: string
+                        label:
+                          type: string
+                        count:
+                          type: integer
+                        amount:
+                          type: number
+                        highest_level:
+                          type: string
+                        drilldown_url:
+                          type: string
+                  risk_trend:
+                    type: array
+                    items:
+                      type: object
+                      required: [period, count, amount, high_count, drilldown_url]
+                      properties:
+                        period:
+                          type: string
+                        count:
+                          type: integer
+                        amount:
+                          type: number
+                        high_count:
+                          type: integer
+                        drilldown_url:
+                          type: string
+                  owner_ranking:
+                    type: array
+                    items:
+                      type: object
+                      required: [owner_user_id, owner_name, count, amount, highest_priority_score, drilldown_url]
+                      properties:
+                        owner_user_id:
+                          type: integer
+                          format: int64
+                        owner_name:
+                          type: string
+                        count:
+                          type: integer
+                        amount:
+                          type: number
+                        highest_priority_score:
+                          type: integer
+                        drilldown_url:
+                          type: string
+                  risk_items:
+                    type: array
+                    items:
+                      type: object
+                      required: [risk_type, risk_label, risk_level, title, amount, object_type, object_id, owner_user_id, owner_name, account_id, account_name, priority_score, suggested_action, drilldown_url]
+                      properties:
+                        risk_type:
+                          type: string
+                        risk_label:
+                          type: string
+                        risk_level:
+                          type: string
+                        title:
+                          type: string
+                        amount:
+                          type: number
+                        object_type:
+                          type: string
+                        object_id:
+                          type: integer
+                          format: int64
+                        owner_user_id:
+                          type: integer
+                          format: int64
+                        owner_name:
+                          type: string
+                        account_id:
+                          type: integer
+                          format: int64
+                        account_name:
+                          type: string
+                        opportunity_id:
+                          type: integer
+                          format: int64
+                        priority_score:
+                          type: integer
+                        suggested_action:
+                          type: string
+                        occurred_at:
+                          type: string
+                          format: date-time
+                        drilldown_url:
+                          type: string
   /api/auth/login:
     post:
       tags: [Auth]
@@ -828,6 +1352,848 @@ paths:
       responses:
         '200':
           description: Solution document detail.
+  /api/contracts:
+    get:
+      tags: [Contracts]
+      summary: List contracts
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_type
+          in: query
+          schema:
+            type: string
+        - name: contract_status
+          in: query
+          schema:
+            type: string
+        - name: risk_level
+          in: query
+          schema:
+            type: string
+        - name: owner_user_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: business_owner_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Contract list.
+    post:
+      tags: [Contracts]
+      summary: Create contract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Contract detail.
+  /api/contracts/{contractId}:
+    get:
+      tags: [Contracts]
+      summary: Get contract detail
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Contract detail.
+    patch:
+      tags: [Contracts]
+      summary: Update contract
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Contract detail.
+  /api/contracts/{contractId}/terminate:
+    post:
+      tags: [Contracts]
+      summary: Terminate contract
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [termination_reason]
+              properties:
+                termination_reason:
+                  type: string
+      responses:
+        '200':
+          description: Contract detail.
+  /api/contracts/{contractId}/changes:
+    get:
+      tags: [Contracts]
+      summary: List contract changes
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Contract change list.
+  /api/contracts/{contractId}/milestones:
+    get:
+      tags: [Contracts]
+      summary: List contract milestones
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Contract milestone list.
+    post:
+      tags: [Contracts]
+      summary: Create contract milestone
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Contract milestone detail.
+  /api/contracts/{contractId}/milestones/{milestoneId}:
+    patch:
+      tags: [Contracts]
+      summary: Update contract milestone
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: milestoneId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Contract milestone detail.
+  /api/invoices:
+    get:
+      tags: [Invoices]
+      summary: List invoice plans and records
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: invoice_status
+          in: query
+          schema:
+            type: string
+        - name: invoice_type
+          in: query
+          schema:
+            type: string
+        - name: owner_user_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: planned_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: planned_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: invoice_date_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: invoice_date_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: exception_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Invoice list.
+    post:
+      tags: [Invoices]
+      summary: Create invoice plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Invoice detail.
+  /api/invoices/{invoiceId}:
+    get:
+      tags: [Invoices]
+      summary: Get invoice detail
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Invoice detail.
+    patch:
+      tags: [Invoices]
+      summary: Update invoice plan
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Invoice detail.
+  /api/invoices/{invoiceId}/apply:
+    post:
+      tags: [Invoices]
+      summary: Submit invoice application
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Invoice detail.
+  /api/invoices/{invoiceId}/issue:
+    post:
+      tags: [Invoices]
+      summary: Register issued invoice
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Invoice detail.
+  /api/invoices/{invoiceId}/sign:
+    post:
+      tags: [Invoices]
+      summary: Confirm customer invoice receipt
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Invoice detail.
+  /api/invoices/{invoiceId}/exception:
+    post:
+      tags: [Invoices]
+      summary: Register invoice exception
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Invoice detail.
+  /api/invoices/{invoiceId}/void:
+    post:
+      tags: [Invoices]
+      summary: Void issued invoice
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [void_reason]
+              properties:
+                void_reason:
+                  type: string
+      responses:
+        '200':
+          description: Invoice detail.
+  /api/receivable-plans:
+    get:
+      tags: [Receivables]
+      summary: List receivable plans
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: receivable_status
+          in: query
+          schema:
+            type: string
+        - name: plan_stage
+          in: query
+          schema:
+            type: string
+        - name: owner_user_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Receivable plan list.
+    post:
+      tags: [Receivables]
+      summary: Create receivable plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Receivable plan detail.
+  /api/receivable-plans/{planId}:
+    get:
+      tags: [Receivables]
+      summary: Get receivable plan detail
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Receivable plan detail.
+    patch:
+      tags: [Receivables]
+      summary: Update receivable plan
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Receivable plan detail.
+  /api/receivable-plans/{planId}/terminate:
+    post:
+      tags: [Receivables]
+      summary: Terminate receivable plan
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Receivable plan detail.
+  /api/receivable-plans/{planId}/payments:
+    get:
+      tags: [Receivables]
+      summary: List payments under a receivable plan
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Payment list under the receivable plan.
+  /api/receivable-plans/{planId}/follow-ups:
+    get:
+      tags: [Receivables]
+      summary: List receivable follow-ups
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Receivable follow-up list.
+    post:
+      tags: [Receivables]
+      summary: Create receivable follow-up
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Receivable follow-up detail.
+  /api/payments:
+    get:
+      tags: [Payments]
+      summary: List payments
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: receivable_plan_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: payment_status
+          in: query
+          schema:
+            type: string
+        - name: payment_method
+          in: query
+          schema:
+            type: string
+        - name: owner_user_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Payment list.
+    post:
+      tags: [Payments]
+      summary: Create payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Payment detail.
+  /api/payments/{paymentId}:
+    get:
+      tags: [Payments]
+      summary: Get payment detail
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Payment detail.
+    patch:
+      tags: [Payments]
+      summary: Update payment
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Payment detail.
+  /api/payments/{paymentId}/confirm:
+    post:
+      tags: [Payments]
+      summary: Confirm payment amount
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Payment detail.
+  /api/payments/{paymentId}/exception:
+    post:
+      tags: [Payments]
+      summary: Register payment exception
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Payment detail.
+  /api/payments/{paymentId}/refund:
+    post:
+      tags: [Payments]
+      summary: Mark payment as refunded
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Payment detail.
+  /api/reconciliations/workbench:
+    get:
+      tags: [Reconciliations]
+      summary: Load invoice-payment reconciliation workbench
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: pending_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Workbench summary, pending invoices, pending payments, and recent reconciliations.
+  /api/reconciliations:
+    get:
+      tags: [Reconciliations]
+      summary: List reconciliation records
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: account_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contract_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: invoice_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: payment_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: reconciliation_status
+          in: query
+          schema:
+            type: string
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Reconciliation record list.
+    post:
+      tags: [Reconciliations]
+      summary: Create reconciliation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invoice_id, payment_id, reconciled_amount]
+              properties:
+                invoice_id:
+                  type: integer
+                  format: int64
+                payment_id:
+                  type: integer
+                  format: int64
+                reconciled_amount:
+                  type: number
+                reconciled_at:
+                  type: string
+                  format: date-time
+                reconcile_note:
+                  type: string
+      responses:
+        '200':
+          description: Reconciliation detail.
+  /api/reconciliations/{reconciliationId}:
+    get:
+      tags: [Reconciliations]
+      summary: Get reconciliation detail
+      parameters:
+        - name: reconciliationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Reconciliation detail.
+  /api/reconciliations/{reconciliationId}/void:
+    post:
+      tags: [Reconciliations]
+      summary: Void reconciliation
+      parameters:
+        - name: reconciliationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [void_reason]
+              properties:
+                void_reason:
+                  type: string
+      responses:
+        '200':
+          description: Reconciliation detail.
   /api/attachments:
     get:
       tags: [Attachments]
@@ -859,6 +2225,33 @@ paths:
       responses:
         '200':
           description: Attachment metadata.
+  /api/attachments/upload:
+    post:
+      tags: [Attachments]
+      summary: Upload attachment file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [object_type, object_id, file]
+              properties:
+                object_type:
+                  type: string
+                object_id:
+                  type: integer
+                  format: int64
+                file:
+                  type: string
+                  format: binary
+                file_type:
+                  type: string
+                remark:
+                  type: string
+      responses:
+        '200':
+          description: Uploaded attachment metadata.
   /api/attachments/{attachmentId}:
     delete:
       tags: [Attachments]
@@ -873,6 +2266,25 @@ paths:
       responses:
         '200':
           description: Deletion result.
+  /api/attachments/{attachmentId}/download:
+    get:
+      tags: [Attachments]
+      summary: Download uploaded attachment file
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Attachment binary stream.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
   /api/reminders:
     get:
       tags: [Reminders]

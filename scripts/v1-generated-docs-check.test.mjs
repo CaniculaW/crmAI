@@ -324,6 +324,47 @@ test("fails when the validation status document is not bound to the current git 
   assert.ok(result.failed.some((check) => check.id === "validation-status-current-commit"));
 });
 
+test("accepts validation status bound to the pull request head commit in GitHub Actions", () => {
+  const mergeCommit = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  const pullRequestHeadCommit = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+  const validationStatus = [
+    "# CRM V1 Validation Status",
+    "",
+    "Generated at: 2026-06-20T06:44:19.125Z",
+    `Git commit: ${pullRequestHeadCommit}`,
+    "",
+    "Overall: Go",
+    ""
+  ].join("\n");
+  const content = "# Generated\n\nCurrent content\n";
+  const rootDir = writeSnapshot({
+    ...Object.fromEntries(DOCS.map((docPath) => [docPath, content])),
+    "docs/testing/v1-validation-status.md": validationStatus,
+    ".git/HEAD": `${mergeCommit}\n`
+  });
+  const originalHeadSha = process.env.GITHUB_HEAD_SHA;
+  process.env.GITHUB_HEAD_SHA = pullRequestHeadCommit;
+
+  try {
+    const result = evaluateGeneratedDocsSnapshot({
+      rootDir,
+      generators: {
+        ...Object.fromEntries(DOCS.map((docPath) => [docPath, () => content])),
+        "docs/testing/v1-validation-status.md": () => validationStatus
+      }
+    });
+
+    assert.equal(result.ok, true);
+    assert.ok(result.passed.some((check) => check.id === "validation-status-current-commit"));
+  } finally {
+    if (originalHeadSha === undefined) {
+      delete process.env.GITHUB_HEAD_SHA;
+    } else {
+      process.env.GITHUB_HEAD_SHA = originalHeadSha;
+    }
+  }
+});
+
 test("reuses an immediately previous validation status commit during regeneration", () => {
   const currentCommit = "8c4f596a9a9c4b02d95b4b6f82d2e6c4c2f0c111";
   const previousCommit = "b3f6b280935698e8bf4625412989fd7ddacfa35b";

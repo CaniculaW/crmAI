@@ -2,6 +2,7 @@ package com.canicula.crmai.api;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.MethodParameter;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
@@ -28,7 +29,8 @@ public class ApiResponseAdvice implements ResponseBodyAdvice<Object> {
             ServerHttpResponse response) {
         if (!(request instanceof ServletServerHttpRequest servletRequest)
                 || !servletRequest.getServletRequest().getRequestURI().startsWith("/api")
-                || body instanceof ApiResponse<?>) {
+                || body instanceof ApiResponse<?>
+                || body instanceof Resource) {
             return body;
         }
 

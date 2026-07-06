@@ -66,37 +66,75 @@ V2 当前进度：
 |---:|---|---|---|---|---|
 | 1 | Done | V2 启动与 UI/范围对齐 | V2 总导航、模块边界、页面逻辑、验收口径 | 确认 V2 从商机成交到核销的业务链路、页面层级和 TODO 机制 | V2 设计说明、模块级 TODOList、模块 2 Current、无范围歧义 |
 | 2 | Done | 方案与标书链路 | 方案/标书列表、详情、新建/编辑、版本、报价/测算、自评、附件增删下载 | 让商业方案和商业谈判阶段有材料、报价、评审、风险和附件归档入口 | 已完成实现、验证与提交 |
-| 3 | Current | 合同管理链路 | 合同列表、详情、新建/编辑、状态流转、变更、节点、附件占位 | 把成交商机转成合同资产，并形成开票/回款计划来源 | 合同可关联客户/商机；状态清晰；合同金额、税率、付款条件、开票条件可维护 |
-| 4 | Pending | 开票管理链路 | 开票计划、开票申请、发票登记、异常、签收、作废 | 管理合同下应该开多少、何时开、实际开了多少、异常是什么 | 开票总额不超过合同金额；已开票可进入核销；异常/作废可追踪 |
-| 5 | Pending | 回款管理链路 | 回款计划、回款流水、到账确认、逾期、回款跟进 | 管理合同应收、实收、逾期和回款责任 | 回款计划与合同联动；流水可登记；逾期可识别；回款跟进可追溯 |
-| 6 | Pending | 发票回款核销链路 | 核销工作台、待核销发票、待分配回款、核销明细、撤销核销 | 支持一笔回款核销多张发票、一张发票被多笔回款分次核销 | 核销金额校验正确；发票/回款/合同金额同步；撤销核销有原因和审计 |
-| 7 | Pending | 客户/商机 V2 入口联动 | 客户详情、商机详情、工作台快捷入口、菜单权限 | 把 V2 能力嵌回 V1 主业务对象，而不是孤立模块 | 客户/商机可看到方案、合同、开票、回款摘要和跳转 |
-| 8 | Pending | V2 系统配置与权限审计 | 字典、权限点、角色授权、审计日志、数据权限补齐 | 保证销售、商务、财务、管理层看到不同入口和动作 | V2 权限点完整；关键金额/状态/核销动作有审计 |
-| 9 | Pending | V2 全链路回归与 UAT | 商机成交 -> 方案/标书 -> 合同 -> 开票 -> 回款 -> 核销 | 验证 V2 销售到财务闭环可跑通 | 前后端测试、构建、浏览器 Smoke、UAT 证据通过 |
+| 3 | Done | 合同管理链路 | 合同列表、详情、新建/编辑、状态流转、变更、节点、附件占位 | 把成交商机转成合同资产，并形成开票/回款计划来源 | 已完成实现、验证与提交 |
+| 4 | Done | 开票管理链路 | 开票计划、开票申请、发票登记、异常、签收、作废 | 管理合同下应该开多少、何时开、实际开了多少、异常是什么 | 已完成实现、验证与浏览器 UAT |
+| 5 | Done | 回款管理链路 | 回款计划、回款流水、到账确认、逾期、回款跟进 | 管理合同应收、实收、逾期和回款责任 | 已完成实现、验证与浏览器 UAT |
+| 6 | Done | 发票回款核销链路 | 核销工作台、待核销发票、待分配回款、核销明细、撤销核销 | 支持一笔回款核销多张发票、一张发票被多笔回款分次核销 | 已完成实现、验证与浏览器 UAT |
+| 7 | Done | 客户/商机 V2 入口联动 | 客户详情、商机详情、工作台快捷入口、菜单权限 | 把 V2 能力嵌回 V1 主业务对象，而不是孤立模块 | 已完成实现、验证与浏览器 UAT |
+| 8 | Done | V2 系统配置与权限审计 | 字典、权限点、角色授权、审计日志、数据权限补齐 | 保证销售、商务、财务、管理层看到不同入口和动作 | 已完成实现、验证与浏览器 UAT |
+| 9 | Done | V2 全链路回归与 UAT | 商机成交 -> 方案/标书 -> 合同 -> 开票 -> 回款 -> 核销 | 验证 V2 销售到财务闭环可跑通 | 已完成前后端回归、构建、浏览器 Smoke 与 UAT 证据归档 |
 
 ## 3. 当前任务
 
-当前任务：`v2-contract-management-design`
+当前任务：`v2-production-evidence-gate`
 
-状态：Current
+状态：In Progress
 
 责任侧：AI 研发主力推进；沈思维作为最终版本确认人，重点确认页面逻辑、模块范围和验收口径。
 
-当前模块：合同管理链路
+当前模块：V2 生产发布复审证据门禁
+
+最终确认：
+
+- 确认人：沈思维。
+- 确认日期：2026-07-02。
+- 确认结论：V2 版本确认通过，签署 GO。
+- 后验收补充：2026-07-02 组建测试与验收团队复核后，V2 内部 UAT / 功能验收 GO；生产发布 / 外部正式发布需补齐 V2 专用 E2E、角色矩阵、移动端、附件真实上传下载、性能/安全证据后复审。证据包：`docs/testing/evidence/v2-comprehensive-validation-2026-07-02.md`。
 
 当前步骤：
 
-- [x] Step 1：读取模块 3 合同管理范围、V2 已有链路和模块 2 输出。
-- [x] Step 2：输出合同管理页面逻辑与业务/UI 方案。
-- [x] Step 3：设计合同数据模型、状态、金额口径和审计点。
-- [x] Step 4：设计合同 API 契约。
-- [ ] Step 5：创建模块 3 实施计划。
+- [x] Step 1：完成模块 3 合同管理后端、前端、OpenAPI、自动化验证与浏览器 UAT。
+- [x] Step 2：合同管理链路切换为 Done。
+- [x] Step 3：启动模块 4 开票管理，输出模块 TODO、页面逻辑、业务边界和验收标准。
+- [x] Step 4：确认采用方案 B：开票计划 + 开票申请 + 发票登记一体化。
+- [x] Step 5：完成开票管理设计说明，明确数据模型、API 契约、权限、附件、金额校验和验收标准。
+- [x] Step 6：创建模块 4 TDD 实施计划。
+- [x] Step 7：按实施计划进入后端数据模型与 API 实现。
+- [x] Step 8：按实施计划进入前端开票页面、OpenAPI 和附件扩展。
+- [x] Step 9：自动化验证、浏览器 UAT、提交并切换到模块 5。
+- [x] Step 10：启动模块 5 回款管理，输出页面逻辑、数据模型、API 和实施计划。
+- [x] Step 11：完成模块 5 后端数据模型、回款计划 API、到账流水 API 和附件对象扩展。
+- [x] Step 12：完成模块 5 前端回款页面、到账状态动作、跟进和附件增删下载入口。
+- [x] Step 13：完成模块 5 OpenAPI 与接口清单。
+- [x] Step 14：完成模块 5 自动化验证、浏览器 UAT 和提交准备。
+- [x] Step 15：启动模块 6 发票回款核销链路，输出页面逻辑、数据模型、API 和实施计划。
+- [x] Step 16：完成后端数据模型、核销工作台 API、金额联动和前端核销工作台。
+- [x] Step 17：补齐 OpenAPI/API 清单、浏览器 UAT 证据和提交记录。
+- [x] Step 18：启动模块 7 客户/商机 V2 入口联动设计与实施计划。
+- [x] Step 19：按模块 7 实施计划进入前端 TDD，实现客户/商机抽屉 V2 摘要、上下文跳转和 URL 初始筛选。
+- [x] Step 20：完成模块 7 浏览器 UAT、证据截图、提交记录并切换到模块 8。
+- [x] Step 21：启动模块 8 V2 系统配置与权限审计，输出字典、权限点、角色授权、审计日志和数据权限补齐计划。
+- [x] Step 22：按模块 8 实施计划进入 TDD：V2 字典覆盖、字典审计、角色权限分组、审计筛选和数据权限回归。
+- [x] Step 23：启动模块 9 V2 全链路回归与 UAT，按业务链路执行端到端验证与证据归档。
+- [x] Step 24：完成模块 9 后端 V2 全链路回归测试。
+- [x] Step 25：完成模块 9 前端测试与构建。
+- [x] Step 26：完成模块 9 浏览器 UAT 和证据截图。
+- [x] Step 27：沈思维最终确认 V2 版本，签署 GO。
+- [x] Step 28：组建测试与验收 Agent 团队完成全面复核，修复 V2 越权详情 `500` 错误码问题。
+- [x] Step 29：建设 V2 专用浏览器 E2E、角色矩阵、移动端、附件真实上传下载、性能/安全/并发证据，作为生产发布复审门禁。
+  - [x] Step 29.1：建设 V2 专用浏览器 smoke，覆盖桌面/移动 18 条路由，产出截图和 JSON 报告。
+  - [x] Step 29.2：补齐角色权限矩阵验收，覆盖销售、商务/法务、财务、管理层、低权限用户。
+  - [x] Step 29.3：补齐移动端/平板响应式证据，重点复核遮挡、换行、表格可读性和关键操作入口。
+  - [x] Step 29.4：补齐真实附件上传/下载能力，明确 URL 元数据管理与本地文件存储边界。
+  - [x] Step 29.5：补齐性能/安全/并发复审证据，形成生产发布复审结论。
 
 当前模块不做：
 
-- 不直接开始写开票/回款/核销代码。
-- 不把驾驶舱和 AI 助手并入 V2。
-- 不绕过 UI/范围确认。
+- 不做复杂审批流设计器。
+- 不做企业级单点登录、LDAP、OAuth 集成。
+- 不做跨租户权限模型重构。
+- 不做审计日志归档、冷热分层和外部 SIEM 对接。
+- 不做字段级权限和行级规则可视化配置器。
 
 完成标准：
 
@@ -104,7 +142,18 @@ V2 当前进度：
 - V2 总导航与模块边界清晰。
 - 模块 2 设计说明已创建，明确附件新增、删除、下载模式。
 - 合同管理页面逻辑、字段口径、状态流转和附件占位明确。
-- 模块 3 实施计划可直接进入 TDD 实现。
+- 合同管理链路已完成实现、自动化验证和浏览器 UAT。
+- 模块 4 开票管理设计说明已完成。
+- 模块 5 回款管理链路已完成实现、自动化验证和浏览器 UAT。
+- 模块 6 已完成 V19 数据模型、核销 API、金额联动、前端核销工作台、OpenAPI/API 清单和浏览器 UAT。
+- 模块 7 已完成前端 TDD 实现、浏览器 UAT、证据截图和提交记录。
+- 模块 8 已完成后端治理、前端系统治理 UI、自动化验证和浏览器 UAT。
+- 模块 9 已完成后端全链路回归、前端测试与构建、浏览器 UAT 和证据截图；V2 进入最终版本确认。
+- 后验收已修复 V2 详情越权返回 `500` 的 API 语义问题；V2 内部 UAT / 功能验收 GO，生产发布需补证复审。
+- V2 专用浏览器 smoke 已建设并通过：`npm run smoke:v2:browser` 覆盖 18 条路由 × desktop/tablet/mobile 三种视口，console failure = 0，API failed response = 0，证据目录 `docs/testing/evidence/artifacts/v2-browser-smoke-20260702/`。
+- V2 角色权限矩阵已补自动化验收：`mvn -Dtest=V2RoleMatrixValidationTest test` 覆盖销售、商务/法务、财务、管理层、低权限用户，验证权限集、V2 读 API、跨职责写操作 403 和财务核销写权限放行到业务校验。
+- V2 附件真实上传/下载已补齐：后端新增 `POST /api/attachments/upload` multipart 上传和 `GET /api/attachments/{attachmentId}/download` 鉴权下载；前端方案、合同、开票、回款附件表单改为真实文件选择；验证命令 `mvn -Dtest=AttachmentControllerTest,OpenApiContractCoverageTest test`、`mvn test`、`npm test -- --run`、`npm run build` 均通过。
+- V2 性能/安全/并发复审证据已补齐：附件新增文件名清洗与匿名下载 401 测试；核销并发从 RED `[200,500]` 修复为 `[200,409]` 业务冲突；本地 8081 核心 GET API 性能 smoke 10/10 通过，max 57ms，avg 31ms；后端全量 `mvn test` 89 tests，0 failures。
 
 ## 4. 模块完成记录
 
@@ -112,25 +161,29 @@ V2 当前进度：
 |---|---|---|---|---|---|---|
 | V2 启动与 UI/范围对齐 | Done | 2026-06-28 | 0d48a79 | 文档评审 | 不适用 | 无 |
 | 方案与标书链路 | Done | 2026-06-29 | eaf7515 | `mvn test`；`mvn -Dtest=OpenApiContractCoverageTest test`；`npm test`；`npm run build` | 127.0.0.1:5175 `/solutions` 已通过页面、详情、附件下载/删除入口验证 | 风险回写商机未做，保留到 V2 入口联动模块 |
-| 合同管理链路 | Current | - | - | - | - | 当前进入业务/UI 与实施计划设计 |
-| 开票管理链路 | Pending | - | - | - | - | - |
-| 回款管理链路 | Pending | - | - | - | - | - |
-| 发票回款核销链路 | Pending | - | - | - | - | - |
-| 客户/商机 V2 入口联动 | Pending | - | - | - | - | - |
-| V2 系统配置与权限审计 | Pending | - | - | - | - | - |
-| V2 全链路回归与 UAT | Pending | - | - | - | - | - |
+| 合同管理链路 | Done | 2026-06-29 | 本次提交 | `mvn test`；`mvn -Dtest=OpenApiContractCoverageTest test`；`npm test`；`npm run build` | 127.0.0.1:5175 `/contracts` 已通过列表、详情、变更记录、节点、附件下载/删除入口验证；浏览器控制台无 error | 开票/回款/核销入口占位保留到后续模块 |
+| 开票管理链路 | Done | 2026-06-30 | 本次提交 | `mvn -Dtest=DatabaseMigrationTest,InvoiceControllerTest,AttachmentControllerTest,OpenApiContractCoverageTest test`；`mvn -Dtest=PostgresMigrationIT test`；`npm test -- --run`；`npm run build` | 127.0.0.1:5175 `/invoices` 已通过登录、列表、详情、合同额度、附件、状态动作入口验证；浏览器控制台无 error | 回款/核销联动保留到模块 5/6 |
+| 回款管理链路 | Done | 2026-06-30 | 本次提交 | `mvn -Dtest=DatabaseMigrationTest,ReceivablePlanControllerTest,PaymentControllerTest,AttachmentControllerTest,OpenApiContractCoverageTest test`；`mvn -Dtest=PostgresMigrationIT test`；`npm test -- --run`；`npm run build` | 127.0.0.1:5175 `/receivables` 已通过登录、列表、详情、到账流水、状态动作、跟进、附件下载/删除入口验证；浏览器控制台无 error | 发票与回款多对多核销保留到模块 6 |
+| 发票回款核销链路 | Done | 2026-06-30 | 1216f5a | `mvn -Dtest=DatabaseMigrationTest,ReconciliationControllerTest test`；`mvn -Dtest=OpenApiContractCoverageTest test`；`npm test`；`npm run build` | 127.0.0.1:5175 `/reconciliations` 已通过登录态、待核销发票、待分配回款、新增核销、最近核销记录验证；浏览器控制台无 error；证据截图：`docs/testing/evidence/artifacts/v2-reconciliation-workbench-visible-uat-20260630.png` | 自动匹配、银行流水导入、ERP/总账回写保留到后续版本 |
+| 客户/商机 V2 入口联动 | Done | 2026-07-02 | 本次提交 | `npm test -- --run`；`npm run build` | 127.0.0.1:5175 已通过客户抽屉 V2 业务闭环、商机抽屉成交执行闭环、合同页 scoped URL 筛选验证；浏览器控制台 app error = 0；证据截图：`docs/testing/evidence/artifacts/v2-account-entry-integration-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-opportunity-entry-integration-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-scoped-contract-filter-uat-20260702.png` | 无 |
+| V2 系统配置与权限审计 | Done | 2026-07-02 | 本次提交 | `mvn -Dtest=DatabaseMigrationTest,DictionaryControllerTest,DataPermissionServiceTest,V1DemoDataSeederTest,IdentityAdminControllerTest,AuditLogControllerTest test`；`npm test -- --run`；`npm run build` | 127.0.0.1:5175 已通过系统概览 V2 治理覆盖、角色权限分组、审计日志核销筛选、V2 字典管理验证；浏览器控制台 app error = 0；证据截图：`docs/testing/evidence/artifacts/v2-system-overview-governance-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-role-permission-groups-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-audit-quick-filter-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-dictionary-governance-uat-20260702.png` | 无 |
+| V2 全链路回归与 UAT | Done | 2026-07-02 | b30652d | `mvn -Dtest=DatabaseMigrationTest,SolutionDocumentControllerTest,ContractControllerTest,InvoiceControllerTest,ReceivablePlanControllerTest,PaymentControllerTest,ReconciliationControllerTest,AttachmentControllerTest,OpenApiContractCoverageTest,DictionaryControllerTest,DataPermissionServiceTest,V1DemoDataSeederTest,IdentityAdminControllerTest,AuditLogControllerTest test`；`npm test -- --run`；`npm run build` | 127.0.0.1:5175 已通过工作台、方案标书、合同、开票管理、回款管理、核销工作台页面级 UAT；浏览器控制台 app error = 0；证据截图：`docs/testing/evidence/artifacts/v2-full-chain-dashboard-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-full-chain-solutions-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-full-chain-contracts-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-full-chain-invoices-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-full-chain-receivables-uat-20260702.png`、`docs/testing/evidence/artifacts/v2-full-chain-reconciliations-uat-20260702.png` | 自动匹配、银行流水导入、ERP/总账回写保留到后续版本；V2 已由沈思维确认 GO |
 
 ## 5. 当前进度快照
 
 ```text
 V2 当前进度：
 - 总模块：9
-- 已完成：2
-- 当前模块：3. 合同管理链路
-- 当前步骤：Step 5. 创建合同管理实施计划
-- 当前 TODO：基于 `docs/superpowers/specs/2026-06-29-v2-contract-management-design.md` 输出 TDD 实施计划
-- 完成标准：合同管理实施计划完成，进入后端数据模型实现
+- 已完成：9
+- 当前模块：V2 最终确认
+- 当前步骤：Step 30 最终人工确认完成
+- 当前 TODO：无，沈思维已确认 V2 GO
+- 完成标准：生产发布复审通过，最终人工确认 GO
 ```
+
+最终确认记录：
+
+- 2026-07-02，沈思维作为版本最终确认人确认 V2 GO。
 
 ## 6. V2 总体页面逻辑与导航方案
 

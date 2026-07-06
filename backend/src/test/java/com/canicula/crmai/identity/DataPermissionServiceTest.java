@@ -137,6 +137,74 @@ class DataPermissionServiceTest {
         assertThat(condition.parameters()).isEqualTo(List.of());
     }
 
+    @Test
+    void v2ModulesUseConfiguredDataScopes() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = identityService.createDepartment(new DepartmentCreateRequest(
+                null,
+                "scope-v2-" + suffix,
+                "V2数据权限部",
+                "CN-31",
+                "active"));
+        Long scopedRoleId = identityService.createRole(new RoleCreateRequest(
+                "scope_v2_role_" + suffix,
+                "V2数据权限角色",
+                "V2数据权限角色"));
+        Long globalRoleId = identityService.createRole(new RoleCreateRequest(
+                "scope_v2_global_role_" + suffix,
+                "V2全局数据权限角色",
+                "V2全局数据权限角色"));
+        Long scopedUserId = identityService.createUser(new UserCreateRequest(
+                departmentId,
+                "V2数据权限用户",
+                null,
+                "scope_v2_" + suffix + "@example.com",
+                "sales_rep",
+                "active"));
+        Long globalUserId = identityService.createUser(new UserCreateRequest(
+                departmentId,
+                "V2全局数据权限用户",
+                null,
+                "scope_v2_global_" + suffix + "@example.com",
+                "sales_manager",
+                "active"));
+        Long noScopeUserId = identityService.createUser(new UserCreateRequest(
+                departmentId,
+                "V2无数据权限用户",
+                null,
+                "scope_v2_empty_" + suffix + "@example.com",
+                "sales_rep",
+                "active"));
+        identityService.assignRole(scopedUserId, scopedRoleId);
+        identityService.assignRole(globalUserId, globalRoleId);
+
+        List<String> v2Modules = List.of("solution", "contract", "invoice", "receivable", "payment", "reconciliation");
+        for (String moduleCode : v2Modules) {
+            grantDataScope(scopedRoleId, moduleCode, "own");
+            grantDataScope(globalRoleId, moduleCode, "global");
+
+            DataPermissionCondition scopedCondition = dataPermissionService.buildCondition(
+                    scopedUserId,
+                    moduleCode,
+                    new DataPermissionColumns("owner_user_id", "owner_department_id", null));
+            DataPermissionCondition globalCondition = dataPermissionService.buildCondition(
+                    globalUserId,
+                    moduleCode,
+                    new DataPermissionColumns("owner_user_id", "owner_department_id", null));
+            DataPermissionCondition noScopeCondition = dataPermissionService.buildCondition(
+                    noScopeUserId,
+                    moduleCode,
+                    new DataPermissionColumns("owner_user_id", "owner_department_id", null));
+
+            assertThat(scopedCondition.clause()).isEqualTo("(owner_user_id = ?)");
+            assertThat(scopedCondition.parameters()).containsExactly(scopedUserId);
+            assertThat(globalCondition.clause()).isEqualTo("1 = 1");
+            assertThat(globalCondition.parameters()).isEmpty();
+            assertThat(noScopeCondition.clause()).isEqualTo("1 = 0");
+            assertThat(noScopeCondition.parameters()).isEmpty();
+        }
+    }
+
     private void grantDataScope(Long roleId, String moduleCode, String scopeCode) {
         Long dataScopeId = jdbcTemplate.queryForObject(
                 "select id from sys_data_scopes where scope_code = ?",

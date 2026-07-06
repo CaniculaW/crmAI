@@ -143,9 +143,128 @@ class DatabaseMigrationTest {
                 where permission_code in ('solution.read', 'solution.create', 'solution.update', 'solution.void')
                 """,
                 Integer.class);
+        Integer contractTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name in ('crm_contracts', 'crm_contract_changes', 'crm_contract_milestones')
+                """,
+                Integer.class);
+        Integer contractPermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'contract.read', 'contract.create', 'contract.update',
+                  'contract.terminate', 'contract.milestone.manage'
+                )
+                """,
+                Integer.class);
+        Integer invoiceTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name = 'crm_invoices'
+                """,
+                Integer.class);
+        Integer invoicePermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'invoice.read', 'invoice.create', 'invoice.update', 'invoice.apply',
+                  'invoice.issue', 'invoice.sign', 'invoice.exception', 'invoice.void'
+                )
+                """,
+                Integer.class);
+        Integer receivablePlanTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name = 'crm_receivable_plans'
+                """,
+                Integer.class);
+        Integer paymentTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name = 'crm_payments'
+                """,
+                Integer.class);
+        Integer followUpTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name = 'crm_receivable_follow_ups'
+                """,
+                Integer.class);
+        Integer receivablePermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'receivable.read', 'receivable.create', 'receivable.update',
+                  'receivable.terminate', 'receivable.follow_up',
+                  'payment.read', 'payment.create', 'payment.update',
+                  'payment.confirm', 'payment.exception', 'payment.refund'
+                )
+                """,
+                Integer.class);
+        Integer reconciliationTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_name = 'crm_reconciliations'
+                """,
+                Integer.class);
+        Integer invoiceReconciledColumnCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.columns
+                where table_name = 'crm_invoices'
+                  and column_name = 'reconciled_amount'
+                """,
+                Integer.class);
+        Integer reconciliationPermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'reconciliation.read', 'reconciliation.create', 'reconciliation.void'
+                )
+                """,
+                Integer.class);
+        Integer v2DictionaryTypeCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_dict_types
+                where dict_code in (
+                  'solution_doc_type', 'solution_status', 'solution_self_check_result', 'solution_risk_level',
+                  'contract_type', 'contract_status', 'contract_change_type', 'contract_milestone_status',
+                  'invoice_status', 'invoice_type', 'invoice_exception_type',
+                  'receivable_plan_status', 'payment_status', 'payment_method', 'receivable_follow_up_result',
+                  'reconciliation_status', 'reconciliation_source'
+                )
+                """,
+                Integer.class);
+        Integer v2DictionaryItemCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_dict_items i
+                join sys_dict_types t on t.id = i.dict_type_id
+                where t.dict_code in (
+                  'solution_doc_type', 'solution_status', 'solution_self_check_result', 'solution_risk_level',
+                  'contract_type', 'contract_status', 'contract_change_type', 'contract_milestone_status',
+                  'invoice_status', 'invoice_type', 'invoice_exception_type',
+                  'receivable_plan_status', 'payment_status', 'payment_method', 'receivable_follow_up_result',
+                  'reconciliation_status', 'reconciliation_source'
+                )
+                  and i.is_active = true
+                """,
+                Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(15);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(26);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -163,5 +282,108 @@ class DatabaseMigrationTest {
         assertThat(reminderPermissionCount).isEqualTo(2);
         assertThat(solutionTableCount).isEqualTo(1);
         assertThat(solutionPermissionCount).isEqualTo(4);
+        assertThat(contractTableCount).isEqualTo(3);
+        assertThat(contractPermissionCount).isEqualTo(5);
+        assertThat(invoiceTableCount).isEqualTo(1);
+        assertThat(invoicePermissionCount).isEqualTo(8);
+        assertThat(receivablePlanTableCount).isEqualTo(1);
+        assertThat(paymentTableCount).isEqualTo(1);
+        assertThat(followUpTableCount).isEqualTo(1);
+        assertThat(receivablePermissionCount).isEqualTo(11);
+        assertThat(reconciliationTableCount).isEqualTo(1);
+        assertThat(invoiceReconciledColumnCount).isEqualTo(1);
+        assertThat(reconciliationPermissionCount).isEqualTo(3);
+        assertThat(v2DictionaryTypeCount).isEqualTo(17);
+        assertThat(v2DictionaryItemCount).isGreaterThanOrEqualTo(48);
+    }
+
+    @Test
+    void createsDashboardReadPermission() {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.read'
+                  and permission_name = '查看驾驶舱'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void createsDashboardFunnelReadPermission() {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.funnel.read'
+                  and permission_name = '查看销售漏斗'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void createsDashboardContractsReadPermission() {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.contracts.read'
+                  and permission_name = '查看合同看板'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void createsDashboardInvoicesReadPermission() {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.invoices.read'
+                  and permission_name = '查看开票看板'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void createsDashboardReceivablesReadPermission() {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.receivables.read'
+                  and permission_name = '查看回款看板'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void createsDashboardRisksReadPermission() {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.risks.read'
+                  and permission_name = '查看风险预警'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
     }
 }

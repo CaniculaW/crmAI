@@ -180,8 +180,106 @@ class PostgresMigrationIT {
                 where permission_code in ('solution.read', 'solution.create', 'solution.update', 'solution.void')
                 """,
                 Integer.class);
+        Integer contractTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name in ('crm_contracts', 'crm_contract_changes', 'crm_contract_milestones')
+                """,
+                Integer.class);
+        Integer contractPermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'contract.read', 'contract.create', 'contract.update',
+                  'contract.terminate', 'contract.milestone.manage'
+                )
+                """,
+                Integer.class);
+        Integer invoiceTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name = 'crm_invoices'
+                """,
+                Integer.class);
+        Integer invoicePermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'invoice.read', 'invoice.create', 'invoice.update', 'invoice.apply',
+                  'invoice.issue', 'invoice.sign', 'invoice.exception', 'invoice.void'
+                )
+                """,
+                Integer.class);
+        Integer receivablePlanTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name = 'crm_receivable_plans'
+                """,
+                Integer.class);
+        Integer paymentTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name = 'crm_payments'
+                """,
+                Integer.class);
+        Integer followUpTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name = 'crm_receivable_follow_ups'
+                """,
+                Integer.class);
+        Integer receivablePermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'receivable.read', 'receivable.create', 'receivable.update',
+                  'receivable.terminate', 'receivable.follow_up',
+                  'payment.read', 'payment.create', 'payment.update',
+                  'payment.confirm', 'payment.exception', 'payment.refund'
+                )
+                """,
+                Integer.class);
+        Integer reconciliationTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name = 'crm_reconciliations'
+                """,
+                Integer.class);
+        Integer invoiceReconciledColumnCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.columns
+                where table_schema = 'public'
+                  and table_name = 'crm_invoices'
+                  and column_name = 'reconciled_amount'
+                """,
+                Integer.class);
+        Integer reconciliationPermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'reconciliation.read', 'reconciliation.create', 'reconciliation.void'
+                )
+                """,
+                Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("15");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("26");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -201,6 +299,17 @@ class PostgresMigrationIT {
         assertThat(reminderPermissionCount).isEqualTo(2);
         assertThat(solutionTableCount).isEqualTo(1);
         assertThat(solutionPermissionCount).isEqualTo(4);
+        assertThat(contractTableCount).isEqualTo(3);
+        assertThat(contractPermissionCount).isEqualTo(5);
+        assertThat(invoiceTableCount).isEqualTo(1);
+        assertThat(invoicePermissionCount).isEqualTo(8);
+        assertThat(receivablePlanTableCount).isEqualTo(1);
+        assertThat(paymentTableCount).isEqualTo(1);
+        assertThat(followUpTableCount).isEqualTo(1);
+        assertThat(receivablePermissionCount).isEqualTo(11);
+        assertThat(reconciliationTableCount).isEqualTo(1);
+        assertThat(invoiceReconciledColumnCount).isEqualTo(1);
+        assertThat(reconciliationPermissionCount).isEqualTo(3);
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type
@@ -230,5 +339,167 @@ class PostgresMigrationIT {
                 "account_type");
 
         assertThat(activeAccountTypeCount).isEqualTo(1);
+    }
+
+    @Test
+    void createsDashboardReadPermission() {
+        Flyway flyway = Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .locations("classpath:db/migration")
+                .placeholders(Map.of(
+                        "activeRecordFilter", "where deleted_at is null",
+                        "jsonDataType", "jsonb"))
+                .load();
+
+        flyway.migrate();
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.read'
+                  and permission_name = '查看驾驶舱'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void createsDashboardFunnelReadPermission() {
+        Flyway flyway = Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .locations("classpath:db/migration")
+                .placeholders(Map.of(
+                        "activeRecordFilter", "where deleted_at is null",
+                        "jsonDataType", "jsonb"))
+                .load();
+
+        flyway.migrate();
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.funnel.read'
+                  and permission_name = '查看销售漏斗'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void createsDashboardContractsReadPermission() {
+        Flyway flyway = Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .locations("classpath:db/migration")
+                .placeholders(Map.of(
+                        "activeRecordFilter", "where deleted_at is null",
+                        "jsonDataType", "jsonb"))
+                .load();
+
+        flyway.migrate();
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.contracts.read'
+                  and permission_name = '查看合同看板'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void createsDashboardInvoicesReadPermission() {
+        Flyway flyway = Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .locations("classpath:db/migration")
+                .placeholders(Map.of(
+                        "activeRecordFilter", "where deleted_at is null",
+                        "jsonDataType", "jsonb"))
+                .load();
+
+        flyway.migrate();
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.invoices.read'
+                  and permission_name = '查看开票看板'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void createsDashboardReceivablesReadPermission() {
+        Flyway flyway = Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .locations("classpath:db/migration")
+                .placeholders(Map.of(
+                        "activeRecordFilter", "where deleted_at is null",
+                        "jsonDataType", "jsonb"))
+                .load();
+
+        flyway.migrate();
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.receivables.read'
+                  and permission_name = '查看回款看板'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void createsDashboardRisksReadPermission() {
+        Flyway flyway = Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .locations("classpath:db/migration")
+                .placeholders(Map.of(
+                        "activeRecordFilter", "where deleted_at is null",
+                        "jsonDataType", "jsonb"))
+                .load();
+
+        flyway.migrate();
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'dashboard.risks.read'
+                  and permission_name = '查看风险预警'
+                  and module_code = 'dashboard'
+                """,
+                Integer.class);
+
+        assertThat(count).isEqualTo(1);
     }
 }

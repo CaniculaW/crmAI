@@ -9,6 +9,7 @@ import com.canicula.crmai.identity.IdentityService;
 import com.canicula.crmai.identity.LoginAccountCreateRequest;
 import com.canicula.crmai.identity.UserCreateRequest;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -95,6 +96,10 @@ class V1DemoDataSeederTest {
         assertThat(jdbcTemplate.queryForObject(
                 "select count(*) from v_opportunity_weekly_progress",
                 Integer.class)).isGreaterThanOrEqualTo(1);
+        assertThat(globalScopeModuleCount(
+                "v1_demo_admin",
+                List.of("solution", "contract", "invoice", "receivable", "payment", "reconciliation")))
+                .isEqualTo(6);
     }
 
     @Test
@@ -218,5 +223,26 @@ class V1DemoDataSeederTest {
     private int count(String sql) {
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
         return count == null ? 0 : count;
+    }
+
+    private Integer globalScopeModuleCount(String roleCode, List<String> moduleCodes) {
+        return jdbcTemplate.queryForObject(
+                """
+                select count(distinct rds.module_code)
+                from sys_roles r
+                join sys_role_data_scopes rds on rds.role_id = r.id
+                join sys_data_scopes ds on ds.id = rds.data_scope_id
+                where r.code = ?
+                  and ds.scope_code = 'global'
+                  and rds.module_code in (?, ?, ?, ?, ?, ?)
+                """,
+                Integer.class,
+                roleCode,
+                moduleCodes.get(0),
+                moduleCodes.get(1),
+                moduleCodes.get(2),
+                moduleCodes.get(3),
+                moduleCodes.get(4),
+                moduleCodes.get(5));
     }
 }

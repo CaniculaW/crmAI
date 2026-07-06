@@ -1,0 +1,464 @@
+{
+  "status": "passed",
+  "generatedAt": "2026-07-02T15:03:40.234Z",
+  "baseUrl": "http://127.0.0.1:5175",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "mobile": false,
+      "deviceScaleFactor": 1
+    },
+    {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024,
+      "mobile": true,
+      "deviceScaleFactor": 2
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "mobile": true,
+      "deviceScaleFactor": 2
+    }
+  ],
+  "pageResults": [
+    {
+      "viewport": "desktop",
+      "path": "/",
+      "url": "http://127.0.0.1:5175/",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n刷新\n今日优先处理\n\n本周已有 1 条行动记录，可进入销售行动查看完成情况。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n1\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-dashboard.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/accounts",
+      "url": "http://127.0.0.1:5175/accounts",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n客户池\n\n从客户池进入客户经营，查看客户状态、最近跟进和后续业务入口。\n\n刷新\n新建客户\n当前页面怎么用\n先用关键词、等级、状态或行业定位客户；打开客户经营查看摘要、最近跟进和后续业务入口，必要时新建客户。\n关键词\n等级\n状态\n行业\n筛 选\n重 置\n客户名称\t类型\t等级\t状态\t最近跟进\t操作\n暂无客户",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-accounts.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/contacts",
+      "url": "http://127.0.0.1:5175/contacts",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n联系人\n\n维护客户干系人关系，识别关键角色、态度和经营动作。\n\n刷新\n新建联系人\n当前页面怎么用\n先按客户、态度或关系热度定位关键人；通过关系判断查看角色覆盖，再进入联系人经营补动作。\n关键词\n客户\n态度\n关系热度\n筛 选\n重 置\n关键关系判断\n项目角色覆盖\n决策人\n1 人\n王敏\n态度判断\n支持者\n1 人\n王敏\n关系热度\n高热度\n1 人\n王敏\n姓名\t所属客户\t职务\t类型\t态度\t关系热度\t操作\n\n王敏\n\tV1演示客户-上海智造集团\t数字化负责人\t决策人\t支持者\t高热度\t\n查看关系\n编 辑\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-contacts.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/opportunities",
+      "url": "http://127.0.0.1:5175/opportunities",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n商机\n\n围绕在办商机推进阶段、状态、风险和关闭/取消跟进。\n\n刷新\n新建商机\n当前页面怎么用\n先看默认在办商机；按阶段、状态或风险筛选，再进入商机推进入口确认进展、下一步和关联动作。\n关键词\n客户\n阶段\n状态\n风险\n筛 选\n重 置\n商机名称\t所属客户\t阶段\t状态\t风险\t最近跟进\t操作\n\n智能制造CRM一期试点\n\tV1演示客户-上海智造集团\t商业方案\t跟进中\t低风险\t完成CRM V1试点需求确认会\t\n查看推进\n编 辑\n关闭/取消\n重 启\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-opportunities.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/activities",
+      "url": "http://127.0.0.1:5175/activities",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n销售行动\n\n记录客户经营和商机推进动作，完成后回写最近跟进与周进展。\n\n刷新\n新建行动\n当前页面怎么用\n先看计划、逾期和风险行动；进入行动执行入口确认沟通内容、客户反馈、结论和下一步计划。\n关键词\n客户\n商机\n状态\n逾期\n筛 选\n重 置\n行动主题\t所属客户\t关联商机\t状态\t类型\t下次跟进\t风险\t操作\n\n完成CRM V1试点需求确认会\n\tV1演示客户-上海智造集团\t智能制造CRM一期试点\t已完成\t会议沟通\t2026-06-19 00:42\t有风险\t\n查看执行\n编 辑\n完 成\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-activities.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/weekly-progress",
+      "url": "http://127.0.0.1:5175/weekly-progress",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n周进展\n\n按商机、负责人和自然周汇总已完成销售行动。\n\n刷新\n当前页面怎么用\n先按自然周、负责人、客户或商机筛选，再进入周进展复盘查看行动结论、下一步和风险。\n负责人ID\n商机ID\n客户\n周开始\n周结束\n仅风险\n筛 选\n重 置\n\t所属客户\t商机\t负责人\t自然周\t行动数\t最近行动\t风险\n暂无周进展",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-weekly-progress.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/solutions",
+      "url": "http://127.0.0.1:5175/solutions",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n方案标书\n\n管理商机关联的技术方案、投标文件、报价和客户反馈。\n\n刷新\n新建方案\n当前页面怎么用\n先按客户、商机、状态筛选方案；进入详情维护方案摘要、投标自检和附件，作废时保留原因用于审计。\n关键词\n客户\n商机\n类型\n状态\n筛 选\n重 置\n方案名称\t客户\t商机\t类型\t版本\t状态\t报价\t自检\t操作\n暂无方案标书",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-solutions.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/contracts",
+      "url": "http://127.0.0.1:5175/contracts",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n合同\n\n维护成交后的合同台账、状态、金额、条款、变更、节点和附件。\n\n刷新\n新建合同\n当前页面怎么用\n先按客户、商机、状态和风险筛选合同；进入执行台查看变更、节点和附件，为后续开票与回款提供来源。\n关键词\n客户\n商机\n状态\n风险\n筛 选\n重 置\n合同名称\t编号\t客户\t商机\t类型\t状态\t金额\t风险\t操作\n暂无合同",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-contracts.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/contracts?account_id=1&opportunity_id=10",
+      "url": "http://127.0.0.1:5175/contracts?account_id=1&opportunity_id=10",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n合同\n\n维护成交后的合同台账、状态、金额、条款、变更、节点和附件。\n\n刷新\n新建合同\n当前页面怎么用\n先按客户、商机、状态和风险筛选合同；进入执行台查看变更、节点和附件，为后续开票与回款提供来源。\n关键词\n客户\n1\n商机\n10\n状态\n风险\n筛 选\n重 置\n合同名称\t编号\t客户\t商机\t类型\t状态\t金额\t风险\t操作\n暂无合同",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-contracts-account-id-1-opportunity-id-10.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/invoices",
+      "url": "http://127.0.0.1:5175/invoices",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n开票管理\n\n承接合同开票条件，管理计划、申请、发票登记、签收、异常和附件。\n\n刷新\n新建计划\n当前页面怎么用\n先按合同、客户、状态筛选计划；财务开票前校验合同额度，开票后进入签收与后续回款核销。\n关键词\n客户\n合同\n状态\n类型\n筛 选\n重 置\n开票计划\t客户\t合同\t类型\t状态\t计划日期\t计划金额\t实际开票\t发票号\t操作\n暂无开票计划",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-invoices.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/receivables",
+      "url": "http://127.0.0.1:5175/receivables",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n回款管理\n\n围绕合同付款条件维护回款计划、到账流水、跟进记录和回单附件。\n\n刷新\n新建计划\n当前页面怎么用\n先按合同、状态和计划日期定位回款节点；进入详情登记到账、沉淀跟进和附件，为后续核销提供准确金额口径。\n关键词\n客户\n合同\n状态\n筛 选\n重 置\n回款计划\t客户\t合同\t阶段\t状态\t计划回款日\t计划金额\t已收/未收\t操作\n暂无回款计划",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-receivables.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/reconciliations",
+      "url": "http://127.0.0.1:5175/reconciliations",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n核销工作台\n\n将已开票或已签收发票与已确认到账流水进行匹配，形成可追溯的核销记录。\n\n刷新\n当前页面怎么用\n先按客户或合同筛选待核销发票和待分配回款；选择两侧记录后确认本次核销金额，系统同步更新发票和到账流水剩余金额。\n关键词\n客户\n合同\n筛 选\n重 置\n待核销发票金额\n¥0.00\n待分配回款金额\n¥0.00\n本页发票总额\n¥0.00\n本页已核销\n¥0.00\n待核销发票\n选择\t开票计划\t合同\t状态\t发票号\t实际开票\t未核销\n暂无待核销发票\n待分配回款\n选择\t到账流水\t合同\t状态\t到账时间\t确认金额\t未核销\n暂无待分配回款\n核销确认\n请选择发票和回款\n发票\n-\n发票未核销\n-\n回款\n-\n回款未核销\n-\n本次核销金额\n核销备注\n确认核销\n最近核销记录\n核销编号\t状态\t发票号\t到账流水\t核销金额\t核销时间\t操作\n暂无核销记录",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-reconciliations.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system",
+      "url": "http://127.0.0.1:5175/system",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n系统概览\n\n集中查看系统治理入口、基础配置数量和最近审计动态。\n\n刷新\n当前页面怎么用\n先从系统概览判断要维护的对象，再进入组织、用户、角色权限、审计日志或字典管理页面处理具体动作。\nV2治理覆盖\nV2权限点\n--\nV2字典类型\n--\nV2审计记录\n--\n组织管理\n\n部门、区域和组织状态维护\n\n0\n用户管理\n\n账号、角色和状态维护\n\n0\n角色权限\n\n角色授权和权限点配置\n\n0\n审计日志\n\n操作轨迹、对象和结果追溯\n\n0\n字典管理\n\n基础选项、启停和排序维护\n\n0",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-system.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system/departments",
+      "url": "http://127.0.0.1:5175/system/departments",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n组织管理\n\n维护部门组织、区域归属和启停状态。\n\n刷新\n新建组织\n当前页面怎么用\n先确认组织编码和区域归属，再新建或停用组织；组织是用户归属和数据权限的基础。\n组织列表\n组织\t编码\t上级ID\t区域\t状态\n\n组织\n\t\n编码\n\t\n上级ID\n\t\n区域\n\t\n状态\n\n\n暂无组织",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-system-departments.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system/users",
+      "url": "http://127.0.0.1:5175/system/users",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n用户管理\n\n维护人员账号、角色分配、状态和管理员密码重置。\n\n刷新\n新增用户\n重置密码\n当前页面怎么用\n先确认用户所属组织和角色，再新增、编辑或重置密码；停用用户会影响登录和数据访问。\n用户列表\n姓名\t部门ID\t邮箱\t状态\t角色\t操作\n\n姓名\n\t\n部门ID\n\t\n邮箱\n\t\n状态\n\t\n角色\n\t\n操作\n\n\n暂无用户",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-system-users.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system/roles",
+      "url": "http://127.0.0.1:5175/system/roles",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n角色权限\n\n按角色配置权限点，支撑系统与业务操作授权。\n\n刷新\n当前页面怎么用\n先选择角色，再进入授权弹窗配置权限点；角色权限会影响菜单、按钮和接口访问。\n角色权限\n角色\t编码\t权限数\t操作\n\n角色\n\t\n编码\n\t\n权限数\n\t\n操作\n\n\n暂无角色",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-system-roles.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system/audit-logs",
+      "url": "http://127.0.0.1:5175/system/audit-logs",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n审计日志\n\n查看系统关键操作记录、Trace 和结果。\n\n刷新\n当前页面怎么用\n用于追溯关键操作的时间、对象、结果和 Trace；优先按异常或变更时间定位记录。\n最近审计日志\n全部审计\n方案审计\n合同审计\n开票审计\n回款审计\n到账审计\n核销审计\n系统变更\n时间\t模块\t动作\t对象\t操作人\t结果\tTrace\n2026-06-30 16:08\treconciliation\treconciliation.create\tcrm_reconciliation #1\t1\tsuccess\t1eb996d4-1491-4f31-a8d8-32f1636be9e9\n2026-06-30 16:07\tpayment\tpayment.confirm\tcrm_payment #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tpayment\tpayment.create\tcrm_payment #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\treceivable\treceivable.create\tcrm_receivable_plan #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tinvoice\tinvoice.issue\tcrm_invoice #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tinvoice\tinvoice.apply\tcrm_invoice #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tinvoice\tinvoice.create\tcrm_invoice #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tcontract\tcontract.create\tcrm_contract #2\t1\tsuccess\tuat-reconciliation-1782806843405\n1\n2\n3",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-system-audit-logs.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system/dictionaries",
+      "url": "http://127.0.0.1:5175/system/dictionaries",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n字典管理\n\n维护基础选项与 V2 商务财务选项。\n\n刷新\n新建字典\n当前页面怎么用\n先确认字典类型，再维护字典项；停用项不再作为新建业务数据的推荐选项。",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/desktop-system-dictionaries.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/",
+      "url": "http://127.0.0.1:5175/",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n刷新\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n--\n待完成行动\n--\n本周行动\n--\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-dashboard.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/accounts",
+      "url": "http://127.0.0.1:5175/accounts",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n客户池\n\n从客户池进入客户经营，查看客户状态、最近跟进和后续业务入口。\n\n刷新\n新建客户\n当前页面怎么用\n先用关键词、等级、状态或行业定位客户；打开客户经营查看摘要、最近跟进和后续业务入口，必要时新建客户。\n关键词\n等级\n状态\n行业\n筛 选\n重 置\n客户名称\t类型\t等级\t状态\t最近跟进\t操作\n\nV1演示客户-上海智造集团\n\t企业客户\tA\t跟进中\t完成CRM V1试点需求确认会\t\n查看经营\n编 辑\n\n\nUAT核销客户1782806843405\n\t企业客户\tA\t跟进中\t-\t\n查看经营\n编 辑\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-accounts.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/contacts",
+      "url": "http://127.0.0.1:5175/contacts",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n联系人\n\n维护客户干系人关系，识别关键角色、态度和经营动作。\n\n刷新\n新建联系人\n当前页面怎么用\n先按客户、态度或关系热度定位关键人；通过关系判断查看角色覆盖，再进入联系人经营补动作。\n关键词\n客户\n态度\n关系热度\n筛 选\n重 置\n关键关系判断\n项目角色覆盖\n决策人\n1 人\n王敏\n态度判断\n支持者\n1 人\n王敏\n关系热度\n高热度\n1 人\n王敏\n姓名\t所属客户\t职务\t类型\t态度\t关系热度\t操作\n\n王敏\n\tV1演示客户-上海智造集团\t数字化负责人\t决策人\t支持者\t高热度\t\n查看关系\n编 辑\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-contacts.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/opportunities",
+      "url": "http://127.0.0.1:5175/opportunities",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n商机\n\n围绕在办商机推进阶段、状态、风险和关闭/取消跟进。\n\n刷新\n新建商机\n当前页面怎么用\n先看默认在办商机；按阶段、状态或风险筛选，再进入商机推进入口确认进展、下一步和关联动作。\n关键词\n客户\n阶段\n状态\n风险\n筛 选\n重 置\n商机名称\t所属客户\t阶段\t状态\t风险\t最近跟进\t操作\n\n智能制造CRM一期试点\n\tV1演示客户-上海智造集团\t商业方案\t跟进中\t低风险\t完成CRM V1试点需求确认会\t\n查看推进\n编 辑\n关闭/取消\n重 启\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-opportunities.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/activities",
+      "url": "http://127.0.0.1:5175/activities",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n销售行动\n\n记录客户经营和商机推进动作，完成后回写最近跟进与周进展。\n\n刷新\n新建行动\n当前页面怎么用\n先看计划、逾期和风险行动；进入行动执行入口确认沟通内容、客户反馈、结论和下一步计划。\n关键词\n客户\n商机\n状态\n逾期\n筛 选\n重 置\n行动主题\t所属客户\t关联商机\t状态\t类型\t下次跟进\t风险\t操作\n\n完成CRM V1试点需求确认会\n\tV1演示客户-上海智造集团\t智能制造CRM一期试点\t已完成\t会议沟通\t2026-06-19 00:42\t有风险\t\n查看执行\n编 辑\n完 成\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-activities.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/weekly-progress",
+      "url": "http://127.0.0.1:5175/weekly-progress",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n周进展\n\n按商机、负责人和自然周汇总已完成销售行动。\n\n刷新\n当前页面怎么用\n先按自然周、负责人、客户或商机筛选，再进入周进展复盘查看行动结论、下一步和风险。\n负责人ID\n商机ID\n客户\n周开始\n周结束\n仅风险\n筛 选\n重 置\n\t所属客户\t商机\t负责人\t自然周\t行动数\t最近行动\t风险\n\tV1演示客户-上海智造集团\t\n智能制造CRM一期试点\n\t用户 1\t2026-06-15 至 2026-06-21\t1 次行动\t2026-06-19 00:42\t存在风险\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-weekly-progress.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/solutions",
+      "url": "http://127.0.0.1:5175/solutions",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n方案标书\n\n管理商机关联的技术方案、投标文件、报价和客户反馈。\n\n刷新\n新建方案\n当前页面怎么用\n先按客户、商机、状态筛选方案；进入详情维护方案摘要、投标自检和附件，作废时保留原因用于审计。\n关键词\n客户\n商机\n类型\n状态\n筛 选\n重 置\n方案名称\t客户\t商机\t类型\t版本\t状态\t报价\t自检\t操作\n\n浏览器验证方案-268632\n\tV1演示客户-上海智造集团\t智能制造CRM一期试点\t技术方案\tV1.0\t编制中\t880,000 元\t有风险\t\n查 看\n编 辑\n作 废\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-solutions.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/contracts",
+      "url": "http://127.0.0.1:5175/contracts",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n合同\n\n维护成交后的合同台账、状态、金额、条款、变更、节点和附件。\n\n刷新\n新建合同\n当前页面怎么用\n先按客户、商机、状态和风险筛选合同；进入执行台查看变更、节点和附件，为后续开票与回款提供来源。\n关键词\n客户\n商机\n状态\n风险\n筛 选\n重 置\n合同名称\t编号\t客户\t商机\t类型\t状态\t金额\t风险\t操作\n\nUAT核销合同1782806843405\n\tUAT-REC-1782806843405\tUAT核销客户1782806843405\tUAT核销商机1782806843405\t项目合同\t履约中\t300,000 元\t-\t\n查 看\n编 辑\n终 止\n\n\nV2 UAT 项目合同\n\tV2-UAT-20260629\tV1演示客户-上海智造集团\t智能制造CRM一期试点\t项目合同\t履约中\t1,360,000 元\t低风险\t\n查 看\n编 辑\n终 止\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-contracts.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/contracts?account_id=1&opportunity_id=10",
+      "url": "http://127.0.0.1:5175/contracts?account_id=1&opportunity_id=10",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n合同\n\n维护成交后的合同台账、状态、金额、条款、变更、节点和附件。\n\n刷新\n新建合同\n当前页面怎么用\n先按客户、商机、状态和风险筛选合同；进入执行台查看变更、节点和附件，为后续开票与回款提供来源。\n关键词\n客户\nV1演示客户-上海智造集团\n商机\n10\n状态\n风险\n筛 选\n重 置\n合同名称\t编号\t客户\t商机\t类型\t状态\t金额\t风险\t操作\n暂无合同",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-contracts-account-id-1-opportunity-id-10.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/invoices",
+      "url": "http://127.0.0.1:5175/invoices",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n开票管理\n\n承接合同开票条件，管理计划、申请、发票登记、签收、异常和附件。\n\n刷新\n新建计划\n当前页面怎么用\n先按合同、客户、状态筛选计划；财务开票前校验合同额度，开票后进入签收与后续回款核销。\n关键词\n客户\n合同\n状态\n类型\n筛 选\n重 置\n开票计划\t客户\t合同\t类型\t状态\t计划日期\t计划金额\t实际开票\t发票号\t操作\n\nUAT核销发票1782806843405\n\tUAT核销客户1782806843405\tUAT核销合同1782806843405\t增值税专票\t已开票\t2026-07-01 10:00\t180,000 元\t180,000 元\tINV-1782806843405\t\n查 看\n编 辑\n申 请\n开 票\n\n\nV2 UAT 首期开票\n\tV1演示客户-上海智造集团\tV2 UAT 项目合同\t增值税专票\t计划中\t2026-07-15 10:00\t360,000 元\t-\t-\t\n查 看\n编 辑\n申 请\n开 票\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-invoices.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/receivables",
+      "url": "http://127.0.0.1:5175/receivables",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n回款管理\n\n围绕合同付款条件维护回款计划、到账流水、跟进记录和回单附件。\n\n刷新\n新建计划\n当前页面怎么用\n先按合同、状态和计划日期定位回款节点；进入详情登记到账、沉淀跟进和附件，为后续核销提供准确金额口径。\n关键词\n客户\n合同\n状态\n筛 选\n重 置\n回款计划\t客户\t合同\t阶段\t状态\t计划回款日\t计划金额\t已收/未收\t操作\n\nUAT核销回款计划1782806843405\n\tUAT核销客户1782806843405\tUAT核销合同1782806843405\t首付款\t计划中\t2026-07-03 10:00\t120,000 元\t\n已收 ¥120,000.00\n未收 ¥0.00\n\t\n查 看\n\n\nV2 UAT 首付款回款\n\tV1演示客户-上海智造集团\tV2 UAT 项目合同\tadvance\t计划中\t2026-07-20 10:00\t408,000 元\t\n已收 ¥0.00\n未收 ¥408,000.00\n\t\n查 看\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-receivables.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/reconciliations",
+      "url": "http://127.0.0.1:5175/reconciliations",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n核销工作台\n\n将已开票或已签收发票与已确认到账流水进行匹配，形成可追溯的核销记录。\n\n刷新\n当前页面怎么用\n先按客户或合同筛选待核销发票和待分配回款；选择两侧记录后确认本次核销金额，系统同步更新发票和到账流水剩余金额。\n关键词\n客户\n合同\n筛 选\n重 置\n待核销发票金额\n¥60,000.00\n待分配回款金额\n¥0.00\n本页发票总额\n-\n本页已核销\n¥120,000.00\n待核销发票\n选择\t开票计划\t合同\t状态\t发票号\t实际开票\t未核销\n\tUAT核销发票1782806843405\tUAT核销合同1782806843405\t已开票\tINV-1782806843405\t180,000 元\t60,000 元\n1\n待分配回款\n选择\t到账流水\t合同\t状态\t到账时间\t确认金额\t未核销\n暂无待分配回款\n核销确认\n请选择发票和回款\n发票\n-\n发票未核销\n-\n回款\n-\n回款未核销\n-\n本次核销金额\n核销备注\n确认核销\n最近核销记录\n核销编号\t状态\t发票号\t到账流水\t核销金额\t核销时间\t操作\nREC-1-605052617004291\t有效\tINV-1782806843405\tUAT核销到账1782806843405\t120,000 元\t2026-06-30 16:08\t\n撤 销\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-reconciliations.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/system",
+      "url": "http://127.0.0.1:5175/system",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n系统概览\n\n集中查看系统治理入口、基础配置数量和最近审计动态。\n\n刷新\n当前页面怎么用\n先从系统概览判断要维护的对象，再进入组织、用户、角色权限、审计日志或字典管理页面处理具体动作。\nV2治理覆盖\nV2权限点\n34\nV2字典类型\n17\nV2审计记录\n18\n组织管理\n\n部门、区域和组织状态维护\n\n1\n用户管理\n\n账号、角色和状态维护\n\n1\n角色权限\n\n角色授权和权限点配置\n\n1\n审计日志\n\n操作轨迹、对象和结果追溯\n\n20\n字典管理\n\n基础选项、启停和排序维护\n\n20",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-system.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/system/departments",
+      "url": "http://127.0.0.1:5175/system/departments",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n组织管理\n\n维护部门组织、区域归属和启停状态。\n\n刷新\n新建组织\n当前页面怎么用\n先确认组织编码和区域归属，再新建或停用组织；组织是用户归属和数据权限的基础。\n组织列表\n组织\t编码\t上级ID\t区域\t状态\n\n组织\n\t\n编码\n\t\n上级ID\n\t\n区域\n\t\n状态\n\nV1演示销售部\tv1-demo-sales\t-\tCN-31\t跟进中\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-system-departments.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/system/users",
+      "url": "http://127.0.0.1:5175/system/users",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n用户管理\n\n维护人员账号、角色分配、状态和管理员密码重置。\n\n刷新\n新增用户\n重置密码\n当前页面怎么用\n先确认用户所属组织和角色，再新增、编辑或重置密码；停用用户会影响登录和数据访问。\n用户列表\n姓名\t部门ID\t邮箱\t状态\t角色\t操作\n\n姓名\n\t\n部门ID\n\t\n邮箱\n\t\n状态\n\t\n角色\n\t\n操作\n\n\n暂无用户",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-system-users.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/system/roles",
+      "url": "http://127.0.0.1:5175/system/roles",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n角色权限\n\n按角色配置权限点，支撑系统与业务操作授权。\n\n刷新\n当前页面怎么用\n先选择角色，再进入授权弹窗配置权限点；角色权限会影响菜单、按钮和接口访问。\n角色权限\n角色\t编码\t权限数\t操作\n\n角色\n\t\n编码\n\t\n权限数\n\t\n操作\n\nV1演示管理员\tv1_demo_admin\t56\t\n授 权\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-system-roles.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/system/audit-logs",
+      "url": "http://127.0.0.1:5175/system/audit-logs",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n审计日志\n\n查看系统关键操作记录、Trace 和结果。\n\n刷新\n当前页面怎么用\n用于追溯关键操作的时间、对象、结果和 Trace；优先按异常或变更时间定位记录。\n最近审计日志\n全部审计\n方案审计\n合同审计\n开票审计\n回款审计\n到账审计\n核销审计\n系统变更\n时间\t模块\t动作\t对象\t操作人\t结果\tTrace\n2026-06-30 16:08\treconciliation\treconciliation.create\tcrm_reconciliation #1\t1\tsuccess\t1eb996d4-1491-4f31-a8d8-32f1636be9e9\n2026-06-30 16:07\tpayment\tpayment.confirm\tcrm_payment #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tpayment\tpayment.create\tcrm_payment #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\treceivable\treceivable.create\tcrm_receivable_plan #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tinvoice\tinvoice.issue\tcrm_invoice #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tinvoice\tinvoice.apply\tcrm_invoice #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tinvoice\tinvoice.create\tcrm_invoice #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tcontract\tcontract.create\tcrm_contract #2\t1\tsuccess\tuat-reconciliation-1782806843405\n1\n2\n3",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-system-audit-logs.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/system/dictionaries",
+      "url": "http://127.0.0.1:5175/system/dictionaries",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n字典管理\n\n维护基础选项与 V2 商务财务选项。\n\n刷新\n新建字典\n当前页面怎么用\n先确认字典类型，再维护字典项；停用项不再作为新建业务数据的推荐选项。\n客户类型 (account_type)\n新增项\n企业客户\n政府客户\n渠道伙伴\n行动类型 (activity_type)\n新增项\n客户拜访\n电话沟通\n项目会议\n合同变更类型 (contract_change_type)\n新增项\n金额变更\n周期变更\n范围变更\n条款变更\n合同节点状态 (contract_milestone_status)\n新增项\n待完成\n已完成\n已延期\n已豁免\n合同状态 (contract_status)\n新增项\n草稿\n履约中\n已结清\n已终止\n合同类型 (contract_type)\n新增项\n销售合同\n框架协议\n补充协议\n服务合同\n开票异常类型 (invoice_exception_type)\n新增项\n信息错误\n金额错误\n客户拒收\n系统问题\n开票状态 (invoice_status)\n新增项\n计划中\n已申请\n已开票\n已签收\n异常\n已作废\n发票类型 (invoice_type)\n新增项\n增值税专票\n增值税普票\n收据\n商机阶段 (opportunity_stage)\n新增项\n商业线索\n商业验证\n方案报价\n回款方式 (payment_method)\n新增项\n银行转账\n承兑汇票\n现金\n其他\n到账状态 (payment_status)\n新增项\n待确认\n已确认\n异常\n已退款\n回款跟进结果 (receivable_follow_up_result)\n新增项\n承诺付款\n存在争议\n升级处理\n已关闭\n回款计划状态 (receivable_plan_status)\n新增项\n计划中\n部分回款\n已回款\n已逾期\n已终止\n核销来源 (reconciliation_source)\n新增项\n手工核销\n导入核销\n核销状态 (reconciliation_status)\n新增项\n有效\n已撤销\n方案材料类型 (solution_doc_type)\n新增项\n商业方案\n投标文件\n报价测算\n标书自评\n客户反馈\n方案风险等级 (solution_risk_level)\n新增项\n低风险\n中风险\n高风险\n方案自评结果 (solution_self_check_result)\n新增项\n通过\n有风险\n不通过\n无需自评\n方案状态 (solution_status)\n新增项\n草稿\n评审中\n已通过\n未通过\n已作废",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/tablet-system-dictionaries.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/",
+      "url": "http://127.0.0.1:5175/",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n刷新\n今日优先处理\n\n本周已有 1 条行动记录，可进入销售行动查看完成情况。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n1\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-dashboard.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/accounts",
+      "url": "http://127.0.0.1:5175/accounts",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n客户池\n\n从客户池进入客户经营，查看客户状态、最近跟进和后续业务入口。\n\n刷新\n新建客户\n当前页面怎么用\n先用关键词、等级、状态或行业定位客户；打开客户经营查看摘要、最近跟进和后续业务入口，必要时新建客户。\n关键词\n等级\n状态\n行业\n筛 选\n重 置\n客户名称\t类型\t等级\t状态\t最近跟进\t操作\n\nV1演示客户-上海智造集团\n\t企业客户\tA\t跟进中\t完成CRM V1试点需求确认会\t\n查看经营\n编 辑\n\n\nUAT核销客户1782806843405\n\t企业客户\tA\t跟进中\t-\t\n查看经营\n编 辑\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-accounts.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/contacts",
+      "url": "http://127.0.0.1:5175/contacts",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n联系人\n\n维护客户干系人关系，识别关键角色、态度和经营动作。\n\n刷新\n新建联系人\n当前页面怎么用\n先按客户、态度或关系热度定位关键人；通过关系判断查看角色覆盖，再进入联系人经营补动作。\n关键词\n客户\n态度\n关系热度\n筛 选\n重 置\n关键关系判断\n项目角色覆盖\n决策人\n1 人\n王敏\n态度判断\n支持者\n1 人\n王敏\n关系热度\n高热度\n1 人\n王敏\n姓名\t所属客户\t职务\t类型\t态度\t关系热度\t操作\n\n王敏\n\tV1演示客户-上海智造集团\t数字化负责人\t决策人\t支持者\t高热度\t\n查看关系\n编 辑\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-contacts.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/opportunities",
+      "url": "http://127.0.0.1:5175/opportunities",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n商机\n\n围绕在办商机推进阶段、状态、风险和关闭/取消跟进。\n\n刷新\n新建商机\n当前页面怎么用\n先看默认在办商机；按阶段、状态或风险筛选，再进入商机推进入口确认进展、下一步和关联动作。\n关键词\n客户\n阶段\n状态\n风险\n筛 选\n重 置\n商机名称\t所属客户\t阶段\t状态\t风险\t最近跟进\t操作\n\n智能制造CRM一期试点\n\tV1演示客户-上海智造集团\t商业方案\t跟进中\t低风险\t完成CRM V1试点需求确认会\t\n查看推进\n编 辑\n关闭/取消\n重 启\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-opportunities.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/activities",
+      "url": "http://127.0.0.1:5175/activities",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n销售行动\n\n记录客户经营和商机推进动作，完成后回写最近跟进与周进展。\n\n刷新\n新建行动\n当前页面怎么用\n先看计划、逾期和风险行动；进入行动执行入口确认沟通内容、客户反馈、结论和下一步计划。\n关键词\n客户\n商机\n状态\n逾期\n筛 选\n重 置\n行动主题\t所属客户\t关联商机\t状态\t类型\t下次跟进\t风险\t操作\n\n完成CRM V1试点需求确认会\n\tV1演示客户-上海智造集团\t智能制造CRM一期试点\t已完成\t会议沟通\t2026-06-19 00:42\t有风险\t\n查看执行\n编 辑\n完 成\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-activities.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/weekly-progress",
+      "url": "http://127.0.0.1:5175/weekly-progress",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n周进展\n\n按商机、负责人和自然周汇总已完成销售行动。\n\n刷新\n当前页面怎么用\n先按自然周、负责人、客户或商机筛选，再进入周进展复盘查看行动结论、下一步和风险。\n负责人ID\n商机ID\n客户\n周开始\n周结束\n仅风险\n筛 选\n重 置\n\t所属客户\t商机\t负责人\t自然周\t行动数\t最近行动\t风险\n\tV1演示客户-上海智造集团\t\n智能制造CRM一期试点\n\t用户 1\t2026-06-15 至 2026-06-21\t1 次行动\t2026-06-19 00:42\t存在风险\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-weekly-progress.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/solutions",
+      "url": "http://127.0.0.1:5175/solutions",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n方案标书\n\n管理商机关联的技术方案、投标文件、报价和客户反馈。\n\n刷新\n新建方案\n当前页面怎么用\n先按客户、商机、状态筛选方案；进入详情维护方案摘要、投标自检和附件，作废时保留原因用于审计。\n关键词\n客户\n商机\n类型\n状态\n筛 选\n重 置\n方案名称\t客户\t商机\t类型\t版本\t状态\t报价\t自检\t操作\n\n浏览器验证方案-268632\n\tV1演示客户-上海智造集团\t智能制造CRM一期试点\t技术方案\tV1.0\t编制中\t880,000 元\t有风险\t\n查 看\n编 辑\n作 废\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-solutions.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/contracts",
+      "url": "http://127.0.0.1:5175/contracts",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n合同\n\n维护成交后的合同台账、状态、金额、条款、变更、节点和附件。\n\n刷新\n新建合同\n当前页面怎么用\n先按客户、商机、状态和风险筛选合同；进入执行台查看变更、节点和附件，为后续开票与回款提供来源。\n关键词\n客户\n商机\n状态\n风险\n筛 选\n重 置\n合同名称\t编号\t客户\t商机\t类型\t状态\t金额\t风险\t操作\n\nUAT核销合同1782806843405\n\tUAT-REC-1782806843405\tUAT核销客户1782806843405\tUAT核销商机1782806843405\t项目合同\t履约中\t300,000 元\t-\t\n查 看\n编 辑\n终 止\n\n\nV2 UAT 项目合同\n\tV2-UAT-20260629\tV1演示客户-上海智造集团\t智能制造CRM一期试点\t项目合同\t履约中\t1,360,000 元\t低风险\t\n查 看\n编 辑\n终 止\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-contracts.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/contracts?account_id=1&opportunity_id=10",
+      "url": "http://127.0.0.1:5175/contracts?account_id=1&opportunity_id=10",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n合同\n\n维护成交后的合同台账、状态、金额、条款、变更、节点和附件。\n\n刷新\n新建合同\n当前页面怎么用\n先按客户、商机、状态和风险筛选合同；进入执行台查看变更、节点和附件，为后续开票与回款提供来源。\n关键词\n客户\nV1演示客户-上海智造集团\n商机\n10\n状态\n风险\n筛 选\n重 置\n合同名称\t编号\t客户\t商机\t类型\t状态\t金额\t风险\t操作\n暂无合同",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-contracts-account-id-1-opportunity-id-10.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/invoices",
+      "url": "http://127.0.0.1:5175/invoices",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n开票管理\n\n承接合同开票条件，管理计划、申请、发票登记、签收、异常和附件。\n\n刷新\n新建计划\n当前页面怎么用\n先按合同、客户、状态筛选计划；财务开票前校验合同额度，开票后进入签收与后续回款核销。\n关键词\n客户\n合同\n状态\n类型\n筛 选\n重 置\n开票计划\t客户\t合同\t类型\t状态\t计划日期\t计划金额\t实际开票\t发票号\t操作\n\nUAT核销发票1782806843405\n\tUAT核销客户1782806843405\tUAT核销合同1782806843405\t增值税专票\t已开票\t2026-07-01 10:00\t180,000 元\t180,000 元\tINV-1782806843405\t\n查 看\n编 辑\n申 请\n开 票\n\n\nV2 UAT 首期开票\n\tV1演示客户-上海智造集团\tV2 UAT 项目合同\t增值税专票\t计划中\t2026-07-15 10:00\t360,000 元\t-\t-\t\n查 看\n编 辑\n申 请\n开 票\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-invoices.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/receivables",
+      "url": "http://127.0.0.1:5175/receivables",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n回款管理\n\n围绕合同付款条件维护回款计划、到账流水、跟进记录和回单附件。\n\n刷新\n新建计划\n当前页面怎么用\n先按合同、状态和计划日期定位回款节点；进入详情登记到账、沉淀跟进和附件，为后续核销提供准确金额口径。\n关键词\n客户\n合同\n状态\n筛 选\n重 置\n回款计划\t客户\t合同\t阶段\t状态\t计划回款日\t计划金额\t已收/未收\t操作\n\nUAT核销回款计划1782806843405\n\tUAT核销客户1782806843405\tUAT核销合同1782806843405\t首付款\t计划中\t2026-07-03 10:00\t120,000 元\t\n已收 ¥120,000.00\n未收 ¥0.00\n\t\n查 看\n\n\nV2 UAT 首付款回款\n\tV1演示客户-上海智造集团\tV2 UAT 项目合同\tadvance\t计划中\t2026-07-20 10:00\t408,000 元\t\n已收 ¥0.00\n未收 ¥408,000.00\n\t\n查 看\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-receivables.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/reconciliations",
+      "url": "http://127.0.0.1:5175/reconciliations",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n核销工作台\n\n将已开票或已签收发票与已确认到账流水进行匹配，形成可追溯的核销记录。\n\n刷新\n当前页面怎么用\n先按客户或合同筛选待核销发票和待分配回款；选择两侧记录后确认本次核销金额，系统同步更新发票和到账流水剩余金额。\n关键词\n客户\n合同\n筛 选\n重 置\n待核销发票金额\n¥60,000.00\n待分配回款金额\n¥0.00\n本页发票总额\n-\n本页已核销\n¥120,000.00\n待核销发票\n选择\t开票计划\t合同\t状态\t发票号\t实际开票\t未核销\n\tUAT核销发票1782806843405\tUAT核销合同1782806843405\t已开票\tINV-1782806843405\t180,000 元\t60,000 元\n1\n待分配回款\n选择\t到账流水\t合同\t状态\t到账时间\t确认金额\t未核销\n暂无待分配回款\n核销确认\n请选择发票和回款\n发票\n-\n发票未核销\n-\n回款\n-\n回款未核销\n-\n本次核销金额\n核销备注\n确认核销\n最近核销记录\n核销编号\t状态\t发票号\t到账流水\t核销金额\t核销时间\t操作\nREC-1-605052617004291\t有效\tINV-1782806843405\tUAT核销到账1782806843405\t120,000 元\t2026-06-30 16:08\t\n撤 销\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-reconciliations.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system",
+      "url": "http://127.0.0.1:5175/system",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n系统概览\n\n集中查看系统治理入口、基础配置数量和最近审计动态。\n\n刷新\n当前页面怎么用\n先从系统概览判断要维护的对象，再进入组织、用户、角色权限、审计日志或字典管理页面处理具体动作。\nV2治理覆盖\nV2权限点\n34\nV2字典类型\n17\nV2审计记录\n18\n组织管理\n\n部门、区域和组织状态维护\n\n1\n用户管理\n\n账号、角色和状态维护\n\n1\n角色权限\n\n角色授权和权限点配置\n\n1\n审计日志\n\n操作轨迹、对象和结果追溯\n\n20\n字典管理\n\n基础选项、启停和排序维护\n\n20",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-system.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system/departments",
+      "url": "http://127.0.0.1:5175/system/departments",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n组织管理\n\n维护部门组织、区域归属和启停状态。\n\n刷新\n新建组织\n当前页面怎么用\n先确认组织编码和区域归属，再新建或停用组织；组织是用户归属和数据权限的基础。\n组织列表\n组织\t编码\t上级ID\t区域\t状态\n\n组织\n\t\n编码\n\t\n上级ID\n\t\n区域\n\t\n状态\n\nV1演示销售部\tv1-demo-sales\t-\tCN-31\t跟进中\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-system-departments.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system/users",
+      "url": "http://127.0.0.1:5175/system/users",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n用户管理\n\n维护人员账号、角色分配、状态和管理员密码重置。\n\n刷新\n新增用户\n重置密码\n当前页面怎么用\n先确认用户所属组织和角色，再新增、编辑或重置密码；停用用户会影响登录和数据访问。\n用户列表\n姓名\t部门ID\t邮箱\t状态\t角色\t操作\n\n姓名\n\t\n部门ID\n\t\n邮箱\n\t\n状态\n\t\n角色\n\t\n操作\n\nV1演示管理员\t1\tdemo_admin@example.com\t跟进中\t\nV1演示管理员\n\t\n编 辑\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-system-users.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system/roles",
+      "url": "http://127.0.0.1:5175/system/roles",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n角色权限\n\n按角色配置权限点，支撑系统与业务操作授权。\n\n刷新\n当前页面怎么用\n先选择角色，再进入授权弹窗配置权限点；角色权限会影响菜单、按钮和接口访问。\n角色权限\n角色\t编码\t权限数\t操作\n\n角色\n\t\n编码\n\t\n权限数\n\t\n操作\n\nV1演示管理员\tv1_demo_admin\t56\t\n授 权\n1",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-system-roles.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system/audit-logs",
+      "url": "http://127.0.0.1:5175/system/audit-logs",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n审计日志\n\n查看系统关键操作记录、Trace 和结果。\n\n刷新\n当前页面怎么用\n用于追溯关键操作的时间、对象、结果和 Trace；优先按异常或变更时间定位记录。\n最近审计日志\n全部审计\n方案审计\n合同审计\n开票审计\n回款审计\n到账审计\n核销审计\n系统变更\n时间\t模块\t动作\t对象\t操作人\t结果\tTrace\n2026-06-30 16:08\treconciliation\treconciliation.create\tcrm_reconciliation #1\t1\tsuccess\t1eb996d4-1491-4f31-a8d8-32f1636be9e9\n2026-06-30 16:07\tpayment\tpayment.confirm\tcrm_payment #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tpayment\tpayment.create\tcrm_payment #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\treceivable\treceivable.create\tcrm_receivable_plan #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tinvoice\tinvoice.issue\tcrm_invoice #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tinvoice\tinvoice.apply\tcrm_invoice #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tinvoice\tinvoice.create\tcrm_invoice #2\t1\tsuccess\tuat-reconciliation-1782806843405\n2026-06-30 16:07\tcontract\tcontract.create\tcrm_contract #2\t1\tsuccess\tuat-reconciliation-1782806843405\n1\n2\n3",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-system-audit-logs.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system/dictionaries",
+      "url": "http://127.0.0.1:5175/system/dictionaries",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n核销工作台\n销售行动\n周进展\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nV1 销售基础闭环\n客户、联系人、商机、行动与周进展\n56 个权限点\n修改密码\n退 出\n字典管理\n\n维护基础选项与 V2 商务财务选项。\n\n刷新\n新建字典\n当前页面怎么用\n先确认字典类型，再维护字典项；停用项不再作为新建业务数据的推荐选项。\n客户类型 (account_type)\n新增项\n企业客户\n政府客户\n渠道伙伴\n行动类型 (activity_type)\n新增项\n客户拜访\n电话沟通\n项目会议\n合同变更类型 (contract_change_type)\n新增项\n金额变更\n周期变更\n范围变更\n条款变更\n合同节点状态 (contract_milestone_status)\n新增项\n待完成\n已完成\n已延期\n已豁免\n合同状态 (contract_status)\n新增项\n草稿\n履约中\n已结清\n已终止\n合同类型 (contract_type)\n新增项\n销售合同\n框架协议\n补充协议\n服务合同\n开票异常类型 (invoice_exception_type)\n新增项\n信息错误\n金额错误\n客户拒收\n系统问题\n开票状态 (invoice_status)\n新增项\n计划中\n已申请\n已开票\n已签收\n异常\n已作废\n发票类型 (invoice_type)\n新增项\n增值税专票\n增值税普票\n收据\n商机阶段 (opportunity_stage)\n新增项\n商业线索\n商业验证\n方案报价\n回款方式 (payment_method)\n新增项\n银行转账\n承兑汇票\n现金\n其他\n到账状态 (payment_status)\n新增项\n待确认\n已确认\n异常\n已退款\n回款跟进结果 (receivable_follow_up_result)\n新增项\n承诺付款\n存在争议\n升级处理\n已关闭\n回款计划状态 (receivable_plan_status)\n新增项\n计划中\n部分回款\n已回款\n已逾期\n已终止\n核销来源 (reconciliation_source)\n新增项\n手工核销\n导入核销\n核销状态 (reconciliation_status)\n新增项\n有效\n已撤销\n方案材料类型 (solution_doc_type)\n新增项\n商业方案\n投标文件\n报价测算\n标书自评\n客户反馈\n方案风险等级 (solution_risk_level)\n新增项\n低风险\n中风险\n高风险\n方案自评结果 (solution_self_check_result)\n新增项\n通过\n有风险\n不通过\n无需自评\n方案状态 (solution_status)\n新增项\n草稿\n评审中\n已通过\n未通过\n已作废",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/v2-browser-smoke-20260702/mobile-system-dictionaries.png"
+    }
+  ],
+  "consoleFailures": [],
+  "failedResponses": []
+}

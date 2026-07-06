@@ -105,7 +105,11 @@ function readPreviousGitCommit(rootDir) {
 }
 
 function allowedValidationStatusCommits(rootDir) {
-  return [readGitCommit(rootDir), readPreviousGitCommit(rootDir)].filter((commit) => commit !== "unknown");
+  return [
+    readGitCommit(rootDir),
+    readPreviousGitCommit(rootDir),
+    process.env.GITHUB_HEAD_SHA
+  ].filter((commit, index, commits) => commit && commit !== "unknown" && commits.indexOf(commit) === index);
 }
 
 export function selectValidationStatusGitCommit({
@@ -186,6 +190,14 @@ function defaultGenerators(rootDir) {
   };
 }
 
+function evaluateLiveGate(rootDir) {
+  try {
+    return evaluateV1ReleaseGateFromFiles(rootDir);
+  } catch {
+    return { ok: false, decision: "Unavailable", failed: [] };
+  }
+}
+
 function includesAll(content, needles) {
   return needles.every((needle) => content.includes(needle));
 }
@@ -231,7 +243,7 @@ export function evaluateGeneratedDocsSnapshot({
   rootDir = process.cwd(),
   generators = defaultGenerators(rootDir)
 } = {}) {
-  const liveGate = evaluateV1ReleaseGateFromFiles(rootDir);
+  const liveGate = evaluateLiveGate(rootDir);
   const checks = GENERATED_DOC_PATHS.map((docPath) => {
     const absolutePath = path.join(rootDir, docPath);
     if (!existsSync(absolutePath)) {

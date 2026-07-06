@@ -344,7 +344,130 @@ OpenAPI契约文件：`docs/openapi/crm-v1-openapi.yaml`。当前已建立 `Open
 
 当前 V2 方案标书基线已落地：`crm_solution_documents` 关联客户和商机，支持方案/投标文件状态、版本、报价、成本、预计毛利、投标自检、客户反馈和作废原因；数据访问复用关联商机的数据权限。附件沿用通用附件 API，使用 `object_type=solution_document`。
 
-## 10. 附件与提醒API
+## 10. 合同管理API
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| GET | /api/contracts | 查询合同列表 | contract.read + 关联商机/客户数据权限 |
+| GET | /api/contracts/{id} | 查看合同详情 | contract.read + 关联商机/客户数据权限 |
+| POST | /api/contracts | 创建合同 | contract.create + 关联商机/客户数据权限 |
+| PATCH | /api/contracts/{id} | 编辑合同 | contract.update + 关联商机/客户数据权限 |
+| POST | /api/contracts/{id}/terminate | 终止合同 | contract.terminate + 关联商机/客户数据权限 |
+| GET | /api/contracts/{id}/changes | 查询合同变更记录 | contract.read + 关联商机/客户数据权限 |
+| GET | /api/contracts/{id}/milestones | 查询合同节点 | contract.read + 关联商机/客户数据权限 |
+| POST | /api/contracts/{id}/milestones | 新增合同节点 | contract.milestone.manage + 关联商机/客户数据权限 |
+| PATCH | /api/contracts/{id}/milestones/{milestoneId} | 编辑合同节点 | contract.milestone.manage + 关联商机/客户数据权限 |
+
+过滤参数：
+
+- `keyword`
+- `account_id`
+- `opportunity_id`
+- `contract_type`
+- `contract_status`
+- `risk_level`
+- `owner_user_id`
+- `business_owner_id`
+
+当前 V2 合同管理基线已落地：`crm_contracts` 关联客户和可选来源商机，支持合同编号、类型、状态、含税金额、税率、不含税金额、付款条件、开票条件、交付范围、验收标准、风险、终止原因；关键字段变更写入 `crm_contract_changes`，合同履约节点写入 `crm_contract_milestones`。附件沿用通用附件 API，使用 `object_type=contract`。
+
+## 11. 开票管理API
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| GET | /api/invoices | 查询开票计划/发票列表 | invoice.read + 关联合同数据权限 |
+| GET | /api/invoices/{id} | 查看开票详情 | invoice.read + 关联合同数据权限 |
+| POST | /api/invoices | 创建开票计划 | invoice.create + 关联合同数据权限 |
+| PATCH | /api/invoices/{id} | 编辑开票计划 | invoice.update + 关联合同数据权限 |
+| POST | /api/invoices/{id}/apply | 提交开票申请 | invoice.apply + 关联合同数据权限 |
+| POST | /api/invoices/{id}/issue | 登记实际发票 | invoice.issue + 关联合同数据权限 |
+| POST | /api/invoices/{id}/sign | 确认客户签收 | invoice.sign + 关联合同数据权限 |
+| POST | /api/invoices/{id}/exception | 登记开票异常 | invoice.exception + 关联合同数据权限 |
+| POST | /api/invoices/{id}/void | 作废发票 | invoice.void + 关联合同数据权限 |
+
+过滤参数：
+
+- `keyword`
+- `account_id`
+- `opportunity_id`
+- `contract_id`
+- `invoice_status`
+- `invoice_type`
+- `owner_user_id`
+- `planned_from`
+- `planned_to`
+- `invoice_date_from`
+- `invoice_date_to`
+- `exception_only`
+
+当前 V2 开票管理基线已落地：`crm_invoices` 关联合同，并从合同继承客户和商机；支持开票计划、申请、实际发票登记、客户签收、异常登记、作废和合同累计开票额度校验。正式开票后累计已开票金额不得超过合同金额；作废发票会释放可开票额度。附件沿用通用附件 API，使用 `object_type=invoice`。
+
+## 12. 回款管理API
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| GET | /api/receivable-plans | 查询回款计划列表 | receivable.read + 关联合同数据权限 |
+| GET | /api/receivable-plans/{id} | 查看回款计划详情 | receivable.read + 关联合同数据权限 |
+| POST | /api/receivable-plans | 创建回款计划 | receivable.create + 关联合同数据权限 |
+| PATCH | /api/receivable-plans/{id} | 编辑回款计划 | receivable.update + 关联合同数据权限 |
+| POST | /api/receivable-plans/{id}/terminate | 终止回款计划 | receivable.terminate + 关联合同数据权限 |
+| GET | /api/receivable-plans/{id}/payments | 查询计划到账流水 | receivable.read + 关联合同数据权限 |
+| GET | /api/receivable-plans/{id}/follow-ups | 查询回款跟进 | receivable.read + 关联合同数据权限 |
+| POST | /api/receivable-plans/{id}/follow-ups | 新增回款跟进 | receivable.follow_up + 关联合同数据权限 |
+| GET | /api/payments | 查询到账流水列表 | payment.read + 关联合同数据权限 |
+| GET | /api/payments/{id} | 查看到账流水详情 | payment.read + 关联合同数据权限 |
+| POST | /api/payments | 登记到账流水 | payment.create + 关联合同数据权限 |
+| PATCH | /api/payments/{id} | 编辑到账流水 | payment.update + 关联合同数据权限 |
+| POST | /api/payments/{id}/confirm | 确认到账 | payment.confirm + 关联合同数据权限 |
+| POST | /api/payments/{id}/exception | 登记到账异常 | payment.exception + 关联合同数据权限 |
+| POST | /api/payments/{id}/refund | 标记退款 | payment.refund + 关联合同数据权限 |
+
+过滤参数：
+
+- `keyword`
+- `account_id`
+- `opportunity_id`
+- `contract_id`
+- `receivable_status`
+- `plan_stage`
+- `owner_user_id`
+- `planned_from`
+- `planned_to`
+- `overdue_only`
+- `receivable_plan_id`
+- `payment_status`
+- `payment_method`
+- `received_from`
+- `received_to`
+- `exception_only`
+
+当前 V2 回款管理基线已落地：`crm_receivable_plans` 从合同继承客户和商机，支持回款计划、终止和跟进记录；`crm_payments` 支持到账登记、确认、异常和退款。回款计划详情返回合同金额、有效开票金额、确认到账金额、未收金额和未核销金额。附件沿用通用附件 API，使用 `object_type=receivable_plan` 和 `object_type=payment`。
+
+## 13. 发票回款核销API
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| GET | /api/reconciliations/workbench | 查询核销工作台汇总、待核销发票、待分配回款和最近核销 | reconciliation.read + 关联合同数据权限 |
+| GET | /api/reconciliations | 查询核销明细列表 | reconciliation.read + 关联合同数据权限 |
+| GET | /api/reconciliations/{id} | 查看核销明细详情 | reconciliation.read + 关联合同数据权限 |
+| POST | /api/reconciliations | 新增发票回款核销 | reconciliation.create + 关联合同数据权限 |
+| POST | /api/reconciliations/{id}/void | 撤销核销 | reconciliation.void + 关联合同数据权限 |
+
+过滤参数：
+
+- `keyword`
+- `account_id`
+- `opportunity_id`
+- `contract_id`
+- `invoice_id`
+- `payment_id`
+- `reconciliation_status`
+- `active_only`
+- `pending_only`
+
+当前 V2 核销管理基线已落地：`crm_reconciliations` 关联客户、商机、合同、发票和到账流水；新增核销会同步增加发票与回款的已核销金额，撤销核销会反向恢复金额并记录撤销原因。核销工作台返回待核销发票、待分配回款、汇总金额和最近核销记录；所有操作通过关联合同继承数据权限，并记录 `reconciliation.create`、`reconciliation.void` 审计。
+
+## 14. 附件与提醒API
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
@@ -354,11 +477,11 @@ OpenAPI契约文件：`docs/openapi/crm-v1-openapi.yaml`。当前已建立 `Open
 | GET | /api/reminders | 我的提醒 |
 | PATCH | /api/reminders/{id} | 完成或取消提醒 |
 
-当前附件元数据基线已落地：`crm_attachments` 统一保存 `object_type + object_id`、文件名、文件地址/对象Key、类型、大小、MIME、上传人和上传时间；支持 account、contact、opportunity、activity 四类 V1 对象，并在 V2 扩展支持 solution_document；写入、查询、删除均先校验业务对象访问权限。
+当前附件元数据基线已落地：`crm_attachments` 统一保存 `object_type + object_id`、文件名、文件地址/对象Key、类型、大小、MIME、上传人和上传时间；支持 account、contact、opportunity、activity 四类 V1 对象，并在 V2 扩展支持 solution_document、contract、invoice、receivable_plan、payment；写入、查询、删除均先校验业务对象访问权限。
 
 当前提醒基线已落地：`crm_reminders` 支持销售行动下次跟进自动生成 `activity/follow_up` 提醒；`GET /api/reminders` 返回当前用户待办，支持 `status`、`overdue`、`object_type`、`object_id` 筛选，逾期待办在响应中标识为 `overdue`；`PATCH /api/reminders/{id}` 支持将本人提醒更新为 `completed` 或 `cancelled` 并记录 `reminder.update` 审计；完成销售行动会自动完成该行动待处理跟进提醒。真实文件上传链路、下载审计和提醒通知方式待后续确认。
 
-## 11. 待确认项
+## 15. 待确认项
 
 - 登录态采用JWT、服务端Session还是企业统一认证。
 - 列表 `page_size` 最大值。

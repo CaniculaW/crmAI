@@ -5,43 +5,70 @@ import com.canicula.crmai.activity.ActivityService;
 import com.canicula.crmai.api.BusinessRuleException;
 import com.canicula.crmai.auth.ForbiddenException;
 import com.canicula.crmai.contact.ContactService;
+import com.canicula.crmai.contract.ContractService;
+import com.canicula.crmai.invoice.InvoiceService;
 import com.canicula.crmai.opportunity.OpportunityService;
+import com.canicula.crmai.payment.PaymentService;
+import com.canicula.crmai.receivable.ReceivablePlanService;
 import com.canicula.crmai.solution.SolutionDocumentService;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.PreparedStatement;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class AttachmentService {
 
+    public record AttachmentDownload(AttachmentResponse attachment, Path path) {
+    }
+
     private final JdbcTemplate jdbcTemplate;
+    private final Path storageRoot;
     private final AccountService accountService;
     private final ContactService contactService;
     private final OpportunityService opportunityService;
     private final ActivityService activityService;
     private final SolutionDocumentService solutionDocumentService;
+    private final ContractService contractService;
+    private final InvoiceService invoiceService;
+    private final ReceivablePlanService receivablePlanService;
+    private final PaymentService paymentService;
 
     AttachmentService(
             JdbcTemplate jdbcTemplate,
+            @Value("${crm.attachments.storage-dir:${java.io.tmpdir}/crm-ai-attachments}") String storageDir,
             AccountService accountService,
             ContactService contactService,
             OpportunityService opportunityService,
             ActivityService activityService,
-            SolutionDocumentService solutionDocumentService) {
+            SolutionDocumentService solutionDocumentService,
+            ContractService contractService,
+            InvoiceService invoiceService,
+            ReceivablePlanService receivablePlanService,
+            PaymentService paymentService) {
         this.jdbcTemplate = jdbcTemplate;
+        this.storageRoot = Path.of(storageDir).toAbsolutePath().normalize();
         this.accountService = accountService;
         this.contactService = contactService;
         this.opportunityService = opportunityService;
         this.activityService = activityService;
         this.solutionDocumentService = solutionDocumentService;
+        this.contractService = contractService;
+        this.invoiceService = invoiceService;
+        this.receivablePlanService = receivablePlanService;
+        this.paymentService = paymentService;
     }
 
     @Transactional
@@ -49,6 +76,47 @@ public class AttachmentService {
         String objectType = normalizeObjectType(request.object_type());
         validateObjectReadable(objectType, request.object_id(), actorUserId);
         Long attachmentId = insertAttachment(request, objectType, actorUserId);
+        return findById(attachmentId);
+    }
+
+    @Transactional
+    public AttachmentResponse upload(
+            String objectType,
+            Long objectId,
+            MultipartFile file,
+            String fileType,
+            String remark,
+            Long actorUserId) {
+        String normalizedObjectType = normalizeObjectType(objectType);
+        validateObjectReadable(normalizedObjectType, objectId, actorUserId);
+        if (file == null || file.isEmpty()) {
+            throw new BusinessRuleException("上传文件不能为空");
+        }
+
+        String fileName = safeFileName(file.getOriginalFilename());
+        AttachmentCreateRequest request = new AttachmentCreateRequest(
+                normalizedObjectType,
+                objectId,
+                fileName,
+                "local://pending",
+                fileType,
+                file.getSize(),
+                normalizeText(file.getContentType()),
+                remark);
+        Long attachmentId = insertAttachment(request, normalizedObjectType, actorUserId);
+        storeFile(attachmentId, fileName, file);
+        jdbcTemplate.update(
+                """
+                update crm_attachments
+                set file_url = ?,
+                    updated_by = ?,
+                    updated_at = current_timestamp,
+                    version = version + 1
+                where id = ?
+                """,
+                downloadUrl(attachmentId),
+                actorUserId,
+                attachmentId);
         return findById(attachmentId);
     }
 
@@ -84,7 +152,20 @@ public class AttachmentService {
                 """,
                 actorUserId,
                 attachmentId);
+        deleteLocalFileIfPresent(current);
         return current;
+    }
+
+    public AttachmentDownload download(Long attachmentId, Long actorUserId) {
+        AttachmentResponse current = readableAttachment(attachmentId, actorUserId);
+        if (!downloadUrl(attachmentId).equals(current.file_url())) {
+            throw new BusinessRuleException("附件文件不是本地上传文件");
+        }
+        Path path = localFilePath(attachmentId, current.file_name());
+        if (!Files.isRegularFile(path)) {
+            throw new BusinessRuleException("附件文件不存在");
+        }
+        return new AttachmentDownload(current, path);
     }
 
     private AttachmentResponse readableAttachment(Long attachmentId, Long actorUserId) {
@@ -152,6 +233,34 @@ public class AttachmentService {
         return findById(attachmentId);
     }
 
+    private void storeFile(Long attachmentId, String fileName, MultipartFile file) {
+        Path path = localFilePath(attachmentId, fileName);
+        try {
+            Files.createDirectories(path.getParent());
+            file.transferTo(path);
+        } catch (IOException exception) {
+            throw new BusinessRuleException("附件文件保存失败");
+        }
+    }
+
+    private void deleteLocalFileIfPresent(AttachmentResponse attachment) {
+        if (!downloadUrl(attachment.id()).equals(attachment.file_url())) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(localFilePath(attachment.id(), attachment.file_name()));
+        } catch (IOException ignored) {
+        }
+    }
+
+    private Path localFilePath(Long attachmentId, String fileName) {
+        Path path = storageRoot.resolve(String.valueOf(attachmentId)).resolve(safeFileName(fileName)).normalize();
+        if (!path.startsWith(storageRoot)) {
+            throw new BusinessRuleException("附件文件路径无效");
+        }
+        return path;
+    }
+
     private void validateObjectReadable(String objectType, Long objectId, Long actorUserId) {
         if (objectId == null) {
             throw new BusinessRuleException("附件对象ID不能为空");
@@ -163,6 +272,10 @@ public class AttachmentService {
                 case "opportunity" -> opportunityService.readableDetail(objectId, actorUserId);
                 case "activity" -> activityService.readableDetail(objectId, actorUserId);
                 case "solution_document" -> solutionDocumentService.readableDetail(objectId, actorUserId);
+                case "contract" -> contractService.readableDetail(objectId, actorUserId);
+                case "invoice" -> invoiceService.readableDetail(objectId, actorUserId);
+                case "receivable_plan" -> receivablePlanService.readableDetail(objectId, actorUserId);
+                case "payment" -> paymentService.readableDetail(objectId, actorUserId);
                 default -> throw new BusinessRuleException("不支持的附件对象类型");
             }
         } catch (IllegalArgumentException exception) {
@@ -175,6 +288,24 @@ public class AttachmentService {
             throw new BusinessRuleException("附件对象类型不能为空");
         }
         return objectType.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static String safeFileName(String fileName) {
+        if (!hasText(fileName)) {
+            throw new BusinessRuleException("附件名称不能为空");
+        }
+        String normalized = fileName.trim().replace('\\', '/');
+        int lastSlash = normalized.lastIndexOf('/');
+        String baseName = lastSlash >= 0 ? normalized.substring(lastSlash + 1) : normalized;
+        String safeName = baseName.replaceAll("[/:*?\"<>|\\p{Cntrl}]", "_").trim();
+        if (!hasText(safeName) || ".".equals(safeName) || "..".equals(safeName)) {
+            throw new BusinessRuleException("附件名称无效");
+        }
+        return safeName.length() > 255 ? safeName.substring(0, 255) : safeName;
+    }
+
+    private static String downloadUrl(Long attachmentId) {
+        return "/api/attachments/" + attachmentId + "/download";
     }
 
     private static String normalizeText(String value) {

@@ -1,6 +1,6 @@
 # CRM V1 External UAT Request Packet
 
-Generated at: 2026-06-22T02:54:05.652Z
+Generated at: 2026-07-05T15:05:27.660Z
 
 Request Status: No External UAT Requests Open
 
@@ -26,9 +26,6 @@ All external UAT request items are closed by validator evidence.
 
 ## Current Blocking Evidence Requests
 
-- Readiness/external-uat-evidence-intake: External UAT evidence intake checklist routes incoming evidence to manifest IDs, source documents, and validation commands.
-- Release Gate/rc-uat-readiness: RC/UAT readiness failed: external-uat-evidence-intake
-
-Keep this request packet open until every source document validates PASS and the final release gate returns Go.
+- None.
 
 Note: This packet is a stakeholder-facing request board. It does not replace the UAT source documents, validator output, or final release gate.

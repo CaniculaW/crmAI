@@ -1,12 +1,12 @@
 # CRM V1 Progress TODO
 
-Generated at: 2026-06-22T02:54:05.659Z
+Generated at: 2026-07-05T15:05:27.653Z
 
-Overall status: `External UAT Evidence Required`
-Overall decision: `No-Go`
-Open blockers: 2
-Current task: `0-engineering-readiness`
-Current owner side: 研发
+Overall status: `No External UAT Requests Open`
+Overall decision: `Go`
+Open blockers: 0
+Current task: `complete`
+Current owner side: -
 
 Do not record plaintext passwords, bearer tokens, API keys, or unmasked account custody secrets in progress evidence.
 
@@ -14,32 +14,21 @@ Do not record plaintext passwords, bearer tokens, API keys, or unmasked account 
 
 | Status | Phase | Open blockers | Owner side | Completion standard |
 |---|---|---:|---|---|
-| In Progress | `0-engineering-readiness` | 1 | 研发 | Source validators PASS and final release gate returns Go |
-| Pending | `6-final-go-decision` | 1 | 项目/产品 | Source validators PASS and final release gate returns Go |
+| Done | `complete` | 0 | - | No open V1 blockers remain |
 
 ## Current Task Progress
 
-Current task: `0-engineering-readiness`
-Open blockers: 1
-Owner side: 研发
-Source documents: `docs/testing/crm-v1-test-environment-validation-runbook.md`
-
-Validation commands:
-- `node scripts/v1-uat-readiness-check.mjs`
-
-| Status | Blocker ID | Gate | Check ID | Owner side | Source document | Validation command | Closure evidence needed |
-|---|---|---|---|---|---|---|---|
-| Open | Readiness/external-uat-evidence-intake | Readiness | external-uat-evidence-intake | 研发 | docs/testing/crm-v1-test-environment-validation-runbook.md | `node scripts/v1-uat-readiness-check.mjs` | External UAT evidence intake checklist routes incoming evidence to manifest IDs, source documents, and validation commands. |
+No open V1 blockers remain.
 
 ## Task Switch Snapshot
 
-Previous task: `none`
-Current task: `0-engineering-readiness`
-Switch readiness: `Blocked`
-Remaining blockers before switch: 1
-Completion standard: Current source validators PASS and final release gate returns Go
+Previous task: `6-final-go-decision`
+Current task: `complete`
+Switch readiness: `Ready`
+Remaining blockers before switch: 0
+Completion standard: No open V1 blockers remain and final release gate returns Go
 Next required validation:
-- `node scripts/v1-uat-readiness-check.mjs`
+- `node scripts/v1-release-gate.mjs --json`
 
 ## Task Switch Display Rule
 

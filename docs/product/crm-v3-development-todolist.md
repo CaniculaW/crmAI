@@ -1,0 +1,166 @@
+# CRM V3 经营驾驶舱研发 TODOList
+
+日期：2026-07-03
+
+目标：在 V1 销售基础闭环与 V2 销售到财务闭环已验证通过的基础上，启动 V3「经营驾驶舱」。V3 重点把客户、商机、方案、合同、开票、回款、核销和风险数据汇总成管理层可理解、可下钻、可追责的经营分析入口。
+
+## 0. V3 范围边界
+
+V3 做：
+
+- 经营驾驶舱总览。
+- 销售漏斗。
+- 商机预测。
+- 合同看板。
+- 开票看板。
+- 回款看板。
+- 风险预警。
+- 数据下钻到 V1/V2 已有业务页面。
+- V3 相关权限、审计、测试数据和验收证据。
+
+V3 不做：
+
+- 不做 V4 AI 销售助手。
+- 不做外部 BI 平台集成。
+- 不做 ERP、银行、税控和电子签章真实集成。
+- 不做复杂自定义报表设计器。
+- 不替代 V1/V2 明细页面的录入、审批和状态流转能力。
+- 不改变 V1/V2 已验证通过的主链路，除非 V3 下钻入口必须补充筛选参数。
+
+## 1. V3 推进规则
+
+每个模块固定执行以下 10 步，切换模块时必须展示当前进度：
+
+| 步骤 | 名称 | 说明 | 完成标准 |
+|---:|---|---|---|
+| 1 | 模块启动 | 明确模块目标、页面范围、指标口径、不做什么 | 输出模块 TODO、完成标准和预计验证方式 |
+| 2 | 业务/UI 对齐 | 基于当前系统和成熟 CRM/ERP 管理驾驶舱习惯，给出页面逻辑与信息架构 | 用户确认推荐方案 |
+| 3 | 指标口径设计 | 定义统计维度、过滤条件、金额口径、时间口径和风险口径 | 形成可测试的指标规则说明 |
+| 4 | API 契约设计 | 设计总览、图表、趋势、排行、风险和下钻 API | OpenAPI/接口清单覆盖页面操作 |
+| 5 | 后端实现 | 聚合查询、权限、数据范围、审计和边界处理 | 后端定向测试通过 |
+| 6 | 前端实现 | 菜单、筛选、指标卡、图表、表格、下钻和空状态 | 前端定向测试通过 |
+| 7 | 下钻联动 | 与客户、商机、合同、开票、回款、核销页面联动 | 图表和风险项可跳转到业务明细 |
+| 8 | 自动化验证 | 前端测试、构建、后端测试、必要集成测试 | 命令通过或阻塞记录清楚 |
+| 9 | 浏览器验收 | 本地 UAT 跑核心管理分析链路并留截图 | 无服务端异常，无控制台应用错误 |
+| 10 | 提交切换 | commit/push，记录提交号、证据、遗留问题 | 当前模块 Done，下一个模块 Current |
+
+每次推进展示模板：
+
+```text
+V3 当前进度：
+- 总模块：
+- 已完成：
+- 当前模块：
+- 当前步骤：
+- 当前 TODO：
+- 完成标准：
+- 本轮预计产出：
+
+上一模块：
+- 状态：
+- 验证结果：
+- 提交号：
+- 遗留问题：
+```
+
+## 2. V3 模块级 TODOList
+
+| 顺序 | 状态 | 模块 | 页面/API范围 | 本轮目标 | 完成标准 |
+|---:|---|---|---|---|---|
+| 1 | Done | V3 启动与 UI/范围对齐 | V3 总导航、模块边界、指标口径、验收口径 | 确认 V3 从经营总览到下钻的业务链路、页面层级和 TODO 机制 | V3 设计说明、模块级 TODOList、模块 2 Ready、无范围歧义；2026-07-03 沈思维已确认 |
+| 2 | Done | 指标口径与数据权限 | 统计维度、金额口径、时间口径、组织/角色数据范围 | 让管理指标能被解释、被验证、被权限控制 | 指标字典、权限规则、API 测试设计完成；2026-07-03 沈思维已确认 |
+| 3 | Done | 经营驾驶舱总览 | `/dashboard`、总览 API、风险摘要、关键指标卡 | 管理层进入系统后先看到整体经营健康度 | `/dashboard` 已展示预测、合同、开票、回款、风险摘要与下钻；API 权限、中文指标、OpenAPI、自动化验证和浏览器 UAT 已完成 |
+| 4 | Done | 销售漏斗与商机预测 | `/dashboard/funnel`、漏斗 API、阶段转化、预计成交、预测金额、停滞/高风险关注 | 判断销售前端是否健康、未来收入是否可预期 | 权限、后端 API、OpenAPI、前端页面、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-funnel-forecast-uat-20260703.png` |
+| 5 | Done | 合同看板 | `/dashboard/contracts`、合同金额、状态、节点、变更、履约风险 | 判断已成交合同资产和履约节点风险 | 权限、后端 API、OpenAPI、前端页面、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-contract-dashboard-uat-20260703.png` |
+| 6 | Done | 开票看板 | 应开、已开、待开、异常、签收、作废 | 判断合同到开票的执行效率和异常 | 权限、后端 API、OpenAPI、前端页面、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-invoice-dashboard-uat-20260704.png` |
+| 7 | Done | 回款看板 | `/dashboard/receivables`、应收、实收、逾期、到账、核销、未分配 | 判断现金回收、逾期和核销质量 | 权限、后端 API、OpenAPI、前端页面、到账/回款/核销下钻、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-receivable-dashboard-uat-20260704.png`、`docs/testing/evidence/artifacts/v3-receivable-drilldown-uat-20260704.png` |
+| 8 | Done | 风险预警与数据下钻 | `/dashboard/risks`、商机停滞、合同节点逾期、开票异常、回款逾期、未核销回款 | 把管理分析落到可处理的业务对象 | 权限、后端 API、OpenAPI、前端页面、商机/合同/开票/回款下钻、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-risk-warning-uat-20260705.png` |
+| 9 | Done | V3 全链路回归与 UAT | 经营总览 -> 漏斗/预测 -> 合同/开票/回款 -> 风险下钻 | 验证 V3 管理分析闭环可跑通 | 前后端回归、构建、API Smoke、浏览器全链路 UAT 与证据归档已完成；证据：`docs/testing/evidence/artifacts/v3-full-chain-uat-20260705.png` |
+
+## 3. 当前任务
+
+当前任务：`v3-full-chain-regression-uat`
+
+状态：Conditional Go，签署材料已生成，等待沈思维最终确认
+
+责任侧：AI 研发主力推进；沈思维作为最终版本确认人，重点确认 V3 页面逻辑、指标口径和验收口径。
+
+当前模块：V3 签署与合并准备
+
+当前 TODO：
+
+- [x] Step 1：从 V2 最终确认提交切出 V3 研发分支。
+- [x] Step 2：建立 V3 研发 TODOList。
+- [x] Step 3：输出 V3 经营驾驶舱设计说明。
+- [x] Step 4：沈思维确认 V3 首轮页面逻辑和模块顺序。
+- [x] Step 5：进入 V3 指标口径与数据权限模块。
+- [x] Step 6：输出 V3 指标口径与数据权限设计说明。
+- [x] Step 7：沈思维确认 V3 指标字典、权限口径和验收方式。
+- [x] Step 8：进入 V3 经营驾驶舱总览模块。
+- [x] Step 9：输出 V3 经营驾驶舱总览设计说明。
+- [x] Step 10：沈思维确认 V3 经营总览页面布局、API 范围和验收方式。
+- [x] Step 11：进入 V3 经营驾驶舱总览实现计划。
+- [x] Step 12：输出 V3 经营驾驶舱总览实现计划。
+- [x] Step 13：按确认的执行方式实施经营驾驶舱总览。
+- [x] Step 14：补齐经营总览中文指标、金额单位和可用下钻路由契约。
+- [x] Step 15：完成经营总览自动化验证与浏览器 UAT 证据归档。
+- [x] Step 16：进入销售漏斗与商机预测模块设计。
+- [x] Step 17：输出销售漏斗与商机预测实现计划。
+- [x] Step 18：按实现计划实施销售漏斗与商机预测。
+- [x] Step 19：进入合同看板模块设计与实现计划。
+- [x] Step 20：按实现计划实施合同看板。
+- [x] Step 21：进入开票看板模块设计与实现计划。
+- [x] Step 22：按实现计划实施开票看板。
+- [x] Step 23：进入回款看板模块设计与实现计划。
+- [x] Step 24：按实现计划实施回款看板。
+- [x] Step 25：进入风险预警与数据下钻模块设计。
+- [x] Step 26：按实现计划实施风险预警与数据下钻。
+- [x] Step 27：完成 V3 全链路回归与 UAT。
+- [x] Step 28：生成 V3 Go/No-Go 签署记录。
+- [ ] Step 29：沈思维最终确认 V3 Go/No-Go 结论。
+
+完成标准：
+
+- 经营总览、销售漏斗、合同看板、开票看板、回款看板、风险预警六个 V3 页面均可访问。
+- 六个驾驶舱 API 均返回 200，页面无服务端异常和前端应用错误。
+- 风险项可下钻到业务处理页面，UAT 证据已归档。
+
+## 4. 当前进度快照
+
+```text
+V3 当前进度：
+- 总模块：9
+- 已完成：9
+- 当前模块：V3 签署与合并准备
+- 当前步骤：Step 29 等待沈思维最终确认 V3 Go/No-Go 结论
+- 当前 TODO：确认 V3 页面逻辑、指标口径和业务闭环是否可签署为 Go
+- 完成标准：沈思维确认后，V3 从 Conditional Go 调整为 Go，并进入分支合并或 PR 流程
+- 本轮预计产出：V3 Go/No-Go 签署记录
+
+上一模块：
+- 状态：V3 全链路回归与 UAT Done
+- 验证结果：`mvn -Dtest=DatabaseMigrationTest,DashboardControllerTest,OpenApiContractCoverageTest test` 21/21 通过；`mvn -Dtest=PostgresMigrationIT test` 7/7 通过；`npm test -- --run App.test.tsx` 49/49 通过；`npm run build` 通过；API smoke 覆盖 `/api/dashboard/overview`、`/api/dashboard/funnel`、`/api/dashboard/contracts`、`/api/dashboard/invoices`、`/api/dashboard/receivables`、`/api/dashboard/risks`，全部返回 200/OK；浏览器 UAT 覆盖 `/dashboard`、`/dashboard/funnel`、`/dashboard/contracts`、`/dashboard/invoices`、`/dashboard/receivables`、`/dashboard/risks` 与风险项下钻到 `opportunities?opportunity_id=1`，控制台应用错误 0
+- 提交号：本次提交见 Git 记录
+- 证据：`docs/testing/evidence/artifacts/v3-full-chain-uat-20260705.png`、`docs/testing/evidence/v3-go-no-go-signoff-2026-07-05.md`
+- 遗留问题：无
+
+本模块设计与计划：
+- 设计说明：`docs/superpowers/specs/2026-07-05-v3-risk-warning-drilldown-design.md`
+- 实施计划：`docs/superpowers/plans/2026-07-05-v3-risk-warning-drilldown.md`
+```
+
+## 5. V3 推荐启动方案
+
+推荐采用 B：先做「经营驾驶舱总览 + 下钻框架」，再逐步补齐各专题看板。
+
+| 方案 | 内容 | 优点 | 风险 |
+|---|---|---|---|
+| A | 逐个做专题看板：漏斗、预测、合同、开票、回款、风险 | 模块边界清楚 | 管理层第一眼仍看不到全局经营健康度 |
+| B | 先做总览和下钻框架，再做专题看板 | 最符合管理驾驶舱使用习惯，能持续吸纳后续模块 | 第一模块需要先定义一组核心指标 |
+| C | 先做指标平台/报表配置，再配置驾驶舱 | 长期灵活 | V3 首版成本高，容易偏离项目型 CRM 主线 |
+
+采用 B 的原因：
+
+- V1/V2 已经有客户、商机、合同、开票、回款和核销明细，V3 首先应该解决“管理者一眼看懂经营状态”。
+- 总览页可以作为后续漏斗、合同、开票、回款和风险模块的统一入口。
+- 不做复杂 BI 和自定义报表，能保持 V3 首版可控。

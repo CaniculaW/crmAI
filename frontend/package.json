@@ -8,7 +8,8 @@
     "build": "tsc -p tsconfig.json && vite build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "smoke:v1:browser": "node scripts/v1-browser-smoke.mjs"
+    "smoke:v1:browser": "node scripts/v1-browser-smoke.mjs",
+    "smoke:v2:browser": "node scripts/v2-browser-smoke.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

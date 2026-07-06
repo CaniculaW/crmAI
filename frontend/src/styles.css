@@ -192,6 +192,11 @@ body {
   margin-bottom: 18px;
 }
 
+.summary-grid.compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+
 .dashboard-command-center {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
@@ -211,6 +216,293 @@ body {
 
 .dashboard-command-center p {
   color: #31415f;
+}
+
+.dashboard-overview {
+  display: grid;
+  gap: 16px;
+}
+
+.dashboard-overview .workspace-header {
+  margin-bottom: 4px;
+}
+
+.dashboard-overview__metrics {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dashboard-overview__metric,
+.dashboard-overview__flow-step,
+.dashboard-overview__risk-row,
+.dashboard-overview__top-risk {
+  color: #172033;
+}
+
+.dashboard-overview__metric {
+  display: grid;
+  gap: 10px;
+  min-height: 104px;
+  padding: 14px;
+  border: 1px solid #d8deeb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.dashboard-overview__metric:hover,
+.dashboard-overview__flow-step:hover,
+.dashboard-overview__risk-row:hover,
+.dashboard-overview__top-risk:hover {
+  border-color: #1f5eff;
+  color: #1f5eff;
+}
+
+.dashboard-overview__metric span,
+.dashboard-overview__flow-step span,
+.dashboard-overview__risk-row small,
+.dashboard-overview__top-risk small {
+  color: #667085;
+  font-size: 13px;
+}
+
+.dashboard-overview__metric strong {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.dashboard-overview__section {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-overview__section .section-title-row {
+  margin-bottom: 0;
+}
+
+.dashboard-overview__section h3.ant-typography,
+.dashboard-overview__card h3.ant-typography {
+  margin: 0;
+  font-size: 18px;
+}
+
+.dashboard-overview__flow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dashboard-overview__flow-step {
+  display: grid;
+  gap: 8px;
+  min-height: 104px;
+  padding: 14px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.dashboard-overview__flow-step strong {
+  font-size: 18px;
+}
+
+.dashboard-overview__flow-step small {
+  color: #667085;
+}
+
+.dashboard-overview__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 14px;
+}
+
+.dashboard-overview__risk-list,
+.dashboard-overview__top-risks {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-overview__risk-row,
+.dashboard-overview__top-risk {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  background: #f8fafd;
+}
+
+.dashboard-overview__risk-row span,
+.dashboard-overview__top-risk span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dashboard-overview__risk-row strong,
+.dashboard-overview__top-risk strong {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.dashboard-overview__risk-link {
+  display: inline-flex;
+  margin-top: 12px;
+  font-weight: 600;
+}
+
+.dashboard-funnel__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 14px;
+}
+
+.dashboard-funnel__stages,
+.dashboard-funnel__trend,
+.dashboard-funnel__attention,
+.dashboard-contracts__status-list,
+.dashboard-contracts__milestones,
+.dashboard-contracts__changes,
+.dashboard-invoices__status-list,
+.dashboard-invoices__gap-trend,
+.dashboard-invoices__risks,
+.dashboard-receivables__status-list,
+.dashboard-receivables__gap-trend,
+.dashboard-receivables__summary-list,
+.dashboard-risks__summary-list,
+.dashboard-risks__trend,
+.dashboard-risks__owners,
+.dashboard-risks__items {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-funnel__stage,
+.dashboard-funnel__attention-row,
+.dashboard-contracts__status-row,
+.dashboard-contracts__milestone,
+.dashboard-invoices__status-row,
+.dashboard-invoices__risk-row,
+.dashboard-receivables__status-row,
+.dashboard-receivables__summary-row,
+.dashboard-risks__trend-row,
+.dashboard-risks__owner-row,
+.dashboard-risks__work-item {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  color: #172033;
+  background: #f8fafd;
+}
+
+.dashboard-funnel__stage:hover,
+.dashboard-funnel__attention-row:hover,
+.dashboard-contracts__status-row:hover,
+.dashboard-contracts__milestone:hover,
+.dashboard-invoices__status-row:hover,
+.dashboard-invoices__risk-row:hover,
+.dashboard-receivables__status-row:hover,
+.dashboard-receivables__summary-row:hover,
+.dashboard-risks__trend-row:hover,
+.dashboard-risks__owner-row:hover,
+.dashboard-risks__work-item:hover {
+  border-color: #1f5eff;
+  color: #1f5eff;
+}
+
+.dashboard-funnel__stage span,
+.dashboard-funnel__attention-row span,
+.dashboard-contracts__status-row span,
+.dashboard-invoices__status-row span,
+.dashboard-invoices__risk-row span,
+.dashboard-receivables__status-row span,
+.dashboard-receivables__summary-row span,
+.dashboard-risks__trend-row span,
+.dashboard-risks__owner-row span,
+.dashboard-risks__work-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dashboard-funnel__stage strong,
+.dashboard-funnel__attention-row strong,
+.dashboard-contracts__status-row strong,
+.dashboard-invoices__status-row strong,
+.dashboard-invoices__risk-row strong,
+.dashboard-receivables__status-row strong,
+.dashboard-receivables__summary-row strong,
+.dashboard-risks__trend-row strong,
+.dashboard-risks__owner-row strong,
+.dashboard-risks__work-item strong {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.dashboard-funnel__stage small,
+.dashboard-funnel__attention-row small,
+.dashboard-funnel__trend-row small,
+.dashboard-contracts__status-row small,
+.dashboard-invoices__status-row small,
+.dashboard-invoices__risk-row small,
+.dashboard-receivables__status-row small,
+.dashboard-receivables__summary-row small,
+.dashboard-risks__trend-row small,
+.dashboard-risks__owner-row small,
+.dashboard-risks__work-item small {
+  color: #667085;
+}
+
+.dashboard-risks__lower {
+  grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.28fr);
+}
+
+.dashboard-risks__items-card .ant-card-body {
+  max-height: 560px;
+  overflow: auto;
+}
+
+.dashboard-risks__work-item em {
+  color: #475467;
+  font-style: normal;
+  line-height: 1.45;
+}
+
+.dashboard-contracts__milestone {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.dashboard-funnel__bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf2f7;
+}
+
+.dashboard-funnel__bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #1f5eff;
+}
+
+.dashboard-funnel__trend-row {
+  display: grid;
+  grid-template-columns: minmax(72px, 0.5fr) minmax(110px, 1fr);
+  gap: 4px 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.dashboard-funnel__trend-row small {
+  grid-column: 2;
 }
 
 .quick-entry-grid {
@@ -297,6 +589,22 @@ body {
   gap: 8px 12px;
 }
 
+.permission-group {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #e6eaf2;
+  border-radius: 8px;
+}
+
+.permission-group .ant-space {
+  gap: 6px 12px !important;
+}
+
+.toolbar {
+  margin-bottom: 12px;
+}
+
 .filter-bar {
   gap: 12px 8px;
   align-items: flex-end;
@@ -345,6 +653,12 @@ body {
 .inline-action {
   height: auto;
   padding: 0;
+}
+
+.reconciliation-workbench-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .account-operation {
@@ -1082,10 +1396,14 @@ body {
   .activity-summary-grid,
   .contact-entry-grid,
   .contact-summary-grid,
+  .dashboard-overview__columns,
+  .dashboard-overview__flow,
+  .dashboard-funnel__layout,
   .dashboard-grid,
   .dictionary-grid,
   .opportunity-entry-grid,
   .opportunity-summary-grid,
+  .reconciliation-workbench-grid,
   .relationship-grid,
   .system-module-grid,
   .system-grid,
@@ -1111,6 +1429,10 @@ body {
 
 @media (max-width: 520px) {
   .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-overview__metrics {
     grid-template-columns: 1fr;
   }
 
