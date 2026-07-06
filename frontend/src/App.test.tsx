@@ -54,6 +54,7 @@ const apiData = {
       "attachment.create",
       "attachment.read",
       "attachment.delete",
+      "ai.context.read",
       "activity.read",
       "activity.create",
       "activity.complete",
@@ -388,6 +389,66 @@ const apiData = {
         opportunity_id: 10,
         occurred_at: "2026-07-23T10:00:00+08:00",
         drilldown_url: "/receivables?overdue=true"
+      }
+    ]
+  },
+  aiContextSummary: {
+    accounts: [
+      {
+        id: 1,
+        account_name: "测试客户A",
+        account_type: "enterprise",
+        account_level: "A",
+        account_status: "following",
+        owner_department_id: 1,
+        owner_user_id: 1001,
+        last_activity_summary: "完成CRM V1试点需求确认会"
+      }
+    ],
+    opportunities: [
+      {
+        id: 10,
+        account_id: 1,
+        opportunity_name: "测试商机A",
+        stage: "lead",
+        status: "following",
+        risk_status: "normal",
+        estimated_contract_amount: 620000,
+        owner_department_id: 1,
+        owner_user_id: 1001,
+        current_progress: "已完成需求确认，进入试点方案细化。",
+        next_plan: "提交V1试点方案和实施排期。"
+      }
+    ],
+    recent_activities: [
+      {
+        id: 88,
+        account_id: 1,
+        opportunity_id: 10,
+        subject: "完成CRM V1试点需求确认会",
+        activity_type: "meeting",
+        activity_status: "completed",
+        activity_result: "aligned",
+        activity_time: "2026-06-22T03:58:00+08:00",
+        owner_department_id: 1,
+        owner_user_id: 1001
+      }
+    ],
+    risk_signals: [
+      {
+        risk_type: "receivable_overdue",
+        title: "V2 UAT 首付款回款逾期",
+        drilldown_url: "/receivables?overdue=true"
+      }
+    ],
+    evidence: [
+      {
+        object_type: "activity",
+        object_id: 88,
+        title: "完成CRM V1试点需求确认会",
+        summary: "双方确认进入试点方案细化阶段。",
+        occurred_at: "2026-06-22T03:58:00+08:00",
+        drilldown_url: "/activities?activity_id=88"
       }
     ]
   },
@@ -817,6 +878,30 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("link", { name: "新建商机" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "新建行动" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "查看周进展" })).toBeInTheDocument();
+  });
+
+  it("renders the V4 AI assistant context preview", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/ai-assistant");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "AI上下文" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "AI助手" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "客户上下文" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "商机上下文" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "近期销售行动" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "风险信号" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "证据链" })).toBeInTheDocument();
+    expect(screen.getAllByText("测试客户A").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("测试商机A").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("完成CRM V1试点需求确认会").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("V2 UAT 首付款回款逾期")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-context/summary"), expect.anything());
+    });
   });
 
   it("renders the V3 dashboard overview with metrics risks and drilldowns", async () => {
@@ -1922,6 +2007,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/dashboard/risks")) {
       return jsonResponse({ code: "OK", data: data.dashboardRisks });
+    }
+    if (path.endsWith("/api/ai-context/summary")) {
+      return jsonResponse({ code: "OK", data: data.aiContextSummary });
     }
     if (path.endsWith("/api/accounts/1") && method === "PATCH") {
       return jsonResponse({ code: "OK", data: { ...data.accounts[0], remark: "重点推进" } });

@@ -427,6 +427,45 @@ export type WeeklyProgress = {
   progress_items: WeeklyProgressItem[];
 };
 
+export type AiEvidenceItem = {
+  object_type: string;
+  object_id: number;
+  title: string;
+  summary?: string;
+  occurred_at?: string;
+  drilldown_url: string;
+};
+
+export type AiContextSummary = {
+  accounts: Account[];
+  opportunities: Opportunity[];
+  recent_activities: Activity[];
+  risk_signals: DashboardRiskItem[];
+  evidence: AiEvidenceItem[];
+};
+
+export type AiAccountContext = {
+  account: Account;
+  contacts: Contact[];
+  opportunities: Opportunity[];
+  recent_activities: Activity[];
+  solutions: SolutionDocument[];
+  contracts: Contract[];
+  receivables: ReceivablePlan[];
+  evidence: AiEvidenceItem[];
+};
+
+export type AiOpportunityContext = {
+  opportunity: Opportunity;
+  account: Account;
+  contacts: Contact[];
+  recent_activities: Activity[];
+  solutions: SolutionDocument[];
+  contracts: Contract[];
+  receivables: ReceivablePlan[];
+  evidence: AiEvidenceItem[];
+};
+
 export type DictionaryType = {
   id: number;
   dict_code: string;
@@ -826,6 +865,11 @@ export const crmApi = {
     receivables: (query?: QueryParams) =>
       requestJson<DashboardReceivables>(withQuery("/api/dashboard/receivables", query)),
     risks: (query?: QueryParams) => requestJson<DashboardRisks>(withQuery("/api/dashboard/risks", query))
+  },
+  aiContext: {
+    summary: () => requestJson<AiContextSummary>("/api/ai-context/summary"),
+    account: (id: number) => requestJson<AiAccountContext>(`/api/ai-context/accounts/${id}`),
+    opportunity: (id: number) => requestJson<AiOpportunityContext>(`/api/ai-context/opportunities/${id}`)
   },
   accounts: {
     list: (query?: QueryParams) => requestJson<Account[]>(withQuery("/api/accounts", query)),

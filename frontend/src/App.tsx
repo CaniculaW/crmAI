@@ -33,6 +33,7 @@ import {
   ReceiptText,
   RefreshCw,
   ShieldCheck,
+  Sparkles,
   Users
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -40,6 +41,8 @@ import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from "react
 import {
   type Account,
   type Activity,
+  type AiContextSummary,
+  type AiEvidenceItem,
   type Attachment,
   type AuditLog,
   type Contract as CrmContract,
@@ -141,6 +144,7 @@ const navItems: NavItem[] = [
   { key: "/reconciliations", label: "核销工作台", icon: <ReceiptText size={18} />, permission: "reconciliation.read" },
   { key: "/activities", label: "销售行动", icon: <CalendarCheck size={18} />, permission: "activity.read" },
   { key: "/weekly-progress", label: "周进展", icon: <BarChart3 size={18} />, permission: "weekly_progress.read" },
+  { key: "/ai-assistant", label: "AI助手", icon: <Sparkles size={18} />, permission: "ai.context.read" },
   {
     key: "/system",
     label: "系统",
@@ -444,6 +448,7 @@ function CrmShell() {
             <Route path="/reconciliations" element={<ReconciliationWorkbenchPage />} />
             <Route path="/activities" element={<ActivitiesPage currentUser={user} />} />
             <Route path="/weekly-progress" element={<WeeklyProgressPage />} />
+            <Route path="/ai-assistant" element={<AiAssistantPage />} />
             <Route path="/system" element={<SystemPage section="overview" />} />
             <Route path="/system/departments" element={<SystemPage section="departments" />} />
             <Route path="/system/users" element={<SystemPage section="users" />} />
@@ -972,6 +977,111 @@ function DashboardRisksPage() {
   );
 }
 
+function AiAssistantPage() {
+  const { data, loading, error, refresh } = useObjectResource<AiContextSummary>(
+    crmApi.aiContext.summary,
+    emptyAiContextSummary,
+    []
+  );
+
+  return (
+    <section className="workspace dashboard-overview">
+      <PageTitle
+        title="AI上下文"
+        description="汇总客户、商机、销售行动和证据链，为周报、商机分析和拜访建议提供可信业务上下文。"
+        action={<RefreshButton onClick={refresh} loading={loading} />}
+      />
+      {error ? <div className="error-banner">{error}</div> : null}
+
+      <div className="dashboard-grid">
+        <Card title={<Typography.Title level={3}>客户上下文</Typography.Title>}>
+          <SimpleList
+            items={data.accounts}
+            empty="暂无客户上下文"
+            render={(account) => (
+              <Link to={`/accounts?account_id=${account.id}`}>
+                <strong>{account.account_name}</strong>
+                <small>
+                  {[account.account_level, account.account_status, account.last_activity_summary]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </small>
+              </Link>
+            )}
+          />
+        </Card>
+
+        <Card title={<Typography.Title level={3}>商机上下文</Typography.Title>}>
+          <SimpleList
+            items={data.opportunities}
+            empty="暂无商机上下文"
+            render={(opportunity) => (
+              <Link to={`/opportunities?opportunity_id=${opportunity.id}`}>
+                <strong>{opportunity.opportunity_name}</strong>
+                <small>
+                  {[
+                    opportunity.stage,
+                    opportunity.status,
+                    opportunity.estimated_contract_amount
+                      ? currencyText(opportunity.estimated_contract_amount)
+                      : undefined
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </small>
+              </Link>
+            )}
+          />
+        </Card>
+
+        <Card title={<Typography.Title level={3}>近期销售行动</Typography.Title>}>
+          <SimpleList
+            items={data.recent_activities}
+            empty="暂无近期销售行动"
+            render={(activity) => (
+              <Link to={`/activities?activity_id=${activity.id}`}>
+                <strong>{activity.subject}</strong>
+                <small>
+                  {[activity.activity_type, activity.activity_status, dateText(activity.activity_time)]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </small>
+              </Link>
+            )}
+          />
+        </Card>
+
+        <Card title={<Typography.Title level={3}>风险信号</Typography.Title>}>
+          <SimpleList
+            items={data.risk_signals}
+            empty="暂无风险信号"
+            render={(risk) => <DashboardRiskItemRow risk={risk} />}
+          />
+        </Card>
+
+        <Card title={<Typography.Title level={3}>证据链</Typography.Title>}>
+          <SimpleList
+            items={data.evidence}
+            empty="暂无AI证据链"
+            render={(evidence) => <AiEvidenceLine evidence={evidence} />}
+          />
+        </Card>
+      </div>
+    </section>
+  );
+}
+
+function AiEvidenceLine({ evidence }: { evidence: AiEvidenceItem }) {
+  const meta = [evidence.object_type, dateText(evidence.occurred_at)].filter(Boolean).join(" · ");
+
+  return (
+    <Link to={evidence.drilldown_url}>
+      <strong>{evidence.title}</strong>
+      <small>{[meta, evidence.summary].filter(Boolean).join(" · ")}</small>
+    </Link>
+  );
+}
+
 function DashboardMetricCardView({ metric }: { metric: DashboardMetricCard }) {
   return (
     <Link className="dashboard-overview__metric" to={metric.drilldown_url}>
@@ -1371,6 +1481,16 @@ function emptyDashboardRisks(): DashboardRisks {
     risk_trend: [],
     owner_ranking: [],
     risk_items: []
+  };
+}
+
+function emptyAiContextSummary(): AiContextSummary {
+  return {
+    accounts: [],
+    opportunities: [],
+    recent_activities: [],
+    risk_signals: [],
+    evidence: []
   };
 }
 
@@ -5732,7 +5852,7 @@ function SummaryPanel({ title, value, loading }: { title: string; value: number;
   );
 }
 
-function SimpleList<T>({ items, render, empty }: { items: T[]; render: (item: T) => string; empty: string }) {
+function SimpleList<T>({ items, render, empty }: { items: T[]; render: (item: T) => React.ReactNode; empty: string }) {
   if (items.length === 0) {
     return <span className="muted">{empty}</span>;
   }

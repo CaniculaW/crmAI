@@ -23,6 +23,7 @@ tags:
   - name: Attachments
   - name: Reminders
   - name: Dashboard
+  - name: AI Context
 paths:
   /api/health:
     get:
@@ -562,6 +563,43 @@ paths:
                           format: date-time
                         drilldown_url:
                           type: string
+  /api/ai-context/summary:
+    get:
+      tags: [AI Context]
+      summary: V4 AI sales context summary
+      responses:
+        '200':
+          description: Current user's readable AI context summary.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiContextSummaryResponse'
+  /api/ai-context/accounts/{accountId}:
+    get:
+      tags: [AI Context]
+      summary: V4 account-centered AI context
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+      responses:
+        '200':
+          description: Account-centered CRM context and evidence for AI assistance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiAccountContextResponse'
+  /api/ai-context/opportunities/{opportunityId}:
+    get:
+      tags: [AI Context]
+      summary: V4 opportunity-centered AI context
+      parameters:
+        - $ref: '#/components/parameters/OpportunityId'
+      responses:
+        '200':
+          description: Opportunity-centered CRM context and evidence for AI assistance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiOpportunityContextResponse'
   /api/auth/login:
     post:
       tags: [Auth]
@@ -2381,6 +2419,394 @@ components:
         type: integer
         format: int64
   schemas:
+    ApiAiContextSummaryResponse:
+      type: object
+      required: [code, message, data, trace_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/AiContextSummary'
+        trace_id:
+          type: string
+    ApiAiAccountContextResponse:
+      type: object
+      required: [code, message, data, trace_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/AiAccountContext'
+        trace_id:
+          type: string
+    ApiAiOpportunityContextResponse:
+      type: object
+      required: [code, message, data, trace_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/AiOpportunityContext'
+        trace_id:
+          type: string
+    AiEvidenceItem:
+      type: object
+      required: [object_type, object_id, title, drilldown_url]
+      properties:
+        object_type:
+          type: string
+        object_id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        summary:
+          type: string
+          nullable: true
+        occurred_at:
+          type: string
+          format: date-time
+          nullable: true
+        drilldown_url:
+          type: string
+    AiContextSummary:
+      type: object
+      required: [accounts, opportunities, recent_activities, risk_signals, evidence]
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountResponse'
+        opportunities:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpportunityResponse'
+        recent_activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityResponse'
+        risk_signals:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardRiskItem'
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiEvidenceItem'
+    AiAccountContext:
+      type: object
+      required: [account, contacts, opportunities, recent_activities, solutions, contracts, receivables, evidence]
+      properties:
+        account:
+          $ref: '#/components/schemas/AccountResponse'
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContactResponse'
+        opportunities:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpportunityResponse'
+        recent_activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityResponse'
+        solutions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SolutionDocumentResponse'
+        contracts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractResponse'
+        receivables:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReceivablePlanResponse'
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiEvidenceItem'
+    AiOpportunityContext:
+      type: object
+      required: [opportunity, account, contacts, recent_activities, solutions, contracts, receivables, evidence]
+      properties:
+        opportunity:
+          $ref: '#/components/schemas/OpportunityResponse'
+        account:
+          $ref: '#/components/schemas/AccountResponse'
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContactResponse'
+        recent_activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityResponse'
+        solutions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SolutionDocumentResponse'
+        contracts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractResponse'
+        receivables:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReceivablePlanResponse'
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiEvidenceItem'
+    AccountResponse:
+      type: object
+      required: [id, account_name, account_type, account_status, owner_department_id, owner_user_id]
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+          format: int64
+        account_name:
+          type: string
+        account_type:
+          type: string
+        account_level:
+          type: string
+          nullable: true
+        account_status:
+          type: string
+        owner_department_id:
+          type: integer
+          format: int64
+        owner_user_id:
+          type: integer
+          format: int64
+        last_activity_summary:
+          type: string
+          nullable: true
+        last_activity_at:
+          type: string
+          format: date-time
+          nullable: true
+    ContactResponse:
+      type: object
+      required: [id, account_id, name]
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+          format: int64
+        account_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        title:
+          type: string
+          nullable: true
+        attitude:
+          type: string
+          nullable: true
+        relationship_heat:
+          type: string
+          nullable: true
+        project_roles:
+          type: array
+          items:
+            type: string
+    OpportunityResponse:
+      type: object
+      required: [id, account_id, opportunity_name, stage, status, owner_department_id, owner_user_id]
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+          format: int64
+        account_id:
+          type: integer
+          format: int64
+        opportunity_name:
+          type: string
+        stage:
+          type: string
+        status:
+          type: string
+        risk_status:
+          type: string
+          nullable: true
+        estimated_contract_amount:
+          type: number
+          nullable: true
+        owner_department_id:
+          type: integer
+          format: int64
+        owner_user_id:
+          type: integer
+          format: int64
+        current_progress:
+          type: string
+          nullable: true
+        next_plan:
+          type: string
+          nullable: true
+    ActivityResponse:
+      type: object
+      required: [id, account_id, subject, activity_type, activity_status, activity_result, activity_time, owner_department_id, owner_user_id]
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+          format: int64
+        account_id:
+          type: integer
+          format: int64
+        opportunity_id:
+          type: integer
+          format: int64
+          nullable: true
+        subject:
+          type: string
+        activity_type:
+          type: string
+        activity_status:
+          type: string
+        activity_result:
+          type: string
+        activity_time:
+          type: string
+          format: date-time
+        owner_department_id:
+          type: integer
+          format: int64
+        owner_user_id:
+          type: integer
+          format: int64
+        conclusion:
+          type: string
+          nullable: true
+        customer_feedback:
+          type: string
+          nullable: true
+    SolutionDocumentResponse:
+      type: object
+      required: [id, account_id, opportunity_id, document_name, document_type, version_no, status, owner_user_id]
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+          format: int64
+        account_id:
+          type: integer
+          format: int64
+        opportunity_id:
+          type: integer
+          format: int64
+        document_name:
+          type: string
+        document_type:
+          type: string
+        version_no:
+          type: string
+        status:
+          type: string
+        owner_user_id:
+          type: integer
+          format: int64
+    ContractResponse:
+      type: object
+      required: [id, account_id, contract_name, contract_type, contract_status, contract_amount, owner_user_id]
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+          format: int64
+        account_id:
+          type: integer
+          format: int64
+        opportunity_id:
+          type: integer
+          format: int64
+          nullable: true
+        contract_name:
+          type: string
+        contract_type:
+          type: string
+        contract_status:
+          type: string
+        contract_amount:
+          type: number
+        owner_user_id:
+          type: integer
+          format: int64
+        risk_level:
+          type: string
+          nullable: true
+    ReceivablePlanResponse:
+      type: object
+      required: [id, account_id, contract_id, plan_name, receivable_status, planned_amount, owner_user_id]
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+          format: int64
+        account_id:
+          type: integer
+          format: int64
+        opportunity_id:
+          type: integer
+          format: int64
+          nullable: true
+        contract_id:
+          type: integer
+          format: int64
+        plan_name:
+          type: string
+        receivable_status:
+          type: string
+        planned_receivable_date:
+          type: string
+          format: date-time
+          nullable: true
+        planned_amount:
+          type: number
+        owner_user_id:
+          type: integer
+          format: int64
+    DashboardRiskItem:
+      type: object
+      required: [risk_type, title, drilldown_url]
+      additionalProperties: true
+      properties:
+        risk_type:
+          type: string
+        risk_level:
+          type: string
+          nullable: true
+        title:
+          type: string
+        amount:
+          type: number
+          nullable: true
+        object_type:
+          type: string
+          nullable: true
+        object_id:
+          type: integer
+          format: int64
+          nullable: true
+        occurred_at:
+          type: string
+          format: date-time
+          nullable: true
+        drilldown_url:
+          type: string
     ApiBootstrapResponse:
       type: object
       required: [code, message, data, trace_id]
