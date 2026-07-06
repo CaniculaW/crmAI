@@ -55,6 +55,7 @@ const apiData = {
       "attachment.read",
       "attachment.delete",
       "ai.context.read",
+      "ai.draft.manage",
       "activity.read",
       "activity.create",
       "activity.complete",
@@ -452,6 +453,40 @@ const apiData = {
       }
     ]
   },
+  aiDrafts: [
+    {
+      id: 7001,
+      input_record_id: 9001,
+      draft_type: "account",
+      status: "pending_confirmation",
+      target_action: "create",
+      source_text: "客户：测试客户AI，行业：制造业",
+      payload: {
+        account_name: "测试客户AI",
+        account_type: "enterprise",
+        owner_user_id: 1001
+      },
+      missing_fields: [],
+      conflicts: [],
+      confidence_status: "high"
+    },
+    {
+      id: 7002,
+      input_record_id: 9001,
+      draft_type: "contact",
+      status: "pending_confirmation",
+      target_action: "create",
+      source_text: "联系人：王采购，客户：测试客户A",
+      payload: {
+        name: "王采购",
+        account_id: 1,
+        title: "采购经理"
+      },
+      missing_fields: [],
+      conflicts: [],
+      confidence_status: "high"
+    }
+  ],
   dashboardReceivables: {
     filters: {},
     metric_cards: [
@@ -880,7 +915,7 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("link", { name: "查看周进展" })).toBeInTheDocument();
   });
 
-  it("renders the V4 AI assistant context preview", async () => {
+  it("renders the V4 AI assistant workbench context preview", async () => {
     const fetchMock = mockCrmFetch();
     const user = userEvent.setup();
     window.history.pushState({}, "", "/ai-assistant");
@@ -888,8 +923,8 @@ describe("CRM frontend V1 workflow", () => {
     render(<App />);
     await loginThroughUi(user);
 
-    expect(await screen.findByRole("heading", { name: "AI上下文" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "AI助手" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "AI助手" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "文本录入" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "客户上下文" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "商机上下文" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "近期销售行动" })).toBeInTheDocument();
@@ -901,6 +936,47 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByText("V2 UAT 首付款回款逾期")).toBeInTheDocument();
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-context/summary"), expect.anything());
+    });
+  });
+
+  it("generates AI drafts from workbench text input", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/ai-assistant");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.type(
+      await screen.findByPlaceholderText(/客户：星河制造/),
+      "客户：测试客户AI，行业：制造业"
+    );
+    await user.click(screen.getByRole("button", { name: "生成草稿" }));
+
+    expect(await screen.findByText("客户草稿")).toBeInTheDocument();
+    expect(screen.getByText("联系人草稿")).toBeInTheDocument();
+    expect(screen.getByText("测试客户AI")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-drafts/parse"), expect.anything());
+    });
+  });
+
+  it("confirms pending AI draft from draft queue", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/ai-assistant/drafts");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "草稿确认" })).toBeInTheDocument();
+    expect(screen.getByText("测试客户AI")).toBeInTheDocument();
+    await user.click(screen.getAllByRole("button", { name: "确认写入" })[0]);
+
+    expect(await screen.findByText("已写入")).toBeInTheDocument();
+    expect(screen.getByText("account #2")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-drafts/7001/confirm"), expect.anything());
     });
   });
 
@@ -2007,6 +2083,24 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/dashboard/risks")) {
       return jsonResponse({ code: "OK", data: data.dashboardRisks });
+    }
+    if (path.endsWith("/api/ai-drafts/parse") && method === "POST") {
+      return jsonResponse({ code: "OK", data: { input_record_id: 9001, drafts: data.aiDrafts } });
+    }
+    if (path.endsWith("/api/ai-drafts/7001/confirm") && method === "POST") {
+      return jsonResponse({
+        code: "OK",
+        data: { ...data.aiDrafts[0], status: "confirmed", write_object_type: "account", write_object_id: 2 }
+      });
+    }
+    if (path.endsWith("/api/ai-drafts/7002/reject") && method === "POST") {
+      return jsonResponse({
+        code: "OK",
+        data: { ...data.aiDrafts[1], status: "rejected", rejection_reason: "页面拒绝" }
+      });
+    }
+    if (path.endsWith("/api/ai-drafts")) {
+      return jsonResponse({ code: "OK", data: data.aiDrafts });
     }
     if (path.endsWith("/api/ai-context/summary")) {
       return jsonResponse({ code: "OK", data: data.aiContextSummary });

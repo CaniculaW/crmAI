@@ -286,8 +286,24 @@ class PostgresMigrationIT {
                   and module_code = 'ai'
                 """,
                 Integer.class);
+        Integer aiDraftTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name in ('ai_input_records', 'ai_extraction_drafts', 'ai_write_logs')
+                """,
+                Integer.class);
+        Integer aiDraftPermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'ai.draft.manage'
+                  and module_code = 'ai'
+                """,
+                Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("27");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("28");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -319,6 +335,8 @@ class PostgresMigrationIT {
         assertThat(invoiceReconciledColumnCount).isEqualTo(1);
         assertThat(reconciliationPermissionCount).isEqualTo(3);
         assertThat(aiContextPermissionCount).isEqualTo(1);
+        assertThat(aiDraftTableCount).isEqualTo(3);
+        assertThat(aiDraftPermissionCount).isEqualTo(1);
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type

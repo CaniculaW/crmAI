@@ -23,6 +23,7 @@ import {
   BarChart3,
   BriefcaseBusiness,
   CalendarCheck,
+  CheckCircle2,
   CircleDollarSign,
   Contact,
   FileSignature,
@@ -34,7 +35,8 @@ import {
   RefreshCw,
   ShieldCheck,
   Sparkles,
-  Users
+  Users,
+  XCircle
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
@@ -42,6 +44,7 @@ import {
   type Account,
   type Activity,
   type AiContextSummary,
+  type AiDraft,
   type AiEvidenceItem,
   type Attachment,
   type AuditLog,
@@ -144,7 +147,16 @@ const navItems: NavItem[] = [
   { key: "/reconciliations", label: "核销工作台", icon: <ReceiptText size={18} />, permission: "reconciliation.read" },
   { key: "/activities", label: "销售行动", icon: <CalendarCheck size={18} />, permission: "activity.read" },
   { key: "/weekly-progress", label: "周进展", icon: <BarChart3 size={18} />, permission: "weekly_progress.read" },
-  { key: "/ai-assistant", label: "AI助手", icon: <Sparkles size={18} />, permission: "ai.context.read" },
+  {
+    key: "/ai-assistant",
+    label: "AI助手",
+    icon: <Sparkles size={18} />,
+    permissions: ["ai.context.read", "ai.draft.manage"],
+    children: [
+      { key: "/ai-assistant", label: "AI工作台", permission: "ai.context.read" },
+      { key: "/ai-assistant/drafts", label: "草稿确认", permission: "ai.draft.manage" }
+    ]
+  },
   {
     key: "/system",
     label: "系统",
@@ -449,6 +461,7 @@ function CrmShell() {
             <Route path="/activities" element={<ActivitiesPage currentUser={user} />} />
             <Route path="/weekly-progress" element={<WeeklyProgressPage />} />
             <Route path="/ai-assistant" element={<AiAssistantPage />} />
+            <Route path="/ai-assistant/drafts" element={<AiDraftsPage />} />
             <Route path="/system" element={<SystemPage section="overview" />} />
             <Route path="/system/departments" element={<SystemPage section="departments" />} />
             <Route path="/system/users" element={<SystemPage section="users" />} />
@@ -983,15 +996,67 @@ function AiAssistantPage() {
     emptyAiContextSummary,
     []
   );
+  const [sourceText, setSourceText] = useState("");
+  const [drafts, setDrafts] = useState<AiDraft[]>([]);
+  const [parsing, setParsing] = useState(false);
+
+  const handleParse = async () => {
+    if (!sourceText.trim()) {
+      message.warning("请输入销售文本");
+      return;
+    }
+    setParsing(true);
+    try {
+      const result = await crmApi.aiDrafts.parse(sourceText);
+      setDrafts(result.drafts);
+      message.success(`已生成 ${result.drafts.length} 条草稿`);
+    } catch (parseError) {
+      message.error(parseError instanceof Error ? parseError.message : "生成草稿失败");
+    } finally {
+      setParsing(false);
+    }
+  };
 
   return (
     <section className="workspace dashboard-overview">
       <PageTitle
-        title="AI上下文"
-        description="汇总客户、商机、销售行动和证据链，为周报、商机分析和拜访建议提供可信业务上下文。"
-        action={<RefreshButton onClick={refresh} loading={loading} />}
+        title="AI助手"
+        description="销售事实录入、上下文预览和待确认草稿。"
+        action={
+          <Space>
+            <Link to="/ai-assistant/drafts">
+              <Button icon={<FileText size={16} />}>草稿确认</Button>
+            </Link>
+            <RefreshButton onClick={refresh} loading={loading} />
+          </Space>
+        }
       />
       {error ? <div className="error-banner">{error}</div> : null}
+
+      <Card title={<Typography.Title level={3}>文本录入</Typography.Title>} className="dashboard-overview__card">
+        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+          <Input.TextArea
+            rows={5}
+            value={sourceText}
+            onChange={(event) => setSourceText(event.target.value)}
+            placeholder="客户：星河制造，行业：制造业，地区：上海，需求：希望提升销售预测透明度&#10;联系人：张三，客户：星河制造，职务：信息化总监，手机：13800000001&#10;商机：星河制造CRM试点，客户：星河制造，金额：320000，预计成交：2026-08-20&#10;行动：星河制造需求拜访，客户：星河制造，时间：2026-07-07T10:00:00+08:00，内容：确认试点范围"
+          />
+          <Space wrap>
+            <Button type="primary" icon={<Sparkles size={16} />} loading={parsing} onClick={handleParse}>
+              生成草稿
+            </Button>
+            <Button onClick={() => setSourceText("")}>清空</Button>
+          </Space>
+        </Space>
+      </Card>
+
+      {drafts.length > 0 ? (
+        <div className="dashboard-grid">
+          {drafts.map((draft) => (
+            <AiDraftCard key={draft.id} draft={draft} compact />
+          ))}
+        </div>
+      ) : null}
 
       <div className="dashboard-grid">
         <Card title={<Typography.Title level={3}>客户上下文</Typography.Title>}>
@@ -1069,6 +1134,185 @@ function AiAssistantPage() {
       </div>
     </section>
   );
+}
+
+function AiDraftsPage() {
+  const { data, loading, error, refresh, setData } = useObjectResource<AiDraft[]>(
+    () => crmApi.aiDrafts.list({ status: "pending_confirmation" }),
+    () => [],
+    []
+  );
+  const [operatingId, setOperatingId] = useState<number | null>(null);
+
+  const updateDraft = (draft: AiDraft) => {
+    setData((current) => current.map((item) => (item.id === draft.id ? draft : item)));
+  };
+
+  const handleConfirm = async (draft: AiDraft) => {
+    setOperatingId(draft.id);
+    try {
+      const updated = await crmApi.aiDrafts.confirm(draft.id);
+      updateDraft(updated);
+      message.success("草稿已写入");
+    } catch (confirmError) {
+      message.error(confirmError instanceof Error ? confirmError.message : "确认草稿失败");
+    } finally {
+      setOperatingId(null);
+    }
+  };
+
+  const handleReject = async (draft: AiDraft) => {
+    setOperatingId(draft.id);
+    try {
+      const updated = await crmApi.aiDrafts.reject(draft.id, "页面拒绝");
+      updateDraft(updated);
+      message.success("草稿已拒绝");
+    } catch (rejectError) {
+      message.error(rejectError instanceof Error ? rejectError.message : "拒绝草稿失败");
+    } finally {
+      setOperatingId(null);
+    }
+  };
+
+  return (
+    <section className="workspace dashboard-overview">
+      <PageTitle
+        title="草稿确认"
+        description="确认前不写入客户、联系人、商机或销售行动。"
+        action={<RefreshButton onClick={refresh} loading={loading} />}
+      />
+      {error ? <div className="error-banner">{error}</div> : null}
+      <div className="dashboard-grid">
+        {data.map((draft) => (
+          <AiDraftCard
+            key={draft.id}
+            draft={draft}
+            operating={operatingId === draft.id}
+            onConfirm={() => handleConfirm(draft)}
+            onReject={() => handleReject(draft)}
+          />
+        ))}
+      </div>
+      {data.length === 0 && !loading ? <div className="empty-state">暂无待确认草稿</div> : null}
+    </section>
+  );
+}
+
+function AiDraftCard({
+  draft,
+  compact,
+  operating,
+  onConfirm,
+  onReject
+}: {
+  draft: AiDraft;
+  compact?: boolean;
+  operating?: boolean;
+  onConfirm?: () => void;
+  onReject?: () => void;
+}) {
+  const payloadItems = Object.entries(draft.payload ?? {}).filter(([, value]) => value !== null && value !== undefined && value !== "");
+  return (
+    <Card
+      title={
+        <Space>
+          <Typography.Title level={3}>{draftTypeText(draft.draft_type)}</Typography.Title>
+          <Tag color={draftStatusColor(draft.status)}>{draftStatusText(draft.status)}</Tag>
+        </Space>
+      }
+      extra={<Tag color={confidenceColor(draft.confidence_status)}>{draft.confidence_status}</Tag>}
+      className="dashboard-overview__card"
+    >
+      <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        <Typography.Text>{draft.source_text}</Typography.Text>
+        {draft.missing_fields.length > 0 ? (
+          <div>
+            <Typography.Text type="secondary">缺失项</Typography.Text>
+            <div className="tag-row">
+              {draft.missing_fields.map((field) => (
+                <Tag key={field} color="orange">
+                  {field}
+                </Tag>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {draft.conflicts.length > 0 ? (
+          <div>
+            <Typography.Text type="secondary">冲突项</Typography.Text>
+            <div className="tag-row">
+              {draft.conflicts.map((conflict) => (
+                <Tag key={conflict} color="red">
+                  {conflict}
+                </Tag>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        <div className="ai-draft-fields">
+          {payloadItems.map(([key, value]) => (
+            <div key={key}>
+              <small>{key}</small>
+              <strong>{String(value)}</strong>
+            </div>
+          ))}
+        </div>
+        {draft.write_object_type && draft.write_object_id ? (
+          <Tag color="green">
+            {draft.write_object_type} #{draft.write_object_id}
+          </Tag>
+        ) : null}
+        {!compact && draft.status === "pending_confirmation" ? (
+          <Space wrap>
+            <Button type="primary" icon={<CheckCircle2 size={16} />} loading={operating} onClick={onConfirm}>
+              确认写入
+            </Button>
+            <Button icon={<XCircle size={16} />} loading={operating} onClick={onReject}>
+              拒绝
+            </Button>
+          </Space>
+        ) : null}
+      </Space>
+    </Card>
+  );
+}
+
+function draftTypeText(type: AiDraft["draft_type"]) {
+  return {
+    account: "客户草稿",
+    contact: "联系人草稿",
+    opportunity: "商机草稿",
+    activity: "行动草稿",
+    unknown: "未识别草稿"
+  }[type];
+}
+
+function draftStatusText(status: AiDraft["status"]) {
+  return {
+    pending_confirmation: "待确认",
+    need_more_info: "需补充",
+    confirmed: "已写入",
+    rejected: "已拒绝"
+  }[status];
+}
+
+function draftStatusColor(status: AiDraft["status"]) {
+  return {
+    pending_confirmation: "blue",
+    need_more_info: "orange",
+    confirmed: "green",
+    rejected: "default"
+  }[status];
+}
+
+function confidenceColor(confidence: string) {
+  if (confidence === "high") {
+    return "green";
+  }
+  if (confidence === "medium") {
+    return "gold";
+  }
+  return "orange";
 }
 
 function AiEvidenceLine({ evidence }: { evidence: AiEvidenceItem }) {
@@ -5886,7 +6130,7 @@ function useResource<T>(loader: () => Promise<T[]>, deps: React.DependencyList) 
     void refresh();
   }, [refresh]);
 
-  return { data, loading, error, refresh };
+  return { data, loading, error, refresh, setData };
 }
 
 function useObjectResource<T>(loader: () => Promise<T>, emptyFactory: () => T, deps: React.DependencyList) {
@@ -5910,7 +6154,7 @@ function useObjectResource<T>(loader: () => Promise<T>, emptyFactory: () => T, d
     void refresh();
   }, [refresh]);
 
-  return { data, loading, error, refresh };
+  return { data, loading, error, refresh, setData };
 }
 
 function useV2BusinessSnapshot(scope: V2BusinessScope, permissions: string[]) {

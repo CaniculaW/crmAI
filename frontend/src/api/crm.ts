@@ -466,6 +466,30 @@ export type AiOpportunityContext = {
   evidence: AiEvidenceItem[];
 };
 
+export type AiDraft = {
+  id: number;
+  input_record_id: number;
+  draft_type: "account" | "contact" | "opportunity" | "activity" | "unknown";
+  status: "pending_confirmation" | "need_more_info" | "confirmed" | "rejected";
+  target_action: string;
+  source_text: string;
+  payload: Record<string, unknown>;
+  missing_fields: string[];
+  conflicts: string[];
+  confidence_status: string;
+  write_object_type?: string;
+  write_object_id?: number;
+  rejection_reason?: string;
+  created_at?: string;
+  confirmed_at?: string;
+  rejected_at?: string;
+};
+
+export type AiDraftParseResponse = {
+  input_record_id: number;
+  drafts: AiDraft[];
+};
+
 export type DictionaryType = {
   id: number;
   dict_code: string;
@@ -870,6 +894,20 @@ export const crmApi = {
     summary: () => requestJson<AiContextSummary>("/api/ai-context/summary"),
     account: (id: number) => requestJson<AiAccountContext>(`/api/ai-context/accounts/${id}`),
     opportunity: (id: number) => requestJson<AiOpportunityContext>(`/api/ai-context/opportunities/${id}`)
+  },
+  aiDrafts: {
+    parse: (sourceText: string) =>
+      requestJson<AiDraftParseResponse>("/api/ai-drafts/parse", {
+        method: "POST",
+        body: JSON.stringify({ source_text: sourceText })
+      }),
+    list: (query?: QueryParams) => requestJson<AiDraft[]>(withQuery("/api/ai-drafts", query)),
+    confirm: (id: number) => requestJson<AiDraft>(`/api/ai-drafts/${id}/confirm`, { method: "POST" }),
+    reject: (id: number, reason?: string) =>
+      requestJson<AiDraft>(`/api/ai-drafts/${id}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ reason })
+      })
   },
   accounts: {
     list: (query?: QueryParams) => requestJson<Account[]>(withQuery("/api/accounts", query)),

@@ -264,7 +264,7 @@ class DatabaseMigrationTest {
                 Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(26);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(28);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -385,5 +385,27 @@ class DatabaseMigrationTest {
                 Integer.class);
 
         assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void createsAiDraftTablesAndPermission() {
+        Integer tableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where lower(table_name) in ('ai_input_records', 'ai_extraction_drafts', 'ai_write_logs')
+                """,
+                Integer.class);
+        Integer permissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'ai.draft.manage'
+                  and module_code = 'ai'
+                """,
+                Integer.class);
+
+        assertThat(tableCount).isEqualTo(3);
+        assertThat(permissionCount).isEqualTo(1);
     }
 }
