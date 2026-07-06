@@ -76,16 +76,17 @@ V3 当前进度：
 | 7 | Done | 回款看板 | `/dashboard/receivables`、应收、实收、逾期、到账、核销、未分配 | 判断现金回收、逾期和核销质量 | 权限、后端 API、OpenAPI、前端页面、到账/回款/核销下钻、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-receivable-dashboard-uat-20260704.png`、`docs/testing/evidence/artifacts/v3-receivable-drilldown-uat-20260704.png` |
 | 8 | Done | 风险预警与数据下钻 | `/dashboard/risks`、商机停滞、合同节点逾期、开票异常、回款逾期、未核销回款 | 把管理分析落到可处理的业务对象 | 权限、后端 API、OpenAPI、前端页面、商机/合同/开票/回款下钻、自动化验证与浏览器 UAT 已完成；证据：`docs/testing/evidence/artifacts/v3-risk-warning-uat-20260705.png` |
 | 9 | Done | V3 全链路回归与 UAT | 经营总览 -> 漏斗/预测 -> 合同/开票/回款 -> 风险下钻 | 验证 V3 管理分析闭环可跑通 | 前后端回归、构建、API Smoke、浏览器全链路 UAT 与证据归档已完成；证据：`docs/testing/evidence/artifacts/v3-full-chain-uat-20260705.png` |
+| 10 | Done | V3 签署、合并与 CI 复核 | PR #1、`main`、远端 GitHub Actions | 将 V3 从 Conditional Go 收敛为 Go，并合并进入主干 | 2026-07-06 沈思维确认；PR #1 已合并；`main` 提交 `c848192f427d73d33fe19a25ae452e026d594a00`；GitHub Actions 3/3 success |
 
 ## 3. 当前任务
 
-当前任务：`v3-full-chain-regression-uat`
+当前任务：`v3-merged-go-closed`
 
-状态：Conditional Go，签署材料已生成，等待沈思维最终确认
+状态：Go，沈思维已确认，V3 已合并到 `main`
 
 责任侧：AI 研发主力推进；沈思维作为最终版本确认人，重点确认 V3 页面逻辑、指标口径和验收口径。
 
-当前模块：V3 签署与合并准备
+当前模块：V3 签署、合并与 CI 复核
 
 当前 TODO：
 
@@ -117,30 +118,33 @@ V3 当前进度：
 - [x] Step 26：按实现计划实施风险预警与数据下钻。
 - [x] Step 27：完成 V3 全链路回归与 UAT。
 - [x] Step 28：生成 V3 Go/No-Go 签署记录。
-- [ ] Step 29：沈思维最终确认 V3 Go/No-Go 结论。
+- [x] Step 29：沈思维最终确认 V3 Go/No-Go 结论。
+- [x] Step 30：将 `codex/v3-management-dashboard` 合并到 `main`。
+- [x] Step 31：推送 `main` 并确认远端 GitHub Actions 3/3 success。
 
 完成标准：
 
 - 经营总览、销售漏斗、合同看板、开票看板、回款看板、风险预警六个 V3 页面均可访问。
 - 六个驾驶舱 API 均返回 200，页面无服务端异常和前端应用错误。
 - 风险项可下钻到业务处理页面，UAT 证据已归档。
+- V3 合并提交已进入远端 `main`，远端 CI 全部通过。
 
 ## 4. 当前进度快照
 
 ```text
 V3 当前进度：
-- 总模块：9
-- 已完成：9
-- 当前模块：V3 签署与合并准备
-- 当前步骤：Step 29 等待沈思维最终确认 V3 Go/No-Go 结论
-- 当前 TODO：确认 V3 页面逻辑、指标口径和业务闭环是否可签署为 Go
-- 完成标准：沈思维确认后，V3 从 Conditional Go 调整为 Go，并进入分支合并或 PR 流程
-- 本轮预计产出：V3 Go/No-Go 签署记录
+- 总模块：10
+- 已完成：10
+- 当前模块：V3 签署、合并与 CI 复核
+- 当前步骤：Step 31 已完成，V3 主干合并闭环
+- 当前 TODO：无，V3 已 Go 并合并到 main
+- 完成标准：沈思维确认、PR #1 merged、origin/main 指向 c848192f427d73d33fe19a25ae452e026d594a00、GitHub Actions 3/3 success
+- 本轮产出：V3 Go/No-Go 签署记录更新、V3 TODOList 状态对齐
 
 上一模块：
-- 状态：V3 全链路回归与 UAT Done
-- 验证结果：`mvn -Dtest=DatabaseMigrationTest,DashboardControllerTest,OpenApiContractCoverageTest test` 21/21 通过；`mvn -Dtest=PostgresMigrationIT test` 7/7 通过；`npm test -- --run App.test.tsx` 49/49 通过；`npm run build` 通过；API smoke 覆盖 `/api/dashboard/overview`、`/api/dashboard/funnel`、`/api/dashboard/contracts`、`/api/dashboard/invoices`、`/api/dashboard/receivables`、`/api/dashboard/risks`，全部返回 200/OK；浏览器 UAT 覆盖 `/dashboard`、`/dashboard/funnel`、`/dashboard/contracts`、`/dashboard/invoices`、`/dashboard/receivables`、`/dashboard/risks` 与风险项下钻到 `opportunities?opportunity_id=1`，控制台应用错误 0
-- 提交号：本次提交见 Git 记录
+- 状态：V3 签署、合并与 CI 复核 Done
+- 验证结果：本地 `node --test scripts/*.test.mjs` 403/403 通过；`node scripts/v1-generated-docs-check.mjs` PASS；`node scripts/v1-uat-readiness-check.mjs` PASS；`docker compose -f compose.v1-test.yml config` PASS；前端 `npm run build` PASS；远端 GitHub Actions 覆盖 Deployment config validation、Backend tests and PostgreSQL migration、Frontend tests and production build，3/3 success
+- 提交号：`c848192f427d73d33fe19a25ae452e026d594a00`
 - 证据：`docs/testing/evidence/artifacts/v3-full-chain-uat-20260705.png`、`docs/testing/evidence/v3-go-no-go-signoff-2026-07-05.md`
 - 遗留问题：无
 

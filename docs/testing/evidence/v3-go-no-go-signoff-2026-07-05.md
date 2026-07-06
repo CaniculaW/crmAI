@@ -4,7 +4,7 @@
 
 日期：2026-07-05
 
-状态：AI 验收通过，等待沈思维最终确认
+状态：Go，沈思维已确认，V3 已合并到 `main`
 
 ## 1. 基本信息
 
@@ -13,9 +13,12 @@
 | 版本范围 | V3 经营驾驶舱 |
 | 前端访问地址 | `http://127.0.0.1:5175/` |
 | 后端 API 地址 | `http://127.0.0.1:8081/` |
-| Git 分支 | `codex/v3-management-dashboard` |
+| Git 分支 | `main`，由 `codex/v3-management-dashboard` 合并 |
 | 功能提交 | `b61c9a7 feat: add v3 risk warning dashboard` |
 | UAT 记录提交 | `0a824e0 docs: record v3 full chain uat` |
+| 合并提交 | `dba1e2eadfcd3fd9d416900ed6591606c38306d4` |
+| 主干最新提交 | `c848192f427d73d33fe19a25ae452e026d594a00` |
+| PR | `#1 Codex/v3 management dashboard`，已 merged/closed |
 | 数据库迁移版本 | Flyway v26 |
 | 最终确认人 | 沈思维 |
 
@@ -40,6 +43,8 @@
 | 前端构建 | `npm run build` | 通过 |
 | API Smoke | 六个驾驶舱 API | 全部 200/OK |
 | 浏览器 UAT | 六个驾驶舱页面与风险项下钻 | 通过，控制台应用错误 0 |
+| 合并后本地验证 | `node --test scripts/*.test.mjs`、`node scripts/v1-generated-docs-check.mjs`、`node scripts/v1-uat-readiness-check.mjs`、`docker compose -f compose.v1-test.yml config`、前端 `npm run build` | 全部通过 |
+| 合并后远端 CI | GitHub Actions on `main`：Deployment config validation、Backend tests and PostgreSQL migration、Frontend tests and production build | 3/3 success |
 
 说明：
 
@@ -76,22 +81,22 @@
 | API Smoke | 六个驾驶舱 API 全部 200/OK | 是 |
 | 浏览器 UAT | 六个页面可访问，风险项可下钻，无服务端异常和前端应用错误 | 是 |
 | 缺陷状态 | 无 P0/P1/P2/P3 遗留记录 | 是 |
-| 业务最终确认 | 等待沈思维确认 | 待确认 |
+| 业务最终确认 | 沈思维已确认 | 是 |
+| 主干合并 | PR #1 已合并，`origin/main` 指向 `c848192f427d73d33fe19a25ae452e026d594a00` | 是 |
 
 AI 准出建议：
 
 ```text
-Conditional Go。
+Go。
 
-AI 研发与验收团队已完成 V3 全链路验证，建议进入最终人工确认。
-沈思维确认后，可将结论调整为 Go，并进入分支合并或 PR 流程。
+AI 研发与验收团队已完成 V3 全链路验证。
+沈思维已确认 V3 Go/No-Go 结论；V3 已合并到 main，远端 CI 3/3 success。
 ```
 
 ## 7. 签署
 
 | 角色 | 姓名 | 结论 | 日期 | 备注 |
 |---|---|---|---|---|
-| AI 研发主力 | Codex | 同意 Conditional Go | 2026-07-05 | 自动化、API Smoke、浏览器 UAT 已通过 |
-| AI 测试与验收团队 | Codex 测试 Agent | 同意 Conditional Go | 2026-07-05 | 无 P0/P1/P2/P3 遗留记录 |
-| 最终确认人 | 沈思维 | 待确认 |  | 确认后 V3 可进入 Go/合并准备 |
-
+| AI 研发主力 | Codex | 同意 Go | 2026-07-05 | 自动化、API Smoke、浏览器 UAT 已通过 |
+| AI 测试与验收团队 | Codex 测试 Agent | 同意 Go | 2026-07-05 | 无 P0/P1/P2/P3 遗留记录 |
+| 最终确认人 | 沈思维 | 确认 Go | 2026-07-06 | 已授权合并并完成主干 CI 复核 |
