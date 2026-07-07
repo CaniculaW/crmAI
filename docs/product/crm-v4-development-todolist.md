@@ -128,7 +128,7 @@ V4 当前进度：
 上一模块：
 - 状态：Done
 - 验证结果：AI 商机分析后端、OpenAPI、前端、构建、PostgreSQL 迁移和本地 UAT 已通过；UAT 结果：分析状态 `confirmed`，来源证据 5 条，写入计划销售行动 ID 4，销售行动列表可读到 `AI商机分析-智能制造CRM一期试点` 且 `source_type=ai_opportunity_analysis`
-- 提交号：本次提交后记录
+- 提交号：3172ebf
 - 遗留问题：无
 ```
 
