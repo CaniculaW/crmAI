@@ -59,6 +59,7 @@ const apiData = {
       "ai.weekly.manage",
       "ai.opportunity.analyze",
       "ai.visit.plan",
+      "ai.communication.recommend",
       "activity.read",
       "activity.create",
       "activity.complete",
@@ -597,6 +598,38 @@ const apiData = {
       source_evidence_count: 1
     }
   ],
+  aiCommunicationRecommendations: [
+    {
+      id: 8401,
+      status: "pending_confirmation",
+      opportunity_id: 10,
+      account_id: 1,
+      contact_id: 21,
+      opportunity_name: "测试商机A",
+      account_name: "测试客户A",
+      contact_name: "张决策",
+      contact_title: "CIO",
+      recommended_channels: ["优先微信同步AI助手试点范围和ROI材料，降低首次沟通压力。", "通过电话确认评审时间、关键诉求和决策链路。"],
+      tone: ["保持专业、简洁、以业务价值为先。"],
+      key_messages: ["明确ROI口径、试点范围和评审材料，方便客户内部同步。"],
+      timing: ["建议在评审前同步材料，给客户预留内部转发和问题收集时间。"],
+      escalation_path: ["先与张决策确认业务价值和ROI材料，再请其牵引内部评审。"],
+      do_not_say: ["不要在预算审批路径未明确前承诺最终价格、上线日期或客户侧收益。"],
+      opening_message: "您好张决策，我想把AI助手试点范围、ROI材料和评审前需要确认的问题同步给您。",
+      evidence: [
+        {
+          object_type: "activity",
+          object_id: 88,
+          title: "完成CRM V1试点需求确认会",
+          summary: "双方确认进入试点方案细化阶段。",
+          occurred_at: "2026-06-22T03:58:00+08:00",
+          drilldown_url: "/activities?activity_id=88"
+        }
+      ],
+      source_activity_count: 2,
+      source_evidence_count: 1
+    }
+  ],
   dashboardReceivables: {
     filters: {},
     metric_cards: [
@@ -1008,6 +1041,13 @@ const apiData = {
       permission_name: "生成AI拜访计划",
       permission_type: "operation",
       module_code: "ai"
+    },
+    {
+      id: 4306,
+      permission_code: "ai.communication.recommend",
+      permission_name: "生成AI沟通建议",
+      permission_type: "operation",
+      module_code: "ai"
     }
   ]
 };
@@ -1200,6 +1240,33 @@ describe("CRM frontend V1 workflow", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-visit-plans/generate"), expect.anything());
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-visit-plans/8301/confirm"), expect.anything());
+    });
+  });
+
+  it("generates and confirms AI communication recommendation from assistant page", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/ai-assistant/communication");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "AI沟通建议" })).toBeInTheDocument();
+    expect(await screen.findByText("测试客户A · 测试商机A")).toBeInTheDocument();
+    expect(await screen.findByText("张决策")).toBeInTheDocument();
+    expect(await screen.findByText("优先微信同步AI助手试点范围和ROI材料，降低首次沟通压力。")).toBeInTheDocument();
+    expect(screen.getByText("不要在预算审批路径未明确前承诺最终价格、上线日期或客户侧收益。")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "生成沟通建议" }));
+
+    expect(await screen.findByText("沟通建议已生成，确认前不会写入销售行动")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "确认写入行动" }));
+
+    expect(await screen.findByText("沟通建议已确认写入销售行动")).toBeInTheDocument();
+    expect(screen.getByText("已写入销售行动 #8804")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看写入行动" })).toHaveAttribute("href", "/activities?activity_id=8804");
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-communication-recommendations/generate"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-communication-recommendations/8401/confirm"), expect.anything());
     });
   });
 
@@ -2191,6 +2258,7 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByLabelText("管理AI周报")).toBeInTheDocument();
     expect(screen.getByLabelText("分析AI商机")).toBeInTheDocument();
     expect(screen.getByLabelText("生成AI拜访计划")).toBeInTheDocument();
+    expect(screen.getByLabelText("生成AI沟通建议")).toBeInTheDocument();
   });
 
   it("filters audit logs by V2 quick actions", async () => {
@@ -2406,6 +2474,29 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/ai-visit-plans")) {
       return jsonResponse({ code: "OK", data: data.aiVisitPlans });
+    }
+    if (path.endsWith("/api/ai-communication-recommendations/generate") && method === "POST") {
+      return jsonResponse({ code: "OK", data: data.aiCommunicationRecommendations[0] });
+    }
+    if (path.endsWith("/api/ai-communication-recommendations/8401/confirm") && method === "POST") {
+      return jsonResponse({
+        code: "OK",
+        data: {
+          ...data.aiCommunicationRecommendations[0],
+          status: "confirmed",
+          write_activity_id: 8804,
+          confirmed_at: "2026-07-07T12:00:00+08:00"
+        }
+      });
+    }
+    if (path.endsWith("/api/ai-communication-recommendations/8401/reject") && method === "POST") {
+      return jsonResponse({
+        code: "OK",
+        data: { ...data.aiCommunicationRecommendations[0], status: "rejected", rejection_reason: "页面拒绝" }
+      });
+    }
+    if (path.endsWith("/api/ai-communication-recommendations")) {
+      return jsonResponse({ code: "OK", data: data.aiCommunicationRecommendations });
     }
     if (path.endsWith("/api/ai-context/summary")) {
       return jsonResponse({ code: "OK", data: data.aiContextSummary });

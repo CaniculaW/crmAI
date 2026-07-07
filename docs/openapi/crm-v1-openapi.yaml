@@ -28,6 +28,7 @@ tags:
   - name: AI Weekly Reports
   - name: AI Opportunity Analyses
   - name: AI Visit Plans
+  - name: AI Communication Recommendations
 paths:
   /api/health:
     get:
@@ -914,6 +915,91 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiAiVisitPlanResponse'
+  /api/ai-communication-recommendations/generate:
+    post:
+      tags: [AI Communication Recommendations]
+      summary: Generate a V4 AI communication recommendation for a contact in an opportunity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiCommunicationRecommendationGenerateRequest'
+      responses:
+        '200':
+          description: Generated communication recommendation awaiting confirmation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiCommunicationRecommendationResponse'
+  /api/ai-communication-recommendations:
+    get:
+      tags: [AI Communication Recommendations]
+      summary: List current user's AI communication recommendations
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: contact_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: AI communication recommendation history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiCommunicationRecommendationListResponse'
+  /api/ai-communication-recommendations/{recommendationId}/confirm:
+    post:
+      tags: [AI Communication Recommendations]
+      summary: Confirm an AI communication recommendation and write one planned communication activity
+      parameters:
+        - name: recommendationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Confirmed communication recommendation with write activity id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiCommunicationRecommendationResponse'
+  /api/ai-communication-recommendations/{recommendationId}/reject:
+    post:
+      tags: [AI Communication Recommendations]
+      summary: Reject an AI communication recommendation
+      parameters:
+        - name: recommendationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiCommunicationRecommendationRejectRequest'
+      responses:
+        '200':
+          description: Rejected communication recommendation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiCommunicationRecommendationResponse'
   /api/auth/login:
     post:
       tags: [Auth]
@@ -3342,6 +3428,147 @@ components:
           type: array
           items:
             type: string
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiEvidenceItem'
+        source_activity_count:
+          type: integer
+        source_evidence_count:
+          type: integer
+        write_activity_id:
+          type: integer
+          format: int64
+          nullable: true
+        rejection_reason:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        confirmed_at:
+          type: string
+          format: date-time
+          nullable: true
+        rejected_at:
+          type: string
+          format: date-time
+          nullable: true
+    ApiAiCommunicationRecommendationResponse:
+      type: object
+      required: [code, message, data, trace_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/AiCommunicationRecommendation'
+        trace_id:
+          type: string
+    ApiAiCommunicationRecommendationListResponse:
+      type: object
+      required: [code, message, data, trace_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiCommunicationRecommendation'
+        trace_id:
+          type: string
+    AiCommunicationRecommendationGenerateRequest:
+      type: object
+      required: [contact_id, opportunity_id]
+      properties:
+        contact_id:
+          type: integer
+          format: int64
+        opportunity_id:
+          type: integer
+          format: int64
+    AiCommunicationRecommendationRejectRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 512
+    AiCommunicationRecommendation:
+      type: object
+      required:
+        - id
+        - status
+        - opportunity_id
+        - account_id
+        - contact_id
+        - opportunity_name
+        - account_name
+        - contact_name
+        - recommended_channels
+        - tone
+        - key_messages
+        - timing
+        - escalation_path
+        - do_not_say
+        - opening_message
+        - evidence
+        - source_activity_count
+        - source_evidence_count
+      properties:
+        id:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [pending_confirmation, writing, confirmed, rejected]
+        opportunity_id:
+          type: integer
+          format: int64
+        account_id:
+          type: integer
+          format: int64
+        contact_id:
+          type: integer
+          format: int64
+        opportunity_name:
+          type: string
+        account_name:
+          type: string
+        contact_name:
+          type: string
+        contact_title:
+          type: string
+          nullable: true
+        recommended_channels:
+          type: array
+          items:
+            type: string
+        tone:
+          type: array
+          items:
+            type: string
+        key_messages:
+          type: array
+          items:
+            type: string
+        timing:
+          type: array
+          items:
+            type: string
+        escalation_path:
+          type: array
+          items:
+            type: string
+        do_not_say:
+          type: array
+          items:
+            type: string
+        opening_message:
+          type: string
         evidence:
           type: array
           items:

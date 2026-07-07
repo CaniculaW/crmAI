@@ -574,6 +574,33 @@ export type AiVisitPlan = {
   rejected_at?: string;
 };
 
+export type AiCommunicationRecommendation = {
+  id: number;
+  status: "pending_confirmation" | "writing" | "confirmed" | "rejected";
+  opportunity_id: number;
+  account_id: number;
+  contact_id: number;
+  opportunity_name: string;
+  account_name: string;
+  contact_name: string;
+  contact_title?: string;
+  recommended_channels: string[];
+  tone: string[];
+  key_messages: string[];
+  timing: string[];
+  escalation_path: string[];
+  do_not_say: string[];
+  opening_message: string;
+  evidence: AiEvidenceItem[];
+  source_activity_count: number;
+  source_evidence_count: number;
+  write_activity_id?: number;
+  rejection_reason?: string;
+  created_at?: string;
+  confirmed_at?: string;
+  rejected_at?: string;
+};
+
 export type DictionaryType = {
   id: number;
   dict_code: string;
@@ -1032,6 +1059,22 @@ export const crmApi = {
     confirm: (id: number) => requestJson<AiVisitPlan>(`/api/ai-visit-plans/${id}/confirm`, { method: "POST" }),
     reject: (id: number, reason?: string) =>
       requestJson<AiVisitPlan>(`/api/ai-visit-plans/${id}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ reason })
+      })
+  },
+  aiCommunicationRecommendations: {
+    generate: (contactId: number, opportunityId: number) =>
+      requestJson<AiCommunicationRecommendation>("/api/ai-communication-recommendations/generate", {
+        method: "POST",
+        body: JSON.stringify({ contact_id: contactId, opportunity_id: opportunityId })
+      }),
+    list: (query?: QueryParams) =>
+      requestJson<AiCommunicationRecommendation[]>(withQuery("/api/ai-communication-recommendations", query)),
+    confirm: (id: number) =>
+      requestJson<AiCommunicationRecommendation>(`/api/ai-communication-recommendations/${id}/confirm`, { method: "POST" }),
+    reject: (id: number, reason?: string) =>
+      requestJson<AiCommunicationRecommendation>(`/api/ai-communication-recommendations/${id}/reject`, {
         method: "POST",
         body: JSON.stringify({ reason })
       })

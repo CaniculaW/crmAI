@@ -43,6 +43,7 @@ import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from "react
 import {
   type Account,
   type Activity,
+  type AiCommunicationRecommendation,
   type AiContextSummary,
   type AiDraft,
   type AiEvidenceItem,
@@ -154,13 +155,21 @@ const navItems: NavItem[] = [
     key: "/ai-assistant",
     label: "AI助手",
     icon: <Sparkles size={18} />,
-    permissions: ["ai.context.read", "ai.draft.manage", "ai.weekly.manage", "ai.opportunity.analyze", "ai.visit.plan"],
+    permissions: [
+      "ai.context.read",
+      "ai.draft.manage",
+      "ai.weekly.manage",
+      "ai.opportunity.analyze",
+      "ai.visit.plan",
+      "ai.communication.recommend"
+    ],
     children: [
       { key: "/ai-assistant", label: "AI工作台", permission: "ai.context.read" },
       { key: "/ai-assistant/drafts", label: "草稿确认", permission: "ai.draft.manage" },
       { key: "/ai-assistant/weekly-report", label: "周报生成", permission: "ai.weekly.manage" },
       { key: "/ai-assistant/opportunities", label: "商机分析", permission: "ai.opportunity.analyze" },
-      { key: "/ai-assistant/visit-plans", label: "拜访计划", permission: "ai.visit.plan" }
+      { key: "/ai-assistant/visit-plans", label: "拜访计划", permission: "ai.visit.plan" },
+      { key: "/ai-assistant/communication", label: "沟通建议", permission: "ai.communication.recommend" }
     ]
   },
   {
@@ -472,6 +481,7 @@ function CrmShell() {
             <Route path="/ai-assistant/weekly-report" element={<AiWeeklyReportPage />} />
             <Route path="/ai-assistant/opportunities" element={<AiOpportunityAnalysisPage />} />
             <Route path="/ai-assistant/visit-plans" element={<AiVisitPlanPage />} />
+            <Route path="/ai-assistant/communication" element={<AiCommunicationRecommendationPage />} />
             <Route path="/system" element={<SystemPage section="overview" />} />
             <Route path="/system/departments" element={<SystemPage section="departments" />} />
             <Route path="/system/users" element={<SystemPage section="users" />} />
@@ -1754,6 +1764,256 @@ function AiVisitPlanDetail({
   );
 }
 
+function AiCommunicationRecommendationPage() {
+  const opportunities = useObjectResource<Opportunity[]>(
+    () => crmApi.opportunities.list({ default_following: true }),
+    () => [],
+    []
+  );
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState<number | undefined>();
+  const selectedOpportunity = opportunities.data.find((opportunity) => opportunity.id === selectedOpportunityId);
+  const contacts = useObjectResource<CrmContact[]>(
+    () => (selectedOpportunity ? crmApi.contacts.list({ account_id: selectedOpportunity.account_id }) : Promise.resolve([])),
+    () => [],
+    [selectedOpportunity?.account_id]
+  );
+  const { data, loading, error, refresh, setData } = useObjectResource<AiCommunicationRecommendation[]>(
+    () => crmApi.aiCommunicationRecommendations.list(),
+    () => [],
+    []
+  );
+  const [selectedContactId, setSelectedContactId] = useState<number | undefined>();
+  const [generating, setGenerating] = useState(false);
+  const [operatingId, setOperatingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!selectedOpportunityId && opportunities.data.length > 0) {
+      setSelectedOpportunityId(opportunities.data[0].id);
+    }
+  }, [opportunities.data, selectedOpportunityId]);
+
+  useEffect(() => {
+    if (contacts.data.length > 0 && !contacts.data.some((contact) => contact.id === selectedContactId)) {
+      setSelectedContactId(contacts.data[0].id);
+    }
+    if (contacts.data.length === 0) {
+      setSelectedContactId(undefined);
+    }
+  }, [contacts.data, selectedContactId]);
+
+  const opportunityOptions = opportunities.data.map((opportunity) => ({
+    label: `${opportunity.opportunity_name} · ${opportunity.stage}`,
+    value: opportunity.id
+  }));
+  const contactOptions = contacts.data.map((contact) => ({
+    label: `${contact.name} · ${contact.title || contact.department || "联系人"}`,
+    value: contact.id
+  }));
+  const currentRecommendation = selectedOpportunityId && selectedContactId
+    ? data.find((item) => item.opportunity_id === selectedOpportunityId && item.contact_id === selectedContactId) ?? data[0]
+    : data[0];
+
+  const upsertRecommendation = (recommendation: AiCommunicationRecommendation) => {
+    setData((current) => [recommendation, ...current.filter((item) => item.id !== recommendation.id)]);
+    setSelectedOpportunityId(recommendation.opportunity_id);
+    setSelectedContactId(recommendation.contact_id);
+  };
+
+  const handleGenerate = async () => {
+    if (!selectedOpportunityId || !selectedContactId) {
+      message.warning("请选择商机和联系人");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const recommendation = await crmApi.aiCommunicationRecommendations.generate(selectedContactId, selectedOpportunityId);
+      upsertRecommendation(recommendation);
+      message.success("沟通建议已生成，确认前不会写入销售行动");
+    } catch (generateError) {
+      message.error(generateError instanceof Error ? generateError.message : "生成沟通建议失败");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleConfirm = async (recommendation: AiCommunicationRecommendation) => {
+    setOperatingId(recommendation.id);
+    try {
+      const updated = await crmApi.aiCommunicationRecommendations.confirm(recommendation.id);
+      upsertRecommendation(updated);
+      message.success("沟通建议已确认写入销售行动");
+    } catch (confirmError) {
+      message.error(confirmError instanceof Error ? confirmError.message : "确认沟通建议失败");
+    } finally {
+      setOperatingId(null);
+    }
+  };
+
+  const handleReject = async (recommendation: AiCommunicationRecommendation) => {
+    setOperatingId(recommendation.id);
+    try {
+      const updated = await crmApi.aiCommunicationRecommendations.reject(recommendation.id, "页面拒绝");
+      upsertRecommendation(updated);
+      message.success("沟通建议已驳回");
+    } catch (rejectError) {
+      message.error(rejectError instanceof Error ? rejectError.message : "驳回沟通建议失败");
+    } finally {
+      setOperatingId(null);
+    }
+  };
+
+  return (
+    <section className="workspace dashboard-overview">
+      <PageTitle
+        title="AI沟通建议"
+        description="基于联系人角色、态度、关系热度、商机阶段和行动证据生成渠道、语气、重点、时机、升级路径和禁忌提醒，确认前不触达客户。"
+        action={<RefreshButton onClick={refresh} loading={loading || opportunities.loading || contacts.loading} />}
+      />
+      {error || opportunities.error || contacts.error ? <div className="error-banner">{error || opportunities.error || contacts.error}</div> : null}
+
+      <Card title={<Typography.Title level={3}>推荐设置</Typography.Title>} className="dashboard-overview__card">
+        <Space wrap>
+          <Select
+            aria-label="选择商机"
+            value={selectedOpportunityId}
+            options={opportunityOptions}
+            loading={opportunities.loading}
+            onChange={(value) => {
+              setSelectedOpportunityId(value);
+              setSelectedContactId(undefined);
+            }}
+            style={{ minWidth: 280 }}
+          />
+          <Select
+            aria-label="选择联系人"
+            value={selectedContactId}
+            options={contactOptions}
+            loading={contacts.loading}
+            onChange={setSelectedContactId}
+            style={{ minWidth: 240 }}
+          />
+          <Button
+            type="primary"
+            icon={<Sparkles size={16} />}
+            loading={generating}
+            disabled={!selectedOpportunityId || !selectedContactId}
+            onClick={handleGenerate}
+          >
+            生成沟通建议
+          </Button>
+          {currentRecommendation?.status === "confirmed" && currentRecommendation.write_activity_id ? (
+            <Link to={`/activities?activity_id=${currentRecommendation.write_activity_id}`}>
+              <Button icon={<CalendarCheck size={16} />}>查看写入行动</Button>
+            </Link>
+          ) : null}
+        </Space>
+      </Card>
+
+      {currentRecommendation ? (
+        <AiCommunicationRecommendationDetail
+          recommendation={currentRecommendation}
+          operating={operatingId === currentRecommendation.id}
+          onConfirm={() => handleConfirm(currentRecommendation)}
+          onReject={() => handleReject(currentRecommendation)}
+        />
+      ) : !loading ? (
+        <div className="empty-state">暂无AI沟通建议</div>
+      ) : null}
+
+      {data.length > 1 ? (
+        <Card title={<Typography.Title level={3}>历史沟通建议</Typography.Title>} className="dashboard-overview__card">
+          <SimpleList
+            items={data.slice(1)}
+            empty="暂无历史沟通建议"
+            render={(recommendation) => (
+              <button type="button" className="link-button" onClick={() => upsertRecommendation(recommendation)}>
+                <strong>{recommendation.contact_name}</strong>
+                <small>{[communicationRecommendationStatusText(recommendation.status), recommendation.opportunity_name].join(" · ")}</small>
+              </button>
+            )}
+          />
+        </Card>
+      ) : null}
+    </section>
+  );
+}
+
+function AiCommunicationRecommendationDetail({
+  recommendation,
+  operating,
+  onConfirm,
+  onReject
+}: {
+  recommendation: AiCommunicationRecommendation;
+  operating: boolean;
+  onConfirm: () => void;
+  onReject: () => void;
+}) {
+  return (
+    <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+      <Card
+        title={
+          <Space>
+            <Typography.Title level={3}>{recommendation.contact_name}</Typography.Title>
+            <Tag color={communicationRecommendationStatusColor(recommendation.status)}>
+              {communicationRecommendationStatusText(recommendation.status)}
+            </Tag>
+          </Space>
+        }
+        extra={`${recommendation.account_name} · ${recommendation.opportunity_name}`}
+        className="dashboard-overview__card"
+      >
+        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+          <Typography.Text strong>{recommendation.opening_message}</Typography.Text>
+          <div className="ai-draft-fields">
+            <div>
+              <small>销售行动</small>
+              <strong>{recommendation.source_activity_count}</strong>
+            </div>
+            <div>
+              <small>证据</small>
+              <strong>{recommendation.source_evidence_count}</strong>
+            </div>
+            <div>
+              <small>推荐渠道</small>
+              <strong>{recommendation.recommended_channels.length}</strong>
+            </div>
+          </div>
+          <div className="dashboard-grid">
+            <AiWeeklyTextList title="沟通渠道" items={recommendation.recommended_channels} />
+            <AiWeeklyTextList title="语气策略" items={recommendation.tone} />
+            <AiWeeklyTextList title="沟通重点" items={recommendation.key_messages} />
+            <AiWeeklyTextList title="沟通时机" items={recommendation.timing} />
+            <AiWeeklyTextList title="升级路径" items={recommendation.escalation_path} />
+            <AiWeeklyTextList title="禁忌提醒" items={recommendation.do_not_say} />
+          </div>
+          {recommendation.status === "pending_confirmation" ? (
+            <Space wrap>
+              <Button type="primary" icon={<CheckCircle2 size={16} />} loading={operating} onClick={onConfirm}>
+                确认写入行动
+              </Button>
+              <Button icon={<XCircle size={16} />} loading={operating} onClick={onReject}>
+                驳回
+              </Button>
+            </Space>
+          ) : null}
+          {recommendation.status === "confirmed" ? (
+            <Tag color="green">已写入销售行动 #{recommendation.write_activity_id}</Tag>
+          ) : null}
+        </Space>
+      </Card>
+
+      <Card title={<Typography.Title level={3}>证据链</Typography.Title>} className="dashboard-overview__card">
+        <SimpleList
+          items={recommendation.evidence}
+          empty="暂无证据"
+          render={(evidence) => <AiEvidenceLine evidence={evidence} />}
+        />
+      </Card>
+    </Space>
+  );
+}
+
 function AiWeeklyReportDetail({
   report,
   operating,
@@ -2010,6 +2270,24 @@ function visitPlanStatusText(status: AiVisitPlan["status"]) {
 }
 
 function visitPlanStatusColor(status: AiVisitPlan["status"]) {
+  return {
+    pending_confirmation: "blue",
+    writing: "gold",
+    confirmed: "green",
+    rejected: "default"
+  }[status];
+}
+
+function communicationRecommendationStatusText(status: AiCommunicationRecommendation["status"]) {
+  return {
+    pending_confirmation: "待确认",
+    writing: "写入中",
+    confirmed: "已写入",
+    rejected: "已驳回"
+  }[status];
+}
+
+function communicationRecommendationStatusColor(status: AiCommunicationRecommendation["status"]) {
   return {
     pending_confirmation: "blue",
     writing: "gold",
