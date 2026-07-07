@@ -47,6 +47,7 @@ import {
   type AiDraft,
   type AiEvidenceItem,
   type AiOpportunityAnalysis,
+  type AiVisitPlan,
   type AiWeeklyReport,
   type Attachment,
   type AuditLog,
@@ -153,12 +154,13 @@ const navItems: NavItem[] = [
     key: "/ai-assistant",
     label: "AI助手",
     icon: <Sparkles size={18} />,
-    permissions: ["ai.context.read", "ai.draft.manage", "ai.weekly.manage", "ai.opportunity.analyze"],
+    permissions: ["ai.context.read", "ai.draft.manage", "ai.weekly.manage", "ai.opportunity.analyze", "ai.visit.plan"],
     children: [
       { key: "/ai-assistant", label: "AI工作台", permission: "ai.context.read" },
       { key: "/ai-assistant/drafts", label: "草稿确认", permission: "ai.draft.manage" },
       { key: "/ai-assistant/weekly-report", label: "周报生成", permission: "ai.weekly.manage" },
-      { key: "/ai-assistant/opportunities", label: "商机分析", permission: "ai.opportunity.analyze" }
+      { key: "/ai-assistant/opportunities", label: "商机分析", permission: "ai.opportunity.analyze" },
+      { key: "/ai-assistant/visit-plans", label: "拜访计划", permission: "ai.visit.plan" }
     ]
   },
   {
@@ -469,6 +471,7 @@ function CrmShell() {
             <Route path="/ai-assistant/drafts" element={<AiDraftsPage />} />
             <Route path="/ai-assistant/weekly-report" element={<AiWeeklyReportPage />} />
             <Route path="/ai-assistant/opportunities" element={<AiOpportunityAnalysisPage />} />
+            <Route path="/ai-assistant/visit-plans" element={<AiVisitPlanPage />} />
             <Route path="/system" element={<SystemPage section="overview" />} />
             <Route path="/system/departments" element={<SystemPage section="departments" />} />
             <Route path="/system/users" element={<SystemPage section="users" />} />
@@ -1543,6 +1546,214 @@ function AiOpportunityAnalysisDetail({
   );
 }
 
+function AiVisitPlanPage() {
+  const opportunities = useObjectResource<Opportunity[]>(
+    () => crmApi.opportunities.list({ default_following: true }),
+    () => [],
+    []
+  );
+  const { data, loading, error, refresh, setData } = useObjectResource<AiVisitPlan[]>(
+    () => crmApi.aiVisitPlans.list(),
+    () => [],
+    []
+  );
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState<number | undefined>();
+  const [generating, setGenerating] = useState(false);
+  const [operatingId, setOperatingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!selectedOpportunityId && opportunities.data.length > 0) {
+      setSelectedOpportunityId(opportunities.data[0].id);
+    }
+  }, [opportunities.data, selectedOpportunityId]);
+
+  const opportunityOptions = opportunities.data.map((opportunity) => ({
+    label: `${opportunity.opportunity_name} · ${opportunity.stage}`,
+    value: opportunity.id
+  }));
+  const currentPlan = selectedOpportunityId ? data.find((item) => item.opportunity_id === selectedOpportunityId) ?? data[0] : data[0];
+
+  const upsertPlan = (plan: AiVisitPlan) => {
+    setData((current) => [plan, ...current.filter((item) => item.id !== plan.id)]);
+    setSelectedOpportunityId(plan.opportunity_id);
+  };
+
+  const handleGenerate = async () => {
+    if (!selectedOpportunityId) {
+      message.warning("请选择商机");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const plan = await crmApi.aiVisitPlans.generate(selectedOpportunityId);
+      upsertPlan(plan);
+      message.success("拜访计划已生成，确认前不会写入销售行动");
+    } catch (generateError) {
+      message.error(generateError instanceof Error ? generateError.message : "生成拜访计划失败");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleConfirm = async (plan: AiVisitPlan) => {
+    setOperatingId(plan.id);
+    try {
+      const updated = await crmApi.aiVisitPlans.confirm(plan.id);
+      upsertPlan(updated);
+      message.success("拜访计划已确认写入销售行动");
+    } catch (confirmError) {
+      message.error(confirmError instanceof Error ? confirmError.message : "确认拜访计划失败");
+    } finally {
+      setOperatingId(null);
+    }
+  };
+
+  const handleReject = async (plan: AiVisitPlan) => {
+    setOperatingId(plan.id);
+    try {
+      const updated = await crmApi.aiVisitPlans.reject(plan.id, "页面拒绝");
+      upsertPlan(updated);
+      message.success("拜访计划已驳回");
+    } catch (rejectError) {
+      message.error(rejectError instanceof Error ? rejectError.message : "驳回拜访计划失败");
+    } finally {
+      setOperatingId(null);
+    }
+  };
+
+  return (
+    <section className="workspace dashboard-overview">
+      <PageTitle
+        title="AI拜访计划"
+        description="基于商机、联系人和行动证据生成拜访目标、参会对象、议程、材料、问题和跟进动作，确认前不写入业务记录。"
+        action={<RefreshButton onClick={refresh} loading={loading || opportunities.loading} />}
+      />
+      {error || opportunities.error ? <div className="error-banner">{error || opportunities.error}</div> : null}
+
+      <Card title={<Typography.Title level={3}>计划设置</Typography.Title>} className="dashboard-overview__card">
+        <Space wrap>
+          <Select
+            aria-label="选择商机"
+            value={selectedOpportunityId}
+            options={opportunityOptions}
+            loading={opportunities.loading}
+            onChange={setSelectedOpportunityId}
+            style={{ minWidth: 280 }}
+          />
+          <Button
+            type="primary"
+            icon={<Sparkles size={16} />}
+            loading={generating}
+            disabled={!selectedOpportunityId}
+            onClick={handleGenerate}
+          >
+            生成拜访计划
+          </Button>
+          {currentPlan?.status === "confirmed" && currentPlan.write_activity_id ? (
+            <Link to={`/activities?activity_id=${currentPlan.write_activity_id}`}>
+              <Button icon={<CalendarCheck size={16} />}>查看写入行动</Button>
+            </Link>
+          ) : null}
+        </Space>
+      </Card>
+
+      {currentPlan ? (
+        <AiVisitPlanDetail
+          plan={currentPlan}
+          operating={operatingId === currentPlan.id}
+          onConfirm={() => handleConfirm(currentPlan)}
+          onReject={() => handleReject(currentPlan)}
+        />
+      ) : !loading ? (
+        <div className="empty-state">暂无AI拜访计划</div>
+      ) : null}
+
+      {data.length > 1 ? (
+        <Card title={<Typography.Title level={3}>历史拜访计划</Typography.Title>} className="dashboard-overview__card">
+          <SimpleList
+            items={data.slice(1)}
+            empty="暂无历史拜访计划"
+            render={(plan) => (
+              <button type="button" className="link-button" onClick={() => upsertPlan(plan)}>
+                <strong>{plan.opportunity_name}</strong>
+                <small>{[visitPlanStatusText(plan.status), `${plan.source_activity_count} 条行动证据`].join(" · ")}</small>
+              </button>
+            )}
+          />
+        </Card>
+      ) : null}
+    </section>
+  );
+}
+
+function AiVisitPlanDetail({
+  plan,
+  operating,
+  onConfirm,
+  onReject
+}: {
+  plan: AiVisitPlan;
+  operating: boolean;
+  onConfirm: () => void;
+  onReject: () => void;
+}) {
+  return (
+    <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+      <Card
+        title={
+          <Space>
+            <Typography.Title level={3}>{plan.opportunity_name}</Typography.Title>
+            <Tag color={visitPlanStatusColor(plan.status)}>{visitPlanStatusText(plan.status)}</Tag>
+          </Space>
+        }
+        extra={plan.account_name}
+        className="dashboard-overview__card"
+      >
+        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+          <div className="ai-draft-fields">
+            <div>
+              <small>销售行动</small>
+              <strong>{plan.source_activity_count}</strong>
+            </div>
+            <div>
+              <small>证据</small>
+              <strong>{plan.source_evidence_count}</strong>
+            </div>
+            <div>
+              <small>跟进动作</small>
+              <strong>{plan.follow_up_actions.length}</strong>
+            </div>
+          </div>
+          <div className="dashboard-grid">
+            <AiWeeklyTextList title="拜访目标" items={plan.visit_objectives} />
+            <AiWeeklyTextList title="参会对象" items={plan.attendees} />
+            <AiWeeklyTextList title="拜访议程" items={plan.agenda} />
+            <AiWeeklyTextList title="准备材料" items={plan.materials} />
+            <AiWeeklyTextList title="关键问题" items={plan.questions} />
+            <AiWeeklyTextList title="预期产出" items={plan.expected_outcomes} />
+            <AiWeeklyTextList title="跟进动作" items={plan.follow_up_actions} />
+          </div>
+          {plan.status === "pending_confirmation" ? (
+            <Space wrap>
+              <Button type="primary" icon={<CheckCircle2 size={16} />} loading={operating} onClick={onConfirm}>
+                确认写入行动
+              </Button>
+              <Button icon={<XCircle size={16} />} loading={operating} onClick={onReject}>
+                驳回
+              </Button>
+            </Space>
+          ) : null}
+          {plan.status === "confirmed" ? <Tag color="green">已写入销售行动 #{plan.write_activity_id}</Tag> : null}
+        </Space>
+      </Card>
+
+      <Card title={<Typography.Title level={3}>证据链</Typography.Title>} className="dashboard-overview__card">
+        <SimpleList items={plan.evidence} empty="暂无证据" render={(evidence) => <AiEvidenceLine evidence={evidence} />} />
+      </Card>
+    </Space>
+  );
+}
+
 function AiWeeklyReportDetail({
   report,
   operating,
@@ -1781,6 +1992,24 @@ function opportunityAnalysisStatusText(status: AiOpportunityAnalysis["status"]) 
 }
 
 function opportunityAnalysisStatusColor(status: AiOpportunityAnalysis["status"]) {
+  return {
+    pending_confirmation: "blue",
+    writing: "gold",
+    confirmed: "green",
+    rejected: "default"
+  }[status];
+}
+
+function visitPlanStatusText(status: AiVisitPlan["status"]) {
+  return {
+    pending_confirmation: "待确认",
+    writing: "写入中",
+    confirmed: "已写入",
+    rejected: "已驳回"
+  }[status];
+}
+
+function visitPlanStatusColor(status: AiVisitPlan["status"]) {
   return {
     pending_confirmation: "blue",
     writing: "gold",

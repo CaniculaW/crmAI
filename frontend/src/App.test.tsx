@@ -58,6 +58,7 @@ const apiData = {
       "ai.draft.manage",
       "ai.weekly.manage",
       "ai.opportunity.analyze",
+      "ai.visit.plan",
       "activity.read",
       "activity.create",
       "activity.complete",
@@ -567,6 +568,35 @@ const apiData = {
       source_evidence_count: 1
     }
   ],
+  aiVisitPlans: [
+    {
+      id: 8301,
+      status: "pending_confirmation",
+      opportunity_id: 10,
+      account_id: 1,
+      opportunity_name: "测试商机A",
+      account_name: "测试客户A",
+      visit_objectives: ["明确AI助手试点范围、ROI材料和下一步评审安排。"],
+      attendees: ["张决策 / 信息化中心 / 角色：decision_maker、budget_promoter"],
+      agenda: ["复盘当前阶段与客户反馈，确认AI助手试点范围。", "对齐预算、财务审批路径和技术集成边界。"],
+      materials: ["AI助手试点范围说明", "ROI测算材料"],
+      questions: ["财务审批人是谁，财务审批材料和预算口径是否已经明确？"],
+      expected_outcomes: ["形成下一步评审安排、责任人和时间表。"],
+      follow_up_actions: ["拜访后24小时内整理会议纪要，安排业务、技术和财务评审并记录反馈。"],
+      evidence: [
+        {
+          object_type: "activity",
+          object_id: 88,
+          title: "完成CRM V1试点需求确认会",
+          summary: "双方确认进入试点方案细化阶段。",
+          occurred_at: "2026-06-22T03:58:00+08:00",
+          drilldown_url: "/activities?activity_id=88"
+        }
+      ],
+      source_activity_count: 2,
+      source_evidence_count: 1
+    }
+  ],
   dashboardReceivables: {
     filters: {},
     metric_cards: [
@@ -971,6 +1001,13 @@ const apiData = {
       permission_name: "分析AI商机",
       permission_type: "operation",
       module_code: "ai"
+    },
+    {
+      id: 4305,
+      permission_code: "ai.visit.plan",
+      permission_name: "生成AI拜访计划",
+      permission_type: "operation",
+      module_code: "ai"
     }
   ]
 };
@@ -1137,6 +1174,32 @@ describe("CRM frontend V1 workflow", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-opportunity-analyses/generate"), expect.anything());
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-opportunity-analyses/8201/confirm"), expect.anything());
+    });
+  });
+
+  it("generates and confirms AI visit plan from assistant page", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/ai-assistant/visit-plans");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "AI拜访计划" })).toBeInTheDocument();
+    expect(screen.getByText("测试商机A")).toBeInTheDocument();
+    expect(screen.getByText("明确AI助手试点范围、ROI材料和下一步评审安排。")).toBeInTheDocument();
+    expect(screen.getByText("财务审批人是谁，财务审批材料和预算口径是否已经明确？")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "生成拜访计划" }));
+
+    expect(await screen.findByText("拜访计划已生成，确认前不会写入销售行动")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "确认写入行动" }));
+
+    expect(await screen.findByText("拜访计划已确认写入销售行动")).toBeInTheDocument();
+    expect(screen.getByText("已写入销售行动 #8803")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看写入行动" })).toHaveAttribute("href", "/activities?activity_id=8803");
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-visit-plans/generate"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-visit-plans/8301/confirm"), expect.anything());
     });
   });
 
@@ -2127,6 +2190,7 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByLabelText("管理AI草稿")).toBeInTheDocument();
     expect(screen.getByLabelText("管理AI周报")).toBeInTheDocument();
     expect(screen.getByLabelText("分析AI商机")).toBeInTheDocument();
+    expect(screen.getByLabelText("生成AI拜访计划")).toBeInTheDocument();
   });
 
   it("filters audit logs by V2 quick actions", async () => {
@@ -2319,6 +2383,29 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/ai-opportunity-analyses")) {
       return jsonResponse({ code: "OK", data: data.aiOpportunityAnalyses });
+    }
+    if (path.endsWith("/api/ai-visit-plans/generate") && method === "POST") {
+      return jsonResponse({ code: "OK", data: data.aiVisitPlans[0] });
+    }
+    if (path.endsWith("/api/ai-visit-plans/8301/confirm") && method === "POST") {
+      return jsonResponse({
+        code: "OK",
+        data: {
+          ...data.aiVisitPlans[0],
+          status: "confirmed",
+          write_activity_id: 8803,
+          confirmed_at: "2026-07-07T11:00:00+08:00"
+        }
+      });
+    }
+    if (path.endsWith("/api/ai-visit-plans/8301/reject") && method === "POST") {
+      return jsonResponse({
+        code: "OK",
+        data: { ...data.aiVisitPlans[0], status: "rejected", rejection_reason: "页面拒绝" }
+      });
+    }
+    if (path.endsWith("/api/ai-visit-plans")) {
+      return jsonResponse({ code: "OK", data: data.aiVisitPlans });
     }
     if (path.endsWith("/api/ai-context/summary")) {
       return jsonResponse({ code: "OK", data: data.aiContextSummary });

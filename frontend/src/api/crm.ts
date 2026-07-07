@@ -550,6 +550,30 @@ export type AiOpportunityAnalysis = {
   rejected_at?: string;
 };
 
+export type AiVisitPlan = {
+  id: number;
+  status: "pending_confirmation" | "writing" | "confirmed" | "rejected";
+  opportunity_id: number;
+  account_id: number;
+  opportunity_name: string;
+  account_name: string;
+  visit_objectives: string[];
+  attendees: string[];
+  agenda: string[];
+  materials: string[];
+  questions: string[];
+  expected_outcomes: string[];
+  follow_up_actions: string[];
+  evidence: AiEvidenceItem[];
+  source_activity_count: number;
+  source_evidence_count: number;
+  write_activity_id?: number;
+  rejection_reason?: string;
+  created_at?: string;
+  confirmed_at?: string;
+  rejected_at?: string;
+};
+
 export type DictionaryType = {
   id: number;
   dict_code: string;
@@ -994,6 +1018,20 @@ export const crmApi = {
       requestJson<AiOpportunityAnalysis>(`/api/ai-opportunity-analyses/${id}/confirm`, { method: "POST" }),
     reject: (id: number, reason?: string) =>
       requestJson<AiOpportunityAnalysis>(`/api/ai-opportunity-analyses/${id}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ reason })
+      })
+  },
+  aiVisitPlans: {
+    generate: (opportunityId: number) =>
+      requestJson<AiVisitPlan>("/api/ai-visit-plans/generate", {
+        method: "POST",
+        body: JSON.stringify({ opportunity_id: opportunityId })
+      }),
+    list: (query?: QueryParams) => requestJson<AiVisitPlan[]>(withQuery("/api/ai-visit-plans", query)),
+    confirm: (id: number) => requestJson<AiVisitPlan>(`/api/ai-visit-plans/${id}/confirm`, { method: "POST" }),
+    reject: (id: number, reason?: string) =>
+      requestJson<AiVisitPlan>(`/api/ai-visit-plans/${id}/reject`, {
         method: "POST",
         body: JSON.stringify({ reason })
       })
