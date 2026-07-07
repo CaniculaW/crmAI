@@ -25,6 +25,8 @@ tags:
   - name: Dashboard
   - name: AI Context
   - name: AI Drafts
+  - name: AI Weekly Reports
+  - name: AI Opportunity Analyses
 paths:
   /api/health:
     get:
@@ -751,6 +753,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiAiWeeklyReportResponse'
+  /api/ai-opportunity-analyses/generate:
+    post:
+      tags: [AI Opportunity Analyses]
+      summary: Generate a V4 AI opportunity analysis from readable opportunity context
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiOpportunityAnalysisGenerateRequest'
+      responses:
+        '200':
+          description: Generated opportunity analysis awaiting confirmation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiOpportunityAnalysisResponse'
+  /api/ai-opportunity-analyses:
+    get:
+      tags: [AI Opportunity Analyses]
+      summary: List current user's AI opportunity analyses
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: opportunity_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: AI opportunity analysis history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiOpportunityAnalysisListResponse'
+  /api/ai-opportunity-analyses/{analysisId}/confirm:
+    post:
+      tags: [AI Opportunity Analyses]
+      summary: Confirm an AI opportunity analysis and write one planned sales activity
+      parameters:
+        - name: analysisId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Confirmed opportunity analysis with write activity id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiOpportunityAnalysisResponse'
+  /api/ai-opportunity-analyses/{analysisId}/reject:
+    post:
+      tags: [AI Opportunity Analyses]
+      summary: Reject an AI opportunity analysis
+      parameters:
+        - name: analysisId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiOpportunityAnalysisRejectRequest'
+      responses:
+        '200':
+          description: Rejected opportunity analysis.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiOpportunityAnalysisResponse'
   /api/auth/login:
     post:
       tags: [Auth]
@@ -2951,6 +3033,131 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AiEvidenceItem'
+    ApiAiOpportunityAnalysisResponse:
+      type: object
+      required: [code, message, data, trace_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/AiOpportunityAnalysis'
+        trace_id:
+          type: string
+    ApiAiOpportunityAnalysisListResponse:
+      type: object
+      required: [code, message, data, trace_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiOpportunityAnalysis'
+        trace_id:
+          type: string
+    AiOpportunityAnalysisGenerateRequest:
+      type: object
+      required: [opportunity_id]
+      properties:
+        opportunity_id:
+          type: integer
+          format: int64
+    AiOpportunityAnalysisRejectRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 512
+    AiOpportunityAnalysis:
+      type: object
+      required:
+        - id
+        - status
+        - opportunity_id
+        - account_id
+        - opportunity_name
+        - account_name
+        - stage_health
+        - relationship_gaps
+        - risks
+        - blockers
+        - win_factors
+        - next_actions
+        - evidence
+        - source_activity_count
+        - source_evidence_count
+      properties:
+        id:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [pending_confirmation, writing, confirmed, rejected]
+        opportunity_id:
+          type: integer
+          format: int64
+        account_id:
+          type: integer
+          format: int64
+        opportunity_name:
+          type: string
+        account_name:
+          type: string
+        stage_health:
+          type: array
+          items:
+            type: string
+        relationship_gaps:
+          type: array
+          items:
+            type: string
+        risks:
+          type: array
+          items:
+            type: string
+        blockers:
+          type: array
+          items:
+            type: string
+        win_factors:
+          type: array
+          items:
+            type: string
+        next_actions:
+          type: array
+          items:
+            type: string
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiEvidenceItem'
+        source_activity_count:
+          type: integer
+        source_evidence_count:
+          type: integer
+        write_activity_id:
+          type: integer
+          format: int64
+          nullable: true
+        rejection_reason:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        confirmed_at:
+          type: string
+          format: date-time
+          nullable: true
+        rejected_at:
+          type: string
+          format: date-time
+          nullable: true
     AccountResponse:
       type: object
       required: [id, account_name, account_type, account_status, owner_department_id, owner_user_id]

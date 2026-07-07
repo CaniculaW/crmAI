@@ -46,6 +46,7 @@ import {
   type AiContextSummary,
   type AiDraft,
   type AiEvidenceItem,
+  type AiOpportunityAnalysis,
   type AiWeeklyReport,
   type Attachment,
   type AuditLog,
@@ -152,11 +153,12 @@ const navItems: NavItem[] = [
     key: "/ai-assistant",
     label: "AI助手",
     icon: <Sparkles size={18} />,
-    permissions: ["ai.context.read", "ai.draft.manage", "ai.weekly.manage"],
+    permissions: ["ai.context.read", "ai.draft.manage", "ai.weekly.manage", "ai.opportunity.analyze"],
     children: [
       { key: "/ai-assistant", label: "AI工作台", permission: "ai.context.read" },
       { key: "/ai-assistant/drafts", label: "草稿确认", permission: "ai.draft.manage" },
-      { key: "/ai-assistant/weekly-report", label: "周报生成", permission: "ai.weekly.manage" }
+      { key: "/ai-assistant/weekly-report", label: "周报生成", permission: "ai.weekly.manage" },
+      { key: "/ai-assistant/opportunities", label: "商机分析", permission: "ai.opportunity.analyze" }
     ]
   },
   {
@@ -466,6 +468,7 @@ function CrmShell() {
             <Route path="/ai-assistant" element={<AiAssistantPage />} />
             <Route path="/ai-assistant/drafts" element={<AiDraftsPage />} />
             <Route path="/ai-assistant/weekly-report" element={<AiWeeklyReportPage />} />
+            <Route path="/ai-assistant/opportunities" element={<AiOpportunityAnalysisPage />} />
             <Route path="/system" element={<SystemPage section="overview" />} />
             <Route path="/system/departments" element={<SystemPage section="departments" />} />
             <Route path="/system/users" element={<SystemPage section="users" />} />
@@ -1321,6 +1324,225 @@ function AiWeeklyReportPage() {
   );
 }
 
+function AiOpportunityAnalysisPage() {
+  const opportunities = useObjectResource<Opportunity[]>(
+    () => crmApi.opportunities.list({ default_following: true }),
+    () => [],
+    []
+  );
+  const { data, loading, error, refresh, setData } = useObjectResource<AiOpportunityAnalysis[]>(
+    () => crmApi.aiOpportunityAnalyses.list(),
+    () => [],
+    []
+  );
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState<number | undefined>();
+  const [generating, setGenerating] = useState(false);
+  const [operatingId, setOperatingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!selectedOpportunityId && opportunities.data.length > 0) {
+      setSelectedOpportunityId(opportunities.data[0].id);
+    }
+  }, [opportunities.data, selectedOpportunityId]);
+
+  const opportunityOptions = opportunities.data.map((opportunity) => ({
+    label: `${opportunity.opportunity_name} · ${opportunity.stage}`,
+    value: opportunity.id
+  }));
+  const currentAnalysis = selectedOpportunityId
+    ? data.find((item) => item.opportunity_id === selectedOpportunityId) ?? data[0]
+    : data[0];
+
+  const upsertAnalysis = (analysis: AiOpportunityAnalysis) => {
+    setData((current) => [analysis, ...current.filter((item) => item.id !== analysis.id)]);
+    setSelectedOpportunityId(analysis.opportunity_id);
+  };
+
+  const handleGenerate = async () => {
+    if (!selectedOpportunityId) {
+      message.warning("请选择商机");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const analysis = await crmApi.aiOpportunityAnalyses.generate(selectedOpportunityId);
+      upsertAnalysis(analysis);
+      message.success("商机分析已生成，确认前不会写入销售行动");
+    } catch (generateError) {
+      message.error(generateError instanceof Error ? generateError.message : "生成商机分析失败");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleConfirm = async (analysis: AiOpportunityAnalysis) => {
+    setOperatingId(analysis.id);
+    try {
+      const updated = await crmApi.aiOpportunityAnalyses.confirm(analysis.id);
+      upsertAnalysis(updated);
+      message.success("商机分析已确认写入销售行动");
+    } catch (confirmError) {
+      message.error(confirmError instanceof Error ? confirmError.message : "确认商机分析失败");
+    } finally {
+      setOperatingId(null);
+    }
+  };
+
+  const handleReject = async (analysis: AiOpportunityAnalysis) => {
+    setOperatingId(analysis.id);
+    try {
+      const updated = await crmApi.aiOpportunityAnalyses.reject(analysis.id, "页面拒绝");
+      upsertAnalysis(updated);
+      message.success("商机分析已驳回");
+    } catch (rejectError) {
+      message.error(rejectError instanceof Error ? rejectError.message : "驳回商机分析失败");
+    } finally {
+      setOperatingId(null);
+    }
+  };
+
+  return (
+    <section className="workspace dashboard-overview">
+      <PageTitle
+        title="AI商机分析"
+        description="基于商机、联系人和销售行动生成推进建议，确认前不写入业务记录。"
+        action={<RefreshButton onClick={refresh} loading={loading || opportunities.loading} />}
+      />
+      {error || opportunities.error ? <div className="error-banner">{error || opportunities.error}</div> : null}
+
+      <Card title={<Typography.Title level={3}>分析设置</Typography.Title>} className="dashboard-overview__card">
+        <Space wrap>
+          <Select
+            aria-label="选择商机"
+            value={selectedOpportunityId}
+            options={opportunityOptions}
+            loading={opportunities.loading}
+            onChange={setSelectedOpportunityId}
+            style={{ minWidth: 280 }}
+          />
+          <Button
+            type="primary"
+            icon={<Sparkles size={16} />}
+            loading={generating}
+            disabled={!selectedOpportunityId}
+            onClick={handleGenerate}
+          >
+            生成商机分析
+          </Button>
+          {currentAnalysis?.status === "confirmed" && currentAnalysis.write_activity_id ? (
+            <Link to={`/activities?activity_id=${currentAnalysis.write_activity_id}`}>
+              <Button icon={<CalendarCheck size={16} />}>查看写入行动</Button>
+            </Link>
+          ) : null}
+        </Space>
+      </Card>
+
+      {currentAnalysis ? (
+        <AiOpportunityAnalysisDetail
+          analysis={currentAnalysis}
+          operating={operatingId === currentAnalysis.id}
+          onConfirm={() => handleConfirm(currentAnalysis)}
+          onReject={() => handleReject(currentAnalysis)}
+        />
+      ) : !loading ? (
+        <div className="empty-state">暂无AI商机分析</div>
+      ) : null}
+
+      {data.length > 1 ? (
+        <Card title={<Typography.Title level={3}>历史商机分析</Typography.Title>} className="dashboard-overview__card">
+          <SimpleList
+            items={data.slice(1)}
+            empty="暂无历史商机分析"
+            render={(analysis) => (
+              <button type="button" className="link-button" onClick={() => upsertAnalysis(analysis)}>
+                <strong>{analysis.opportunity_name}</strong>
+                <small>
+                  {[opportunityAnalysisStatusText(analysis.status), `${analysis.source_activity_count} 条行动证据`].join(" · ")}
+                </small>
+              </button>
+            )}
+          />
+        </Card>
+      ) : null}
+    </section>
+  );
+}
+
+function AiOpportunityAnalysisDetail({
+  analysis,
+  operating,
+  onConfirm,
+  onReject
+}: {
+  analysis: AiOpportunityAnalysis;
+  operating: boolean;
+  onConfirm: () => void;
+  onReject: () => void;
+}) {
+  return (
+    <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+      <Card
+        title={
+          <Space>
+            <Typography.Title level={3}>{analysis.opportunity_name}</Typography.Title>
+            <Tag color={opportunityAnalysisStatusColor(analysis.status)}>
+              {opportunityAnalysisStatusText(analysis.status)}
+            </Tag>
+          </Space>
+        }
+        extra={analysis.account_name}
+        className="dashboard-overview__card"
+      >
+        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+          <div className="ai-draft-fields">
+            <div>
+              <small>销售行动</small>
+              <strong>{analysis.source_activity_count}</strong>
+            </div>
+            <div>
+              <small>证据</small>
+              <strong>{analysis.source_evidence_count}</strong>
+            </div>
+            <div>
+              <small>下一步建议</small>
+              <strong>{analysis.next_actions.length}</strong>
+            </div>
+          </div>
+          <div className="dashboard-grid">
+            <AiWeeklyTextList title="阶段健康" items={analysis.stage_health} />
+            <AiWeeklyTextList title="关系缺口" items={analysis.relationship_gaps} />
+            <AiWeeklyTextList title="风险" items={analysis.risks} />
+            <AiWeeklyTextList title="阻塞点" items={analysis.blockers} />
+            <AiWeeklyTextList title="赢单因素" items={analysis.win_factors} />
+            <AiWeeklyTextList title="下一步行动" items={analysis.next_actions} />
+          </div>
+          {analysis.status === "pending_confirmation" ? (
+            <Space wrap>
+              <Button type="primary" icon={<CheckCircle2 size={16} />} loading={operating} onClick={onConfirm}>
+                确认写入行动
+              </Button>
+              <Button icon={<XCircle size={16} />} loading={operating} onClick={onReject}>
+                驳回
+              </Button>
+            </Space>
+          ) : null}
+          {analysis.status === "confirmed" ? (
+            <Tag color="green">已写入销售行动 #{analysis.write_activity_id}</Tag>
+          ) : null}
+        </Space>
+      </Card>
+
+      <Card title={<Typography.Title level={3}>证据链</Typography.Title>} className="dashboard-overview__card">
+        <SimpleList
+          items={analysis.evidence}
+          empty="暂无证据"
+          render={(evidence) => <AiEvidenceLine evidence={evidence} />}
+        />
+      </Card>
+    </Space>
+  );
+}
+
 function AiWeeklyReportDetail({
   report,
   operating,
@@ -1541,6 +1763,24 @@ function weeklyReportStatusText(status: AiWeeklyReport["status"]) {
 }
 
 function weeklyReportStatusColor(status: AiWeeklyReport["status"]) {
+  return {
+    pending_confirmation: "blue",
+    writing: "gold",
+    confirmed: "green",
+    rejected: "default"
+  }[status];
+}
+
+function opportunityAnalysisStatusText(status: AiOpportunityAnalysis["status"]) {
+  return {
+    pending_confirmation: "待确认",
+    writing: "写入中",
+    confirmed: "已写入",
+    rejected: "已驳回"
+  }[status];
+}
+
+function opportunityAnalysisStatusColor(status: AiOpportunityAnalysis["status"]) {
   return {
     pending_confirmation: "blue",
     writing: "gold",

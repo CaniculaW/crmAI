@@ -264,7 +264,7 @@ class DatabaseMigrationTest {
                 Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(migrationCount).isGreaterThanOrEqualTo(30);
+        assertThat(migrationCount).isGreaterThanOrEqualTo(31);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -423,6 +423,28 @@ class DatabaseMigrationTest {
                 select count(*)
                 from sys_permissions
                 where permission_code = 'ai.weekly.manage'
+                  and module_code = 'ai'
+                """,
+                Integer.class);
+
+        assertThat(tableCount).isEqualTo(1);
+        assertThat(permissionCount).isEqualTo(1);
+    }
+
+    @Test
+    void createsAiOpportunityAnalysisTableAndPermission() {
+        Integer tableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where lower(table_name) = 'ai_opportunity_analyses'
+                """,
+                Integer.class);
+        Integer permissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'ai.opportunity.analyze'
                   and module_code = 'ai'
                 """,
                 Integer.class);

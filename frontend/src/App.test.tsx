@@ -57,6 +57,7 @@ const apiData = {
       "ai.context.read",
       "ai.draft.manage",
       "ai.weekly.manage",
+      "ai.opportunity.analyze",
       "activity.read",
       "activity.create",
       "activity.complete",
@@ -538,6 +539,34 @@ const apiData = {
       write_activity_ids: []
     }
   ],
+  aiOpportunityAnalyses: [
+    {
+      id: 8201,
+      status: "pending_confirmation",
+      opportunity_id: 10,
+      account_id: 1,
+      opportunity_name: "测试商机A",
+      account_name: "测试客户A",
+      stage_health: ["当前阶段 proposal，状态 following，预计成交日 2026-07-31。"],
+      relationship_gaps: ["财务审批人未明确，需要补齐预算、采购或财务角色。"],
+      risks: ["预算审批链路未明确"],
+      blockers: ["预算审批链路是当前阻塞点，需要确认财务审批人、审批材料和预算口径。"],
+      win_factors: ["客户认可AI助手价值"],
+      next_actions: ["确认财务审批人、预算口径和审批材料清单。"],
+      evidence: [
+        {
+          object_type: "activity",
+          object_id: 88,
+          title: "完成CRM V1试点需求确认会",
+          summary: "双方确认进入试点方案细化阶段。",
+          occurred_at: "2026-06-22T03:58:00+08:00",
+          drilldown_url: "/activities?activity_id=88"
+        }
+      ],
+      source_activity_count: 2,
+      source_evidence_count: 1
+    }
+  ],
   dashboardReceivables: {
     filters: {},
     metric_cards: [
@@ -935,6 +964,13 @@ const apiData = {
       permission_name: "管理AI周报",
       permission_type: "operation",
       module_code: "ai"
+    },
+    {
+      id: 4304,
+      permission_code: "ai.opportunity.analyze",
+      permission_name: "分析AI商机",
+      permission_type: "operation",
+      module_code: "ai"
     }
   ]
 };
@@ -1075,6 +1111,32 @@ describe("CRM frontend V1 workflow", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-weekly-reports/generate"), expect.anything());
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-weekly-reports/8101/confirm"), expect.anything());
+    });
+  });
+
+  it("generates and confirms AI opportunity analysis from assistant page", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/ai-assistant/opportunities");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "AI商机分析" })).toBeInTheDocument();
+    expect(screen.getByText("测试商机A")).toBeInTheDocument();
+    expect(screen.getByText("预算审批链路未明确")).toBeInTheDocument();
+    expect(screen.getByText("确认财务审批人、预算口径和审批材料清单。")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "生成商机分析" }));
+
+    expect(await screen.findByText("商机分析已生成，确认前不会写入销售行动")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "确认写入行动" }));
+
+    expect(await screen.findByText("商机分析已确认写入销售行动")).toBeInTheDocument();
+    expect(screen.getByText("已写入销售行动 #8802")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看写入行动" })).toHaveAttribute("href", "/activities?activity_id=8802");
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-opportunity-analyses/generate"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-opportunity-analyses/8201/confirm"), expect.anything());
     });
   });
 
@@ -2064,6 +2126,7 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByLabelText("查看AI上下文")).toBeInTheDocument();
     expect(screen.getByLabelText("管理AI草稿")).toBeInTheDocument();
     expect(screen.getByLabelText("管理AI周报")).toBeInTheDocument();
+    expect(screen.getByLabelText("分析AI商机")).toBeInTheDocument();
   });
 
   it("filters audit logs by V2 quick actions", async () => {
@@ -2233,6 +2296,29 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/ai-weekly-reports")) {
       return jsonResponse({ code: "OK", data: data.aiWeeklyReports });
+    }
+    if (path.endsWith("/api/ai-opportunity-analyses/generate") && method === "POST") {
+      return jsonResponse({ code: "OK", data: data.aiOpportunityAnalyses[0] });
+    }
+    if (path.endsWith("/api/ai-opportunity-analyses/8201/confirm") && method === "POST") {
+      return jsonResponse({
+        code: "OK",
+        data: {
+          ...data.aiOpportunityAnalyses[0],
+          status: "confirmed",
+          write_activity_id: 8802,
+          confirmed_at: "2026-07-07T10:00:00+08:00"
+        }
+      });
+    }
+    if (path.endsWith("/api/ai-opportunity-analyses/8201/reject") && method === "POST") {
+      return jsonResponse({
+        code: "OK",
+        data: { ...data.aiOpportunityAnalyses[0], status: "rejected", rejection_reason: "页面拒绝" }
+      });
+    }
+    if (path.endsWith("/api/ai-opportunity-analyses")) {
+      return jsonResponse({ code: "OK", data: data.aiOpportunityAnalyses });
     }
     if (path.endsWith("/api/ai-context/summary")) {
       return jsonResponse({ code: "OK", data: data.aiContextSummary });

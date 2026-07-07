@@ -527,6 +527,29 @@ export type AiWeeklyReport = {
   rejected_at?: string;
 };
 
+export type AiOpportunityAnalysis = {
+  id: number;
+  status: "pending_confirmation" | "writing" | "confirmed" | "rejected";
+  opportunity_id: number;
+  account_id: number;
+  opportunity_name: string;
+  account_name: string;
+  stage_health: string[];
+  relationship_gaps: string[];
+  risks: string[];
+  blockers: string[];
+  win_factors: string[];
+  next_actions: string[];
+  evidence: AiEvidenceItem[];
+  source_activity_count: number;
+  source_evidence_count: number;
+  write_activity_id?: number;
+  rejection_reason?: string;
+  created_at?: string;
+  confirmed_at?: string;
+  rejected_at?: string;
+};
+
 export type DictionaryType = {
   id: number;
   dict_code: string;
@@ -956,6 +979,21 @@ export const crmApi = {
     confirm: (id: number) => requestJson<AiWeeklyReport>(`/api/ai-weekly-reports/${id}/confirm`, { method: "POST" }),
     reject: (id: number, reason?: string) =>
       requestJson<AiWeeklyReport>(`/api/ai-weekly-reports/${id}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ reason })
+      })
+  },
+  aiOpportunityAnalyses: {
+    generate: (opportunityId: number) =>
+      requestJson<AiOpportunityAnalysis>("/api/ai-opportunity-analyses/generate", {
+        method: "POST",
+        body: JSON.stringify({ opportunity_id: opportunityId })
+      }),
+    list: (query?: QueryParams) => requestJson<AiOpportunityAnalysis[]>(withQuery("/api/ai-opportunity-analyses", query)),
+    confirm: (id: number) =>
+      requestJson<AiOpportunityAnalysis>(`/api/ai-opportunity-analyses/${id}/confirm`, { method: "POST" }),
+    reject: (id: number, reason?: string) =>
+      requestJson<AiOpportunityAnalysis>(`/api/ai-opportunity-analyses/${id}/reject`, {
         method: "POST",
         body: JSON.stringify({ reason })
       })

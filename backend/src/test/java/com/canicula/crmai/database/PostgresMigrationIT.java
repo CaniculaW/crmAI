@@ -318,8 +318,24 @@ class PostgresMigrationIT {
                   and module_code = 'ai'
                 """,
                 Integer.class);
+        Integer aiOpportunityAnalysisTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name = 'ai_opportunity_analyses'
+                """,
+                Integer.class);
+        Integer aiOpportunityAnalysisPermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code = 'ai.opportunity.analyze'
+                  and module_code = 'ai'
+                """,
+                Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("30");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("31");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -355,6 +371,8 @@ class PostgresMigrationIT {
         assertThat(aiDraftPermissionCount).isEqualTo(1);
         assertThat(aiWeeklyReportTableCount).isEqualTo(1);
         assertThat(aiWeeklyPermissionCount).isEqualTo(1);
+        assertThat(aiOpportunityAnalysisTableCount).isEqualTo(1);
+        assertThat(aiOpportunityAnalysisPermissionCount).isEqualTo(1);
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type
