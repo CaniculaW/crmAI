@@ -46,6 +46,7 @@ import {
   type AiContextSummary,
   type AiDraft,
   type AiEvidenceItem,
+  type AiWeeklyReport,
   type Attachment,
   type AuditLog,
   type Contract as CrmContract,
@@ -151,10 +152,11 @@ const navItems: NavItem[] = [
     key: "/ai-assistant",
     label: "AI助手",
     icon: <Sparkles size={18} />,
-    permissions: ["ai.context.read", "ai.draft.manage"],
+    permissions: ["ai.context.read", "ai.draft.manage", "ai.weekly.manage"],
     children: [
       { key: "/ai-assistant", label: "AI工作台", permission: "ai.context.read" },
-      { key: "/ai-assistant/drafts", label: "草稿确认", permission: "ai.draft.manage" }
+      { key: "/ai-assistant/drafts", label: "草稿确认", permission: "ai.draft.manage" },
+      { key: "/ai-assistant/weekly-report", label: "周报生成", permission: "ai.weekly.manage" }
     ]
   },
   {
@@ -463,6 +465,7 @@ function CrmShell() {
             <Route path="/weekly-progress" element={<WeeklyProgressPage />} />
             <Route path="/ai-assistant" element={<AiAssistantPage />} />
             <Route path="/ai-assistant/drafts" element={<AiDraftsPage />} />
+            <Route path="/ai-assistant/weekly-report" element={<AiWeeklyReportPage />} />
             <Route path="/system" element={<SystemPage section="overview" />} />
             <Route path="/system/departments" element={<SystemPage section="departments" />} />
             <Route path="/system/users" element={<SystemPage section="users" />} />
@@ -1025,6 +1028,9 @@ function AiAssistantPage() {
         description="销售事实录入、上下文预览和待确认草稿。"
         action={
           <Space>
+            <Link to="/ai-assistant/weekly-report">
+              <Button icon={<CalendarCheck size={16} />}>周报生成</Button>
+            </Link>
             <Link to="/ai-assistant/drafts">
               <Button icon={<FileText size={16} />}>草稿确认</Button>
             </Link>
@@ -1199,6 +1205,225 @@ function AiDraftsPage() {
   );
 }
 
+function AiWeeklyReportPage() {
+  const { data, loading, error, refresh, setData } = useObjectResource<AiWeeklyReport[]>(
+    () => crmApi.aiWeeklyReports.list(),
+    () => [],
+    []
+  );
+  const [weekStart, setWeekStart] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [operatingId, setOperatingId] = useState<number | null>(null);
+  const currentReport = data[0];
+
+  const upsertReport = (report: AiWeeklyReport) => {
+    setData((current) => [report, ...current.filter((item) => item.id !== report.id)]);
+  };
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const report = await crmApi.aiWeeklyReports.generate(weekStart || undefined);
+      upsertReport(report);
+      message.success("周报已生成，确认前不会写入周进展");
+    } catch (generateError) {
+      message.error(generateError instanceof Error ? generateError.message : "生成周报失败");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleConfirm = async (report: AiWeeklyReport) => {
+    setOperatingId(report.id);
+    try {
+      const updated = await crmApi.aiWeeklyReports.confirm(report.id);
+      upsertReport(updated);
+      message.success("周报已确认写入周进展");
+    } catch (confirmError) {
+      message.error(confirmError instanceof Error ? confirmError.message : "确认周报失败");
+    } finally {
+      setOperatingId(null);
+    }
+  };
+
+  const handleReject = async (report: AiWeeklyReport) => {
+    setOperatingId(report.id);
+    try {
+      const updated = await crmApi.aiWeeklyReports.reject(report.id, "页面拒绝");
+      upsertReport(updated);
+      message.success("周报已驳回");
+    } catch (rejectError) {
+      message.error(rejectError instanceof Error ? rejectError.message : "驳回周报失败");
+    } finally {
+      setOperatingId(null);
+    }
+  };
+
+  return (
+    <section className="workspace dashboard-overview">
+      <PageTitle
+        title="AI周报"
+        description="基于本周可见销售行动生成个人周报和商机周进展，确认前不写入业务记录。"
+        action={<RefreshButton onClick={refresh} loading={loading} />}
+      />
+      {error ? <div className="error-banner">{error}</div> : null}
+
+      <Card title={<Typography.Title level={3}>生成设置</Typography.Title>} className="dashboard-overview__card">
+        <Space wrap>
+          <Input
+            type="date"
+            value={weekStart}
+            onChange={(event) => setWeekStart(event.target.value)}
+            aria-label="周开始日期"
+            style={{ width: 180 }}
+          />
+          <Button type="primary" icon={<Sparkles size={16} />} loading={generating} onClick={handleGenerate}>
+            生成周报
+          </Button>
+          {currentReport?.status === "confirmed" ? (
+            <Link to="/weekly-progress">
+              <Button icon={<BarChart3 size={16} />}>查看周进展</Button>
+            </Link>
+          ) : null}
+        </Space>
+      </Card>
+
+      {currentReport ? (
+        <AiWeeklyReportDetail
+          report={currentReport}
+          operating={operatingId === currentReport.id}
+          onConfirm={() => handleConfirm(currentReport)}
+          onReject={() => handleReject(currentReport)}
+        />
+      ) : !loading ? (
+        <div className="empty-state">暂无AI周报</div>
+      ) : null}
+
+      {data.length > 1 ? (
+        <Card title={<Typography.Title level={3}>历史周报</Typography.Title>} className="dashboard-overview__card">
+          <SimpleList
+            items={data.slice(1)}
+            empty="暂无历史周报"
+            render={(report) => (
+              <button type="button" className="link-button" onClick={() => upsertReport(report)}>
+                <strong>
+                  {dateText(report.week_start_date)} - {dateText(report.week_end_date)}
+                </strong>
+                <small>
+                  {[weeklyReportStatusText(report.status), `${report.source_activity_count} 条行动`].join(" · ")}
+                </small>
+              </button>
+            )}
+          />
+        </Card>
+      ) : null}
+    </section>
+  );
+}
+
+function AiWeeklyReportDetail({
+  report,
+  operating,
+  onConfirm,
+  onReject
+}: {
+  report: AiWeeklyReport;
+  operating: boolean;
+  onConfirm: () => void;
+  onReject: () => void;
+}) {
+  return (
+    <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+      <Card
+        title={
+          <Space>
+            <Typography.Title level={3}>个人周报</Typography.Title>
+            <Tag color={weeklyReportStatusColor(report.status)}>{weeklyReportStatusText(report.status)}</Tag>
+          </Space>
+        }
+        extra={`${dateText(report.week_start_date)} - ${dateText(report.week_end_date)}`}
+        className="dashboard-overview__card"
+      >
+        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+          <Typography.Text strong>{report.personal_summary.headline}</Typography.Text>
+          <div className="ai-draft-fields">
+            <div>
+              <small>有效行动</small>
+              <strong>{report.source_activity_count}</strong>
+            </div>
+            <div>
+              <small>商机周进展</small>
+              <strong>{report.opportunity_progress.length}</strong>
+            </div>
+            <div>
+              <small>证据</small>
+              <strong>{report.evidence.length}</strong>
+            </div>
+          </div>
+          <AiWeeklyTextList title="本周成果" items={report.personal_summary.highlights} />
+          <AiWeeklyTextList title="风险关注" items={report.personal_summary.risks} />
+          <AiWeeklyTextList title="下周计划" items={report.personal_summary.next_week_plan} />
+          {report.status === "pending_confirmation" ? (
+            <Space wrap>
+              <Button type="primary" icon={<CheckCircle2 size={16} />} loading={operating} onClick={onConfirm}>
+                确认写入周进展
+              </Button>
+              <Button icon={<XCircle size={16} />} loading={operating} onClick={onReject}>
+                驳回
+              </Button>
+            </Space>
+          ) : null}
+          {report.status === "confirmed" ? (
+            <Tag color="green">已写入 {report.write_activity_ids.length} 条周进展行动</Tag>
+          ) : null}
+        </Space>
+      </Card>
+
+      <div className="dashboard-grid">
+        {report.opportunity_progress.map((progress) => (
+          <Card
+            key={progress.opportunity_id}
+            title={<Typography.Title level={3}>{progress.opportunity_name}</Typography.Title>}
+            className="dashboard-overview__card"
+          >
+            <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+              <Typography.Text type="secondary">{progress.account_name}</Typography.Text>
+              <AiWeeklySummaryItem label="本周进展" value={progress.summary} />
+              <AiWeeklySummaryItem label="风险" value={progress.risk_summary || "暂无明确风险"} />
+              <AiWeeklySummaryItem label="下周计划" value={progress.next_week_plan} />
+              <SimpleList
+                items={progress.evidence}
+                empty="暂无证据"
+                render={(evidence) => <AiEvidenceLine evidence={evidence} />}
+              />
+            </Space>
+          </Card>
+        ))}
+      </div>
+    </Space>
+  );
+}
+
+function AiWeeklyTextList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div>
+      <Typography.Text type="secondary">{title}</Typography.Text>
+      <div className="tag-row">
+        {items.length > 0 ? items.map((item) => <Tag key={item}>{item}</Tag>) : <Tag>暂无</Tag>}
+      </div>
+    </div>
+  );
+}
+
+function AiWeeklySummaryItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="weekly-review-summary-item">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
 function AiDraftCard({
   draft,
   compact,
@@ -1301,6 +1526,24 @@ function draftStatusColor(status: AiDraft["status"]) {
   return {
     pending_confirmation: "blue",
     need_more_info: "orange",
+    confirmed: "green",
+    rejected: "default"
+  }[status];
+}
+
+function weeklyReportStatusText(status: AiWeeklyReport["status"]) {
+  return {
+    pending_confirmation: "待确认",
+    writing: "写入中",
+    confirmed: "已写入",
+    rejected: "已驳回"
+  }[status];
+}
+
+function weeklyReportStatusColor(status: AiWeeklyReport["status"]) {
+  return {
+    pending_confirmation: "blue",
+    writing: "gold",
     confirmed: "green",
     rejected: "default"
   }[status];

@@ -82,6 +82,16 @@ body {
   font-weight: 700;
 }
 
+.link-button {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .app-header,
 .app-header.ant-layout-header {
   display: flex;

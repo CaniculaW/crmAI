@@ -676,6 +676,81 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiAiDraftResponse'
+  /api/ai-weekly-reports/generate:
+    post:
+      tags: [AI Weekly Reports]
+      summary: Generate a V4 AI weekly report from readable sales activities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiWeeklyReportGenerateRequest'
+      responses:
+        '200':
+          description: Generated weekly report awaiting confirmation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiWeeklyReportResponse'
+  /api/ai-weekly-reports:
+    get:
+      tags: [AI Weekly Reports]
+      summary: List current user's AI weekly reports
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: AI weekly report history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiWeeklyReportListResponse'
+  /api/ai-weekly-reports/{reportId}/confirm:
+    post:
+      tags: [AI Weekly Reports]
+      summary: Confirm an AI weekly report and write weekly progress activities
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Confirmed weekly report with write activity ids.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiWeeklyReportResponse'
+  /api/ai-weekly-reports/{reportId}/reject:
+    post:
+      tags: [AI Weekly Reports]
+      summary: Reject an AI weekly report
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiWeeklyReportRejectRequest'
+      responses:
+        '200':
+          description: Rejected weekly report.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiWeeklyReportResponse'
   /api/auth/login:
     post:
       tags: [Auth]
@@ -2745,6 +2820,137 @@ components:
         rejection_reason:
           type: string
           nullable: true
+    ApiAiWeeklyReportResponse:
+      type: object
+      required: [code, message, data, trace_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/AiWeeklyReport'
+        trace_id:
+          type: string
+    ApiAiWeeklyReportListResponse:
+      type: object
+      required: [code, message, data, trace_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiWeeklyReport'
+        trace_id:
+          type: string
+    AiWeeklyReportGenerateRequest:
+      type: object
+      properties:
+        week_start:
+          type: string
+          format: date
+          nullable: true
+        week_end:
+          type: string
+          format: date
+          nullable: true
+    AiWeeklyReportRejectRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 512
+    AiWeeklyReport:
+      type: object
+      required: [id, status, week_start_date, week_end_date, personal_summary, opportunity_progress, evidence, source_activity_count, write_activity_ids]
+      properties:
+        id:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [pending_confirmation, writing, confirmed, rejected]
+        week_start_date:
+          type: string
+          format: date
+        week_end_date:
+          type: string
+          format: date
+        personal_summary:
+          $ref: '#/components/schemas/AiWeeklyPersonalSummary'
+        opportunity_progress:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiOpportunityWeeklyProgress'
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiEvidenceItem'
+        source_activity_count:
+          type: integer
+        write_activity_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+        rejection_reason:
+          type: string
+          nullable: true
+    AiWeeklyPersonalSummary:
+      type: object
+      required: [headline, highlights, risks, next_week_plan]
+      properties:
+        headline:
+          type: string
+        highlights:
+          type: array
+          items:
+            type: string
+        risks:
+          type: array
+          items:
+            type: string
+        next_week_plan:
+          type: array
+          items:
+            type: string
+    AiOpportunityWeeklyProgress:
+      type: object
+      required: [opportunity_id, account_id, opportunity_name, account_name, activity_count, summary, next_week_plan, evidence]
+      properties:
+        opportunity_id:
+          type: integer
+          format: int64
+        account_id:
+          type: integer
+          format: int64
+        owner_department_id:
+          type: integer
+          format: int64
+        owner_user_id:
+          type: integer
+          format: int64
+        opportunity_name:
+          type: string
+        account_name:
+          type: string
+        activity_count:
+          type: integer
+          format: int64
+        summary:
+          type: string
+        risk_summary:
+          type: string
+          nullable: true
+        next_week_plan:
+          type: string
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiEvidenceItem'
     AccountResponse:
       type: object
       required: [id, account_name, account_type, account_status, owner_department_id, owner_user_id]

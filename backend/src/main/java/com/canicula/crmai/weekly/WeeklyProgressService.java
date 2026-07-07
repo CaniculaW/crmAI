@@ -123,7 +123,13 @@ public class WeeklyProgressService {
     }
 
     private static LocalDate nullableLocalDate(Object value) {
-        return value == null ? null : ((java.sql.Date) value).toLocalDate();
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof LocalDate localDate) {
+            return localDate;
+        }
+        return ((java.sql.Date) value).toLocalDate();
     }
 
     private static OffsetDateTime nullableOffsetDateTime(Object value) {

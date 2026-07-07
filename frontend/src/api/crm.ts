@@ -490,6 +490,43 @@ export type AiDraftParseResponse = {
   drafts: AiDraft[];
 };
 
+export type AiOpportunityWeeklyProgress = {
+  opportunity_id: number;
+  account_id: number;
+  owner_department_id: number;
+  owner_user_id: number;
+  opportunity_name: string;
+  account_name: string;
+  activity_count: number;
+  summary: string;
+  risk_summary?: string;
+  next_week_plan: string;
+  evidence: AiEvidenceItem[];
+};
+
+export type AiWeeklyPersonalSummary = {
+  headline: string;
+  highlights: string[];
+  risks: string[];
+  next_week_plan: string[];
+};
+
+export type AiWeeklyReport = {
+  id: number;
+  status: "pending_confirmation" | "writing" | "confirmed" | "rejected";
+  week_start_date: string;
+  week_end_date: string;
+  personal_summary: AiWeeklyPersonalSummary;
+  opportunity_progress: AiOpportunityWeeklyProgress[];
+  evidence: AiEvidenceItem[];
+  source_activity_count: number;
+  write_activity_ids: number[];
+  rejection_reason?: string;
+  created_at?: string;
+  confirmed_at?: string;
+  rejected_at?: string;
+};
+
 export type DictionaryType = {
   id: number;
   dict_code: string;
@@ -905,6 +942,20 @@ export const crmApi = {
     confirm: (id: number) => requestJson<AiDraft>(`/api/ai-drafts/${id}/confirm`, { method: "POST" }),
     reject: (id: number, reason?: string) =>
       requestJson<AiDraft>(`/api/ai-drafts/${id}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ reason })
+      })
+  },
+  aiWeeklyReports: {
+    generate: (weekStart?: string, weekEnd?: string) =>
+      requestJson<AiWeeklyReport>("/api/ai-weekly-reports/generate", {
+        method: "POST",
+        body: JSON.stringify({ week_start: weekStart || undefined, week_end: weekEnd || undefined })
+      }),
+    list: (query?: QueryParams) => requestJson<AiWeeklyReport[]>(withQuery("/api/ai-weekly-reports", query)),
+    confirm: (id: number) => requestJson<AiWeeklyReport>(`/api/ai-weekly-reports/${id}/confirm`, { method: "POST" }),
+    reject: (id: number, reason?: string) =>
+      requestJson<AiWeeklyReport>(`/api/ai-weekly-reports/${id}/reject`, {
         method: "POST",
         body: JSON.stringify({ reason })
       })

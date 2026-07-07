@@ -56,6 +56,7 @@ const apiData = {
       "attachment.delete",
       "ai.context.read",
       "ai.draft.manage",
+      "ai.weekly.manage",
       "activity.read",
       "activity.create",
       "activity.complete",
@@ -487,6 +488,56 @@ const apiData = {
       confidence_status: "high"
     }
   ],
+  aiWeeklyReports: [
+    {
+      id: 8101,
+      status: "pending_confirmation",
+      week_start_date: "2026-07-06",
+      week_end_date: "2026-07-12",
+      personal_summary: {
+        headline: "本周跟进 1 个商机，沉淀 2 条有效行动。",
+        highlights: ["客户认可试点目标"],
+        risks: ["预算审批链路未明确"],
+        next_week_plan: ["补充 ROI 测算并约技术评审"]
+      },
+      opportunity_progress: [
+        {
+          opportunity_id: 10,
+          account_id: 1,
+          owner_department_id: 1,
+          owner_user_id: 1001,
+          opportunity_name: "测试商机A",
+          account_name: "测试客户A",
+          activity_count: 2,
+          summary: "客户认可试点目标",
+          risk_summary: "预算审批链路未明确",
+          next_week_plan: "补充 ROI 测算并约技术评审",
+          evidence: [
+            {
+              object_type: "activity",
+              object_id: 88,
+              title: "完成CRM V1试点需求确认会",
+              summary: "双方确认进入试点方案细化阶段。",
+              occurred_at: "2026-06-22T03:58:00+08:00",
+              drilldown_url: "/activities?activity_id=88"
+            }
+          ]
+        }
+      ],
+      evidence: [
+        {
+          object_type: "activity",
+          object_id: 88,
+          title: "完成CRM V1试点需求确认会",
+          summary: "双方确认进入试点方案细化阶段。",
+          occurred_at: "2026-06-22T03:58:00+08:00",
+          drilldown_url: "/activities?activity_id=88"
+        }
+      ],
+      source_activity_count: 2,
+      write_activity_ids: []
+    }
+  ],
   dashboardReceivables: {
     filters: {},
     metric_cards: [
@@ -877,6 +928,13 @@ const apiData = {
       permission_name: "管理AI草稿",
       permission_type: "operation",
       module_code: "ai"
+    },
+    {
+      id: 4303,
+      permission_code: "ai.weekly.manage",
+      permission_name: "管理AI周报",
+      permission_type: "operation",
+      module_code: "ai"
     }
   ]
 };
@@ -991,6 +1049,32 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByText("account #2")).toBeInTheDocument();
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-drafts/7001/confirm"), expect.anything());
+    });
+  });
+
+  it("generates and confirms AI weekly report from weekly assistant page", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/ai-assistant/weekly-report");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "AI周报" })).toBeInTheDocument();
+    expect(screen.getByText("本周跟进 1 个商机，沉淀 2 条有效行动。")).toBeInTheDocument();
+    expect(screen.getByText("测试商机A")).toBeInTheDocument();
+    expect(screen.getAllByText("预算审批链路未明确").length).toBeGreaterThanOrEqual(1);
+    await user.click(screen.getByRole("button", { name: "生成周报" }));
+
+    expect(await screen.findByText("周报已生成，确认前不会写入周进展")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "确认写入周进展" }));
+
+    expect(await screen.findByText("周报已确认写入周进展")).toBeInTheDocument();
+    expect(screen.getByText("已写入 1 条周进展行动")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看周进展" })).toHaveAttribute("href", "/weekly-progress");
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-weekly-reports/generate"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-weekly-reports/8101/confirm"), expect.anything());
     });
   });
 
@@ -1979,6 +2063,7 @@ describe("CRM frontend V1 workflow", () => {
     expect(await screen.findByText("AI 助手")).toBeInTheDocument();
     expect(screen.getByLabelText("查看AI上下文")).toBeInTheDocument();
     expect(screen.getByLabelText("管理AI草稿")).toBeInTheDocument();
+    expect(screen.getByLabelText("管理AI周报")).toBeInTheDocument();
   });
 
   it("filters audit logs by V2 quick actions", async () => {
@@ -2130,6 +2215,24 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/ai-drafts")) {
       return jsonResponse({ code: "OK", data: data.aiDrafts });
+    }
+    if (path.endsWith("/api/ai-weekly-reports/generate") && method === "POST") {
+      return jsonResponse({ code: "OK", data: data.aiWeeklyReports[0] });
+    }
+    if (path.endsWith("/api/ai-weekly-reports/8101/confirm") && method === "POST") {
+      return jsonResponse({
+        code: "OK",
+        data: { ...data.aiWeeklyReports[0], status: "confirmed", write_activity_ids: [8801], confirmed_at: "2026-07-06T18:00:00+08:00" }
+      });
+    }
+    if (path.endsWith("/api/ai-weekly-reports/8101/reject") && method === "POST") {
+      return jsonResponse({
+        code: "OK",
+        data: { ...data.aiWeeklyReports[0], status: "rejected", rejection_reason: "页面拒绝" }
+      });
+    }
+    if (path.endsWith("/api/ai-weekly-reports")) {
+      return jsonResponse({ code: "OK", data: data.aiWeeklyReports });
     }
     if (path.endsWith("/api/ai-context/summary")) {
       return jsonResponse({ code: "OK", data: data.aiContextSummary });
