@@ -127,7 +127,7 @@ V4 当前进度：
 上一模块：
 - 状态：Done
 - 验证结果：AI 沟通方式推荐后端、OpenAPI、前端、构建、PostgreSQL 迁移和本地 UAT 已通过；UAT 结果：`/ai-assistant/communication` 可选择商机与联系人，生成沟通渠道、语气、重点、时机、升级路径、禁忌提醒和证据链；确认后写入销售行动 ID 6，页面显示 `已写入销售行动 #6`，跳转 `/activities?activity_id=6`
-- 提交号：74f0b69
+- 提交号：9661df4
 - 遗留问题：antd `Space direction` 弃用提示，不影响业务功能，后续 UI 技术债统一处理
 ```
 
