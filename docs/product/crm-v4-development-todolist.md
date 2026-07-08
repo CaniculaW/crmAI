@@ -133,7 +133,7 @@ V4 当前进度：
 上一模块：
 - 状态：Done
 - 验证结果：模块10全链路回归与UAT已通过。后端 AI/OpenAPI/种子数据回归 `42 tests, 0 failures, 0 errors`；后端 `mvn verify -Ppostgres-it` 通过，Surefire `137 tests, 0 failures, 0 errors`，Failsafe `7 tests, 0 failures, 0 errors`；前端 `67 tests, 0 failures`；`npm run build` 通过；V4 API Smoke passed，AI日志覆盖 5 个模块；V4 Browser Smoke passed，24 个路由检查、0 控制台失败、0 API 失败；证据：`docs/testing/evidence/v4-full-chain-uat-2026-07-08.md`。
-- 提交号：待本次提交
+- 提交号：`3e842ef`
 - 遗留问题：Vite chunk 体积提示仍存在，属于构建优化项，不阻断 V4 准出
 ```
 
