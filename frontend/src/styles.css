@@ -320,6 +320,47 @@ body {
   color: #667085;
 }
 
+.ai-workbench-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ai-workbench-summary .ant-card-body {
+  display: grid;
+  gap: 8px;
+}
+
+.ai-workbench-summary span {
+  color: #667085;
+  font-size: 13px;
+}
+
+.ai-workbench-summary strong {
+  color: #172033;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.ai-workbench-summary small {
+  color: #667085;
+  line-height: 1.5;
+}
+
+.ai-workbench-actions {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ai-workbench-actions .dashboard-overview__flow-step {
+  min-height: 132px;
+}
+
+.ai-workbench-actions svg {
+  color: #1f5eff;
+}
+
 .dashboard-overview__columns {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -1441,6 +1482,8 @@ body {
   .account-summary-grid,
   .activity-entry-grid,
   .activity-summary-grid,
+  .ai-workbench-actions,
+  .ai-workbench-summary,
   .contact-entry-grid,
   .contact-summary-grid,
   .dashboard-overview__columns,

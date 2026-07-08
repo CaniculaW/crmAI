@@ -1108,7 +1108,22 @@ describe("CRM frontend V1 workflow", () => {
     render(<App />);
     await loginThroughUi(user);
 
-    expect(await screen.findByRole("heading", { name: "AI助手" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "AI销售作战助手" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "待确认队列" })).toBeInTheDocument();
+    expect(screen.getByText("6 项待确认")).toBeInTheDocument();
+    expect(screen.getAllByText("草稿确认").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("周报生成").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("商机分析").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("拜访计划").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("沟通建议").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("heading", { name: "快捷任务" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "录入销售事实" })).toHaveAttribute("href", "#ai-text-input");
+    expect(screen.getByRole("link", { name: "生成周报" })).toHaveAttribute("href", "/ai-assistant/weekly-report");
+    expect(screen.getByRole("link", { name: "分析商机" })).toHaveAttribute("href", "/ai-assistant/opportunities");
+    expect(screen.getByRole("link", { name: "准备拜访" })).toHaveAttribute("href", "/ai-assistant/visit-plans");
+    expect(screen.getByRole("link", { name: "推荐沟通方式" })).toHaveAttribute("href", "/ai-assistant/communication");
+    expect(screen.getByRole("heading", { name: "最近AI建议" })).toBeInTheDocument();
+    expect(screen.getAllByText(/优先微信同步AI助手试点范围和ROI材料/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("heading", { name: "文本录入" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "客户上下文" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "商机上下文" })).toBeInTheDocument();
@@ -1121,6 +1136,11 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByText("V2 UAT 首付款回款逾期")).toBeInTheDocument();
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-context/summary"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-drafts?status=pending_confirmation"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-weekly-reports"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-opportunity-analyses"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-visit-plans"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-communication-recommendations"), expect.anything());
     });
   });
 
@@ -1138,8 +1158,8 @@ describe("CRM frontend V1 workflow", () => {
     );
     await user.click(screen.getByRole("button", { name: "生成草稿" }));
 
-    expect(await screen.findByText("客户草稿")).toBeInTheDocument();
-    expect(screen.getByText("联系人草稿")).toBeInTheDocument();
+    expect((await screen.findAllByText("客户草稿")).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("联系人草稿").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("测试客户AI")).toBeInTheDocument();
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-drafts/parse"), expect.anything());

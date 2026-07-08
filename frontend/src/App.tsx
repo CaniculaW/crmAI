@@ -1016,9 +1016,123 @@ function AiAssistantPage() {
     emptyAiContextSummary,
     []
   );
+  const pendingDrafts = useObjectResource<AiDraft[]>(
+    () => crmApi.aiDrafts.list({ status: "pending_confirmation" }),
+    () => [],
+    []
+  );
+  const weeklyReports = useObjectResource<AiWeeklyReport[]>(
+    () => crmApi.aiWeeklyReports.list(),
+    () => [],
+    []
+  );
+  const opportunityAnalyses = useObjectResource<AiOpportunityAnalysis[]>(
+    () => crmApi.aiOpportunityAnalyses.list(),
+    () => [],
+    []
+  );
+  const visitPlans = useObjectResource<AiVisitPlan[]>(
+    () => crmApi.aiVisitPlans.list(),
+    () => [],
+    []
+  );
+  const communicationRecommendations = useObjectResource<AiCommunicationRecommendation[]>(
+    () => crmApi.aiCommunicationRecommendations.list(),
+    () => [],
+    []
+  );
   const [sourceText, setSourceText] = useState("");
   const [drafts, setDrafts] = useState<AiDraft[]>([]);
   const [parsing, setParsing] = useState(false);
+  const pendingWorkbenchItems = [
+    ...pendingDrafts.data.map((draft) => ({
+      key: `draft-${draft.id}`,
+      title: draftTypeText(draft.draft_type),
+      description: draftPreviewText(draft),
+      href: "/ai-assistant/drafts",
+      status: draftStatusText(draft.status)
+    })),
+    ...weeklyReports.data
+      .filter((report) => report.status === "pending_confirmation")
+      .map((report) => ({
+        key: `weekly-${report.id}`,
+        title: "周报生成",
+        description: report.personal_summary.headline,
+        href: "/ai-assistant/weekly-report",
+        status: weeklyReportStatusText(report.status)
+      })),
+    ...opportunityAnalyses.data
+      .filter((analysis) => analysis.status === "pending_confirmation")
+      .map((analysis) => ({
+        key: `analysis-${analysis.id}`,
+        title: "商机分析",
+        description: analysis.next_actions[0] || analysis.opportunity_name,
+        href: "/ai-assistant/opportunities",
+        status: opportunityAnalysisStatusText(analysis.status)
+      })),
+    ...visitPlans.data
+      .filter((plan) => plan.status === "pending_confirmation")
+      .map((plan) => ({
+        key: `visit-${plan.id}`,
+        title: "拜访计划",
+        description: plan.visit_objectives[0] || plan.opportunity_name,
+        href: "/ai-assistant/visit-plans",
+        status: visitPlanStatusText(plan.status)
+      })),
+    ...communicationRecommendations.data
+      .filter((recommendation) => recommendation.status === "pending_confirmation")
+      .map((recommendation) => ({
+        key: `communication-${recommendation.id}`,
+        title: "沟通建议",
+        description: recommendation.recommended_channels[0] || recommendation.opening_message,
+        href: "/ai-assistant/communication",
+        status: communicationRecommendationStatusText(recommendation.status)
+      }))
+  ];
+  const latestRecommendations = [
+    ...weeklyReports.data.map((report) => ({
+      key: `weekly-latest-${report.id}`,
+      title: "周报生成",
+      description: report.personal_summary.headline,
+      href: "/ai-assistant/weekly-report",
+      meta: `${report.opportunity_progress.length} 个商机进展`
+    })),
+    ...opportunityAnalyses.data.map((analysis) => ({
+      key: `analysis-latest-${analysis.id}`,
+      title: "商机分析",
+      description: analysis.next_actions[0] || analysis.opportunity_name,
+      href: "/ai-assistant/opportunities",
+      meta: analysis.opportunity_name
+    })),
+    ...visitPlans.data.map((plan) => ({
+      key: `visit-latest-${plan.id}`,
+      title: "拜访计划",
+      description: plan.visit_objectives[0] || plan.opportunity_name,
+      href: "/ai-assistant/visit-plans",
+      meta: plan.opportunity_name
+    })),
+    ...communicationRecommendations.data.map((recommendation) => ({
+      key: `communication-latest-${recommendation.id}`,
+      title: "沟通建议",
+      description: recommendation.recommended_channels[0] || recommendation.opening_message,
+      href: "/ai-assistant/communication",
+      meta: recommendation.contact_name
+    }))
+  ].slice(0, 6);
+  const loadingWorkbench =
+    loading ||
+    pendingDrafts.loading ||
+    weeklyReports.loading ||
+    opportunityAnalyses.loading ||
+    visitPlans.loading ||
+    communicationRecommendations.loading;
+  const workbenchError =
+    error ||
+    pendingDrafts.error ||
+    weeklyReports.error ||
+    opportunityAnalyses.error ||
+    visitPlans.error ||
+    communicationRecommendations.error;
 
   const handleParse = async () => {
     if (!sourceText.trim()) {
@@ -1037,26 +1151,115 @@ function AiAssistantPage() {
     }
   };
 
+  const refreshWorkbench = () => {
+    refresh();
+    pendingDrafts.refresh();
+    weeklyReports.refresh();
+    opportunityAnalyses.refresh();
+    visitPlans.refresh();
+    communicationRecommendations.refresh();
+  };
+
   return (
     <section className="workspace dashboard-overview">
       <PageTitle
-        title="AI助手"
-        description="销售事实录入、上下文预览和待确认草稿。"
+        title="AI销售作战助手"
+        description="统一处理销售事实录入、待确认建议、周报、商机分析、拜访计划和沟通方式推荐。"
         action={
           <Space>
-            <Link to="/ai-assistant/weekly-report">
-              <Button icon={<CalendarCheck size={16} />}>周报生成</Button>
-            </Link>
             <Link to="/ai-assistant/drafts">
               <Button icon={<FileText size={16} />}>草稿确认</Button>
             </Link>
-            <RefreshButton onClick={refresh} loading={loading} />
+            <Link to="/ai-assistant/weekly-report">
+              <Button icon={<CalendarCheck size={16} />}>周报生成</Button>
+            </Link>
+            <RefreshButton onClick={refreshWorkbench} loading={loadingWorkbench} />
           </Space>
         }
       />
-      {error ? <div className="error-banner">{error}</div> : null}
+      {workbenchError ? <div className="error-banner">{workbenchError}</div> : null}
 
-      <Card title={<Typography.Title level={3}>文本录入</Typography.Title>} className="dashboard-overview__card">
+      <div className="ai-workbench-summary">
+        <Card className="dashboard-overview__card">
+          <span>待确认</span>
+          <strong>{pendingWorkbenchItems.length} 项待确认</strong>
+          <small>所有 AI 写入仍需人工确认，不自动触达客户。</small>
+        </Card>
+        <Card className="dashboard-overview__card">
+          <span>上下文</span>
+          <strong>{data.accounts.length + data.opportunities.length + data.recent_activities.length} 条业务信号</strong>
+          <small>客户、商机、行动和风险共同支撑建议。</small>
+        </Card>
+        <Card className="dashboard-overview__card">
+          <span>证据</span>
+          <strong>{data.evidence.length} 条证据链</strong>
+          <small>每条建议需要可回溯来源。</small>
+        </Card>
+      </div>
+
+      <Card title={<Typography.Title level={3}>快捷任务</Typography.Title>} className="dashboard-overview__card">
+        <div className="ai-workbench-actions">
+          <a href="#ai-text-input" className="dashboard-overview__flow-step" aria-label="录入销售事实">
+            <Sparkles size={18} />
+            <strong>录入销售事实</strong>
+            <small>把客户、联系人、商机和行动文本转成待确认草稿</small>
+          </a>
+          <Link to="/ai-assistant/weekly-report" className="dashboard-overview__flow-step" aria-label="生成周报">
+            <CalendarCheck size={18} />
+            <strong>生成周报</strong>
+            <small>从销售行动生成个人周报和商机周进展</small>
+          </Link>
+          <Link to="/ai-assistant/opportunities" className="dashboard-overview__flow-step" aria-label="分析商机">
+            <BarChart3 size={18} />
+            <strong>分析商机</strong>
+            <small>识别阶段健康、关系缺口、风险和下一步动作</small>
+          </Link>
+          <Link to="/ai-assistant/visit-plans" className="dashboard-overview__flow-step" aria-label="准备拜访">
+            <BriefcaseBusiness size={18} />
+            <strong>准备拜访</strong>
+            <small>生成拜访目标、议程、材料、问题和跟进动作</small>
+          </Link>
+          <Link to="/ai-assistant/communication" className="dashboard-overview__flow-step" aria-label="推荐沟通方式">
+            <Contact size={18} />
+            <strong>推荐沟通方式</strong>
+            <small>选择渠道、语气、重点、时机和升级路径</small>
+          </Link>
+        </div>
+      </Card>
+
+      <div className="dashboard-overview__columns">
+        <Card title={<Typography.Title level={3}>待确认队列</Typography.Title>} className="dashboard-overview__card">
+          <SimpleList
+            items={pendingWorkbenchItems}
+            empty="暂无待确认AI事项"
+            render={(item) => (
+              <Link to={item.href}>
+                <strong>{item.title}</strong>
+                <small>{[item.status, item.description].filter(Boolean).join(" · ")}</small>
+              </Link>
+            )}
+          />
+        </Card>
+
+        <Card title={<Typography.Title level={3}>最近AI建议</Typography.Title>} className="dashboard-overview__card">
+          <SimpleList
+            items={latestRecommendations}
+            empty="暂无AI建议"
+            render={(item) => (
+              <Link to={item.href}>
+                <strong>{item.title}</strong>
+                <small>{[item.meta, item.description].filter(Boolean).join(" · ")}</small>
+              </Link>
+            )}
+          />
+        </Card>
+      </div>
+
+      <Card
+        id="ai-text-input"
+        title={<Typography.Title level={3}>文本录入</Typography.Title>}
+        className="dashboard-overview__card"
+      >
         <Space direction="vertical" size="middle" style={{ width: "100%" }}>
           <Input.TextArea
             rows={5}
@@ -2204,6 +2407,16 @@ function draftTypeText(type: AiDraft["draft_type"]) {
     activity: "行动草稿",
     unknown: "未识别草稿"
   }[type];
+}
+
+function draftPreviewText(draft: AiDraft) {
+  const namedValue =
+    draft.payload.account_name ||
+    draft.payload.name ||
+    draft.payload.opportunity_name ||
+    draft.payload.subject ||
+    draft.source_text;
+  return String(namedValue);
 }
 
 function draftStatusText(status: AiDraft["status"]) {
