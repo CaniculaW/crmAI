@@ -106,11 +106,11 @@ V4 当前进度：
 
 模块 11 当前 TODO：
 
-- [ ] Step 1：汇总 V4 全模块证据、提交号、遗留问题和准出条件。
-- [ ] Step 2：生成 V4 Go/No-Go 记录，等待沈思维最终确认。
-- [ ] Step 3：确认是否创建 PR 或直接合并主干。
-- [ ] Step 4：推送远端并检查远端状态。
-- [ ] Step 5：完成 V4 版本收口记录。
+- [x] Step 1：汇总 V4 全模块证据、提交号、遗留问题和准出条件。
+- [x] Step 2：生成 V4 Go/No-Go 记录，等待沈思维最终确认。
+- [x] Step 3：确认采用当前 `main` 直接收口，不创建 PR。
+- [x] Step 4：推送远端并检查远端状态。
+- [ ] Step 5：完成 V4 版本收口记录，等待沈思维最终 GO 签署。
 
 完成标准：
 
@@ -125,16 +125,22 @@ V4 当前进度：
 - 总模块：11
 - 已完成：10
 - 当前模块：V4 Go/No-Go 与合并准备
-- 当前步骤：Step 1 证据汇总 / Step 2 Go-No-Go 记录
-- 当前 TODO：汇总 V4 全模块证据、提交号、遗留问题，形成最终确认材料
-- 完成标准：沈思维确认 Go，当前分支提交推送，后续按选择进入 PR 或主干合并
-- 本轮预计产出：V4 Go/No-Go 记录、提交号、远端状态；UAT证据：`docs/testing/evidence/v4-full-chain-uat-2026-07-08.md`
+- 当前步骤：Step 5 V4 版本收口记录 / 等待最终 GO 签署
+- 当前 TODO：沈思维确认 V4 Go/No-Go；确认后将模块 11 标记 Done，V4 版本收口
+- 完成标准：沈思维确认 GO，TODOList 记录最终签署状态
+- 本轮预计产出：V4 Go/No-Go 记录：`docs/releases/v4-go-no-go-2026-07-08.md`；远端 main / CI 状态已核对
 
 上一模块：
 - 状态：Done
 - 验证结果：模块10全链路回归与UAT已通过。后端 AI/OpenAPI/种子数据回归 `42 tests, 0 failures, 0 errors`；后端 `mvn verify -Ppostgres-it` 通过，Surefire `137 tests, 0 failures, 0 errors`，Failsafe `7 tests, 0 failures, 0 errors`；前端 `67 tests, 0 failures`；`npm run build` 通过；V4 API Smoke passed，AI日志覆盖 5 个模块；V4 Browser Smoke passed，24 个路由检查、0 控制台失败、0 API 失败；证据：`docs/testing/evidence/v4-full-chain-uat-2026-07-08.md`。
 - 提交号：`3e842ef`
 - 遗留问题：Vite chunk 体积提示仍存在，属于构建优化项，不阻断 V4 准出
+
+当前模块：
+- 状态：Current
+- 验证结果：Go/No-Go 材料已生成；远端 main 为 `d39a7b86bc4aa33ea41e6f4aac07c6c7f4f874b3`；GitHub Actions 最新 `V1 Validation` run `28925519234` 对应 `d39a7b8` 且 conclusion `success`。
+- 提交号：待本次提交
+- 遗留问题：GitHub Actions 工作流名称仍为 `V1 Validation`，但本次 V4 本地/浏览器/API 证据已完整归档；后续建议升级为全版本验证工作流。
 ```
 
 ## 5. V4 推荐方案
