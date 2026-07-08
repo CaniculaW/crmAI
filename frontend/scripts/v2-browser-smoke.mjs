@@ -65,21 +65,21 @@ export function assertSmokeReport(report) {
     const details = serviceFailures
       .map((result) => `${result.viewport} ${result.path}: ${findBlockingText(result.bodyText)}`)
       .join("; ");
-    throw new Error(`V2 browser smoke found service failure text: ${details}`);
+    throw new Error(`Browser smoke found service failure text: ${details}`);
   }
 
   if (report.consoleFailures.length > 0) {
-    const details = report.consoleFailures.map((entry) => `${entry.type}: ${entry.text}`).join("; ");
-    throw new Error(`V2 browser smoke found browser console failures: ${details}`);
+    const details = report.consoleFailures.map((entry) => `${entry.path ?? "unknown"} ${entry.type}: ${entry.text}`).join("; ");
+    throw new Error(`Browser smoke found browser console failures: ${details}`);
   }
 
   if (report.failedResponses.length > 0) {
     const details = report.failedResponses.map((entry) => `${entry.status} ${entry.url}`).join("; ");
-    throw new Error(`V2 browser smoke found failed API responses: ${details}`);
+    throw new Error(`Browser smoke found failed API responses: ${details}`);
   }
 }
 
-async function runSmoke(config = resolveSmokeConfig()) {
+export async function runSmoke(config = resolveSmokeConfig()) {
   if (!config.chromePath) {
     throw new Error("Chrome executable not found. Set CRM_SMOKE_CHROME_PATH to run the V2 browser smoke.");
   }
@@ -102,22 +102,25 @@ async function runSmoke(config = resolveSmokeConfig()) {
     const page = await openCdpPage(config);
     const consoleFailures = [];
     const failedResponses = [];
+    let currentSmokePath = "bootstrap";
 
     page.onEvent((event) => {
       if (event.method === "Runtime.consoleAPICalled" && ["error", "warning", "warn"].includes(event.params.type)) {
         consoleFailures.push({
+          path: currentSmokePath,
           type: event.params.type,
           text: event.params.args.map((arg) => arg.value ?? arg.description ?? "").join(" ")
         });
       }
       if (event.method === "Runtime.exceptionThrown") {
         consoleFailures.push({
+          path: currentSmokePath,
           type: "exception",
           text: event.params.exceptionDetails?.text ?? "Runtime exception"
         });
       }
       if (event.method === "Log.entryAdded" && ["error", "warning"].includes(event.params.entry.level)) {
-        consoleFailures.push({ type: event.params.entry.level, text: event.params.entry.text });
+        consoleFailures.push({ path: currentSmokePath, type: event.params.entry.level, text: event.params.entry.text });
       }
       if (event.method === "Network.responseReceived") {
         const { response } = event.params;
@@ -157,9 +160,14 @@ async function runSmoke(config = resolveSmokeConfig()) {
     for (const viewport of config.viewports) {
       await setViewport(page, viewport);
       for (const check of config.pageChecks) {
+        currentSmokePath = `${viewport.name} ${check.path}`;
         let pageState;
         for (let attempt = 1; attempt <= 2; attempt += 1) {
           await navigate(page, `${config.baseUrl}${check.path}`, config.timeoutMs);
+          if (await isLoginPage(page)) {
+            await login(page, config.username, config.password);
+            await navigate(page, `${config.baseUrl}${check.path}`, config.timeoutMs);
+          }
           try {
             await waitForAllTexts(page, check.expectedTexts, config.timeoutMs);
           } catch (error) {
@@ -284,7 +292,7 @@ async function waitForAllTexts(page, texts, timeoutMs) {
       returnByValue: true
     });
     return result.result.value === true;
-  }, timeoutMs, `Timed out waiting for V2 smoke texts: ${texts.join(", ")}`);
+  }, timeoutMs, `Timed out waiting for browser smoke texts: ${texts.join(", ")}`);
 }
 
 async function describePage(page) {
@@ -293,6 +301,14 @@ async function describePage(page) {
     returnByValue: true
   });
   return result.result.value;
+}
+
+async function isLoginPage(page) {
+  const result = await page.send("Runtime.evaluate", {
+    expression: "Boolean(document.body?.innerText?.includes('用户名') && document.body?.innerText?.includes('登 录'))",
+    returnByValue: true
+  });
+  return result.result.value === true;
 }
 
 async function waitUntil(check, timeoutMs, timeoutMessage) {

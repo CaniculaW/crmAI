@@ -9,7 +9,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke:v1:browser": "node scripts/v1-browser-smoke.mjs",
-    "smoke:v2:browser": "node scripts/v2-browser-smoke.mjs"
+    "smoke:v2:browser": "node scripts/v2-browser-smoke.mjs",
+    "smoke:v4:api": "node scripts/v4-api-smoke.mjs",
+    "smoke:v4:browser": "node scripts/v4-browser-smoke.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

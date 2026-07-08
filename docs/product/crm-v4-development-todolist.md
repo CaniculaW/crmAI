@@ -78,57 +78,63 @@ V4 当前进度：
 | 7 | Done | AI 沟通方式推荐 | `/ai-assistant/communication`、沟通推荐 API | 帮销售选择沟通渠道、语气、重点和升级路径 | 根据联系人角色、态度、影响力、关系热度和反馈输出建议；确认后写入一条计划销售行动 |
 | 8 | Done | AI 助手工作台 | `/ai-assistant` 聚合视图 | 把录入、周报、分析、拜访计划和沟通推荐放到一个工作入口 | 用户进入 AI 助手即可看到待确认草稿、待处理建议和快捷任务 |
 | 9 | Done | 权限、审计、AI 日志 | `/ai-assistant/logs`、权限、推荐记录、写入日志 | 让 AI 生成、确认、写入和建议留痕 | 成功/失败写入、推荐生成、确认和拒绝均可追溯 |
-| 10 | Current | V4 全链路回归与 UAT | AI输入 -> 周报 -> 商机分析 -> 拜访计划 -> 沟通推荐 -> 日志 | 验证 V4 销售作战助手闭环可跑通 | 自动化、构建、OpenAPI、浏览器 UAT 和证据归档完成 |
-| 11 | Pending | V4 Go/No-Go 与合并准备 | 签署记录、主干合并、远端 CI | 完成 V4 最终验收和主干合并 | 沈思维确认 Go、PR merged、`main` CI 全部通过 |
+| 10 | Done | V4 全链路回归与 UAT | AI输入 -> 周报 -> 商机分析 -> 拜访计划 -> 沟通推荐 -> 日志 | 验证 V4 销售作战助手闭环可跑通 | 自动化、构建、OpenAPI、浏览器 UAT 和证据归档完成 |
+| 11 | Current | V4 Go/No-Go 与合并准备 | 签署记录、主干合并、远端 CI | 完成 V4 最终验收和主干合并 | 沈思维确认 Go、PR merged、`main` CI 全部通过 |
 
 ## 3. 当前任务
 
-当前任务：`v4-full-chain-regression-uat`
+当前任务：`v4-go-no-go-merge-readiness`
 
 状态：Current
 
-责任侧：AI 研发主力推进；测试与验收 Agent 按 V4 销售作战链路回归；沈思维作为最终版本确认人。
+责任侧：AI 研发主力推进；测试与验收 Agent 复核准出证据；沈思维作为最终版本确认人。
 
-当前模块：V4 全链路回归与 UAT
+当前模块：V4 Go/No-Go 与合并准备
 
 当前 TODO：
 
-- [ ] Step 1：模块启动，明确 V4 全链路回归范围、入口页面、核心业务路径和证据要求。
-- [ ] Step 2：验收脚本对齐，按 AI输入、草稿确认、周报、商机分析、拜访计划、沟通推荐、AI日志拆分检查点。
-- [ ] Step 3：测试数据盘点，确认本地演示数据可覆盖客户、联系人、商机、行动、周进展和 AI 建议。
-- [ ] Step 4：API 契约回归，确认 V4 所有 AI API 均被 OpenAPI 覆盖。
-- [ ] Step 5：后端回归，运行 AI 相关后端测试、迁移测试和关键业务写入测试。
-- [ ] Step 6：前端回归，运行 AI 相关前端测试、全量 App 测试和构建。
-- [ ] Step 7：浏览器链路验收，完整跑 AI输入 -> 草稿确认 -> 周报 -> 商机分析 -> 拜访计划 -> 沟通推荐 -> 日志。
-- [ ] Step 8：证据归档，保存 API 输出、浏览器截图和 UAT 结论。
-- [ ] Step 9：缺陷清理，若发现阻断问题则回到对应模块修复并复测。
-- [ ] Step 10：提交切换，当前模块 Done，模块 11 V4 Go/No-Go 与合并准备 Current。
+- [x] Step 1：模块启动，明确 V4 全链路回归范围、入口页面、核心业务路径和证据要求。
+- [x] Step 2：验收脚本对齐，按 AI输入、草稿确认、周报、商机分析、拜访计划、沟通推荐、AI日志拆分检查点。
+- [x] Step 3：测试数据盘点，确认本地演示数据可覆盖客户、联系人、商机、行动、周进展和 AI 建议。
+- [x] Step 4：API 契约回归，确认 V4 所有 AI API 均被 OpenAPI 覆盖。
+- [x] Step 5：后端回归，运行 AI 相关后端测试、迁移测试和关键业务写入测试。
+- [x] Step 6：前端回归，运行 AI 相关前端测试、全量 App 测试和构建。
+- [x] Step 7：浏览器链路验收，完整跑 AI输入 -> 草稿确认 -> 周报 -> 商机分析 -> 拜访计划 -> 沟通推荐 -> 日志。
+- [x] Step 8：证据归档，保存 API 输出、浏览器截图和 UAT 结论。
+- [x] Step 9：缺陷清理，已修复 Postgres V34 断言、V4 smoke 脚本断言、AntD Space 弃用告警和 AI 日志重复 row key。
+- [x] Step 10：提交切换，当前模块 Done，模块 11 V4 Go/No-Go 与合并准备 Current。
+
+模块 11 当前 TODO：
+
+- [ ] Step 1：汇总 V4 全模块证据、提交号、遗留问题和准出条件。
+- [ ] Step 2：生成 V4 Go/No-Go 记录，等待沈思维最终确认。
+- [ ] Step 3：确认是否创建 PR 或直接合并主干。
+- [ ] Step 4：推送远端并检查远端状态。
+- [ ] Step 5：完成 V4 版本收口记录。
 
 完成标准：
 
-- V4 AI 助手所有核心入口可访问，无服务端异常。
-- AI 生成结果均可人工确认、拒绝或回到业务对象。
-- 确认写入后的行动、周进展或业务对象可在 CRM 页面追溯。
-- AI 日志能追踪生成、确认、拒绝、写入成功/失败和权限拒绝审计。
-- 自动化、构建、OpenAPI、浏览器 UAT 和证据归档完成。
+- V4 全链路 UAT 证据已归档。
+- 自动化、构建、Postgres IT、OpenAPI、API Smoke、浏览器 UAT 均通过。
+- 沈思维确认 Go 后，完成 V4 版本提交/合并/远端状态检查。
 
 ## 4. 当前进度快照
 
 ```text
 V4 当前进度：
 - 总模块：11
-- 已完成：9
-- 当前模块：V4 全链路回归与 UAT
-- 当前步骤：Step 1 模块启动
-- 当前 TODO：明确 V4 全链路回归范围、入口页面、核心业务路径和证据要求
-- 完成标准：AI输入、周报、商机分析、拜访计划、沟通推荐和AI日志闭环可验收
-- 本轮预计产出：V4 全链路回归脚本、自动化验证、浏览器 UAT、证据归档和缺陷清单
+- 已完成：10
+- 当前模块：V4 Go/No-Go 与合并准备
+- 当前步骤：Step 1 证据汇总 / Step 2 Go-No-Go 记录
+- 当前 TODO：汇总 V4 全模块证据、提交号、遗留问题，形成最终确认材料
+- 完成标准：沈思维确认 Go，当前分支提交推送，后续按选择进入 PR 或主干合并
+- 本轮预计产出：V4 Go/No-Go 记录、提交号、远端状态；UAT证据：`docs/testing/evidence/v4-full-chain-uat-2026-07-08.md`
 
 上一模块：
 - 状态：Done
-- 验证结果：权限、审计、AI 日志模块已完成。`/api/ai-logs` 支持事件、模块、状态、对象、对象ID、时间和 limit 筛选；`ai.log.read` 权限已创建并向已有 AI/系统管理角色补授权；无权限访问会写入 `sys_audit_logs`。`/ai-assistant/logs` 已具备菜单入口、列表、筛选、详情抽屉、Trace、错误信息和业务对象跳转。自动化结果：`DatabaseMigrationTest,AiLogControllerTest,OpenApiContractCoverageTest` 15 passed；`App.test.tsx` 58 passed；`npm run build` passed。UAT 结果：本地 `8085/5178` 验证真实 AI 日志数据、对象筛选、未来时间筛选空结果、页面筛选控件、详情抽屉和业务链接均通过；截图证据：`docs/testing/evidence/artifacts/v4-ai-log-uat-20260708.png`。
+- 验证结果：模块10全链路回归与UAT已通过。后端 AI/OpenAPI/种子数据回归 `42 tests, 0 failures, 0 errors`；后端 `mvn verify -Ppostgres-it` 通过，Surefire `137 tests, 0 failures, 0 errors`，Failsafe `7 tests, 0 failures, 0 errors`；前端 `67 tests, 0 failures`；`npm run build` 通过；V4 API Smoke passed，AI日志覆盖 5 个模块；V4 Browser Smoke passed，24 个路由检查、0 控制台失败、0 API 失败；证据：`docs/testing/evidence/v4-full-chain-uat-2026-07-08.md`。
 - 提交号：待本次提交
-- 遗留问题：antd `Space direction` 弃用提示，不影响业务功能，后续 UI 技术债统一处理
+- 遗留问题：Vite chunk 体积提示仍存在，属于构建优化项，不阻断 V4 准出
 ```
 
 ## 5. V4 推荐方案

@@ -1266,7 +1266,7 @@ function AiAssistantPage() {
         title={<Typography.Title level={3}>文本录入</Typography.Title>}
         className="dashboard-overview__card"
       >
-        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
           <Input.TextArea
             rows={5}
             value={sourceText}
@@ -1284,8 +1284,8 @@ function AiAssistantPage() {
 
       {drafts.length > 0 ? (
         <div className="dashboard-grid">
-          {drafts.map((draft) => (
-            <AiDraftCard key={draft.id} draft={draft} compact />
+          {drafts.map((draft, index) => (
+            <AiDraftCard key={`draft-preview-${draft.id}-${index}`} draft={draft} compact />
           ))}
         </div>
       ) : null}
@@ -1702,7 +1702,7 @@ function AiOpportunityAnalysisDetail({
   onReject: () => void;
 }) {
   return (
-    <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+    <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
       <Card
         title={
           <Space>
@@ -1715,7 +1715,7 @@ function AiOpportunityAnalysisDetail({
         extra={analysis.account_name}
         className="dashboard-overview__card"
       >
-        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
           <div className="ai-draft-fields">
             <div>
               <small>销售行动</small>
@@ -1917,7 +1917,7 @@ function AiVisitPlanDetail({
   onReject: () => void;
 }) {
   return (
-    <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+    <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
       <Card
         title={
           <Space>
@@ -1928,7 +1928,7 @@ function AiVisitPlanDetail({
         extra={plan.account_name}
         className="dashboard-overview__card"
       >
-        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
           <div className="ai-draft-fields">
             <div>
               <small>销售行动</small>
@@ -2159,7 +2159,7 @@ function AiCommunicationRecommendationDetail({
   onReject: () => void;
 }) {
   return (
-    <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+    <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
       <Card
         title={
           <Space>
@@ -2172,7 +2172,7 @@ function AiCommunicationRecommendationDetail({
         extra={`${recommendation.account_name} · ${recommendation.opportunity_name}`}
         className="dashboard-overview__card"
       >
-        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
           <Typography.Text strong>{recommendation.opening_message}</Typography.Text>
           <div className="ai-draft-fields">
             <div>
@@ -2235,7 +2235,7 @@ function AiWeeklyReportDetail({
   onReject: () => void;
 }) {
   return (
-    <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+    <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
       <Card
         title={
           <Space>
@@ -2246,7 +2246,7 @@ function AiWeeklyReportDetail({
         extra={`${dateText(report.week_start_date)} - ${dateText(report.week_end_date)}`}
         className="dashboard-overview__card"
       >
-        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
           <Typography.Text strong>{report.personal_summary.headline}</Typography.Text>
           <div className="ai-draft-fields">
             <div>
@@ -2282,13 +2282,13 @@ function AiWeeklyReportDetail({
       </Card>
 
       <div className="dashboard-grid">
-        {report.opportunity_progress.map((progress) => (
+        {report.opportunity_progress.map((progress, index) => (
           <Card
-            key={progress.opportunity_id}
+            key={`weekly-progress-${progress.opportunity_id}-${index}`}
             title={<Typography.Title level={3}>{progress.opportunity_name}</Typography.Title>}
             className="dashboard-overview__card"
           >
-            <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+            <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
               <Typography.Text type="secondary">{progress.account_name}</Typography.Text>
               <AiWeeklySummaryItem label="本周进展" value={progress.summary} />
               <AiWeeklySummaryItem label="风险" value={progress.risk_summary || "暂无明确风险"} />
@@ -2311,7 +2311,7 @@ function AiWeeklyTextList({ title, items }: { title: string; items: string[] }) 
     <div>
       <Typography.Text type="secondary">{title}</Typography.Text>
       <div className="tag-row">
-        {items.length > 0 ? items.map((item) => <Tag key={item}>{item}</Tag>) : <Tag>暂无</Tag>}
+        {items.length > 0 ? items.map((item, index) => <Tag key={`${item}-${index}`}>{item}</Tag>) : <Tag>暂无</Tag>}
       </div>
     </div>
   );
@@ -2351,7 +2351,7 @@ function AiDraftCard({
       extra={<Tag color={confidenceColor(draft.confidence_status)}>{draft.confidence_status}</Tag>}
       className="dashboard-overview__card"
     >
-      <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+      <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
         <Typography.Text>{draft.source_text}</Typography.Text>
         {draft.missing_fields.length > 0 ? (
           <div>
@@ -2533,7 +2533,17 @@ function AiLogPage() {
       </Card>
       <Card className="dashboard-overview__card" title={<Typography.Title level={3}>AI操作记录</Typography.Title>}>
         <Table
-          rowKey="id"
+          rowKey={(record) =>
+            [
+              record.id,
+              record.event_type,
+              record.ai_module,
+              record.operation,
+              record.object_type,
+              record.object_id,
+              record.occurred_at
+            ].join("-")
+          }
           size="small"
           loading={logs.loading}
           dataSource={logs.data}
