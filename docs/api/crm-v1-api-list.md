@@ -481,7 +481,40 @@ OpenAPI契约文件：`docs/openapi/crm-v1-openapi.yaml`。当前已建立 `Open
 
 当前提醒基线已落地：`crm_reminders` 支持销售行动下次跟进自动生成 `activity/follow_up` 提醒；`GET /api/reminders` 返回当前用户待办，支持 `status`、`overdue`、`object_type`、`object_id` 筛选，逾期待办在响应中标识为 `overdue`；`PATCH /api/reminders/{id}` 支持将本人提醒更新为 `completed` 或 `cancelled` 并记录 `reminder.update` 审计；完成销售行动会自动完成该行动待处理跟进提醒。真实文件上传链路、下载审计和提醒通知方式待后续确认。
 
-## 15. 待确认项
+## 15. V4 AI助手API
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| GET | /api/ai-context/summary | 当前用户可读客户、商机、行动和风险上下文摘要 | ai.context.read + 数据权限 |
+| GET | /api/ai-context/accounts/{accountId} | 客户中心 AI 证据上下文 | ai.context.read + 客户数据权限 |
+| GET | /api/ai-context/opportunities/{opportunityId} | 商机中心 AI 证据上下文 | ai.context.read + 商机数据权限 |
+| POST | /api/ai-drafts/parse | 文本解析为客户、联系人、商机、行动待确认草稿 | ai.draft.create |
+| GET | /api/ai-drafts | 当前用户 AI 录入草稿列表 | ai.draft.read |
+| POST | /api/ai-drafts/{draftId}/confirm | 确认草稿并写入业务对象 | ai.draft.confirm + 对象写权限 |
+| POST | /api/ai-drafts/{draftId}/reject | 驳回草稿 | ai.draft.confirm |
+| POST | /api/ai-weekly-reports/generate | 生成销售周报 | ai.weekly_report.generate |
+| GET | /api/ai-weekly-reports | 当前用户 AI 周报列表 | ai.weekly_report.read |
+| POST | /api/ai-weekly-reports/{reportId}/confirm | 确认周报并写入周进展行动 | ai.weekly_report.confirm |
+| POST | /api/ai-weekly-reports/{reportId}/reject | 驳回周报 | ai.weekly_report.confirm |
+| POST | /api/ai-opportunity-analyses/generate | 生成商机分析 | ai.opportunity_analysis.generate + 商机数据权限 |
+| GET | /api/ai-opportunity-analyses | 当前用户商机分析列表 | ai.opportunity_analysis.read |
+| POST | /api/ai-opportunity-analyses/{analysisId}/confirm | 确认商机分析并写入计划行动 | ai.opportunity_analysis.confirm |
+| POST | /api/ai-opportunity-analyses/{analysisId}/reject | 驳回商机分析 | ai.opportunity_analysis.confirm |
+| POST | /api/ai-visit-plans/generate | 生成拜访计划建议 | ai.visit_plan.generate + 商机数据权限 |
+| GET | /api/ai-visit-plans | 当前用户拜访计划列表 | ai.visit_plan.read |
+| POST | /api/ai-visit-plans/{planId}/confirm | 确认拜访计划并写入计划行动 | ai.visit_plan.confirm |
+| POST | /api/ai-visit-plans/{planId}/reject | 驳回拜访计划 | ai.visit_plan.confirm |
+| POST | /api/ai-communication-recommendations/generate | 生成沟通方式推荐 | ai.communication_recommendation.generate + 联系人/商机数据权限 |
+| GET | /api/ai-communication-recommendations | 当前用户沟通推荐列表 | ai.communication_recommendation.read |
+| POST | /api/ai-communication-recommendations/{recommendationId}/confirm | 确认沟通推荐并写入计划行动 | ai.communication_recommendation.confirm |
+| POST | /api/ai-communication-recommendations/{recommendationId}/reject | 驳回沟通推荐 | ai.communication_recommendation.confirm |
+| GET | /api/ai-logs | 当前用户 AI 生成与确认写入日志 | ai.log.read |
+
+当前 V4 AI助手基线已落地：AI 不再只是数据录入员，而是围绕销售业务链路提供文本录入、周报生成、商机分析、拜访计划建议、沟通方式推荐，以及统一 AI 生成/写入日志追踪。所有确认写入动作均保留人工确认入口，AI 日志用于追踪来源、状态、业务对象和 trace_id。
+
+AI 日志支持 `event_type`、`ai_module`、`status`、`object_type`、`object_id`、`occurred_from`、`occurred_to` 和 `limit` 查询参数；权限拒绝由服务端统一写入 `sys_audit_logs`，用于追踪无权访问场景。
+
+## 16. 待确认项
 
 - 登录态采用JWT、服务端Session还是企业统一认证。
 - 列表 `page_size` 最大值。

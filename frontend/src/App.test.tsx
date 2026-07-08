@@ -60,6 +60,7 @@ const apiData = {
       "ai.opportunity.analyze",
       "ai.visit.plan",
       "ai.communication.recommend",
+      "ai.log.read",
       "activity.read",
       "activity.create",
       "activity.complete",
@@ -936,6 +937,39 @@ const apiData = {
       occurred_at: "2026-06-18T10:00:00+08:00"
     }
   ],
+  aiLogs: [
+    {
+      id: 9101,
+      event_type: "generated",
+      ai_module: "weekly_report",
+      operation: "generate",
+      status: "pending_confirmation",
+      source_type: "weekly_report",
+      source_id: 8101,
+      title: "AI周报",
+      summary: "本周跟进 1 个商机，沉淀 2 条有效行动。",
+      business_url: "/ai-assistant/weekly-report",
+      actor_user_id: 1001,
+      occurred_at: "2026-07-08T09:30:00+08:00"
+    },
+    {
+      id: 9102,
+      event_type: "write",
+      ai_module: "draft",
+      operation: "confirm",
+      status: "success",
+      source_type: "draft",
+      source_id: 7001,
+      object_type: "account",
+      object_id: 1,
+      title: "确认并写入",
+      summary: "确认并写入：客户 #1",
+      business_url: "/accounts?account_id=1",
+      actor_user_id: 1001,
+      trace_id: "ai-write-trace-001",
+      occurred_at: "2026-07-08T10:00:00+08:00"
+    }
+  ],
   users: [
     {
       id: 1001,
@@ -1048,6 +1082,13 @@ const apiData = {
       permission_name: "生成AI沟通建议",
       permission_type: "operation",
       module_code: "ai"
+    },
+    {
+      id: 4307,
+      permission_code: "ai.log.read",
+      permission_name: "查看AI日志",
+      permission_type: "operation",
+      module_code: "ai"
     }
   ]
 };
@@ -1142,6 +1183,39 @@ describe("CRM frontend V1 workflow", () => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-visit-plans"), expect.anything());
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-communication-recommendations"), expect.anything());
     });
+  });
+
+  it("renders V4 AI logs with filters and business links", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/ai-assistant/logs");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "AI日志" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "AI日志" })).toHaveAttribute("href", "/ai-assistant/logs");
+    expect(screen.getByText("AI周报")).toBeInTheDocument();
+    expect(screen.getByText("确认并写入：客户 #1")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看业务对象" })).toHaveAttribute("href", "/accounts?account_id=1");
+
+    await user.click(screen.getByRole("button", { name: "详情 确认并写入" }));
+    const detailDrawer = await screen.findByRole("dialog", { name: "AI日志详情" });
+    expect(within(detailDrawer).getByText("ai-write-trace-001")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Close" }));
+
+    await user.click(screen.getByLabelText("事件类型"));
+    await user.click(await screen.findByTitle("写入/确认"));
+    await user.click(screen.getByLabelText("对象类型"));
+    await user.click(await screen.findByTitle("客户"));
+    await user.type(screen.getByLabelText("对象ID"), "1");
+    await user.click(screen.getByRole("button", { name: /筛\s*选/ }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-logs?event_type=write"), expect.anything());
+    });
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("object_type=account"), expect.anything());
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("object_id=1"), expect.anything());
   });
 
   it("generates AI drafts from workbench text input", async () => {
@@ -2517,6 +2591,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/ai-communication-recommendations")) {
       return jsonResponse({ code: "OK", data: data.aiCommunicationRecommendations });
+    }
+    if (path.endsWith("/api/ai-logs")) {
+      return jsonResponse({ code: "OK", data: data.aiLogs });
     }
     if (path.endsWith("/api/ai-context/summary")) {
       return jsonResponse({ code: "OK", data: data.aiContextSummary });

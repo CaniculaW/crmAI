@@ -47,6 +47,7 @@ import {
   type AiContextSummary,
   type AiDraft,
   type AiEvidenceItem,
+  type AiLog,
   type AiOpportunityAnalysis,
   type AiVisitPlan,
   type AiWeeklyReport,
@@ -161,7 +162,8 @@ const navItems: NavItem[] = [
       "ai.weekly.manage",
       "ai.opportunity.analyze",
       "ai.visit.plan",
-      "ai.communication.recommend"
+      "ai.communication.recommend",
+      "ai.log.read"
     ],
     children: [
       { key: "/ai-assistant", label: "AI工作台", permission: "ai.context.read" },
@@ -169,7 +171,8 @@ const navItems: NavItem[] = [
       { key: "/ai-assistant/weekly-report", label: "周报生成", permission: "ai.weekly.manage" },
       { key: "/ai-assistant/opportunities", label: "商机分析", permission: "ai.opportunity.analyze" },
       { key: "/ai-assistant/visit-plans", label: "拜访计划", permission: "ai.visit.plan" },
-      { key: "/ai-assistant/communication", label: "沟通建议", permission: "ai.communication.recommend" }
+      { key: "/ai-assistant/communication", label: "沟通建议", permission: "ai.communication.recommend" },
+      { key: "/ai-assistant/logs", label: "AI日志", permission: "ai.log.read" }
     ]
   },
   {
@@ -413,6 +416,8 @@ function CrmShell() {
 
   const allowedNav = allowedNavItems(navItems, user.permissions);
   const selectedMenuKey = location.pathname;
+  const selectedRootKey = allowedNav.find((item) => item.children?.some((child) => child.key === selectedMenuKey))?.key;
+  const defaultOpenKeys = Array.from(new Set(["/dashboard-root", "/system-root", selectedRootKey ? `${selectedRootKey}-root` : ""])).filter(Boolean);
 
   return (
     <Layout className="app-shell">
@@ -428,7 +433,7 @@ function CrmShell() {
         <Menu
           mode="inline"
           selectedKeys={[selectedMenuKey]}
-          defaultOpenKeys={["/dashboard-root", "/system-root"]}
+          defaultOpenKeys={defaultOpenKeys}
           items={allowedNav.map((item) => ({
             key: item.children ? `${item.key}-root` : item.key,
             icon: item.icon,
@@ -482,6 +487,7 @@ function CrmShell() {
             <Route path="/ai-assistant/opportunities" element={<AiOpportunityAnalysisPage />} />
             <Route path="/ai-assistant/visit-plans" element={<AiVisitPlanPage />} />
             <Route path="/ai-assistant/communication" element={<AiCommunicationRecommendationPage />} />
+            <Route path="/ai-assistant/logs" element={<AiLogPage />} />
             <Route path="/system" element={<SystemPage section="overview" />} />
             <Route path="/system/departments" element={<SystemPage section="departments" />} />
             <Route path="/system/users" element={<SystemPage section="users" />} />
@@ -2396,6 +2402,174 @@ function AiDraftCard({
         ) : null}
       </Space>
     </Card>
+  );
+}
+
+function AiLogPage() {
+  const [filters, setFilters] = useState<Record<string, unknown>>({ limit: 50 });
+  const [selectedLog, setSelectedLog] = useState<AiLog | null>(null);
+  const logs = useResource(() => crmApi.aiLogs.list(filters), [filters]);
+
+  const columns: ColumnsType<AiLog> = [
+    { title: "时间", dataIndex: "occurred_at", render: dateText },
+    { title: "事件", dataIndex: "event_type", render: aiLogEventTypeTag },
+    { title: "模块", dataIndex: "ai_module", render: aiLogModuleText },
+    { title: "动作", dataIndex: "operation", render: aiLogOperationText },
+    {
+      title: "摘要",
+      render: (_, record) => (
+        <div className="table-primary">
+          <strong>{record.title}</strong>
+          <small>{record.summary || "-"}</small>
+        </div>
+      )
+    },
+    { title: "状态", dataIndex: "status", render: aiLogStatusTag },
+    {
+      title: "对象",
+      render: (_, record) =>
+        record.object_type && record.object_id ? `${aiLogObjectTypeText(record.object_type)} #${record.object_id}` : "-"
+    },
+    { title: "Trace", dataIndex: "trace_id", render: textOrDash },
+    {
+      title: "操作",
+      render: (_, record) => (
+        <Space>
+          <Button size="small" onClick={() => setSelectedLog(record)} aria-label={`详情 ${record.title}`}>
+            详情
+          </Button>
+          {record.business_url ? (
+            <Link to={record.business_url}>{record.object_type && record.object_id ? "查看业务对象" : "查看AI记录"}</Link>
+          ) : null}
+        </Space>
+      )
+    }
+  ];
+
+  return (
+    <section className="workspace">
+      <PageTitle
+        title="AI日志"
+        description="追溯AI生成、确认、拒绝、写入结果和权限拒绝审计。"
+        action={<RefreshButton onClick={logs.refresh} loading={logs.loading} />}
+      />
+      {logs.error ? <div className="error-banner">{logs.error}</div> : null}
+      <Card className="dashboard-overview__card" title={<Typography.Title level={3}>日志筛选</Typography.Title>}>
+        <Form
+          layout="inline"
+          initialValues={filters}
+          onFinish={(values) => setFilters(withoutEmpty({ ...values, limit: 50 }, []))}
+        >
+          <Form.Item name="event_type" label="事件类型">
+            <Select
+              allowClear
+              className="filter-select"
+              options={[
+                { label: "生成", value: "generated" },
+                { label: "写入/确认", value: "write" }
+              ]}
+            />
+          </Form.Item>
+          <Form.Item name="ai_module" label="AI模块">
+            <Select
+              allowClear
+              className="filter-select"
+              options={[
+                { label: "草稿", value: "draft" },
+                { label: "周报", value: "weekly_report" },
+                { label: "商机分析", value: "opportunity_analysis" },
+                { label: "拜访计划", value: "visit_plan" },
+                { label: "沟通建议", value: "communication_recommendation" }
+              ]}
+            />
+          </Form.Item>
+          <Form.Item name="status" label="状态">
+            <Select
+              allowClear
+              className="filter-select"
+              options={[
+                { label: "待确认", value: "pending_confirmation" },
+                { label: "成功", value: "success" },
+                { label: "已确认", value: "confirmed" },
+                { label: "已拒绝", value: "rejected" },
+                { label: "失败", value: "failed" }
+              ]}
+            />
+          </Form.Item>
+          <Form.Item name="object_type" label="对象类型">
+            <Select
+              allowClear
+              className="filter-select"
+              options={[
+                { label: "客户", value: "account" },
+                { label: "联系人", value: "contact" },
+                { label: "商机", value: "opportunity" },
+                { label: "销售行动", value: "activity" },
+                { label: "AI周报", value: "weekly_report" },
+                { label: "商机分析", value: "opportunity_analysis" },
+                { label: "拜访计划", value: "visit_plan" },
+                { label: "沟通建议", value: "communication_recommendation" }
+              ]}
+            />
+          </Form.Item>
+          <Form.Item name="object_id" label="对象ID">
+            <InputNumber min={1} className="filter-select" />
+          </Form.Item>
+          <Form.Item name="occurred_from" label="开始时间">
+            <Input className="filter-select" placeholder="2026-07-01T00:00:00+08:00" />
+          </Form.Item>
+          <Form.Item name="occurred_to" label="结束时间">
+            <Input className="filter-select" placeholder="2026-07-08T23:59:59+08:00" />
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button htmlType="submit" type="primary">
+                筛选
+              </Button>
+              <Button onClick={() => setFilters({ limit: 50 })}>重置</Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Card>
+      <Card className="dashboard-overview__card" title={<Typography.Title level={3}>AI操作记录</Typography.Title>}>
+        <Table
+          rowKey="id"
+          size="small"
+          loading={logs.loading}
+          dataSource={logs.data}
+          columns={columns}
+          pagination={{ pageSize: 8 }}
+          scroll={{ x: 1080 }}
+          locale={{ emptyText: "暂无AI日志" }}
+        />
+      </Card>
+      <Drawer title="AI日志详情" open={Boolean(selectedLog)} onClose={() => setSelectedLog(null)} size="large">
+        {selectedLog ? (
+          <div className="detail-stack">
+            <DetailItem label="事件">{aiLogEventTypeText(selectedLog.event_type)}</DetailItem>
+            <DetailItem label="AI模块">{aiLogModuleText(selectedLog.ai_module)}</DetailItem>
+            <DetailItem label="动作">{aiLogOperationText(selectedLog.operation)}</DetailItem>
+            <DetailItem label="状态">{aiLogStatusText(selectedLog.status)}</DetailItem>
+            <DetailItem label="摘要">
+              <strong>{selectedLog.title}</strong>
+              <span>{selectedLog.summary || "-"}</span>
+            </DetailItem>
+            <DetailItem label="来源">
+              {selectedLog.source_type ? `${aiLogObjectTypeText(selectedLog.source_type)} #${selectedLog.source_id ?? "-"}` : "-"}
+            </DetailItem>
+            <DetailItem label="业务对象">
+              {selectedLog.object_type && selectedLog.object_id
+                ? `${aiLogObjectTypeText(selectedLog.object_type)} #${selectedLog.object_id}`
+                : "-"}
+            </DetailItem>
+            <DetailItem label="Trace">{textOrDash(selectedLog.trace_id)}</DetailItem>
+            <DetailItem label="发生时间">{dateText(selectedLog.occurred_at)}</DetailItem>
+            <DetailItem label="错误信息">{textOrDash(selectedLog.error_message)}</DetailItem>
+            {selectedLog.business_url ? <Link to={selectedLog.business_url}>打开关联记录</Link> : null}
+          </div>
+        ) : null}
+      </Drawer>
+    </section>
   );
 }
 
@@ -8423,6 +8597,99 @@ function statusText(status?: string) {
     normal: "正常"
   };
   return labels[status] ?? status;
+}
+
+function aiLogEventTypeTag(eventType?: string) {
+  if (!eventType) {
+    return "-";
+  }
+  return <Tag color={eventType === "write" ? "purple" : "blue"}>{aiLogEventTypeText(eventType)}</Tag>;
+}
+
+function aiLogEventTypeText(eventType?: string) {
+  if (!eventType) {
+    return "-";
+  }
+  return eventType === "write" ? "写入/确认" : "生成";
+}
+
+function aiLogModuleText(module?: string) {
+  if (!module) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    draft: "草稿",
+    weekly_report: "周报",
+    opportunity_analysis: "商机分析",
+    visit_plan: "拜访计划",
+    communication_recommendation: "沟通建议"
+  };
+  return labels[module] ?? module;
+}
+
+function aiLogOperationText(operation?: string) {
+  if (!operation) {
+    return "-";
+  }
+  if (operation === "generate") {
+    return "生成";
+  }
+  if (operation === "confirm" || operation.endsWith("_confirm")) {
+    return "确认并写入";
+  }
+  if (operation === "reject" || operation.endsWith("_reject")) {
+    return "拒绝";
+  }
+  return operation;
+}
+
+function aiLogStatusTag(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const color = status === "success" || status === "confirmed" ? "green" : status === "failed" || status === "rejected" ? "red" : "blue";
+  return <Tag color={color}>{aiLogStatusText(status)}</Tag>;
+}
+
+function aiLogStatusText(status?: string) {
+  if (!status) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    pending_confirmation: "待确认",
+    success: "成功",
+    confirmed: "已确认",
+    rejected: "已拒绝",
+    failed: "失败",
+    writing: "写入中"
+  };
+  return labels[status] ?? status;
+}
+
+function aiLogObjectTypeText(objectType?: string) {
+  if (!objectType) {
+    return "-";
+  }
+  const labels: Record<string, string> = {
+    account: "客户",
+    contact: "联系人",
+    opportunity: "商机",
+    activity: "销售行动",
+    weekly_report: "AI周报",
+    opportunity_analysis: "商机分析",
+    visit_plan: "拜访计划",
+    communication_recommendation: "沟通建议"
+  };
+  return labels[objectType] ?? objectType;
+}
+
+function DetailItem({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="detail-item">
+      <span>{label}</span>
+      <div>{children}</div>
+    </div>
+  );
 }
 
 function statusTag(status?: string) {

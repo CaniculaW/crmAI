@@ -29,6 +29,7 @@ tags:
   - name: AI Opportunity Analyses
   - name: AI Visit Plans
   - name: AI Communication Recommendations
+  - name: AI Logs
 paths:
   /api/health:
     get:
@@ -1000,6 +1001,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiAiCommunicationRecommendationResponse'
+  /api/ai-logs:
+    get:
+      tags: [AI Logs]
+      summary: List current user's AI generation and write logs
+      parameters:
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [generated, write]
+        - name: ai_module
+          in: query
+          schema:
+            type: string
+            enum: [draft, weekly_report, opportunity_analysis, visit_plan, communication_recommendation]
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: object_type
+          in: query
+          schema:
+            type: string
+        - name: object_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: occurred_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: occurred_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+      responses:
+        '200':
+          description: AI generation drafts, assistant outputs and confirmed write logs visible to current user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiAiLogListResponse'
   /api/auth/login:
     post:
       tags: [Auth]
@@ -3596,6 +3648,77 @@ components:
           type: string
           format: date-time
           nullable: true
+    ApiAiLogListResponse:
+      type: object
+      required: [code, message, data, trace_id]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiLog'
+        trace_id:
+          type: string
+    AiLog:
+      type: object
+      required:
+        - id
+        - event_type
+        - ai_module
+        - operation
+        - status
+        - title
+        - occurred_at
+      properties:
+        id:
+          type: string
+        event_type:
+          type: string
+          enum: [generated, write]
+        ai_module:
+          type: string
+          enum: [draft, weekly_report, opportunity_analysis, visit_plan, communication_recommendation]
+        operation:
+          type: string
+        status:
+          type: string
+        source_type:
+          type: string
+          nullable: true
+        source_id:
+          type: integer
+          format: int64
+          nullable: true
+        object_type:
+          type: string
+          nullable: true
+        object_id:
+          type: integer
+          format: int64
+          nullable: true
+        title:
+          type: string
+        summary:
+          type: string
+          nullable: true
+        business_url:
+          type: string
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        actor_user_id:
+          type: integer
+          format: int64
+        trace_id:
+          type: string
+          nullable: true
+        occurred_at:
+          type: string
+          format: date-time
     AccountResponse:
       type: object
       required: [id, account_name, account_type, account_status, owner_department_id, owner_user_id]

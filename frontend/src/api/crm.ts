@@ -620,6 +620,25 @@ export type AuditLog = {
   occurred_at: string;
 };
 
+export type AiLog = {
+  id: number;
+  event_type: string;
+  ai_module: string;
+  operation: string;
+  status: string;
+  source_type?: string;
+  source_id?: number;
+  object_type?: string;
+  object_id?: number;
+  title: string;
+  summary?: string;
+  business_url?: string;
+  error_message?: string;
+  actor_user_id?: number;
+  trace_id?: string;
+  occurred_at: string;
+};
+
 export type SystemRoleSummary = {
   id: number;
   code: string;
@@ -1078,6 +1097,9 @@ export const crmApi = {
         method: "POST",
         body: JSON.stringify({ reason })
       })
+  },
+  aiLogs: {
+    list: (query?: QueryParams) => requestJson<AiLog[]>(withQuery("/api/ai-logs", query))
   },
   accounts: {
     list: (query?: QueryParams) => requestJson<Account[]>(withQuery("/api/accounts", query)),
