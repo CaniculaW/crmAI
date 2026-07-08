@@ -79,13 +79,13 @@ V4 当前进度：
 | 8 | Done | AI 助手工作台 | `/ai-assistant` 聚合视图 | 把录入、周报、分析、拜访计划和沟通推荐放到一个工作入口 | 用户进入 AI 助手即可看到待确认草稿、待处理建议和快捷任务 |
 | 9 | Done | 权限、审计、AI 日志 | `/ai-assistant/logs`、权限、推荐记录、写入日志 | 让 AI 生成、确认、写入和建议留痕 | 成功/失败写入、推荐生成、确认和拒绝均可追溯 |
 | 10 | Done | V4 全链路回归与 UAT | AI输入 -> 周报 -> 商机分析 -> 拜访计划 -> 沟通推荐 -> 日志 | 验证 V4 销售作战助手闭环可跑通 | 自动化、构建、OpenAPI、浏览器 UAT 和证据归档完成 |
-| 11 | Current | V4 Go/No-Go 与合并准备 | 签署记录、主干合并、远端 CI | 完成 V4 最终验收和主干合并 | 沈思维确认 Go、PR merged、`main` CI 全部通过 |
+| 11 | Done | V4 Go/No-Go 与合并准备 | 签署记录、主干合并、远端 CI | 完成 V4 最终验收和主干合并 | 沈思维确认 Go、`main` CI 全部通过 |
 
 ## 3. 当前任务
 
 当前任务：`v4-go-no-go-merge-readiness`
 
-状态：Current
+状态：Done
 
 责任侧：AI 研发主力推进；测试与验收 Agent 复核准出证据；沈思维作为最终版本确认人。
 
@@ -102,7 +102,7 @@ V4 当前进度：
 - [x] Step 7：浏览器链路验收，完整跑 AI输入 -> 草稿确认 -> 周报 -> 商机分析 -> 拜访计划 -> 沟通推荐 -> 日志。
 - [x] Step 8：证据归档，保存 API 输出、浏览器截图和 UAT 结论。
 - [x] Step 9：缺陷清理，已修复 Postgres V34 断言、V4 smoke 脚本断言、AntD Space 弃用告警和 AI 日志重复 row key。
-- [x] Step 10：提交切换，当前模块 Done，模块 11 V4 Go/No-Go 与合并准备 Current。
+- [x] Step 10：提交切换，当前模块 Done，模块 11 V4 Go/No-Go 与合并准备已进入并完成收口。
 
 模块 11 当前 TODO：
 
@@ -110,25 +110,25 @@ V4 当前进度：
 - [x] Step 2：生成 V4 Go/No-Go 记录，等待沈思维最终确认。
 - [x] Step 3：确认采用当前 `main` 直接收口，不创建 PR。
 - [x] Step 4：推送远端并检查远端状态。
-- [ ] Step 5：完成 V4 版本收口记录，等待沈思维最终 GO 签署。
+- [x] Step 5：完成 V4 版本收口记录，沈思维已最终确认 GO。
 
 完成标准：
 
 - V4 全链路 UAT 证据已归档。
 - 自动化、构建、Postgres IT、OpenAPI、API Smoke、浏览器 UAT 均通过。
-- 沈思维确认 Go 后，完成 V4 版本提交/合并/远端状态检查。
+- 沈思维已确认 GO，完成 V4 版本提交/合并/远端状态检查。
 
 ## 4. 当前进度快照
 
 ```text
 V4 当前进度：
 - 总模块：11
-- 已完成：10
+- 已完成：11
 - 当前模块：V4 Go/No-Go 与合并准备
-- 当前步骤：Step 5 V4 版本收口记录 / 等待最终 GO 签署
-- 当前 TODO：沈思维确认 V4 Go/No-Go；确认后将模块 11 标记 Done，V4 版本收口
+- 当前步骤：Step 5 V4 版本收口记录 / 已确认 GO
+- 当前 TODO：V4 已完成；下一步进入 V5 启动前规划或版本归档专项
 - 完成标准：沈思维确认 GO，TODOList 记录最终签署状态
-- 本轮预计产出：V4 Go/No-Go 记录：`docs/releases/v4-go-no-go-2026-07-08.md`；远端 main / CI 状态已核对
+- 本轮预计产出：V4 Go/No-Go 记录：`docs/releases/v4-go-no-go-2026-07-08.md`；远端 main / CI 状态已核对；V4 状态归档
 
 上一模块：
 - 状态：Done
@@ -137,9 +137,9 @@ V4 当前进度：
 - 遗留问题：Vite chunk 体积提示仍存在，属于构建优化项，不阻断 V4 准出
 
 当前模块：
-- 状态：Current
-- 验证结果：Go/No-Go 材料已生成；远端 main 为 `d39a7b86bc4aa33ea41e6f4aac07c6c7f4f874b3`；GitHub Actions 最新 `V1 Validation` run `28925519234` 对应 `d39a7b8` 且 conclusion `success`。
-- 提交号：待本次提交
+- 状态：Done
+- 验证结果：Go/No-Go 材料已生成并签署；V4 验证收口提交为 `6b81007903527018f81c83c318d2a56e65c82579`；GitHub Actions `V1 Validation` run `28926067436` 对应 `6b81007` 且 conclusion `success`。
+- 提交号：`6b81007`
 - 遗留问题：GitHub Actions 工作流名称仍为 `V1 Validation`，但本次 V4 本地/浏览器/API 证据已完整归档；后续建议升级为全版本验证工作流。
 ```
 
