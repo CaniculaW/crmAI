@@ -1,7 +1,12 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
+
+const stylesCss = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "styles.css"), "utf8");
 
 const apiData = {
   user: {
@@ -1124,6 +1129,27 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("link", { name: "商机" })).toBeInTheDocument();
     expect(await screen.findByText("我的商机")).toBeInTheDocument();
     expect(localStorage.getItem("crm.access_token")).toBe("token-001");
+  });
+
+  it("keeps the sidebar fixed while the business content scrolls independently", async () => {
+    mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    const shell = document.querySelector(".app-shell");
+    const sidebar = document.querySelector(".app-sidebar");
+    const content = document.querySelector(".app-content");
+
+    expect(shell).toBeInTheDocument();
+    expect(sidebar).toBeInTheDocument();
+    expect(content).toBeInTheDocument();
+
+    expect(stylesCss).toMatch(/\.app-shell\s*{[^}]*height:\s*100vh;[^}]*overflow:\s*hidden;[^}]*}/s);
+    expect(stylesCss).toMatch(/\.app-sidebar\s*{[^}]*position:\s*sticky;[^}]*top:\s*0;[^}]*height:\s*100vh;[^}]*overflow-y:\s*auto;[^}]*}/s);
+    expect(stylesCss).toMatch(/\.app-shell\s*>\s*\.ant-layout\s*{[^}]*height:\s*100vh;[^}]*overflow:\s*hidden;[^}]*}/s);
+    expect(stylesCss).toMatch(/\.app-content\s*{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;[^}]*}/s);
   });
 
   it("shows a dashboard command center with priority and quick entries", async () => {
