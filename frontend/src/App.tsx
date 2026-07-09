@@ -4344,9 +4344,12 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
         <section className="drawer-section">
           <div className="section-title-row">
             <Typography.Title level={4}>附件</Typography.Title>
-            <Button icon={<Paperclip size={16} />} onClick={() => selected ? void loadAttachments(selected.id) : undefined}>
-              刷新附件
-            </Button>
+            <Space>
+              <Button icon={<Paperclip size={16} />} onClick={() => attachmentForm.submit()}>
+                添加附件
+              </Button>
+              <Button onClick={() => selected ? void loadAttachments(selected.id) : undefined}>刷新附件</Button>
+            </Space>
           </div>
           <Table
             rowKey="id"
@@ -4359,7 +4362,7 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
           />
           <Form form={attachmentForm} layout="vertical" className="inline-create-form" onFinish={createAttachment}>
             <AttachmentUploadFormFields options={attachmentFileTypeOptions()} />
-            <Button type="primary" htmlType="submit">新增附件</Button>
+            <Button type="primary" htmlType="submit">上传附件</Button>
           </Form>
         </section>
       </Drawer>
@@ -6248,6 +6251,7 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
   const [filters, setFilters] = useState<Record<string, unknown>>({});
   const activities = useResource(() => crmApi.activities.list(filters), [filters]);
   const accounts = useResource(crmApi.accounts.list, []);
+  const contacts = useResource(crmApi.contacts.list, []);
   const opportunities = useResource(crmApi.opportunities.list, []);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selected, setSelected] = useState<Activity | null>(null);
@@ -6256,9 +6260,13 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
   const [completeForm] = Form.useForm();
+  const selectedAccountId = Form.useWatch("account_id", form) as number | undefined;
   const accountOptions = toAccountOptions(accounts.data);
+  const createContactOptions = contactOptionsForAccount(contacts.data, selectedAccountId);
+  const editContactOptions = contactOptionsForAccount(contacts.data, editing?.account_id);
   const opportunityOptions = toOpportunityOptions(opportunities.data);
   const accountById = useMemo(() => new Map(accounts.data.map((account) => [account.id, account])), [accounts.data]);
+  const contactById = useMemo(() => new Map(contacts.data.map((contact) => [contact.id, contact])), [contacts.data]);
   const opportunityById = useMemo(
     () => new Map(opportunities.data.map((opportunity) => [opportunity.id, opportunity])),
     [opportunities.data]
@@ -6276,6 +6284,7 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
     },
     { title: "所属客户", dataIndex: "account_id", render: (value) => accountById.get(Number(value))?.account_name ?? value },
     { title: "关联商机", dataIndex: "opportunity_id", render: (value) => value ? opportunityById.get(Number(value))?.opportunity_name ?? value : "-" },
+    { title: "拜访对象", dataIndex: "contact_ids", render: (value) => contactNamesText(value, contactById) },
     { title: "状态", dataIndex: "activity_status", render: activityStatusTag },
     { title: "类型", dataIndex: "activity_type", render: activityTypeText },
     { title: "下次跟进", dataIndex: "next_follow_up_at", render: dateText },
@@ -6294,7 +6303,8 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
               editForm.setFieldsValue({
                 ...record,
                 activity_time: fromDateTime(record.activity_time),
-                next_follow_up_at: fromDateTime(record.next_follow_up_at)
+                next_follow_up_at: fromDateTime(record.next_follow_up_at),
+                contact_ids: record.contact_ids ?? []
               });
             }}
           >
@@ -6390,10 +6400,13 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
       <Drawer title="新建行动" open={drawerOpen} onClose={() => setDrawerOpen(false)} size="large">
         <Form form={form} layout="vertical" onFinish={createActivity} initialValues={{ owner_department_id: 1 }}>
           <Form.Item name="account_id" label="客户" rules={[{ required: true }]}>
-            <Select options={accountOptions} loading={accounts.loading} />
+            <Select options={accountOptions} loading={accounts.loading} onChange={() => form.setFieldValue("contact_ids", [])} />
           </Form.Item>
           <Form.Item name="opportunity_id" label="商机">
             <Select allowClear options={opportunityOptions} loading={opportunities.loading} />
+          </Form.Item>
+          <Form.Item name="contact_ids" label="拜访对象">
+            <Select allowClear mode="multiple" options={createContactOptions} loading={contacts.loading} placeholder="选择该客户联系人" />
           </Form.Item>
           <Form.Item name="subject" label="行动主题" rules={[{ required: true }]}>
             <Input />
@@ -6417,6 +6430,7 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
         <ActivityExecutionDrawer
           activity={selected}
           account={selected ? accountById.get(selected.account_id) : undefined}
+          contacts={contactById}
           opportunity={selected?.opportunity_id ? opportunityById.get(selected.opportunity_id) : undefined}
         />
       </Drawer>
@@ -6427,6 +6441,9 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
           </Form.Item>
           <Form.Item name="activity_status" label="状态">
             <Select allowClear options={activityStatusOptions()} />
+          </Form.Item>
+          <Form.Item name="contact_ids" label="拜访对象">
+            <Select allowClear mode="multiple" options={editContactOptions} loading={contacts.loading} placeholder="选择该客户联系人" />
           </Form.Item>
           <Form.Item name="activity_time" label="行动时间">
             <Input type="datetime-local" />
@@ -6473,10 +6490,12 @@ function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
 function ActivityExecutionDrawer({
   activity,
   account,
+  contacts,
   opportunity
 }: {
   activity: Activity | null;
   account?: Account;
+  contacts: Map<number, CrmContact>;
   opportunity?: Opportunity;
 }) {
   if (!activity) {
@@ -6522,7 +6541,7 @@ function ActivityExecutionDrawer({
           <ActivitySummaryItem label="行动状态" value={activityStatusText(activity.activity_status)} />
           <ActivitySummaryItem label="行动结果" value={activityResultText(activity.activity_result)} />
           <ActivitySummaryItem label="进入周进展" value={weeklyProgressText(activity.include_in_weekly_progress)} />
-          <ActivitySummaryItem label="关联联系人" value={contactCountText(activity.contact_ids)} />
+          <ActivitySummaryItem label="拜访对象" value={contactNamesText(activity.contact_ids, contacts)} />
           <ActivitySummaryItem label="风险类型" value={riskTypesText(activity.risk_types)} />
         </div>
       </section>
@@ -6801,6 +6820,7 @@ function SystemPage({ section }: { section: SystemSection }) {
   const [typeOpen, setTypeOpen] = useState(false);
   const [departmentOpen, setDepartmentOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
+  const [roleOpen, setRoleOpen] = useState(false);
   const [modelConfigOpen, setModelConfigOpen] = useState(false);
   const [itemTarget, setItemTarget] = useState<DictionaryType | null>(null);
   const [editingItem, setEditingItem] = useState<DictionaryType["items"][number] | null>(null);
@@ -6812,6 +6832,7 @@ function SystemPage({ section }: { section: SystemSection }) {
   const [departmentForm] = Form.useForm();
   const [userForm] = Form.useForm();
   const [userEditForm] = Form.useForm();
+  const [roleForm] = Form.useForm();
   const [modelConfigForm] = Form.useForm();
   const [itemForm] = Form.useForm();
   const [itemEditForm] = Form.useForm();
@@ -6888,6 +6909,14 @@ function SystemPage({ section }: { section: SystemSection }) {
     userEditForm.resetFields();
     setEditingUser(null);
     await users.refresh();
+    await auditLogs.refresh();
+  };
+
+  const createRole = async (values: Record<string, unknown>) => {
+    await crmApi.roles.create(withoutEmpty(values, []));
+    roleForm.resetFields();
+    setRoleOpen(false);
+    await roles.refresh();
     await auditLogs.refresh();
   };
 
@@ -6973,6 +7002,7 @@ function SystemPage({ section }: { section: SystemSection }) {
 
   const userColumns: ColumnsType<SystemUser> = [
     { title: "姓名", dataIndex: "name", width: 140 },
+    { title: "登录账号", dataIndex: "login_username", width: 140, render: textOrDash },
     { title: "所属部门", dataIndex: "department_id", width: 180, render: (value) => departmentNameById.get(value) ?? textOrDash(value) },
     { title: "邮箱", dataIndex: "email", width: 220, render: textOrDash },
     { title: "状态", dataIndex: "status", width: 100, render: statusTag },
@@ -7152,7 +7182,11 @@ function SystemPage({ section }: { section: SystemSection }) {
         <Button onClick={() => setResetOpen(true)}>重置密码</Button>
       </Space>
     ),
-    roles: null,
+    roles: (
+      <Button icon={<Plus size={16} />} type="primary" onClick={() => setRoleOpen(true)}>
+        新建角色
+      </Button>
+    ),
     auditLogs: null,
     dictionaries: (
       <Button icon={<Plus size={16} />} type="primary" onClick={() => setTypeOpen(true)}>
@@ -7249,7 +7283,7 @@ function SystemPage({ section }: { section: SystemSection }) {
             dataSource={users.data}
             columns={userColumns}
             pagination={{ pageSize: 5 }}
-            scroll={{ x: 806 }}
+            scroll={{ x: 946 }}
             locale={{ emptyText: "暂无用户" }}
           />
         </Card>
@@ -7396,6 +7430,22 @@ function SystemPage({ section }: { section: SystemSection }) {
           </Form.Item>
           <Button type="primary" htmlType="submit" block>
             保存用户
+          </Button>
+        </Form>
+      </Modal>
+      <Modal title="新建角色" open={roleOpen} onCancel={() => setRoleOpen(false)} footer={null} destroyOnHidden>
+        <Form name="roleCreateForm" form={roleForm} layout="vertical" onFinish={createRole}>
+          <Form.Item name="code" label="角色编码" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="name" label="角色名称" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="description" label="角色说明">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            保存角色
           </Button>
         </Form>
       </Modal>
@@ -7951,6 +8001,15 @@ function toAccountOptions(accounts: Account[]): SelectOption[] {
 
 function toOpportunityOptions(opportunities: Opportunity[]): SelectOption[] {
   return opportunities.map((opportunity) => ({ label: opportunity.opportunity_name, value: opportunity.id }));
+}
+
+function contactOptionsForAccount(contacts: CrmContact[], accountId?: number): SelectOption[] {
+  return contacts
+    .filter((contact) => !accountId || contact.account_id === Number(accountId))
+    .map((contact) => ({
+      label: [contact.name, contact.title].filter(Boolean).join(" / "),
+      value: contact.id
+    }));
 }
 
 function option(value: string) {
@@ -8766,11 +8825,15 @@ function weeklyRiskTag(progress: WeeklyProgress) {
   );
 }
 
-function contactCountText(contactIds?: number[]) {
+function contactNamesText(contactIds: number[] | undefined, contacts: Map<number, CrmContact>) {
   if (!contactIds?.length) {
     return "未关联";
   }
-  return `${contactIds.length} 个联系人`;
+  const names = contactIds
+    .map((contactId) => contacts.get(contactId))
+    .filter((contact): contact is CrmContact => Boolean(contact))
+    .map((contact) => [contact.name, contact.title].filter(Boolean).join(" / "));
+  return names.length > 0 ? names.join("、") : `${contactIds.length} 个联系人`;
 }
 
 function riskTypesText(types?: string[]) {

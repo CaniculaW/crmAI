@@ -128,6 +128,30 @@ public class IdentityAdminController {
     }
 
     @RequirePermission("system.role.manage")
+    @PostMapping("/api/system/roles")
+    RoleAdminResponse createRole(
+            @RequestHeader(name = "Authorization", required = false) String authorization,
+            @Valid @RequestBody RoleCreateRequest request,
+            HttpServletRequest httpRequest) {
+        Long actorUserId = authService.currentUserId(bearerToken(authorization));
+        RoleAdminResponse created = identityService.createRoleForAdmin(request);
+        auditLogService.record(new AuditLogEntry(
+                actorUserId,
+                "system",
+                "system.role.create",
+                "sys_role",
+                created.id(),
+                null,
+                created,
+                "success",
+                null,
+                httpRequest.getRemoteAddr(),
+                httpRequest.getHeader("User-Agent"),
+                (String) httpRequest.getAttribute("crm.traceId")));
+        return created;
+    }
+
+    @RequirePermission("system.role.manage")
     @GetMapping("/api/system/permissions")
     List<PermissionResponse> listPermissions() {
         return identityService.listPermissions();

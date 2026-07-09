@@ -133,10 +133,15 @@ public class IdentityService {
     public List<UserAdminResponse> listUsers() {
         return jdbcTemplate.query(
                 """
-                select id, department_id, name, mobile, email, role_code, status, last_login_at
-                from sys_users
-                where deleted_at is null
-                order by id
+                select u.id, u.department_id, u.name, u.mobile, u.email, u.role_code, u.status,
+                       la.login_identifier as login_username, u.last_login_at
+                from sys_users u
+                left join sys_login_accounts la
+                  on la.user_id = u.id
+                 and la.login_type = 'username'
+                 and la.is_primary = true
+                where u.deleted_at is null
+                order by u.id
                 """,
                 (rs, rowNum) -> new UserAdminResponse(
                         rs.getLong("id"),
@@ -146,6 +151,7 @@ public class IdentityService {
                         rs.getString("email"),
                         rs.getString("role_code"),
                         rs.getString("status"),
+                        rs.getString("login_username"),
                         rs.getObject("last_login_at", java.time.OffsetDateTime.class),
                         findRoleSummariesByUserId(rs.getLong("id"))));
     }
@@ -242,6 +248,12 @@ public class IdentityService {
                         rs.getString("description")));
     }
 
+    @Transactional
+    public RoleAdminResponse createRoleForAdmin(RoleCreateRequest request) {
+        Long roleId = createRole(request);
+        return findRole(roleId);
+    }
+
     public List<PermissionResponse> listPermissions() {
         return jdbcTemplate.query(
                 """
@@ -317,10 +329,15 @@ public class IdentityService {
     private UserAdminResponse findUser(Long userId) {
         return jdbcTemplate.queryForObject(
                 """
-                select id, department_id, name, mobile, email, role_code, status, last_login_at
-                from sys_users
-                where id = ?
-                  and deleted_at is null
+                select u.id, u.department_id, u.name, u.mobile, u.email, u.role_code, u.status,
+                       la.login_identifier as login_username, u.last_login_at
+                from sys_users u
+                left join sys_login_accounts la
+                  on la.user_id = u.id
+                 and la.login_type = 'username'
+                 and la.is_primary = true
+                where u.id = ?
+                  and u.deleted_at is null
                 """,
                 (rs, rowNum) -> new UserAdminResponse(
                         rs.getLong("id"),
@@ -330,6 +347,7 @@ public class IdentityService {
                         rs.getString("email"),
                         rs.getString("role_code"),
                         rs.getString("status"),
+                        rs.getString("login_username"),
                         rs.getObject("last_login_at", java.time.OffsetDateTime.class),
                         findRoleSummariesByUserId(rs.getLong("id"))),
                 userId);

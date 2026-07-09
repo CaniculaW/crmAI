@@ -12,6 +12,7 @@ public record UserAdminResponse(
         String email,
         String role_code,
         String status,
+        String login_username,
         OffsetDateTime last_login_at,
         List<RoleSummary> roles) {
 }

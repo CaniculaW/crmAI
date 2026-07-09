@@ -1330,6 +1330,26 @@ paths:
       responses:
         '200':
           description: Role list.
+    post:
+      tags: [System]
+      summary: Create a system role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, name]
+              properties:
+                code:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Created role.
   /api/system/permissions:
     get:
       tags: [System]
@@ -1363,6 +1383,85 @@ paths:
       responses:
         '200':
           description: Updated role.
+  /api/system/ai-model-configs:
+    get:
+      tags: [System]
+      summary: List AI model configurations
+      responses:
+        '200':
+          description: AI model configuration list.
+    post:
+      tags: [System]
+      summary: Create an AI model configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider, base_url, model_name]
+              properties:
+                provider:
+                  type: string
+                  enum: [openai]
+                base_url:
+                  type: string
+                model_name:
+                  type: string
+                api_key:
+                  type: string
+                enabled:
+                  type: boolean
+      responses:
+        '200':
+          description: Created AI model configuration.
+  /api/system/ai-model-configs/{configId}:
+    put:
+      tags: [System]
+      summary: Update an AI model configuration
+      parameters:
+        - name: configId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider, base_url, model_name]
+              properties:
+                provider:
+                  type: string
+                  enum: [openai]
+                base_url:
+                  type: string
+                model_name:
+                  type: string
+                api_key:
+                  type: string
+                enabled:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated AI model configuration.
+  /api/system/ai-model-configs/{configId}/test:
+    post:
+      tags: [System]
+      summary: Test an AI model configuration connection
+      parameters:
+        - name: configId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Tested AI model configuration.
   /api/accounts:
     get:
       tags: [Accounts]

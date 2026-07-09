@@ -48,6 +48,7 @@ class IdentityAdminControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody().path("data")).anySatisfy(user -> {
             assertThat(user.path("id").asLong()).isEqualTo(userId);
+            assertThat(user.path("login_username").asText()).isEqualTo("sales_user_" + suffix);
             assertThat(user.path("email").asText()).isEqualTo("sales_user_" + suffix + "@example.com");
             assertThat(user.path("status").asText()).isEqualTo("active");
             assertThat(user.path("roles")).anySatisfy(role ->
@@ -157,6 +158,33 @@ class IdentityAdminControllerTest {
                 assertThat(role.path("id").asLong()).isEqualTo(secondRoleId));
         assertThat(updateResponse.getBody().path("data").path("roles")).noneSatisfy(role ->
                 assertThat(role.path("id").asLong()).isEqualTo(firstRoleId));
+    }
+
+    @Test
+    void createsRolesForSystemRoleManagers() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String token = createAndLoginUser("role_creator_" + suffix, List.of("system.role.manage"));
+
+        ResponseEntity<JsonNode> createResponse = restTemplate.exchange(
+                "/api/system/roles",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "code", "custom_role_" + suffix,
+                        "name", "自定义销售角色",
+                        "description", "用于页面创建角色"), authHeaders(token, "identity-role-create-trace-001")),
+                JsonNode.class);
+        ResponseEntity<JsonNode> listResponse = restTemplate.exchange(
+                "/api/system/roles",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "identity-role-create-list-trace-001")),
+                JsonNode.class);
+
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Long roleId = createResponse.getBody().path("data").path("id").asLong();
+        assertThat(createResponse.getBody().path("data").path("code").asText()).isEqualTo("custom_role_" + suffix);
+        assertThat(createResponse.getBody().path("data").path("permission_codes")).isEmpty();
+        assertThat(listResponse.getBody().path("data")).anySatisfy(role ->
+                assertThat(role.path("id").asLong()).isEqualTo(roleId));
     }
 
     @Test

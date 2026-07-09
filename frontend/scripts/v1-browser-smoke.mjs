@@ -5,11 +5,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_EXPECTED_TEXTS = ["V1演示销售部", "V1演示管理员", "v1_demo_admin"];
+const DEFAULT_EXPECTED_TEXTS = ["V1演示管理员", "系统概览", "角色权限", "AI配置"];
 
 export function resolveSmokeConfig(env = process.env) {
   return {
-    url: env.CRM_SMOKE_URL ?? "http://127.0.0.1:5175/system",
+    url: env.CRM_SMOKE_URL ?? "http://127.0.0.1:5174/system",
     username: env.CRM_SMOKE_USERNAME ?? "demo_admin",
     password: env.CRM_SMOKE_PASSWORD ?? "S3cure!123",
     expectedTexts: (env.CRM_SMOKE_EXPECTED_TEXTS ?? DEFAULT_EXPECTED_TEXTS.join(","))

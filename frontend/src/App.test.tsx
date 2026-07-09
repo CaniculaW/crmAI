@@ -159,6 +159,18 @@ const apiData = {
       bid_risk_description: "附件材料待补齐"
     }
   ],
+  solutionAttachments: [
+    {
+      id: 800,
+      object_type: "solution_document",
+      object_id: 91,
+      file_name: "V2报价清单.xlsx",
+      file_url: "oss://crm/solution/91/quotation.xlsx",
+      file_type: "quotation",
+      file_size: 8192,
+      mime_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    }
+  ],
   contracts: [
     {
       id: 301,
@@ -982,6 +994,7 @@ const apiData = {
       id: 1001,
       department_id: 1,
       name: "销售一号",
+      login_username: "sales",
       email: "sales@example.com",
       status: "active",
       roles: [{ id: 3001, code: "sales_admin", name: "销售管理员" }]
@@ -1960,6 +1973,25 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
+  it("opens the solution detail drawer with quotation attachments", async () => {
+    mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "方案标书" }));
+    await screen.findByRole("button", { name: "V2试点技术方案" });
+    await user.click(screen.getByRole("button", { name: "V2试点技术方案" }));
+
+    expect(await screen.findByText("方案详情")).toBeInTheDocument();
+    expect(screen.getAllByText("报价").length).toBeGreaterThan(0);
+    expect(screen.getByText("V2报价清单.xlsx")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "添加附件" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "上传附件" })).toBeInTheDocument();
+    expect(screen.getByText("选择文件")).toBeInTheDocument();
+  });
+
   it("renders the contract module and loads the V2 contract list", async () => {
     const fetchMock = mockCrmFetch();
     const user = userEvent.setup();
@@ -2146,6 +2178,7 @@ describe("CRM frontend V1 workflow", () => {
 
     await user.click(screen.getByRole("link", { name: "销售行动" }));
     await screen.findByRole("button", { name: "完成CRM V1试点需求确认会" });
+    expect(screen.getByText("张决策 / CIO")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "完成CRM V1试点需求确认会" }));
 
     expect(await screen.findByRole("heading", { name: "行动执行入口" })).toBeInTheDocument();
@@ -2154,6 +2187,8 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getAllByText("测试商机A").length).toBeGreaterThan(0);
     expect(screen.getAllByText("已完成").length).toBeGreaterThan(0);
     expect(screen.getAllByText("会议沟通").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("拜访对象").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("张决策 / CIO").length).toBeGreaterThan(0);
     expect(screen.getByText("围绕CRM V1试点目标、角色权限、客户档案和商机推进节奏完成确认。")).toBeInTheDocument();
     expect(screen.getByText("客户希望先以重点客户团队试点，验证周进展和提醒机制。")).toBeInTheDocument();
     expect(screen.getByText("双方确认进入试点方案细化阶段。")).toBeInTheDocument();
@@ -2162,6 +2197,9 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("link", { name: "查看客户" })).toHaveAttribute("href", "/accounts");
     expect(screen.getByRole("link", { name: "推进商机" })).toHaveAttribute("href", "/opportunities");
     expect(screen.getByRole("link", { name: "查看周进展" })).toHaveAttribute("href", "/weekly-progress");
+
+    await user.click(screen.getByRole("button", { name: "新建行动" }));
+    expect(await screen.findByLabelText("拜访对象")).toBeInTheDocument();
   });
 
   it("filters weekly progress by owner and natural week", async () => {
@@ -2419,6 +2457,35 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
+  it("creates roles and shows user login account for authorized system admins", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getAllByRole("link", { name: "用户管理" })[0]);
+    expect(await screen.findByText("sales")).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("link", { name: "角色权限" })[0]);
+    await user.click(await screen.findByRole("button", { name: "新建角色" }));
+    const roleDialog = latestDialog();
+    await user.type(roleDialog.getByLabelText("角色编码"), "solution_reviewer");
+    await user.type(roleDialog.getByLabelText("角色名称"), "方案评审员");
+    await user.type(roleDialog.getByLabelText("角色说明"), "负责方案和报价评审");
+    await user.click(roleDialog.getByRole("button", { name: "保存角色" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/system/roles",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("solution_reviewer")
+        })
+      );
+    });
+  });
+
   it("shows V2 system governance coverage on overview and role authorization", async () => {
     const user = userEvent.setup();
     mockCrmFetch();
@@ -2516,6 +2583,7 @@ describe("CRM frontend V1 workflow", () => {
     const userEditDialog = latestDialog();
     await user.clear(userEditDialog.getByLabelText("姓名"));
     await user.type(userEditDialog.getByLabelText("姓名"), "销售一号更新");
+    await user.click(userEditDialog.getByLabelText("销售管理员"));
     await user.click(userEditDialog.getByRole("button", { name: "保存用户" }));
 
     await waitFor(() => {
@@ -2530,14 +2598,14 @@ describe("CRM frontend V1 workflow", () => {
         "/api/system/users",
         expect.objectContaining({
           method: "POST",
-          body: expect.stringContaining("new_sales")
+          body: expect.stringContaining("role_ids")
         })
       );
       expect(fetchMock).toHaveBeenCalledWith(
         "/api/system/users/1001",
         expect.objectContaining({
           method: "PUT",
-          body: expect.stringContaining("销售一号更新")
+          body: expect.stringContaining("role_ids")
         })
       );
     });
@@ -2797,6 +2865,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
       return jsonResponse({ code: "OK", data: data.reconciliations });
     }
     if (path.includes("/api/attachments")) {
+      if (url.includes("object_type=solution_document")) {
+        return jsonResponse({ code: "OK", data: data.solutionAttachments });
+      }
       if (url.includes("object_type=receivable_plan")) {
         return jsonResponse({ code: "OK", data: data.receivableAttachments });
       }
@@ -2847,6 +2918,18 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/system/users/1001") && method === "PUT") {
       return jsonResponse({ code: "OK", data: { ...data.users[0], name: "销售一号更新" } });
+    }
+    if (path.endsWith("/api/system/roles") && method === "POST") {
+      return jsonResponse({
+        code: "OK",
+        data: {
+          id: 3003,
+          code: "solution_reviewer",
+          name: "方案评审员",
+          description: "负责方案和报价评审",
+          permission_codes: []
+        }
+      });
     }
     if (path.endsWith("/api/system/roles")) {
       return jsonResponse({ code: "OK", data: data.roles });

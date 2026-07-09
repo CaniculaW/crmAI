@@ -669,6 +669,7 @@ export type SystemUser = {
   email?: string;
   role_code?: string;
   status: string;
+  login_username?: string;
   last_login_at?: string;
   roles: SystemRoleSummary[];
 };
@@ -1297,6 +1298,8 @@ export const crmApi = {
   },
   roles: {
     list: () => requestJson<SystemRole[]>("/api/system/roles"),
+    create: (body: Record<string, unknown>) =>
+      requestJson<SystemRole>("/api/system/roles", { method: "POST", body: JSON.stringify(body) }),
     replacePermissions: (roleId: number, permissionCodes: string[]) =>
       requestJson<SystemRole>(`/api/system/roles/${roleId}/permissions`, {
         method: "PUT",
