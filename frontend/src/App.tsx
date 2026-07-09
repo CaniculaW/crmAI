@@ -48,6 +48,7 @@ import {
   type AiDraft,
   type AiEvidenceItem,
   type AiLog,
+  type AiModelConfig,
   type AiOpportunityAnalysis,
   type AiVisitPlan,
   type AiWeeklyReport,
@@ -179,14 +180,19 @@ const navItems: NavItem[] = [
     key: "/system",
     label: "系统",
     icon: <ShieldCheck size={18} />,
-    permissions: ["system.dict.manage", "system.user.manage", "system.role.manage", "system.audit.read"],
+    permissions: ["system.dict.manage", "system.user.manage", "system.role.manage", "system.audit.read", "system.ai-config.manage"],
     children: [
-      { key: "/system", label: "系统概览", permissions: ["system.dict.manage", "system.user.manage", "system.role.manage", "system.audit.read"] },
+      {
+        key: "/system",
+        label: "系统概览",
+        permissions: ["system.dict.manage", "system.user.manage", "system.role.manage", "system.audit.read", "system.ai-config.manage"]
+      },
       { key: "/system/departments", label: "组织管理", permission: "system.user.manage" },
       { key: "/system/users", label: "用户管理", permission: "system.user.manage" },
       { key: "/system/roles", label: "角色权限", permission: "system.role.manage" },
       { key: "/system/audit-logs", label: "审计日志", permission: "system.audit.read" },
-      { key: "/system/dictionaries", label: "字典管理", permission: "system.dict.manage" }
+      { key: "/system/dictionaries", label: "字典管理", permission: "system.dict.manage" },
+      { key: "/system/ai-config", label: "AI配置", permission: "system.ai-config.manage" }
     ]
   }
 ];
@@ -201,7 +207,7 @@ type RelationshipBucket = {
   contacts: CrmContact[];
 };
 
-type SystemSection = "overview" | "departments" | "users" | "roles" | "auditLogs" | "dictionaries";
+type SystemSection = "overview" | "departments" | "users" | "roles" | "auditLogs" | "dictionaries" | "aiConfig";
 
 const v2GovernanceModules = ["solution", "contract", "invoice", "receivable", "payment", "reconciliation", "attachment"];
 const v2DictionaryCodes = [
@@ -494,6 +500,7 @@ function CrmShell() {
             <Route path="/system/roles" element={<SystemPage section="roles" />} />
             <Route path="/system/audit-logs" element={<SystemPage section="auditLogs" />} />
             <Route path="/system/dictionaries" element={<SystemPage section="dictionaries" />} />
+            <Route path="/system/ai-config" element={<SystemPage section="aiConfig" />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Content>
@@ -6755,18 +6762,22 @@ function SystemPage({ section }: { section: SystemSection }) {
   const departments = useResource(crmApi.departments.list, []);
   const roles = useResource(crmApi.roles.list, []);
   const permissions = useResource(crmApi.permissions.list, []);
+  const aiModelConfigs = useResource(crmApi.aiModelConfigs.list, []);
   const [typeOpen, setTypeOpen] = useState(false);
   const [departmentOpen, setDepartmentOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
+  const [modelConfigOpen, setModelConfigOpen] = useState(false);
   const [itemTarget, setItemTarget] = useState<DictionaryType | null>(null);
   const [editingItem, setEditingItem] = useState<DictionaryType["items"][number] | null>(null);
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
   const [editingRole, setEditingRole] = useState<SystemRole | null>(null);
+  const [editingModelConfig, setEditingModelConfig] = useState<AiModelConfig | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
   const [typeForm] = Form.useForm();
   const [departmentForm] = Form.useForm();
   const [userForm] = Form.useForm();
   const [userEditForm] = Form.useForm();
+  const [modelConfigForm] = Form.useForm();
   const [itemForm] = Form.useForm();
   const [itemEditForm] = Form.useForm();
   const [permissionForm] = Form.useForm();
@@ -6861,6 +6872,48 @@ function SystemPage({ section }: { section: SystemSection }) {
     await auditLogs.refresh();
   };
 
+  const openModelConfigCreate = () => {
+    setEditingModelConfig(null);
+    modelConfigForm.setFieldsValue({
+      provider: "openai",
+      base_url: "https://api.openai.com/v1",
+      enabled: true
+    });
+    setModelConfigOpen(true);
+  };
+
+  const editModelConfig = (config: AiModelConfig) => {
+    setEditingModelConfig(config);
+    modelConfigForm.setFieldsValue({
+      provider: config.provider,
+      base_url: config.base_url,
+      model_name: config.model_name,
+      enabled: config.enabled
+    });
+    setModelConfigOpen(true);
+  };
+
+  const saveModelConfig = async (values: Record<string, unknown>) => {
+    const payload = withoutEmpty(values, []);
+    if (editingModelConfig) {
+      await crmApi.aiModelConfigs.update(editingModelConfig.id, payload);
+    } else {
+      await crmApi.aiModelConfigs.create(payload);
+    }
+    modelConfigForm.resetFields();
+    setModelConfigOpen(false);
+    setEditingModelConfig(null);
+    await aiModelConfigs.refresh();
+    await auditLogs.refresh();
+  };
+
+  const testModelConfig = async (config: AiModelConfig) => {
+    await crmApi.aiModelConfigs.test(config.id);
+    message.success("模型连接测试完成");
+    await aiModelConfigs.refresh();
+    await auditLogs.refresh();
+  };
+
   const groupedPermissions = permissionGroups
     .map((group) => ({
       ...group,
@@ -6943,6 +6996,38 @@ function SystemPage({ section }: { section: SystemSection }) {
     { title: "Trace", dataIndex: "trace_id", render: textOrDash }
   ];
 
+  const aiModelConfigColumns: ColumnsType<AiModelConfig> = [
+    { title: "服务商", dataIndex: "provider", width: 110, render: (value) => (value === "openai" ? "OpenAI" : value) },
+    { title: "模型", dataIndex: "model_name", width: 180 },
+    { title: "Base URL", dataIndex: "base_url", width: 240 },
+    { title: "API Key", dataIndex: "api_key_masked", width: 150 },
+    { title: "启用", dataIndex: "enabled", width: 90, render: (value) => (value ? <Tag color="green">启用</Tag> : <Tag>停用</Tag>) },
+    {
+      title: "测试状态",
+      width: 220,
+      render: (_, record) => (
+        <Space direction="vertical" size={2}>
+          {record.last_test_status ? statusTag(record.last_test_status) : <Tag>未测试</Tag>}
+          <Typography.Text type="secondary">{record.last_test_message ?? "暂无连接测试记录"}</Typography.Text>
+        </Space>
+      )
+    },
+    {
+      title: "操作",
+      width: 180,
+      render: (_, record) => (
+        <Space>
+          <Button size="small" onClick={() => editModelConfig(record)}>
+            编辑
+          </Button>
+          <Button size="small" onClick={() => void testModelConfig(record)}>
+            测试连接
+          </Button>
+        </Space>
+      )
+    }
+  ];
+
   const sectionMeta: Record<SystemSection, { title: string; description: string; guide: string }> = {
     overview: {
       title: "系统概览",
@@ -6973,30 +7058,37 @@ function SystemPage({ section }: { section: SystemSection }) {
       title: "字典管理",
       description: "维护基础选项与 V2 商务财务选项。",
       guide: "先确认字典类型，再维护字典项；停用项不再作为新建业务数据的推荐选项。"
+    },
+    aiConfig: {
+      title: "AI配置",
+      description: "维护OpenAI API模型连接参数、启用状态和连接测试结果。",
+      guide: "先保存OpenAI模型配置，再执行连接测试；API Key保存后只展示脱敏结果。"
     }
   };
 
   const sectionLoading: Record<SystemSection, boolean> = {
-    overview: dictionaries.loading || departments.loading || users.loading || roles.loading || auditLogs.loading,
+    overview: dictionaries.loading || departments.loading || users.loading || roles.loading || auditLogs.loading || aiModelConfigs.loading,
     departments: departments.loading,
     users: users.loading || roles.loading,
     roles: roles.loading || permissions.loading,
     auditLogs: auditLogs.loading,
-    dictionaries: dictionaries.loading
+    dictionaries: dictionaries.loading,
+    aiConfig: aiModelConfigs.loading
   };
 
   const sectionError: Record<SystemSection, string> = {
-    overview: dictionaries.error || departments.error || users.error || roles.error || auditLogs.error,
+    overview: dictionaries.error || departments.error || users.error || roles.error || auditLogs.error || aiModelConfigs.error,
     departments: departments.error,
     users: users.error || roles.error,
     roles: roles.error || permissions.error,
     auditLogs: auditLogs.error,
-    dictionaries: dictionaries.error
+    dictionaries: dictionaries.error,
+    aiConfig: aiModelConfigs.error
   };
 
   const sectionRefresh: Record<SystemSection, () => Promise<void>> = {
     overview: async () => {
-      await Promise.all([dictionaries.refresh(), users.refresh(), departments.refresh(), roles.refresh(), auditLogs.refresh()]);
+      await Promise.all([dictionaries.refresh(), users.refresh(), departments.refresh(), roles.refresh(), auditLogs.refresh(), aiModelConfigs.refresh()]);
     },
     departments: departments.refresh,
     users: async () => {
@@ -7006,7 +7098,8 @@ function SystemPage({ section }: { section: SystemSection }) {
       await Promise.all([roles.refresh(), permissions.refresh()]);
     },
     auditLogs: auditLogs.refresh,
-    dictionaries: dictionaries.refresh
+    dictionaries: dictionaries.refresh,
+    aiConfig: aiModelConfigs.refresh
   };
 
   const sectionAction: Record<SystemSection, React.ReactNode> = {
@@ -7029,6 +7122,11 @@ function SystemPage({ section }: { section: SystemSection }) {
     dictionaries: (
       <Button icon={<Plus size={16} />} type="primary" onClick={() => setTypeOpen(true)}>
         新建字典
+      </Button>
+    ),
+    aiConfig: (
+      <Button icon={<Plus size={16} />} type="primary" onClick={openModelConfigCreate}>
+        新建模型配置
       </Button>
     )
   };
@@ -7058,6 +7156,7 @@ function SystemPage({ section }: { section: SystemSection }) {
             <SystemModuleCard title="角色权限" description="角色授权和权限点配置" path="/system/roles" value={roles.data.length} />
             <SystemModuleCard title="审计日志" description="操作轨迹、对象和结果追溯" path="/system/audit-logs" value={auditLogs.data.length} />
             <SystemModuleCard title="字典管理" description="基础选项、启停和排序维护" path="/system/dictionaries" value={dictionaries.data.length} />
+            <SystemModuleCard title="AI配置" description="OpenAI模型、密钥和连接测试" path="/system/ai-config" value={aiModelConfigs.data.length} />
           </div>
         </>
       ) : null}
@@ -7152,6 +7251,20 @@ function SystemPage({ section }: { section: SystemSection }) {
             columns={auditColumns}
             pagination={{ pageSize: 8 }}
             locale={{ emptyText: "暂无审计日志" }}
+          />
+        </Card>
+      ) : null}
+      {section === "aiConfig" ? (
+        <Card size="small" title="模型配置">
+          <Table
+            rowKey="id"
+            size="small"
+            loading={aiModelConfigs.loading}
+            dataSource={aiModelConfigs.data}
+            columns={aiModelConfigColumns}
+            pagination={{ pageSize: 5 }}
+            scroll={{ x: 1040 }}
+            locale={{ emptyText: "暂无AI模型配置" }}
           />
         </Card>
       ) : null}
@@ -7319,6 +7432,42 @@ function SystemPage({ section }: { section: SystemSection }) {
           </Form.Item>
           <Button aria-label="保存授权" type="primary" htmlType="submit" block>
             保存授权
+          </Button>
+        </Form>
+      </Modal>
+      <Modal
+        title={editingModelConfig ? "编辑模型配置" : "新建模型配置"}
+        open={modelConfigOpen}
+        onCancel={() => {
+          setModelConfigOpen(false);
+          setEditingModelConfig(null);
+        }}
+        footer={null}
+        destroyOnHidden
+      >
+        <Form name="modelConfigForm" form={modelConfigForm} layout="vertical" onFinish={saveModelConfig}>
+          <Form.Item name="provider" label="服务商" rules={[{ required: true }]}>
+            <Select options={[{ label: "OpenAI", value: "openai" }]} />
+          </Form.Item>
+          <Form.Item name="base_url" label="API Base URL" rules={[{ required: true }]}>
+            <Input placeholder="https://api.openai.com/v1" />
+          </Form.Item>
+          <Form.Item name="model_name" label="模型名称" rules={[{ required: true }]}>
+            <Input placeholder="例如 gpt-4.1-mini" />
+          </Form.Item>
+          <Form.Item name="api_key" label={editingModelConfig ? "API Key（留空则不修改）" : "API Key"} rules={editingModelConfig ? [] : [{ required: true }]}>
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+          <Form.Item name="enabled" label="启用状态">
+            <Select
+              options={[
+                { label: "启用", value: true },
+                { label: "停用", value: false }
+              ]}
+            />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            保存配置
           </Button>
         </Form>
       </Modal>

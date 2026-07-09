@@ -74,7 +74,8 @@ const apiData = {
       "system.audit.read",
       "system.dict.manage",
       "system.user.manage",
-      "system.role.manage"
+      "system.role.manage",
+      "system.ai-config.manage"
     ]
   },
   accounts: [
@@ -1094,6 +1095,28 @@ const apiData = {
       permission_name: "查看AI日志",
       permission_type: "operation",
       module_code: "ai"
+    },
+    {
+      id: 4104,
+      permission_code: "system.ai-config.manage",
+      permission_name: "管理AI配置",
+      permission_type: "operation",
+      module_code: "system"
+    }
+  ],
+  aiModelConfigs: [
+    {
+      id: 9101,
+      provider: "openai",
+      base_url: "https://api.openai.com/v1",
+      model_name: "gpt-4.1-mini",
+      api_key_masked: "sk-t...cdef",
+      enabled: true,
+      last_test_status: "success",
+      last_test_message: "OpenAI模型连接成功：gpt-4.1-mini",
+      last_test_at: "2026-07-09T12:00:00+08:00",
+      created_by: 1001,
+      created_at: "2026-07-09T11:59:00+08:00"
     }
   ]
 };
@@ -2246,6 +2269,32 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getAllByRole("link", { name: "角色权限" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "审计日志" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "字典管理" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "AI配置" }).length).toBeGreaterThan(0);
+  });
+
+  it("renders OpenAI model configuration under system AI config", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getAllByRole("link", { name: "AI配置" })[0]);
+
+    expect(await screen.findByRole("heading", { name: "AI配置" })).toBeInTheDocument();
+    expect(screen.getByText("模型配置")).toBeInTheDocument();
+    expect(screen.getByText("OpenAI")).toBeInTheDocument();
+    expect(screen.getByText("gpt-4.1-mini")).toBeInTheDocument();
+    expect(screen.getByText("sk-t...cdef")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "测试连接" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/api/system/ai-model-configs/9101/test"),
+        expect.objectContaining({ method: "POST" })
+      );
+    });
   });
 
   it("maintains dictionaries from an independent dictionary management page", async () => {
@@ -2739,6 +2788,19 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/system/audit-logs")) {
       return jsonResponse({ code: "OK", data: data.auditLogs });
+    }
+    if (path.endsWith("/api/system/ai-model-configs/9101/test") && method === "POST") {
+      return jsonResponse({
+        code: "OK",
+        data: {
+          ...data.aiModelConfigs[0],
+          last_test_status: "success",
+          last_test_message: "OpenAI模型连接成功：gpt-4.1-mini"
+        }
+      });
+    }
+    if (path.endsWith("/api/system/ai-model-configs")) {
+      return jsonResponse({ code: "OK", data: data.aiModelConfigs });
     }
     if (path.endsWith("/api/system/departments") && method === "POST") {
       return jsonResponse({ code: "OK", data: { ...data.departments[0], id: 2, code: "sales-south", name: "华南销售部" } });

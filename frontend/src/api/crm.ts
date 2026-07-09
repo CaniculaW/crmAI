@@ -9,6 +9,22 @@ export type CurrentUser = {
   permissions: string[];
 };
 
+export type AiModelConfig = {
+  id: number;
+  provider: string;
+  base_url: string;
+  model_name: string;
+  api_key_masked: string;
+  enabled: boolean;
+  last_test_status?: string;
+  last_test_message?: string;
+  last_test_at?: string;
+  created_by: number;
+  created_at: string;
+  updated_by?: number;
+  updated_at?: string;
+};
+
 export type AuthTokenResponse = {
   access_token: string;
   token_type: string;
@@ -1289,5 +1305,13 @@ export const crmApi = {
   },
   permissions: {
     list: () => requestJson<SystemPermission[]>("/api/system/permissions")
+  },
+  aiModelConfigs: {
+    list: () => requestJson<AiModelConfig[]>("/api/system/ai-model-configs"),
+    create: (body: Record<string, unknown>) =>
+      requestJson<AiModelConfig>("/api/system/ai-model-configs", { method: "POST", body: JSON.stringify(body) }),
+    update: (configId: number, body: Record<string, unknown>) =>
+      requestJson<AiModelConfig>(`/api/system/ai-model-configs/${configId}`, { method: "PUT", body: JSON.stringify(body) }),
+    test: (configId: number) => requestJson<AiModelConfig>(`/api/system/ai-model-configs/${configId}/test`, { method: "POST" })
   }
 };
