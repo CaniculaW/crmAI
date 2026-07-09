@@ -2366,7 +2366,7 @@ function AiDraftCard({
             <div className="tag-row">
               {draft.missing_fields.map((field) => (
                 <Tag key={field} color="orange">
-                  {field}
+                  {aiDraftFieldText(field)}
                 </Tag>
               ))}
             </div>
@@ -2378,7 +2378,7 @@ function AiDraftCard({
             <div className="tag-row">
               {draft.conflicts.map((conflict) => (
                 <Tag key={conflict} color="red">
-                  {conflict}
+                  {aiDraftFieldText(conflict)}
                 </Tag>
               ))}
             </div>
@@ -2387,7 +2387,7 @@ function AiDraftCard({
         <div className="ai-draft-fields">
           {payloadItems.map(([key, value]) => (
             <div key={key}>
-              <small>{key}</small>
+              <small>{aiDraftFieldText(key)}</small>
               <strong>{String(value)}</strong>
             </div>
           ))}
@@ -2598,6 +2598,41 @@ function draftTypeText(type: AiDraft["draft_type"]) {
     activity: "行动草稿",
     unknown: "未识别草稿"
   }[type];
+}
+
+function aiDraftFieldText(field: string) {
+  return {
+    draft_type: "业务对象类型",
+    business_object_type: "业务对象类型",
+    source_text: "原始文本",
+    account_name: "客户名称",
+    account_type: "客户类型",
+    industry: "行业",
+    region: "区域",
+    owner_user_id: "负责人",
+    owner_department_id: "所属组织",
+    name: "姓名",
+    account_id: "所属客户",
+    title: "职务",
+    mobile: "手机",
+    email: "邮箱",
+    attitude: "态度",
+    relationship_strength: "关系强度",
+    opportunity_name: "商机名称",
+    stage: "销售阶段",
+    amount: "预计金额",
+    expected_close_date: "预计成交日",
+    next_step: "下一步",
+    subject: "行动主题",
+    scheduled_at: "行动时间",
+    communication_content: "沟通内容",
+    customer_feedback: "客户反馈",
+    conclusion: "结论",
+    next_plan: "后续计划",
+    risk_description: "风险说明",
+    source_type: "来源类型",
+    remark: "备注"
+  }[field] ?? field;
 }
 
 function draftPreviewText(draft: AiDraft) {

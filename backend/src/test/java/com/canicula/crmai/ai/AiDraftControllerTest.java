@@ -126,6 +126,32 @@ class AiDraftControllerTest {
     }
 
     @Test
+    void parsesUnrecognizedTextWithBusinessMissingFieldInsteadOfTechnicalDraftType() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("ai-draft-unknown-dept-" + suffix);
+        TestUser user = createLoginReadyUser(
+                "ai_draft_unknown_" + suffix,
+                departmentId,
+                List.of("ai.draft.manage"),
+                List.of("account", "contact", "opportunity", "activity"),
+                List.of("department"));
+
+        ResponseEntity<JsonNode> parseResponse = restTemplate.exchange(
+                "/api/ai-drafts/parse",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("source_text", "今天客户沟通情况先记录一下"), authHeaders(user.token(), "ai-draft-unknown-parse-trace-001")),
+                JsonNode.class);
+
+        assertThat(parseResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode draft = parseResponse.getBody().path("data").path("drafts").get(0);
+        assertThat(draft.path("draft_type").asText()).isEqualTo("unknown");
+        assertThat(draft.path("missing_fields")).anySatisfy(field ->
+                assertThat(field.asText()).isEqualTo("business_object_type"));
+        assertThat(draft.path("missing_fields")).noneSatisfy(field ->
+                assertThat(field.asText()).isEqualTo("draft_type"));
+    }
+
+    @Test
     void confirmsAndRejectsDraftsWithWriteLogs() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         Long departmentId = createDepartment("ai-draft-confirm-dept-" + suffix);

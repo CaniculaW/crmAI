@@ -5,6 +5,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
+import type { AiDraft } from "./api/crm";
 
 const stylesCss = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "styles.css"), "utf8");
 
@@ -497,7 +498,7 @@ const apiData = {
       conflicts: [],
       confidence_status: "high"
     }
-  ],
+  ] satisfies AiDraft[],
   aiWeeklyReports: [
     {
       id: 8101,
@@ -1287,6 +1288,36 @@ describe("CRM frontend V1 workflow", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/ai-drafts/parse"), expect.anything());
     });
+  });
+
+  it("shows business labels for AI draft missing fields instead of technical keys", async () => {
+    const unknownDrafts: AiDraft[] = [
+      {
+        id: 7010,
+        input_record_id: 9010,
+        draft_type: "unknown",
+        status: "need_more_info",
+        target_action: "create",
+        source_text: "今天客户沟通情况先记录一下",
+        payload: {
+          source_text: "今天客户沟通情况先记录一下"
+        },
+        missing_fields: ["draft_type"],
+        conflicts: ["未识别出客户、联系人、商机或行动"],
+        confidence_status: "low"
+      }
+    ];
+    mockCrmFetch({
+      aiDrafts: unknownDrafts as unknown as typeof apiData.aiDrafts
+    });
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/ai-assistant/drafts");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByText("业务对象类型")).toBeInTheDocument();
+    expect(screen.queryByText("draft_type")).not.toBeInTheDocument();
   });
 
   it("confirms pending AI draft from draft queue", async () => {

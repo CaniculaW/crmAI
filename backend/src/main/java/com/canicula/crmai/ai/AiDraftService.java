@@ -103,7 +103,7 @@ public class AiDraftService {
                             "need_more_info",
                             "create",
                             Map.of("source_text", sourceText),
-                            List.of("draft_type"),
+                            List.of("business_object_type"),
                             List.of("未识别出客户、联系人、商机或行动"),
                             "low"),
                     userId));
