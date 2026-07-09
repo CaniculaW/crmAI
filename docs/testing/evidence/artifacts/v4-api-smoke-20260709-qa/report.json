@@ -1,0 +1,63 @@
+{
+  "status": "passed",
+  "generatedAt": "2026-07-09T03:28:24.777Z",
+  "baseUrl": "http://127.0.0.1:8085",
+  "user": {
+    "id": 1,
+    "email": "demo_admin@example.com",
+    "aiPermissions": 7
+  },
+  "selectedContext": {
+    "opportunityId": 1,
+    "opportunityName": "智能制造CRM一期试点",
+    "contactId": 1
+  },
+  "checks": {
+    "contextCounts": {
+      "accounts": 3,
+      "opportunities": 1,
+      "recentActivities": 6,
+      "evidence": 6
+    },
+    "draft": {
+      "inputRecordId": 3,
+      "draftId": 6,
+      "generatedCount": 1,
+      "rejectedStatus": "rejected"
+    },
+    "weeklyReport": {
+      "id": 4,
+      "generatedStatus": "pending_confirmation",
+      "rejectedStatus": "rejected",
+      "opportunityProgressCount": 1
+    },
+    "opportunityAnalysis": {
+      "id": 3,
+      "generatedStatus": "pending_confirmation",
+      "rejectedStatus": "rejected",
+      "evidenceCount": 8
+    },
+    "visitPlan": {
+      "id": 3,
+      "generatedStatus": "pending_confirmation",
+      "rejectedStatus": "rejected",
+      "evidenceCount": 8
+    },
+    "communicationRecommendation": {
+      "id": 3,
+      "generatedStatus": "pending_confirmation",
+      "rejectedStatus": "rejected",
+      "evidenceCount": 8
+    },
+    "logs": {
+      "count": 30,
+      "modules": [
+        "communication_recommendation",
+        "draft",
+        "opportunity_analysis",
+        "visit_plan",
+        "weekly_report"
+      ]
+    }
+  }
+}
