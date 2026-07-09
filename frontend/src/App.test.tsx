@@ -2413,6 +2413,8 @@ describe("CRM frontend V1 workflow", () => {
 
     await user.click(screen.getByRole("button", { name: "新建组织" }));
     const departmentDialog = latestDialog();
+    expect(departmentDialog.getByLabelText("上级组织")).toBeInTheDocument();
+    expect(departmentDialog.queryByLabelText("上级组织ID")).not.toBeInTheDocument();
     await user.type(departmentDialog.getByLabelText("组织编码"), "sales-south");
     await user.type(departmentDialog.getByLabelText("组织名称"), "华南销售部");
     await user.type(departmentDialog.getByLabelText("区域编码"), "CN-44");
@@ -2421,7 +2423,8 @@ describe("CRM frontend V1 workflow", () => {
     await user.click(screen.getAllByRole("link", { name: "用户管理" })[0]);
     await user.click(screen.getByRole("button", { name: "新增用户" }));
     const userCreateDialog = latestDialog();
-    await user.type(userCreateDialog.getByLabelText("部门ID"), "1");
+    expect(userCreateDialog.getByLabelText("所属部门")).toBeInTheDocument();
+    expect(userCreateDialog.queryByLabelText("部门ID")).not.toBeInTheDocument();
     await user.type(userCreateDialog.getByLabelText("姓名"), "新增销售");
     await user.type(userCreateDialog.getByLabelText("邮箱"), "new-sales@example.com");
     await user.type(userCreateDialog.getByLabelText("登录账号"), "new_sales");

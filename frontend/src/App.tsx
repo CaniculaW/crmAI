@@ -6870,10 +6870,22 @@ function SystemPage({ section }: { section: SystemSection }) {
   const v2PermissionCount = permissions.data.filter((permission) => v2GovernanceModules.includes(permission.module_code)).length;
   const v2DictionaryCount = dictionaries.data.filter((dictionary) => v2DictionaryCodes.includes(dictionary.dict_code)).length;
   const v2AuditCount = auditLogs.data.filter((log) => v2GovernanceModules.includes(log.module_code)).length;
+  const departmentNameById = new Map(departments.data.map((department) => [department.id, `${department.name}（${department.code}）`]));
+  const departmentOptions = departments.data.map((department) => ({
+    label: `${department.name}（${department.code}）`,
+    value: department.id
+  }));
+  const openUserCreate = () => {
+    userForm.setFieldsValue({
+      status: "active",
+      department_id: departments.data[0]?.id
+    });
+    setUserOpen(true);
+  };
 
   const userColumns: ColumnsType<SystemUser> = [
     { title: "姓名", dataIndex: "name", width: 140 },
-    { title: "部门ID", dataIndex: "department_id", width: 90, render: textOrDash },
+    { title: "所属部门", dataIndex: "department_id", width: 180, render: (value) => departmentNameById.get(value) ?? textOrDash(value) },
     { title: "邮箱", dataIndex: "email", width: 220, render: textOrDash },
     { title: "状态", dataIndex: "status", width: 100, render: statusTag },
     {
@@ -6901,7 +6913,7 @@ function SystemPage({ section }: { section: SystemSection }) {
   const departmentColumns: ColumnsType<SystemDepartment> = [
     { title: "组织", dataIndex: "name", width: 160 },
     { title: "编码", dataIndex: "code", width: 180 },
-    { title: "上级ID", dataIndex: "parent_id", width: 100, render: textOrDash },
+    { title: "上级组织", dataIndex: "parent_id", width: 180, render: (value) => departmentNameById.get(value) ?? textOrDash(value) },
     { title: "区域", dataIndex: "region_code", width: 100, render: textOrDash },
     { title: "状态", dataIndex: "status", width: 100, render: statusTag }
   ];
@@ -7006,7 +7018,7 @@ function SystemPage({ section }: { section: SystemSection }) {
     ),
     users: (
       <Space>
-        <Button icon={<Plus size={16} />} type="primary" onClick={() => setUserOpen(true)}>
+        <Button icon={<Plus size={16} />} type="primary" onClick={openUserCreate}>
           新增用户
         </Button>
         <Button onClick={() => setResetOpen(true)}>重置密码</Button>
@@ -7145,8 +7157,8 @@ function SystemPage({ section }: { section: SystemSection }) {
       ) : null}
       <Modal title="新建组织" open={departmentOpen} onCancel={() => setDepartmentOpen(false)} footer={null} destroyOnHidden>
         <Form name="departmentForm" form={departmentForm} layout="vertical" onFinish={createDepartment} initialValues={{ status: "active" }}>
-          <Form.Item name="parent_id" label="上级组织ID">
-            <InputNumber className="full-width" min={1} />
+          <Form.Item name="parent_id" label="上级组织">
+            <Select allowClear showSearch optionFilterProp="label" options={departmentOptions} placeholder="选择后创建为二级组织" />
           </Form.Item>
           <Form.Item name="code" label="组织编码" rules={[{ required: true }]}>
             <Input />
@@ -7167,8 +7179,8 @@ function SystemPage({ section }: { section: SystemSection }) {
       </Modal>
       <Modal title="新增用户" open={userOpen} onCancel={() => setUserOpen(false)} footer={null} destroyOnHidden>
         <Form name="userCreateForm" form={userForm} layout="vertical" onFinish={createUser} initialValues={{ status: "active" }}>
-          <Form.Item name="department_id" label="部门ID" rules={[{ required: true }]}>
-            <InputNumber className="full-width" min={1} />
+          <Form.Item name="department_id" label="所属部门" rules={[{ required: true }]}>
+            <Select showSearch optionFilterProp="label" options={departmentOptions} placeholder="选择用户所属组织" />
           </Form.Item>
           <Form.Item name="name" label="姓名" rules={[{ required: true }]}>
             <Input />
@@ -7207,8 +7219,8 @@ function SystemPage({ section }: { section: SystemSection }) {
       </Modal>
       <Modal title="编辑用户" open={!!editingUser} onCancel={() => setEditingUser(null)} footer={null} destroyOnHidden>
         <Form name="userEditForm" form={userEditForm} layout="vertical" onFinish={updateUser}>
-          <Form.Item name="department_id" label="部门ID">
-            <InputNumber className="full-width" min={1} />
+          <Form.Item name="department_id" label="所属部门">
+            <Select showSearch optionFilterProp="label" options={departmentOptions} placeholder="选择用户所属组织" />
           </Form.Item>
           <Form.Item name="name" label="姓名" rules={[{ required: true }]}>
             <Input />

@@ -93,10 +93,17 @@ class IdentityAdminControllerTest {
                 "用户管理测试部",
                 "CN-31",
                 "active"));
+        Long childDepartmentId = identityService.createDepartment(new DepartmentCreateRequest(
+                departmentId,
+                "user-admin-child-" + suffix,
+                "用户管理二级组织",
+                "CN-31",
+                "active"));
         Long firstRoleId = identityService.createRole(new RoleCreateRequest(
                 "created_user_role_" + suffix,
                 "新用户角色",
                 "创建用户时分配"));
+        identityService.grantPermission(firstRoleId, identityService.findPermissionIdByCode("account.read"));
         Long secondRoleId = identityService.createRole(new RoleCreateRequest(
                 "updated_user_role_" + suffix,
                 "更新用户角色",
@@ -106,7 +113,7 @@ class IdentityAdminControllerTest {
                 "/api/system/users",
                 HttpMethod.POST,
                 new HttpEntity<>(Map.of(
-                        "department_id", departmentId,
+                        "department_id", childDepartmentId,
                         "name", "新建系统用户",
                         "mobile", "138" + suffix.substring(0, 8),
                         "email", "created_" + suffix + "@example.com",
@@ -119,6 +126,7 @@ class IdentityAdminControllerTest {
 
         assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         Long userId = createResponse.getBody().path("data").path("id").asLong();
+        assertThat(createResponse.getBody().path("data").path("department_id").asLong()).isEqualTo(childDepartmentId);
         assertThat(createResponse.getBody().path("data").path("roles")).anySatisfy(role ->
                 assertThat(role.path("id").asLong()).isEqualTo(firstRoleId));
 
@@ -130,6 +138,8 @@ class IdentityAdminControllerTest {
                         "password", "S3cure!123"), traceHeaders("identity-created-login-trace-001")),
                 JsonNode.class);
         assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(loginResponse.getBody().path("data").path("user").path("permissions"))
+                .anySatisfy(permission -> assertThat(permission.asText()).isEqualTo("account.read"));
 
         ResponseEntity<JsonNode> updateResponse = restTemplate.exchange(
                 "/api/system/users/" + userId,
