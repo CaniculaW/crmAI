@@ -20,6 +20,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,6 +36,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ContractControllerTest {
@@ -49,6 +56,9 @@ class ContractControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @LocalServerPort
     private int port;
@@ -411,6 +421,68 @@ class ContractControllerTest {
         assertThat(controllerSource).contains("@Transactional\n    ContractResponse submitApproval");
     }
 
+    @Test
+    void submitApprovalUsesContractSnapshotAfterConcurrentUpdateCommits() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String username = "contract_snapshot_" + suffix;
+        Long departmentId = createDepartment("contract-snapshot-" + suffix);
+        Long userId = createLoginReadyUser(
+                username,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "contract.create",
+                        "contract.read",
+                        "contract.update",
+                        "approval.submit"),
+                List.of("global"));
+        createDefaultWorkflow(username, userId);
+        String token = login(username);
+        Long accountId = createAccount(token, "并发合同客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(token, accountId, "并发合同商机-" + suffix, departmentId, userId);
+        Long contractId = createContract(token, accountId, opportunityId, userId, suffix);
+        String committedName = "并发合同新名称-" + suffix;
+
+        CountDownLatch updateLocked = new CountDownLatch(1);
+        CountDownLatch releaseUpdate = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        try {
+            Future<?> updateFuture = executor.submit(() -> transactionTemplate.executeWithoutResult(status -> {
+                jdbcTemplate.update(
+                        "update crm_contracts set contract_name = ?, version = version + 1 where id = ?",
+                        committedName,
+                        contractId);
+                updateLocked.countDown();
+                awaitLatch(releaseUpdate);
+            }));
+            assertThat(updateLocked.await(5, TimeUnit.SECONDS)).isTrue();
+
+            Future<HttpJsonResponse> submitFuture = executor.submit(() -> postJson(
+                    "/api/contracts/" + contractId + "/submit-approval",
+                    Map.of(),
+                    authHeaders(token, "contract-concurrent-snapshot")));
+            Thread.sleep(300);
+            assertThat(submitFuture.isDone()).isFalse();
+
+            releaseUpdate.countDown();
+            updateFuture.get(5, TimeUnit.SECONDS);
+            HttpJsonResponse response = submitFuture.get(5, TimeUnit.SECONDS);
+
+            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+            assertThat(jdbcTemplate.queryForObject(
+                    "select object_name from approval_instances where object_type = 'contract' and object_id = ?",
+                    String.class,
+                    contractId)).isEqualTo(committedName);
+        } finally {
+            releaseUpdate.countDown();
+            executor.shutdownNow();
+            executor.awaitTermination(5, TimeUnit.SECONDS);
+        }
+    }
+
     private Long createContract(
             String accessToken,
             Long accountId,
@@ -677,6 +749,17 @@ class ContractControllerTest {
                 objectId);
         assertThat(String.valueOf(audit.get("before_data"))).contains(beforeStatus);
         assertThat(String.valueOf(audit.get("after_data"))).contains(afterStatus);
+    }
+
+    private static void awaitLatch(CountDownLatch latch) {
+        try {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("Timed out waiting for concurrent test transaction");
+            }
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(exception);
+        }
     }
 
     private record HttpJsonResponse(int status, JsonNode body) {

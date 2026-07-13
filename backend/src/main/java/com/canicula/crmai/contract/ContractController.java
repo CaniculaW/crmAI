@@ -85,12 +85,11 @@ public class ContractController {
             @PathVariable Long contractId,
             HttpServletRequest httpRequest) {
         Long actorUserId = currentUserId(httpRequest);
-        ContractResponse before = contractService.readableDetail(contractId, actorUserId);
-        long instanceId = contractService.submitApproval(contractId, actorUserId);
-        ContractResponse response = contractService.readableDetail(contractId, actorUserId);
+        ContractService.ApprovalSubmission submission = contractService.submitApproval(contractId, actorUserId);
+        ContractResponse response = submission.after();
         audit(actorUserId, "contract.submit-approval", response, httpRequest);
-        auditApprovalSubmit(actorUserId, instanceId, response, httpRequest);
-        auditBusinessStatus(actorUserId, before, response, httpRequest);
+        auditApprovalSubmit(actorUserId, submission.instanceId(), response, httpRequest);
+        auditBusinessStatus(actorUserId, submission.before(), response, httpRequest);
         return response;
     }
 

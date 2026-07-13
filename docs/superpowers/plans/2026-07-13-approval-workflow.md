@@ -255,17 +255,17 @@ git commit -m "feat: add approval instance workflow"
 - Modify: `backend/src/main/java/com/canicula/crmai/contract/ContractService.java`
 - Modify: `backend/src/test/java/com/canicula/crmai/contract/ContractControllerTest.java`
 
-- [ ] **Step 1: Write failing solution integration tests**
+- [x] **Step 1: Write failing solution integration tests**
 
-Add one quotation and one bid case. Assert `/api/solutions/{id}/submit-approval` creates the correct object type and changes `status` to `approving`. Add a test that a pending document rejects changes to approval-critical fields with HTTP 400 while allowing `remark` changes.
+Add one quotation and one bid case. Assert `/api/solutions/{id}/submit-approval` creates the correct object type and changes `status` to `approving`. Add a test that a pending document rejects changes to approval-critical fields with HTTP 409 while allowing `remark` changes, matching the project's global business-rule contract.
 
-- [ ] **Step 2: Run solution tests and verify RED**
+- [x] **Step 2: Run solution tests and verify RED**
 
 Run: `mvn -Dtest=SolutionDocumentControllerTest test`
 
 Expected: FAIL with 404 for the new submission endpoint.
 
-- [ ] **Step 3: Implement solution approval shortcut and lock**
+- [x] **Step 3: Implement solution approval shortcut and lock**
 
 Inject `ApprovalService` into `SolutionDocumentService`. Derive the type with:
 
@@ -283,33 +283,33 @@ private static String approvalObjectType(SolutionDocumentResponse document) {
 
 Before updating a document with `status = approving`, compare request values with current critical fields and throw `BusinessRuleException("审批中的报价或投标不能修改关键字段")` on any change. Add the shortcut endpoint with `approval.submit` and reuse `readableDetail` before submission.
 
-- [ ] **Step 4: Run solution tests and verify GREEN**
+- [x] **Step 4: Run solution tests and verify GREEN**
 
 Run: `mvn -Dtest=SolutionDocumentControllerTest test`
 
 Expected: PASS.
 
-- [ ] **Step 5: Write failing contract integration tests**
+- [x] **Step 5: Write failing contract integration tests**
 
 Assert contract submission changes `contract_status` from `drafting` to `approving`, final approval changes it to `pending_signature`, rejection changes it to `drafting`, and critical updates are blocked while pending.
 
-- [ ] **Step 6: Run contract tests and verify RED**
+- [x] **Step 6: Run contract tests and verify RED**
 
 Run: `mvn -Dtest=ContractControllerTest test`
 
 Expected: FAIL with 404 for `/api/contracts/{id}/submit-approval`.
 
-- [ ] **Step 7: Implement contract approval shortcut and lock**
+- [x] **Step 7: Implement contract approval shortcut and lock**
 
 Inject `ApprovalService`, call `submit("contract", contract.id(), contract.contract_name(), actorUserId)`, and block changes to amount, tax, payment terms, invoice terms, delivery scope, acceptance criteria, and risk level while `contract_status = approving`. Add the controller endpoint with `approval.submit` and audit the business shortcut.
 
-- [ ] **Step 8: Run integrated backend tests**
+- [x] **Step 8: Run integrated backend tests**
 
 Run: `mvn -Dtest=ApprovalControllerTest,SolutionDocumentControllerTest,ContractControllerTest test`
 
 Expected: PASS.
 
-- [ ] **Step 9: Commit business integration**
+- [x] **Step 9: Commit business integration**
 
 ```bash
 git add backend/src/main/java/com/canicula/crmai/solution backend/src/test/java/com/canicula/crmai/solution/SolutionDocumentControllerTest.java backend/src/main/java/com/canicula/crmai/contract backend/src/test/java/com/canicula/crmai/contract/ContractControllerTest.java
@@ -322,17 +322,17 @@ git commit -m "feat: connect approvals to solutions and contracts"
 - Modify: `frontend/src/api/crm.ts`
 - Modify: `frontend/src/App.test.tsx`
 
-- [ ] **Step 1: Add failing API contract expectations**
+- [x] **Step 1: Add failing API contract expectations**
 
 Extend the shared API mock so approval pages can call `crmApi.approvals.tasks`, `detail`, `objectStatus`, `submit`, `approve`, `reject`, and template configuration methods. Add a source-contract assertion that the client exposes the exact backend paths.
 
-- [ ] **Step 2: Run frontend test and verify RED**
+- [x] **Step 2: Run frontend test and verify RED**
 
 Run: `npm test -- --run src/App.test.tsx`
 
 Expected: FAIL because `crmApi.approvals` and approval types are missing.
 
-- [ ] **Step 3: Add approval types and API methods**
+- [x] **Step 3: Add approval types and API methods**
 
 Add types whose fields match the backend records:
 
@@ -354,13 +354,13 @@ export type ApprovalInstance = {
 
 Expose `crmApi.approvals` and `crmApi.approvalTemplates` using the existing `requestJson` and query helpers. Business shortcuts call `/api/solutions/${id}/submit-approval` and `/api/contracts/${id}/submit-approval`.
 
-- [ ] **Step 4: Run frontend test and verify GREEN**
+- [x] **Step 4: Run frontend test and verify GREEN**
 
 Run: `npm test -- --run src/App.test.tsx`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit frontend client work**
+- [x] **Step 5: Commit frontend client work**
 
 ```bash
 git add frontend/src/api/crm.ts frontend/src/App.test.tsx

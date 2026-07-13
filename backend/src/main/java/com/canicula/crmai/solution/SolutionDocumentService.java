@@ -142,15 +142,17 @@ public class SolutionDocumentService {
     }
 
     @Transactional
-    public long submitApproval(Long solutionId, Long actorUserId) {
+    public ApprovalSubmission submitApproval(Long solutionId, Long actorUserId) {
         approvalService.requireActorPermission(actorUserId, "solution.read");
         approvalService.requireActorPermission(actorUserId, "approval.submit");
+        lockById(solutionId);
         SolutionDocumentResponse current = readableDetail(solutionId, actorUserId);
-        return approvalService.submitBusinessObject(
+        long instanceId = approvalService.submitBusinessObject(
                 approvalObjectType(current),
                 current.id(),
                 current.document_name(),
                 actorUserId);
+        return new ApprovalSubmission(instanceId, current, findById(solutionId));
     }
 
     @Transactional
@@ -266,6 +268,23 @@ public class SolutionDocumentService {
         } catch (EmptyResultDataAccessException exception) {
             throw new IllegalArgumentException("方案标书不存在或无权访问");
         }
+    }
+
+    private void lockById(Long solutionId) {
+        try {
+            jdbcTemplate.queryForObject(
+                    "select id from crm_solution_documents where id = ? and deleted_at is null for update",
+                    Long.class,
+                    solutionId);
+        } catch (EmptyResultDataAccessException exception) {
+            throw new IllegalArgumentException("方案标书不存在或无权访问");
+        }
+    }
+
+    public record ApprovalSubmission(
+            long instanceId,
+            SolutionDocumentResponse before,
+            SolutionDocumentResponse after) {
     }
 
     private static void validateSameAccount(Long requestAccountId, Long opportunityAccountId) {

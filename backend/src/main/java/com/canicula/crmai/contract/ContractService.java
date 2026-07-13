@@ -170,11 +170,14 @@ public class ContractService {
     }
 
     @Transactional
-    public long submitApproval(Long contractId, Long actorUserId) {
+    public ApprovalSubmission submitApproval(Long contractId, Long actorUserId) {
         approvalService.requireActorPermission(actorUserId, "contract.read");
         approvalService.requireActorPermission(actorUserId, "approval.submit");
+        lockById(contractId);
         ContractResponse current = readableDetail(contractId, actorUserId);
-        return approvalService.submitBusinessObject("contract", current.id(), current.contract_name(), actorUserId);
+        long instanceId = approvalService.submitBusinessObject(
+                "contract", current.id(), current.contract_name(), actorUserId);
+        return new ApprovalSubmission(instanceId, current, findById(contractId));
     }
 
     @Transactional
@@ -416,6 +419,23 @@ public class ContractService {
         } catch (EmptyResultDataAccessException exception) {
             throw new IllegalArgumentException("合同不存在或已删除");
         }
+    }
+
+    private void lockById(Long contractId) {
+        try {
+            jdbcTemplate.queryForObject(
+                    "select id from crm_contracts where id = ? and deleted_at is null for update",
+                    Long.class,
+                    contractId);
+        } catch (EmptyResultDataAccessException exception) {
+            throw new IllegalArgumentException("合同不存在或无权访问");
+        }
+    }
+
+    public record ApprovalSubmission(
+            long instanceId,
+            ContractResponse before,
+            ContractResponse after) {
     }
 
     private void insertChange(Long contractId, ContractChange change, String reason, Long actorUserId) {

@@ -87,12 +87,12 @@ public class SolutionDocumentController {
             @PathVariable Long solutionId,
             HttpServletRequest httpRequest) {
         Long actorUserId = currentUserId(httpRequest);
-        SolutionDocumentResponse before = solutionDocumentService.readableDetail(solutionId, actorUserId);
-        long instanceId = solutionDocumentService.submitApproval(solutionId, actorUserId);
-        SolutionDocumentResponse response = solutionDocumentService.readableDetail(solutionId, actorUserId);
+        SolutionDocumentService.ApprovalSubmission submission =
+                solutionDocumentService.submitApproval(solutionId, actorUserId);
+        SolutionDocumentResponse response = submission.after();
         audit(actorUserId, "solution.submit-approval", response, httpRequest);
-        auditApprovalSubmit(actorUserId, instanceId, before, response, httpRequest);
-        auditBusinessStatus(actorUserId, before, response, httpRequest);
+        auditApprovalSubmit(actorUserId, submission.instanceId(), submission.before(), response, httpRequest);
+        auditBusinessStatus(actorUserId, submission.before(), response, httpRequest);
         return response;
     }
 
