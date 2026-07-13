@@ -396,6 +396,10 @@ public class ApprovalService {
             requireSinglePendingUpdate(updatedInstanceCount);
             syncBusinessStatus(context.instance().object_type(), context.instance().object_id(), "approve");
         } else {
+            requireEligibleApprover(new WorkflowNode(
+                    nextNode.step_order(),
+                    nextNode.node_name(),
+                    nextNode.approver_role_id()));
             int activatedCount = jdbcTemplate.update(
                     """
                     update approval_instance_nodes
@@ -509,18 +513,116 @@ public class ApprovalService {
         return instances.get(0);
     }
 
-    public ApprovalInstanceDetailResponse findInstanceDetail(Long instanceId) {
-        ApprovalInstanceResponse instance = findInstance(instanceId);
+    ApprovalInstanceResponse findInstanceForAccess(Long instanceId) {
+        try {
+            return findInstance(instanceId);
+        } catch (BusinessRuleException exception) {
+            throw new ForbiddenException("审批记录不存在或无权访问");
+        }
+    }
+
+    public boolean canAccessInstance(Long instanceId, Long actorUserId) {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from approval_instances i
+                where i.id = ?
+                  and i.tenant_id = ?
+                  and (
+                      i.submitted_by = ?
+                      or exists (
+                          select 1
+                          from approval_instance_nodes n
+                          join sys_user_roles ur on ur.role_id = n.approver_role_id
+                          join sys_roles r on r.id = ur.role_id
+                          where n.instance_id = i.id
+                            and ur.user_id = ?
+                            and r.deleted_at is null
+                      )
+                      or exists (
+                          select 1
+                          from approval_actions a
+                          where a.instance_id = i.id
+                            and a.actor_user_id = ?
+                      )
+                  )
+                """,
+                Integer.class,
+                instanceId,
+                TENANT_ID,
+                actorUserId,
+                actorUserId,
+                actorUserId);
+        return count != null && count > 0;
+    }
+
+    public boolean canAccessObject(String objectType, Long objectId, Long actorUserId) {
+        String normalizedObjectType = requireObjectType(objectType);
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from approval_instances i
+                where i.tenant_id = ?
+                  and i.object_type = ?
+                  and i.object_id = ?
+                  and (
+                      i.submitted_by = ?
+                      or exists (
+                          select 1
+                          from approval_instance_nodes n
+                          join sys_user_roles ur on ur.role_id = n.approver_role_id
+                          join sys_roles r on r.id = ur.role_id
+                          where n.instance_id = i.id
+                            and ur.user_id = ?
+                            and r.deleted_at is null
+                      )
+                      or exists (
+                          select 1
+                          from approval_actions a
+                          where a.instance_id = i.id
+                            and a.actor_user_id = ?
+                      )
+                  )
+                """,
+                Integer.class,
+                TENANT_ID,
+                normalizedObjectType,
+                objectId,
+                actorUserId,
+                actorUserId,
+                actorUserId);
+        return count != null && count > 0;
+    }
+
+    public ApprovalInstanceDetailResponse findInstanceDetail(
+            Long instanceId,
+            Long actorUserId,
+            boolean businessAccessAuthorized) {
+        if (!businessAccessAuthorized && !canAccessInstance(instanceId, actorUserId)) {
+            throw new ForbiddenException("审批记录不存在或无权访问");
+        }
+        return buildInstanceDetail(instanceId);
+    }
+
+    private ApprovalInstanceDetailResponse buildInstanceDetail(Long instanceId) {
+        ApprovalInstanceResponse instance = findInstanceForAccess(instanceId);
         return new ApprovalInstanceDetailResponse(
                 instance,
                 findInstanceNodes(instanceId),
                 findActions(instanceId));
     }
 
-    public ApprovalObjectStatusResponse findObjectStatus(String objectType, Long objectId) {
+    public ApprovalObjectStatusResponse findObjectStatus(
+            String objectType,
+            Long objectId,
+            Long actorUserId,
+            boolean businessAccessAuthorized) {
         String normalizedObjectType = requireObjectType(objectType);
         if (objectId == null || objectId <= 0) {
             throw new BusinessRuleException("审批对象ID必须大于0");
+        }
+        if (!businessAccessAuthorized && !canAccessObject(normalizedObjectType, objectId, actorUserId)) {
+            throw new ForbiddenException("审批记录不存在或无权访问");
         }
         List<Long> instanceIds = jdbcTemplate.queryForList(
                 """
@@ -530,19 +632,53 @@ public class ApprovalService {
                   and object_type = ?
                   and object_id = ?
                 order by submitted_at desc, id desc
+                limit 100
                 """,
                 Long.class,
                 TENANT_ID,
                 normalizedObjectType,
                 objectId);
         List<ApprovalInstanceDetailResponse> history = instanceIds.stream()
-                .map(this::findInstanceDetail)
+                .map(this::buildInstanceDetail)
                 .toList();
         return new ApprovalObjectStatusResponse(
                 normalizedObjectType,
                 objectId,
                 history.isEmpty() ? null : history.get(0),
                 history);
+    }
+
+    public String findBusinessStatus(ApprovalInstanceResponse instance) {
+        List<String> statuses;
+        if ("contract".equals(instance.object_type())) {
+            statuses = jdbcTemplate.queryForList(
+                    """
+                    select contract_status
+                    from crm_contracts
+                    where id = ?
+                      and tenant_id = ?
+                      and deleted_at is null
+                    """,
+                    String.class,
+                    instance.object_id(),
+                    TENANT_ID);
+        } else {
+            statuses = jdbcTemplate.queryForList(
+                    """
+                    select status
+                    from crm_solution_documents
+                    where id = ?
+                      and tenant_id = ?
+                      and deleted_at is null
+                    """,
+                    String.class,
+                    instance.object_id(),
+                    TENANT_ID);
+        }
+        if (statuses.isEmpty()) {
+            throw new BusinessRuleException("审批业务对象不存在或已删除");
+        }
+        return statuses.get(0);
     }
 
     private Long lockDefaultTemplate(String objectType) {
@@ -772,6 +908,7 @@ public class ApprovalService {
                         and r.deleted_at is null
                   )
                 order by i.submitted_at desc, i.id desc
+                limit 100
                 """,
                 Long.class,
                 TENANT_ID,
@@ -789,6 +926,7 @@ public class ApprovalService {
                   and submitted_by = ?
                   and status = 'pending'
                 order by submitted_at desc, id desc
+                limit 100
                 """,
                 Long.class,
                 TENANT_ID,
@@ -809,6 +947,7 @@ public class ApprovalService {
                         and a.action in ('approve', 'reject')
                   )
                 order by i.submitted_at desc, i.id desc
+                limit 100
                 """,
                 Long.class,
                 TENANT_ID,
@@ -876,8 +1015,11 @@ public class ApprovalService {
                 case "reject" -> "drafting";
                 default -> throw new IllegalArgumentException("Unsupported approval transition");
             };
+            String expectedStatusCondition = "submit".equals(transition)
+                    ? "contract_status in ('drafting', 'draft', 'rejected')"
+                    : "contract_status = 'approving'";
             int updated = jdbcTemplate.update(
-                    """
+                    ("""
                     update crm_contracts
                     set contract_status = ?,
                         updated_at = current_timestamp,
@@ -885,7 +1027,8 @@ public class ApprovalService {
                     where id = ?
                       and tenant_id = ?
                       and deleted_at is null
-                    """,
+                      and %s
+                    """).formatted(expectedStatusCondition),
                     targetStatus,
                     objectId,
                     TENANT_ID);
@@ -900,8 +1043,11 @@ public class ApprovalService {
             case "reject" -> "draft";
             default -> throw new IllegalArgumentException("Unsupported approval transition");
         };
+        String expectedStatusCondition = "submit".equals(transition)
+                ? "status in ('draft', 'drafting', 'rejected')"
+                : "status = 'approving'";
         int updated = jdbcTemplate.update(
-                """
+                ("""
                 update crm_solution_documents
                 set status = ?,
                     updated_at = current_timestamp,
@@ -909,7 +1055,8 @@ public class ApprovalService {
                 where id = ?
                   and tenant_id = ?
                   and deleted_at is null
-                """,
+                  and %s
+                """).formatted(expectedStatusCondition),
                 targetStatus,
                 objectId,
                 TENANT_ID);

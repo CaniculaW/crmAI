@@ -51,7 +51,9 @@ class ApprovalControllerTest {
         TestUser submitter = createAndLoginUser(
                 "approval_submit_" + suffix,
                 "approval.read",
-                "approval.submit");
+                "approval.submit",
+                "solution.read",
+                "solution.update");
         TestUser firstApprover = createAndLoginUser(
                 "approval_first_" + suffix,
                 "approval.read",
@@ -95,6 +97,8 @@ class ApprovalControllerTest {
                 Integer.class,
                 instanceId)).isEqualTo(1);
         assertThat(auditCount("approval.submit", instanceId, submitter.userId())).isEqualTo(1);
+        assertThat(businessStatusAuditCount(
+                "crm_solution_document", quotationId, submitter.userId())).isEqualTo(1);
 
         assertConflict(submit(
                 submitter.token(), "quotation", quotationId, "Quotation duplicate " + suffix));
@@ -105,7 +109,11 @@ class ApprovalControllerTest {
         String suffix = suffix();
         TestUser submitter = createAndLoginUser(
                 "approval_invalid_submit_" + suffix,
-                "approval.submit");
+                "approval.submit",
+                "solution.read",
+                "solution.update",
+                "contract.read",
+                "contract.update");
         long quotationId = createSolutionDocument(submitter, "quotation", "draft", true, suffix + "-missing");
         disableDefaults("quotation");
 
@@ -134,7 +142,9 @@ class ApprovalControllerTest {
         String suffix = suffix();
         TestUser submitter = createAndLoginUser(
                 "approval_task_submit_" + suffix,
-                "approval.submit");
+                "approval.submit",
+                "solution.read",
+                "solution.update");
         TestUser firstApprover = createAndLoginUser(
                 "approval_task_first_" + suffix,
                 "approval.read",
@@ -214,7 +224,9 @@ class ApprovalControllerTest {
         TestUser submitter = createAndLoginUser(
                 "approval_final_submit_" + suffix,
                 "approval.read",
-                "approval.submit");
+                "approval.submit",
+                "contract.read",
+                "contract.update");
         TestUser approver = createAndLoginUser(
                 "approval_final_actor_" + suffix,
                 "approval.read",
@@ -249,6 +261,8 @@ class ApprovalControllerTest {
                 .filter(id -> id == instanceId)
                 .count()).isEqualTo(1);
         assertThat(auditCount("approval.approve", instanceId, approver.userId())).isEqualTo(2);
+        assertThat(businessStatusAuditCount(
+                "crm_contract", contractId, approver.userId())).isEqualTo(1);
     }
 
     @Test
@@ -257,7 +271,11 @@ class ApprovalControllerTest {
         TestUser submitter = createAndLoginUser(
                 "approval_reject_submit_" + suffix,
                 "approval.read",
-                "approval.submit");
+                "approval.submit",
+                "solution.read",
+                "solution.update",
+                "contract.read",
+                "contract.update");
         TestUser otherSubmitter = createAndLoginUser(
                 "approval_reject_other_" + suffix,
                 "approval.read");
@@ -277,6 +295,24 @@ class ApprovalControllerTest {
 
         assertThat(taskIds(submitter.token(), "started")).contains(instanceId);
         assertThat(taskIds(otherSubmitter.token(), "started")).doesNotContain(instanceId);
+        assertForbidden(exchange(
+                "/api/approvals/instances/" + instanceId,
+                HttpMethod.GET,
+                null,
+                otherSubmitter.token(),
+                "approval-unrelated-detail"));
+        assertForbidden(exchange(
+                "/api/approvals/object/quotation/" + quotationId,
+                HttpMethod.GET,
+                null,
+                otherSubmitter.token(),
+                "approval-unrelated-history"));
+        assertThat(exchange(
+                "/api/approvals/instances/" + instanceId,
+                HttpMethod.GET,
+                null,
+                approver.token(),
+                "approval-current-approver-detail").getStatusCode()).isEqualTo(HttpStatus.OK);
         assertConflict(decide(approver.token(), instanceId, "reject", Map.of("comment", "   ")));
 
         ResponseEntity<JsonNode> rejectResponse = decide(
@@ -358,7 +394,9 @@ class ApprovalControllerTest {
         String suffix = suffix();
         TestUser submitter = createAndLoginUser(
                 "approval_bid_submit_" + suffix,
-                "approval.submit");
+                "approval.submit",
+                "solution.read",
+                "solution.update");
         TestUser approver = createAndLoginUser(
                 "approval_bid_actor_" + suffix,
                 "approval.approve");
@@ -407,6 +445,227 @@ class ApprovalControllerTest {
     }
 
     @Test
+    void submitRequiresBusinessPermissionsAndScopeAndUsesCanonicalObjectData() {
+        String suffix = suffix();
+        TestUser missingBusinessPermissions = createAndLoginUser(
+                "approval_business_missing_" + suffix,
+                "approval.submit");
+        TestUser objectOwner = createAndLoginUser("approval_business_owner_" + suffix);
+        TestUser scopedSubmitter = createAndLoginUser(
+                "approval_business_scoped_" + suffix,
+                "approval.submit",
+                "solution.read",
+                "solution.update");
+        TestUser approver = createAndLoginUser(
+                "approval_business_actor_" + suffix,
+                "approval.approve");
+        long roleId = createRole("approval_business_role_" + suffix);
+        identityService.assignRole(approver.userId(), roleId);
+        createWorkflow(
+                "quotation",
+                scopedSubmitter.userId(),
+                new NodeSpec(1, "Business Review", roleId, "active"));
+
+        long missingPermissionId = createSolutionDocument(
+                missingBusinessPermissions, "quotation", "draft", true, suffix + "-permission");
+        assertForbidden(submit(
+                missingBusinessPermissions.token(),
+                "quotation",
+                missingPermissionId,
+                "Missing permissions"));
+
+        long inaccessibleId = createSolutionDocument(
+                objectOwner, "quotation", "draft", true, suffix + "-scope");
+        assertForbidden(submit(
+                scopedSubmitter.token(), "quotation", inaccessibleId, "Out of scope"));
+
+        String canonicalSuffix = suffix + "-canonical";
+        long canonicalId = createSolutionDocument(
+                scopedSubmitter, "quotation", "draft", true, canonicalSuffix);
+        ResponseEntity<JsonNode> canonicalResponse = submit(
+                scopedSubmitter.token(), "quotation", canonicalId, "Forged object name");
+        assertThat(canonicalResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(canonicalResponse.getBody().path("data").path("object_name").asText())
+                .isEqualTo("Approval document " + canonicalSuffix);
+
+        long mismatchedTypeId = createSolutionDocument(
+                scopedSubmitter, "quotation", "draft", true, suffix + "-type");
+        assertConflict(submit(
+                scopedSubmitter.token(), "bid", mismatchedTypeId, "Wrong type"));
+
+        long illegalStatusId = createSolutionDocument(
+                scopedSubmitter, "quotation", "approved", true, suffix + "-status");
+        assertConflict(submit(
+                scopedSubmitter.token(), "quotation", illegalStatusId, "Illegal old status"));
+    }
+
+    @Test
+    void approvalRollsBackWhenTheNextNodeLosesAllActiveApprovers() {
+        String suffix = suffix();
+        TestUser submitter = createAndLoginUser(
+                "approval_next_submit_" + suffix,
+                "approval.submit",
+                "solution.read",
+                "solution.update");
+        TestUser firstApprover = createAndLoginUser(
+                "approval_next_first_" + suffix,
+                "approval.approve");
+        TestUser secondApprover = createAndLoginUser(
+                "approval_next_second_" + suffix,
+                "approval.approve");
+        long firstRoleId = createRole("approval_next_first_role_" + suffix);
+        long secondRoleId = createRole("approval_next_second_role_" + suffix);
+        identityService.assignRole(firstApprover.userId(), firstRoleId);
+        identityService.assignRole(secondApprover.userId(), secondRoleId);
+        createWorkflow(
+                "quotation",
+                submitter.userId(),
+                new NodeSpec(1, "First", firstRoleId, "active"),
+                new NodeSpec(2, "Second", secondRoleId, "active"));
+        long quotationId = createSolutionDocument(
+                submitter, "quotation", "draft", true, suffix);
+        long instanceId = submit(submitter.token(), "quotation", quotationId, "Next role " + suffix)
+                .getBody().path("data").path("id").asLong();
+        jdbcTemplate.update(
+                "delete from sys_user_roles where user_id = ? and role_id = ?",
+                secondApprover.userId(),
+                secondRoleId);
+
+        assertConflict(decide(firstApprover.token(), instanceId, "approve", Map.of()));
+        assertThat(jdbcTemplate.queryForObject(
+                "select status from approval_instances where id = ?",
+                String.class,
+                instanceId)).isEqualTo("pending");
+        assertThat(jdbcTemplate.queryForObject(
+                "select current_step_order from approval_instances where id = ?",
+                Integer.class,
+                instanceId)).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForList(
+                        "select status from approval_instance_nodes where instance_id = ? order by step_order",
+                        String.class,
+                        instanceId))
+                .containsExactly("pending", "waiting");
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from approval_actions where instance_id = ?",
+                Integer.class,
+                instanceId)).isEqualTo(1);
+    }
+
+    @Test
+    void approvalRollsBackWhenBusinessStatusChangesConcurrently() {
+        String suffix = suffix();
+        TestUser submitter = createAndLoginUser(
+                "approval_race_submit_" + suffix,
+                "approval.submit",
+                "solution.read",
+                "solution.update",
+                "contract.read",
+                "contract.update");
+        TestUser approver = createAndLoginUser(
+                "approval_race_actor_" + suffix,
+                "approval.approve");
+        long roleId = createRole("approval_race_role_" + suffix);
+        identityService.assignRole(approver.userId(), roleId);
+
+        createWorkflow(
+                "quotation",
+                submitter.userId(),
+                new NodeSpec(1, "Solution Review", roleId, "active"));
+        long quotationId = createSolutionDocument(
+                submitter, "quotation", "draft", true, suffix + "-solution");
+        long quotationInstanceId = submit(
+                        submitter.token(), "quotation", quotationId, "Race solution " + suffix)
+                .getBody().path("data").path("id").asLong();
+        jdbcTemplate.update(
+                "update crm_solution_documents set status = 'voided' where id = ?",
+                quotationId);
+
+        assertConflict(decide(approver.token(), quotationInstanceId, "approve", Map.of()));
+        assertPendingDecisionUnchanged(quotationInstanceId);
+        assertThat(jdbcTemplate.queryForObject(
+                "select status from crm_solution_documents where id = ?",
+                String.class,
+                quotationId)).isEqualTo("voided");
+
+        createWorkflow(
+                "contract",
+                submitter.userId(),
+                new NodeSpec(1, "Contract Review", roleId, "active"));
+        long contractId = createContract(submitter, suffix + "-contract");
+        long contractInstanceId = submit(
+                        submitter.token(), "contract", contractId, "Race contract " + suffix)
+                .getBody().path("data").path("id").asLong();
+        jdbcTemplate.update(
+                "update crm_contracts set contract_status = 'terminated' where id = ?",
+                contractId);
+
+        assertConflict(decide(
+                approver.token(), contractInstanceId, "reject", Map.of("comment", "Reject")));
+        assertPendingDecisionUnchanged(contractInstanceId);
+        assertThat(jdbcTemplate.queryForObject(
+                "select contract_status from crm_contracts where id = ?",
+                String.class,
+                contractId)).isEqualTo("terminated");
+    }
+
+    @Test
+    void taskBucketsAndObjectHistoryAreLimitedToOneHundredItems() {
+        String suffix = suffix();
+        TestUser reader = createAndLoginUser(
+                "approval_limit_reader_" + suffix,
+                "approval.read");
+        long roleId = createRole("approval_limit_role_" + suffix);
+        identityService.assignRole(reader.userId(), roleId);
+        long templateId = createWorkflow(
+                "quotation",
+                reader.userId(),
+                new NodeSpec(1, "Limit Review", roleId, "active"));
+        long historyObjectId = Long.MAX_VALUE - reader.userId();
+        long latestHistoryId = 0;
+        for (int index = 0; index < 101; index++) {
+            latestHistoryId = insertAndReturnId(
+                    """
+                    insert into approval_instances (
+                        tenant_id, template_id, object_type, object_id, object_name,
+                        status, current_step_order, submitted_by, completed_at
+                    )
+                    values (1, ?, 'quotation', ?, ?, 'rejected', null, ?, current_timestamp)
+                    """,
+                    templateId,
+                    historyObjectId,
+                    "History " + index,
+                    reader.userId());
+        }
+        ResponseEntity<JsonNode> historyResponse = exchange(
+                "/api/approvals/object/quotation/" + historyObjectId,
+                HttpMethod.GET,
+                null,
+                reader.token(),
+                "approval-history-limit");
+        assertThat(historyResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode history = historyResponse.getBody().path("data").path("history");
+        assertThat(history).hasSize(100);
+        assertThat(history.get(0).path("instance").path("id").asLong())
+                .isEqualTo(latestHistoryId);
+
+        for (int index = 0; index < 101; index++) {
+            insertAndReturnId(
+                    """
+                    insert into approval_instances (
+                        tenant_id, template_id, object_type, object_id, object_name,
+                        status, current_step_order, submitted_by
+                    )
+                    values (1, ?, 'quotation', ?, ?, 'pending', 1, ?)
+                    """,
+                    templateId,
+                    index + 1L,
+                    "Started " + index,
+                    reader.userId());
+        }
+        assertThat(taskIds(reader.token(), "started")).hasSize(100);
+    }
+
+    @Test
     void enforcesReadSubmitAndApprovePermissionsIndependently() {
         String suffix = suffix();
         TestUser noRead = createAndLoginUser(
@@ -434,7 +693,8 @@ class ApprovalControllerTest {
         String suffix = suffix();
         TestUser reader = createAndLoginUser(
                 "approval_empty_history_" + suffix,
-                "approval.read");
+                "approval.read",
+                "solution.read");
         long quotationId = createSolutionDocument(reader, "quotation", "draft", true, suffix);
 
         ResponseEntity<JsonNode> response = exchange(
@@ -525,6 +785,10 @@ class ApprovalControllerTest {
         Arrays.stream(permissionCodes)
                 .map(identityService::findPermissionIdByCode)
                 .forEach(permissionId -> identityService.grantPermission(roleId, permissionId));
+        grantDataScope(roleId, "account", "own");
+        grantDataScope(roleId, "opportunity", "own");
+        grantDataScope(roleId, "solution", "own");
+        grantDataScope(roleId, "contract", "own");
         passwordCredentialService.createPasswordCredential(userId, "S3cure!123");
 
         ResponseEntity<JsonNode> loginResponse = restTemplate.exchange(
@@ -539,6 +803,21 @@ class ApprovalControllerTest {
                 userId,
                 departmentId,
                 loginResponse.getBody().path("data").path("access_token").asText());
+    }
+
+    private void grantDataScope(Long roleId, String moduleCode, String scopeCode) {
+        Long dataScopeId = jdbcTemplate.queryForObject(
+                "select id from sys_data_scopes where scope_code = ?",
+                Long.class,
+                scopeCode);
+        jdbcTemplate.update(
+                """
+                insert into sys_role_data_scopes (role_id, module_code, data_scope_id)
+                values (?, ?, ?)
+                """,
+                roleId,
+                moduleCode,
+                dataScopeId);
     }
 
     private long createRole(String roleCode) {
@@ -694,6 +973,38 @@ class ApprovalControllerTest {
                 actionCode,
                 instanceId,
                 actorUserId);
+    }
+
+    private Integer businessStatusAuditCount(String objectType, long objectId, long actorUserId) {
+        return jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_audit_logs
+                where module_code = 'approval'
+                  and action_code = 'approval.business-status.update'
+                  and object_type = ?
+                  and object_id = ?
+                  and actor_user_id = ?
+                """,
+                Integer.class,
+                objectType,
+                objectId,
+                actorUserId);
+    }
+
+    private void assertPendingDecisionUnchanged(long instanceId) {
+        assertThat(jdbcTemplate.queryForObject(
+                "select status from approval_instances where id = ?",
+                String.class,
+                instanceId)).isEqualTo("pending");
+        assertThat(jdbcTemplate.queryForObject(
+                "select status from approval_instance_nodes where instance_id = ?",
+                String.class,
+                instanceId)).isEqualTo("pending");
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from approval_actions where instance_id = ?",
+                Integer.class,
+                instanceId)).isEqualTo(1);
     }
 
     private static void assertConflict(ResponseEntity<JsonNode> response) {
