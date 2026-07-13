@@ -20,14 +20,14 @@ import { Pencil, Plus, Settings } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   crmApi,
+  type ApprovalApproverRole,
   type ApprovalObjectType,
   type ApprovalTemplate,
   type ApprovalTemplateCreateRequest,
   type ApprovalTemplateNode,
   type ApprovalTemplateNodeCreateRequest,
   type ApprovalTemplateStatus,
-  type ApprovalTemplateUpdateRequest,
-  type SystemRole
+  type ApprovalTemplateUpdateRequest
 } from "../../api/crm";
 
 type TemplateFormValues = ApprovalTemplateCreateRequest;
@@ -61,7 +61,7 @@ export function ApprovalTemplateConfigPage() {
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<ApprovalTemplate | null>(null);
   const [nodes, setNodes] = useState<ApprovalTemplateNode[]>([]);
-  const [roles, setRoles] = useState<SystemRole[]>([]);
+  const [roles, setRoles] = useState<ApprovalApproverRole[]>([]);
   const [nodeModalOpen, setNodeModalOpen] = useState(false);
   const [editingNode, setEditingNode] = useState<ApprovalTemplateNode | null>(null);
   const [nodeSaving, setNodeSaving] = useState(false);
@@ -109,14 +109,12 @@ export function ApprovalTemplateConfigPage() {
           is_default: values.is_default,
           status: values.status
         };
-        const updated = await crmApi.approvalTemplates.update(editingTemplate.id, body);
-        setTemplates((current) => current.map((template) => (template.id === updated.id ? updated : template)));
-        message.success("审批模板已更新");
+        await crmApi.approvalTemplates.update(editingTemplate.id, body);
       } else {
-        const created = await crmApi.approvalTemplates.create(values);
-        setTemplates((current) => [...current, created]);
-        message.success("审批模板已创建");
+        await crmApi.approvalTemplates.create(values);
       }
+      await loadTemplates();
+      message.success(editingTemplate ? "审批模板已更新" : "审批模板已创建");
       setTemplateModalOpen(false);
       setEditingTemplate(null);
       templateForm.resetFields();
@@ -136,7 +134,7 @@ export function ApprovalTemplateConfigPage() {
     try {
       const [loadedNodes, loadedRoles] = await Promise.all([
         crmApi.approvalTemplates.listNodes(template.id),
-        crmApi.roles.list()
+        crmApi.approvalTemplates.approverRoles()
       ]);
       setNodes(sortNodes(loadedNodes));
       setRoles(loadedRoles);

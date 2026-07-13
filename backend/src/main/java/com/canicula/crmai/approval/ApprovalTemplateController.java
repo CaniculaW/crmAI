@@ -31,6 +31,12 @@ public class ApprovalTemplateController {
     }
 
     @RequirePermission("approval.config.manage")
+    @GetMapping("/api/approval-templates/approver-roles")
+    List<ApprovalApproverRoleResponse> listApproverRoles() {
+        return approvalService.listApproverRoles();
+    }
+
+    @RequirePermission("approval.config.manage")
     @PostMapping("/api/approval-templates")
     ApprovalTemplateResponse createTemplate(
             @Valid @RequestBody ApprovalTemplateCreateRequest request,

@@ -39,6 +39,12 @@ record ApprovalTemplateResponse(
         OffsetDateTime updated_at) {
 }
 
+record ApprovalApproverRoleResponse(
+        Long id,
+        String code,
+        String name) {
+}
+
 record ApprovalTemplateNodeCreateRequest(
         @NotNull @Positive Integer step_order,
         @NotBlank String node_name,

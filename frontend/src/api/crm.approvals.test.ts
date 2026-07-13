@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import { crmApi } from "./crm";
 import type {
+  ApprovalApproverRole,
   ApprovalDecisionRequest,
   ApprovalInstance,
   ApprovalInstanceDetail,
@@ -246,6 +247,21 @@ describe("crm approval API contracts", () => {
     expect(requestAt(1)[1]).toMatchObject({ method: "POST", body: JSON.stringify(createBody) });
     expect(requestAt(2)[0]).toBe("/api/approval-templates/7/nodes/51");
     expect(requestAt(2)[1]).toMatchObject({ method: "PATCH", body: JSON.stringify(updateBody) });
+  });
+
+  it("lists typed approver roles through the approval configuration endpoint", async () => {
+    const roles: ApprovalApproverRole[] = [
+      { id: 3, code: "legal", name: "Legal" },
+      { id: 4, code: "finance", name: "Finance" }
+    ];
+    mockData(roles);
+
+    const result = await crmApi.approvalTemplates.approverRoles();
+
+    expectTypeOf(result).toEqualTypeOf<ApprovalApproverRole[]>();
+    expect(result).toEqual(roles);
+    expect(requestAt(0)[0]).toBe("/api/approval-templates/approver-roles");
+    expect(requestAt(0)[1]?.method).toBeUndefined();
   });
 
   it("returns typed business objects from solution and contract approval shortcuts", async () => {

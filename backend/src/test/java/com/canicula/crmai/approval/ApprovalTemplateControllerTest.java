@@ -366,6 +366,32 @@ class ApprovalTemplateControllerTest {
     }
 
     @Test
+    void listsAssignableApproverRolesWithApprovalConfigPermissionOnly() {
+        String suffix = suffix();
+        TestUser manager = createAndLoginUser("approval_roles_" + suffix, "approval.config.manage");
+        String assignableCode = "approval_assignable_" + suffix;
+        long assignableRoleId = createRole(assignableCode);
+        long deletedRoleId = createRole("approval_unassignable_" + suffix);
+        jdbcTemplate.update("update sys_roles set deleted_at = current_timestamp where id = ?", deletedRoleId);
+
+        ResponseEntity<JsonNode> response = exchange(
+                "/api/approval-templates/approver-roles",
+                HttpMethod.GET,
+                null,
+                manager.token(),
+                "approval-approver-role-list");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode data = response.getBody().path("data");
+        JsonNode role = findById(data, assignableRoleId);
+        assertThat(role.size()).isEqualTo(3);
+        assertThat(role.path("id").asLong()).isEqualTo(assignableRoleId);
+        assertThat(role.path("code").asText()).isEqualTo(assignableCode);
+        assertThat(role.path("name").asText()).isEqualTo("Approval Test Role");
+        assertThat(containsId(data, deletedRoleId)).isFalse();
+    }
+
+    @Test
     void requiresApprovalConfigManagePermissionForTemplateAndNodeEndpoints() {
         String suffix = suffix();
         TestUser lowUser = createAndLoginUser("approval_low_" + suffix, "account.read");
@@ -382,11 +408,19 @@ class ApprovalTemplateControllerTest {
                 null,
                 lowUser.token(),
                 "approval-low-node");
+        ResponseEntity<JsonNode> roleResponse = exchange(
+                "/api/approval-templates/approver-roles",
+                HttpMethod.GET,
+                null,
+                lowUser.token(),
+                "approval-low-approver-role");
 
         assertThat(templateResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(templateResponse.getBody().path("code").asText()).isEqualTo("FORBIDDEN");
         assertThat(nodeResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(nodeResponse.getBody().path("code").asText()).isEqualTo("FORBIDDEN");
+        assertThat(roleResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(roleResponse.getBody().path("code").asText()).isEqualTo("FORBIDDEN");
     }
 
     private long createTemplate(String token, String objectType, String templateName, boolean isDefault) {

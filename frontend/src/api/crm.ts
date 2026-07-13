@@ -200,6 +200,12 @@ export type ApprovalTemplate = {
   updated_at: string;
 };
 
+export type ApprovalApproverRole = {
+  id: number;
+  code: string;
+  name: string;
+};
+
 export type ApprovalTemplateNode = {
   id: number;
   template_id: number;
@@ -1333,6 +1339,8 @@ export const crmApi = {
   },
   approvalTemplates: {
     list: () => requestJson<ApprovalTemplate[]>("/api/approval-templates"),
+    approverRoles: () =>
+      requestJson<ApprovalApproverRole[]>("/api/approval-templates/approver-roles"),
     listNodes: (templateId: number) =>
       requestJson<ApprovalTemplateNode[]>(`/api/approval-templates/${templateId}/nodes`),
     create: (body: ApprovalTemplateCreateRequest) =>

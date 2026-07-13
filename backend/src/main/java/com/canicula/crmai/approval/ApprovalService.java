@@ -43,6 +43,22 @@ public class ApprovalService {
                 TENANT_ID);
     }
 
+    public List<ApprovalApproverRoleResponse> listApproverRoles() {
+        return jdbcTemplate.query(
+                """
+                select id, code, name
+                from sys_roles
+                where tenant_id = ?
+                  and deleted_at is null
+                order by code, id
+                """,
+                (rs, rowNum) -> new ApprovalApproverRoleResponse(
+                        rs.getLong("id"),
+                        rs.getString("code"),
+                        rs.getString("name")),
+                TENANT_ID);
+    }
+
     public ApprovalTemplateResponse findTemplate(Long templateId) {
         List<ApprovalTemplateResponse> templates = jdbcTemplate.query(
                 """
