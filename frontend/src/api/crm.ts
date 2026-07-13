@@ -282,6 +282,10 @@ export type ApprovalDecisionRequest = {
   comment?: string;
 };
 
+export type ApprovalRejectRequest = {
+  comment: string;
+};
+
 export type ApprovalTemplateCreateRequest = {
   object_type: ApprovalObjectType;
   template_name: string;
@@ -1321,14 +1325,16 @@ export const crmApi = {
         method: "POST",
         body: body === undefined ? undefined : JSON.stringify(body)
       }),
-    reject: (id: number, body?: ApprovalDecisionRequest) =>
+    reject: (id: number, body: ApprovalRejectRequest) =>
       requestJson<ApprovalInstance>(`/api/approvals/instances/${id}/reject`, {
         method: "POST",
-        body: body === undefined ? undefined : JSON.stringify(body)
+        body: JSON.stringify(body)
       })
   },
   approvalTemplates: {
     list: () => requestJson<ApprovalTemplate[]>("/api/approval-templates"),
+    listNodes: (templateId: number) =>
+      requestJson<ApprovalTemplateNode[]>(`/api/approval-templates/${templateId}/nodes`),
     create: (body: ApprovalTemplateCreateRequest) =>
       requestJson<ApprovalTemplate>("/api/approval-templates", { method: "POST", body: JSON.stringify(body) }),
     update: (id: number, body: ApprovalTemplateUpdateRequest) =>
