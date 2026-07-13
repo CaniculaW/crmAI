@@ -24,6 +24,7 @@ logs/
 coverage/
 tmp/
 temp/
+.worktrees/
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
