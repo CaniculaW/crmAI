@@ -10,6 +10,7 @@ import com.canicula.crmai.identity.RoleCreateRequest;
 import com.canicula.crmai.identity.UserCreateRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.sql.PreparedStatement;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -163,6 +164,20 @@ class ApprovalControllerTest {
         assertThat(taskIds(secondApprover.token(), "pending")).doesNotContain(instanceId);
         assertThat(taskIds(wrongRole.token(), "pending")).doesNotContain(instanceId);
         assertForbidden(decide(wrongRole.token(), instanceId, "approve", Map.of("comment", "wrong role")));
+        assertForbidden(decide(wrongRole.token(), instanceId, "reject", Map.of("comment", "wrong role")));
+        assertThat(jdbcTemplate.queryForObject(
+                "select status from approval_instances where id = ?",
+                String.class,
+                instanceId)).isEqualTo("pending");
+        assertThat(jdbcTemplate.queryForList(
+                        "select status from approval_instance_nodes where instance_id = ? order by step_order",
+                        String.class,
+                        instanceId))
+                .containsExactly("pending", "waiting");
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from approval_actions where instance_id = ?",
+                Integer.class,
+                instanceId)).isEqualTo(1);
 
         ResponseEntity<JsonNode> approveResponse = decide(
                 firstApprover.token(), instanceId, "approve", Map.of("comment", "looks good"));
@@ -179,6 +194,18 @@ class ApprovalControllerTest {
         assertThat(taskIds(firstApprover.token(), "pending")).doesNotContain(instanceId);
         assertThat(taskIds(secondApprover.token(), "pending")).contains(instanceId);
         assertThat(auditCount("approval.approve", instanceId, firstApprover.userId())).isEqualTo(1);
+
+        ResponseEntity<JsonNode> detailResponse = exchange(
+                "/api/approvals/instances/" + instanceId,
+                HttpMethod.GET,
+                null,
+                firstApprover.token(),
+                "approval-multi-node-detail");
+        assertThat(detailResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode nodes = detailResponse.getBody().path("data").path("nodes");
+        assertThat(nodes).hasSize(2);
+        assertThat(nodes.get(0).path("step_order").asInt()).isEqualTo(1);
+        assertThat(nodes.get(1).path("step_order").asInt()).isEqualTo(2);
     }
 
     @Test
@@ -300,7 +327,16 @@ class ApprovalControllerTest {
         assertThat(objectResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode objectStatus = objectResponse.getBody().path("data");
         assertThat(objectStatus.path("instance").path("instance").path("id").asLong()).isEqualTo(latestId);
-        assertThat(objectStatus.path("history")).hasSize(2);
+        JsonNode history = objectStatus.path("history");
+        assertThat(history).hasSize(2);
+        assertThat(history.get(0).path("instance").path("id").asLong()).isEqualTo(latestId);
+        assertThat(history.get(1).path("instance").path("id").asLong()).isEqualTo(instanceId);
+        OffsetDateTime latestSubmittedAt = OffsetDateTime.parse(
+                history.get(0).path("instance").path("submitted_at").asText());
+        OffsetDateTime firstSubmittedAt = OffsetDateTime.parse(
+                history.get(1).path("instance").path("submitted_at").asText());
+        assertThat(latestId).isGreaterThan(instanceId);
+        assertThat(latestSubmittedAt).isAfterOrEqualTo(firstSubmittedAt);
 
         createWorkflow(
                 "contract",
@@ -315,6 +351,59 @@ class ApprovalControllerTest {
                 "select contract_status from crm_contracts where id = ?",
                 String.class,
                 contractId)).isEqualTo("drafting");
+    }
+
+    @Test
+    void bidApprovalTransitionsThroughApprovingApprovedAndDraft() {
+        String suffix = suffix();
+        TestUser submitter = createAndLoginUser(
+                "approval_bid_submit_" + suffix,
+                "approval.submit");
+        TestUser approver = createAndLoginUser(
+                "approval_bid_actor_" + suffix,
+                "approval.approve");
+        long roleId = createRole("approval_bid_role_" + suffix);
+        identityService.assignRole(approver.userId(), roleId);
+        createWorkflow(
+                "bid",
+                submitter.userId(),
+                new NodeSpec(1, "Bid Review", roleId, "active"));
+        long approvedBidId = createSolutionDocument(
+                submitter, "bid_document", "draft", false, suffix + "-approve");
+
+        long approvedInstanceId = submit(
+                        submitter.token(), "bid", approvedBidId, "Approve bid " + suffix)
+                .getBody().path("data").path("id").asLong();
+        assertThat(jdbcTemplate.queryForObject(
+                "select status from crm_solution_documents where id = ?",
+                String.class,
+                approvedBidId)).isEqualTo("approving");
+        ResponseEntity<JsonNode> approveResponse = decide(
+                approver.token(), approvedInstanceId, "approve", Map.of());
+        assertThat(approveResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(approveResponse.getBody().path("data").path("status").asText()).isEqualTo("approved");
+        assertThat(jdbcTemplate.queryForObject(
+                "select status from crm_solution_documents where id = ?",
+                String.class,
+                approvedBidId)).isEqualTo("approved");
+
+        long rejectedBidId = createSolutionDocument(
+                submitter, "bid", "draft", false, suffix + "-reject");
+        long rejectedInstanceId = submit(
+                        submitter.token(), "bid", rejectedBidId, "Reject bid " + suffix)
+                .getBody().path("data").path("id").asLong();
+        assertThat(jdbcTemplate.queryForObject(
+                "select status from crm_solution_documents where id = ?",
+                String.class,
+                rejectedBidId)).isEqualTo("approving");
+        ResponseEntity<JsonNode> rejectResponse = decide(
+                approver.token(), rejectedInstanceId, "reject", Map.of("comment", "Revise bid"));
+        assertThat(rejectResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(rejectResponse.getBody().path("data").path("status").asText()).isEqualTo("rejected");
+        assertThat(jdbcTemplate.queryForObject(
+                "select status from crm_solution_documents where id = ?",
+                String.class,
+                rejectedBidId)).isEqualTo("draft");
     }
 
     @Test
