@@ -374,8 +374,43 @@ class PostgresMigrationIT {
                   and module_code = 'ai'
                 """,
                 Integer.class);
+        Integer approvalTableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where table_schema = 'public'
+                  and table_name in (
+                    'approval_templates',
+                    'approval_template_nodes',
+                    'approval_instances',
+                    'approval_instance_nodes',
+                    'approval_actions'
+                  )
+                """,
+                Integer.class);
+        Integer approvalPermissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where module_code = 'approval'
+                  and permission_code in (
+                    'approval.read',
+                    'approval.submit',
+                    'approval.approve',
+                    'approval.config.manage'
+                  )
+                """,
+                Integer.class);
+        Integer approvalObjectIndexCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from pg_indexes
+                where schemaname = 'public'
+                  and indexname = 'idx_approval_instances_object'
+                """,
+                Integer.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("34");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("36");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -418,6 +453,9 @@ class PostgresMigrationIT {
         assertThat(aiCommunicationRecommendationTableCount).isEqualTo(1);
         assertThat(aiCommunicationRecommendationPermissionCount).isEqualTo(1);
         assertThat(aiLogPermissionCount).isEqualTo(1);
+        assertThat(approvalTableCount).isEqualTo(5);
+        assertThat(approvalPermissionCount).isEqualTo(4);
+        assertThat(approvalObjectIndexCount).isEqualTo(1);
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type

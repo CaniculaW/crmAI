@@ -30,6 +30,8 @@ tags:
   - name: AI Visit Plans
   - name: AI Communication Recommendations
   - name: AI Logs
+  - name: Approvals
+  - name: ApprovalTemplates
 paths:
   /api/health:
     get:
@@ -1941,6 +1943,20 @@ paths:
       responses:
         '200':
           description: Solution document detail.
+  /api/solutions/{solutionId}/submit-approval:
+    post:
+      tags: [Approvals]
+      summary: Submit a quotation or bid document for approval
+      parameters:
+        - name: solutionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Created approval instance.
   /api/contracts:
     get:
       tags: [Contracts]
@@ -2054,6 +2070,20 @@ paths:
       responses:
         '200':
           description: Contract detail.
+  /api/contracts/{contractId}/submit-approval:
+    post:
+      tags: [Approvals]
+      summary: Submit a contract for approval
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Created approval instance.
   /api/contracts/{contractId}/changes:
     get:
       tags: [Contracts]
@@ -2925,6 +2955,185 @@ paths:
       responses:
         '200':
           description: Reminder detail.
+  /api/approvals/tasks:
+    get:
+      tags: [Approvals]
+      summary: List approval tasks by work bucket
+      parameters:
+        - name: bucket
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [pending, started, processed]
+      responses:
+        '200':
+          description: Approval task list.
+  /api/approvals/instances:
+    post:
+      tags: [Approvals]
+      summary: Submit a business object for approval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [object_type, object_id]
+              properties:
+                object_type:
+                  type: string
+                  enum: [quotation, bid, contract]
+                object_id:
+                  type: integer
+                  format: int64
+      responses:
+        '200':
+          description: Created approval instance.
+  /api/approvals/instances/{instanceId}:
+    get:
+      tags: [Approvals]
+      summary: Get approval instance details and history
+      parameters:
+        - $ref: '#/components/parameters/ApprovalInstanceId'
+      responses:
+        '200':
+          description: Approval instance details.
+  /api/approvals/instances/{instanceId}/approve:
+    post:
+      tags: [Approvals]
+      summary: Approve the current approval node
+      parameters:
+        - $ref: '#/components/parameters/ApprovalInstanceId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecisionRequest'
+      responses:
+        '200':
+          description: Updated approval instance.
+  /api/approvals/instances/{instanceId}/reject:
+    post:
+      tags: [Approvals]
+      summary: Reject the current approval node
+      parameters:
+        - $ref: '#/components/parameters/ApprovalInstanceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecisionRequest'
+      responses:
+        '200':
+          description: Updated approval instance.
+  /api/approvals/object/{objectType}/{objectId}:
+    get:
+      tags: [Approvals]
+      summary: Get the latest approval status for a business object
+      parameters:
+        - name: objectType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [quotation, bid, contract]
+        - name: objectId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Approval status and instance details when available.
+  /api/approval-templates:
+    get:
+      tags: [ApprovalTemplates]
+      summary: List approval templates
+      responses:
+        '200':
+          description: Approval template list.
+    post:
+      tags: [ApprovalTemplates]
+      summary: Create an approval template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Created approval template.
+  /api/approval-templates/approver-roles:
+    get:
+      tags: [ApprovalTemplates]
+      summary: List active roles available as approvers
+      responses:
+        '200':
+          description: Approver role list.
+  /api/approval-templates/{templateId}:
+    patch:
+      tags: [ApprovalTemplates]
+      summary: Update an approval template
+      parameters:
+        - $ref: '#/components/parameters/ApprovalTemplateId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Updated approval template.
+  /api/approval-templates/{templateId}/nodes:
+    get:
+      tags: [ApprovalTemplates]
+      summary: List approval template nodes
+      parameters:
+        - $ref: '#/components/parameters/ApprovalTemplateId'
+      responses:
+        '200':
+          description: Approval template node list.
+    post:
+      tags: [ApprovalTemplates]
+      summary: Create an approval template node
+      parameters:
+        - $ref: '#/components/parameters/ApprovalTemplateId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Created approval template node.
+  /api/approval-templates/{templateId}/nodes/{nodeId}:
+    patch:
+      tags: [ApprovalTemplates]
+      summary: Update an approval template node
+      parameters:
+        - $ref: '#/components/parameters/ApprovalTemplateId'
+        - name: nodeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Updated approval template node.
 components:
   securitySchemes:
     bearerAuth:
@@ -2969,7 +3178,26 @@ components:
       schema:
         type: integer
         format: int64
+    ApprovalInstanceId:
+      name: instanceId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    ApprovalTemplateId:
+      name: templateId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
   schemas:
+    ApprovalDecisionRequest:
+      type: object
+      properties:
+        comment:
+          type: string
     ApiAiContextSummaryResponse:
       type: object
       required: [code, message, data, trace_id]

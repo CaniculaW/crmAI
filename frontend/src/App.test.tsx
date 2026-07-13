@@ -76,7 +76,11 @@ const apiData = {
       "system.dict.manage",
       "system.user.manage",
       "system.role.manage",
-      "system.ai-config.manage"
+      "system.ai-config.manage",
+      "approval.read",
+      "approval.submit",
+      "approval.approve",
+      "approval.config.manage"
     ]
   },
   accounts: [
@@ -2339,6 +2343,57 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getAllByRole("link", { name: "审计日志" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "字典管理" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "AI配置" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "审批配置" }).length).toBeGreaterThan(0);
+  });
+
+  it("routes approval center and approval configuration as independent work pages", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "审批中心" }));
+    expect(await screen.findByRole("heading", { name: "审批中心" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "待我审批" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "我发起的" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "已处理" })).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("link", { name: "审批配置" })[0]);
+    expect(await screen.findByRole("heading", { name: "审批配置" })).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledWith("/api/approval-templates", expect.anything());
+  });
+
+  it("shows approval configuration without exposing system overview to a config-only user", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch({
+      user: {
+        ...apiData.user,
+        permissions: ["approval.config.manage"]
+      }
+    });
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(screen.getByRole("menuitem", { name: "系统" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "审批配置" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "系统概览" })).not.toBeInTheDocument();
+  });
+
+  it("shows approval status inside a quotation detail drawer", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "方案标书" }));
+    await user.click(await screen.findByRole("button", { name: "V2试点技术方案" }));
+
+    expect(await screen.findByText("尚未提交审批")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "提交审批" })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/approvals/object/quotation/91", expect.anything());
   });
 
   it("renders OpenAI model configuration under system AI config", async () => {
@@ -2887,6 +2942,18 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/system/dicts")) {
       return jsonResponse({ code: "OK", data: data.dictionaries });
+    }
+    if (path.endsWith("/api/approvals/tasks")) {
+      return jsonResponse({ code: "OK", data: [] });
+    }
+    if (path.endsWith("/api/approvals/object/quotation/91")) {
+      return jsonResponse({
+        code: "OK",
+        data: { object_type: "quotation", object_id: 91, instance: null, history: [] }
+      });
+    }
+    if (path.endsWith("/api/approval-templates")) {
+      return jsonResponse({ code: "OK", data: [] });
     }
     if (path.endsWith("/api/system/audit-logs")) {
       return jsonResponse({ code: "OK", data: data.auditLogs });
