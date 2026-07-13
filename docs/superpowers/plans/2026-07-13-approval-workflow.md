@@ -37,7 +37,7 @@
 - Create: `backend/src/main/resources/db/migration/V36__create_approval_workflows.sql`
 - Modify: `backend/src/test/java/com/canicula/crmai/DatabaseMigrationTest.java`
 
-- [ ] **Step 1: Write the failing migration test**
+- [x] **Step 1: Write the failing migration test**
 
 Add assertions that query `information_schema.tables` for `approval_templates`, `approval_template_nodes`, `approval_instances`, `approval_instance_nodes`, and `approval_actions`, then assert these permission codes exist:
 
@@ -49,13 +49,13 @@ assertThat(permissionCodes()).contains(
         "approval.config.manage");
 ```
 
-- [ ] **Step 2: Run the migration test and verify RED**
+- [x] **Step 2: Run the migration test and verify RED**
 
 Run: `mvn -Dtest=DatabaseMigrationTest test`
 
 Expected: FAIL because `approval_templates` and the approval permission codes do not exist.
 
-- [ ] **Step 3: Add the migration**
+- [x] **Step 3: Add the migration**
 
 Create five tables using the established identity, timestamp, soft-delete, and index conventions. The core columns must be:
 
@@ -106,13 +106,13 @@ create table approval_instances (
 
 `approval_instance_nodes` copies `step_order`, `node_name`, and `approver_role_id`, and stores `status`, `handled_by`, `handled_at`, and `comment`. `approval_actions` stores `instance_id`, optional `node_id`, `action`, `actor_user_id`, `comment`, and `action_at`. Add a partial unique index preventing more than one pending instance for the same object, and seed the four permission codes with `module_code = 'approval'`.
 
-- [ ] **Step 4: Run the migration test and verify GREEN**
+- [x] **Step 4: Run the migration test and verify GREEN**
 
 Run: `mvn -Dtest=DatabaseMigrationTest test`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit schema work**
+- [x] **Step 5: Commit schema work**
 
 ```bash
 git add backend/src/main/resources/db/migration/V36__create_approval_workflows.sql backend/src/test/java/com/canicula/crmai/DatabaseMigrationTest.java
