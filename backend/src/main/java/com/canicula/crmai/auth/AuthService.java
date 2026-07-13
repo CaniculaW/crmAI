@@ -191,17 +191,15 @@ public class AuthService {
                     select s.id, s.user_id
                     from sys_sessions s
                     join sys_users u on u.id = s.user_id
+                    join sys_login_accounts la
+                      on la.id = s.login_account_id
+                     and la.user_id = s.user_id
                     where s.session_token_hash = ?
                       and s.revoked_at is null
                       and s.expires_at > current_timestamp
                       and u.status = 'active'
                       and u.deleted_at is null
-                      and exists (
-                          select 1
-                          from sys_login_accounts la
-                          where la.user_id = u.id
-                            and la.status = 'active'
-                      )
+                      and la.status = 'active'
                     """,
                     (rs, rowNum) -> new SessionSubject(rs.getLong("id"), rs.getLong("user_id")),
                     sha256(accessToken)));

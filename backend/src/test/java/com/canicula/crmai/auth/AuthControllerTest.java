@@ -158,6 +158,28 @@ class AuthControllerTest {
     }
 
     @Test
+    void invalidatesExistingSessionWhenIssuingLoginAccountIsDisabled() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String username = "session_login_" + suffix;
+        Long userId = createLoginReadyUser(username, "session_login_" + suffix + "@example.com");
+        identityService.createLoginAccount(new LoginAccountCreateRequest(
+                userId,
+                "username",
+                username + "_backup",
+                false,
+                "active"));
+        passwordCredentialService.createPasswordCredential(userId, "S3cure!123");
+        String accessToken = login(username, "auth-session-login-account-login");
+
+        identityService.updateLoginAccountStatus("username", username, "disabled");
+
+        ResponseEntity<JsonNode> meResponse = me(accessToken, "auth-session-login-account-me");
+
+        assertThat(meResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(meResponse.getBody().path("code").asText()).isEqualTo("UNAUTHORIZED");
+    }
+
+    @Test
     void excludesDeletedRolesAndTheirPermissionsFromExistingSession() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         String username = "deleted_role_" + suffix;
