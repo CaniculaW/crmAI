@@ -1,12 +1,19 @@
 package com.canicula.crmai.database;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.Map;
+import java.util.UUID;
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.MigrationVersion;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 class DatabaseMigrationTest {
@@ -509,6 +516,15 @@ class DatabaseMigrationTest {
                 )
                 """,
                 Integer.class);
+        Integer nullableCurrentStepCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.columns
+                where lower(table_name) = 'approval_instances'
+                  and lower(column_name) = 'current_step_order'
+                  and is_nullable = 'YES'
+                """,
+                Integer.class);
         Integer permissionCount = jdbcTemplate.queryForObject(
                 """
                 select count(*)
@@ -516,10 +532,158 @@ class DatabaseMigrationTest {
                 where permission_code in (
                   'approval.read', 'approval.submit', 'approval.approve', 'approval.config.manage'
                 )
+                  and module_code = 'approval'
                 """,
                 Integer.class);
 
         assertThat(tableCount).isEqualTo(5);
+        assertThat(nullableCurrentStepCount).isEqualTo(1);
         assertThat(permissionCount).isEqualTo(4);
+    }
+
+    @Test
+    void grantsApprovalPermissionsToSystemRoleManagers() {
+        DriverManagerDataSource isolatedDataSource = new DriverManagerDataSource();
+        isolatedDataSource.setDriverClassName("org.h2.Driver");
+        isolatedDataSource.setUrl("jdbc:h2:mem:approval_permissions_" + UUID.randomUUID()
+                + ";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
+        isolatedDataSource.setUsername("sa");
+        isolatedDataSource.setPassword("");
+        Map<String, String> placeholders = Map.of(
+                "activeRecordFilter", "",
+                "jsonDataType", "json");
+
+        Flyway.configure()
+                .dataSource(isolatedDataSource)
+                .locations("classpath:db/migration")
+                .placeholders(placeholders)
+                .target(MigrationVersion.fromVersion("35"))
+                .load()
+                .migrate();
+
+        JdbcTemplate isolatedJdbcTemplate = new JdbcTemplate(isolatedDataSource);
+        try {
+            isolatedJdbcTemplate.update(
+                    "insert into sys_roles (code, name) values ('approval_test_admin', 'Approval Test Admin')");
+            isolatedJdbcTemplate.update(
+                    """
+                    insert into sys_role_permissions (role_id, permission_id)
+                    select r.id, p.id
+                    from sys_roles r
+                    join sys_permissions p on p.permission_code = 'system.role.manage'
+                    where r.code = 'approval_test_admin'
+                    """);
+
+            Flyway.configure()
+                    .dataSource(isolatedDataSource)
+                    .locations("classpath:db/migration")
+                    .placeholders(placeholders)
+                    .load()
+                    .migrate();
+
+            Integer grantedPermissionCount = isolatedJdbcTemplate.queryForObject(
+                    """
+                    select count(distinct approval_permission.permission_code)
+                    from sys_role_permissions manager_role_permission
+                    join sys_permissions manager_permission
+                      on manager_permission.id = manager_role_permission.permission_id
+                    join sys_role_permissions approval_role_permission
+                      on approval_role_permission.role_id = manager_role_permission.role_id
+                    join sys_permissions approval_permission
+                      on approval_permission.id = approval_role_permission.permission_id
+                    where manager_permission.permission_code = 'system.role.manage'
+                      and approval_permission.permission_code in (
+                        'approval.read', 'approval.submit', 'approval.approve', 'approval.config.manage'
+                      )
+                    """,
+                    Integer.class);
+
+            assertThat(grantedPermissionCount).isEqualTo(4);
+        } finally {
+            isolatedJdbcTemplate.execute("drop all objects");
+        }
+    }
+
+    @Test
+    @Transactional
+    void rejectsApprovalActionForNodeFromDifferentInstance() {
+        jdbcTemplate.update(
+                """
+                insert into sys_users (name, email, status)
+                values ('Approval Test User', 'approval-test-user@example.com', 'active')
+                """);
+        Long userId = jdbcTemplate.queryForObject(
+                "select id from sys_users where email = 'approval-test-user@example.com'",
+                Long.class);
+        jdbcTemplate.update(
+                """
+                insert into sys_roles (code, name)
+                values ('approval_test_approver', 'Approval Test Approver')
+                """);
+        Long roleId = jdbcTemplate.queryForObject(
+                "select id from sys_roles where code = 'approval_test_approver'",
+                Long.class);
+        jdbcTemplate.update(
+                """
+                insert into approval_templates (object_type, template_name, created_by)
+                values ('contract', 'Approval Test Template', ?)
+                """,
+                userId);
+        Long templateId = jdbcTemplate.queryForObject(
+                "select id from approval_templates where template_name = 'Approval Test Template'",
+                Long.class);
+        jdbcTemplate.update(
+                """
+                insert into approval_instances (
+                  template_id, object_type, object_id, object_name, submitted_by
+                ) values (?, 'contract', 1001, 'Approval Test Object A', ?)
+                """,
+                templateId,
+                userId);
+        jdbcTemplate.update(
+                """
+                insert into approval_instances (
+                  template_id, object_type, object_id, object_name, submitted_by
+                ) values (?, 'contract', 1002, 'Approval Test Object B', ?)
+                """,
+                templateId,
+                userId);
+        Long instanceAId = jdbcTemplate.queryForObject(
+                "select id from approval_instances where object_id = 1001",
+                Long.class);
+        Long instanceBId = jdbcTemplate.queryForObject(
+                "select id from approval_instances where object_id = 1002",
+                Long.class);
+        jdbcTemplate.update(
+                """
+                insert into approval_instance_nodes (
+                  instance_id, step_order, node_name, approver_role_id
+                ) values (?, 1, 'Approval Test Node', ?)
+                """,
+                instanceBId,
+                roleId);
+        Long instanceBNodeId = jdbcTemplate.queryForObject(
+                "select id from approval_instance_nodes where instance_id = ? and step_order = 1",
+                Long.class,
+                instanceBId);
+
+        int submitActionCount = jdbcTemplate.update(
+                """
+                insert into approval_actions (instance_id, node_id, action, actor_user_id)
+                values (?, null, 'submit', ?)
+                """,
+                instanceAId,
+                userId);
+        assertThat(submitActionCount).isEqualTo(1);
+
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                """
+                insert into approval_actions (instance_id, node_id, action, actor_user_id)
+                values (?, ?, 'approve', ?)
+                """,
+                instanceAId,
+                instanceBNodeId,
+                userId))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 }
