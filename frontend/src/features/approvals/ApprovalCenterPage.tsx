@@ -15,7 +15,7 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { CheckCircle2, Eye, XCircle } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   crmApi,
   type ApprovalAction,
@@ -25,8 +25,11 @@ import {
   type ApprovalObjectType,
   type ApprovalTask,
   type ApprovalTaskBucket,
-  type CurrentUser
+  type CurrentUser,
+  type SystemRoleSummary
 } from "../../api/crm";
+
+type ApprovalCenterUser = CurrentUser & { roles?: SystemRoleSummary[] };
 
 const objectTypeLabels: Record<ApprovalObjectType, string> = {
   quotation: "报价",
@@ -79,20 +82,43 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detail, setDetail] = useState<ApprovalInstanceDetail | null>(null);
+  const [selectedTask, setSelectedTask] = useState<ApprovalTask | null>(null);
   const [approvalComment, setApprovalComment] = useState("");
   const [decisionLoading, setDecisionLoading] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectForm] = Form.useForm<{ comment: string }>();
+  const taskRequestSequence = useRef(0);
+
+  const resetDecisionInputs = useCallback(() => {
+    setApprovalComment("");
+    rejectForm.resetFields();
+  }, [rejectForm]);
+
+  const closeDrawer = useCallback(() => {
+    setDrawerOpen(false);
+    setDetail(null);
+    setSelectedTask(null);
+    setRejectOpen(false);
+    resetDecisionInputs();
+  }, [resetDecisionInputs]);
 
   const loadTasks = useCallback(async () => {
+    const requestSequence = ++taskRequestSequence.current;
     setLoading(true);
     try {
-      setTasks(await crmApi.approvals.tasks(bucket));
+      const nextTasks = await crmApi.approvals.tasks(bucket);
+      if (requestSequence === taskRequestSequence.current) {
+        setTasks(nextTasks);
+      }
     } catch (error) {
-      setTasks([]);
-      messageApi.error(errorText(error, "加载审批任务失败"));
+      if (requestSequence === taskRequestSequence.current) {
+        setTasks([]);
+        messageApi.error(errorText(error, "加载审批任务失败"));
+      }
     } finally {
-      setLoading(false);
+      if (requestSequence === taskRequestSequence.current) {
+        setLoading(false);
+      }
     }
   }, [bucket, messageApi]);
 
@@ -100,18 +126,21 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
     void loadTasks();
   }, [loadTasks]);
 
-  const openDetail = async (id: number) => {
+  const openDetail = useCallback(async (task: ApprovalTask) => {
+    resetDecisionInputs();
+    setRejectOpen(false);
+    setSelectedTask(task);
     setDrawerOpen(true);
     setDetail(null);
     setDetailLoading(true);
     try {
-      setDetail(await crmApi.approvals.detail(id));
+      setDetail(await crmApi.approvals.detail(task.instance.id));
     } catch (error) {
       messageApi.error(errorText(error, "加载审批详情失败"));
     } finally {
       setDetailLoading(false);
     }
-  };
+  }, [messageApi, resetDecisionInputs]);
 
   const handleApprove = async () => {
     if (!detail) {
@@ -122,9 +151,7 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
       const comment = approvalComment.trim();
       await crmApi.approvals.approve(detail.instance.id, comment ? { comment } : undefined);
       messageApi.success("审批已通过");
-      setDrawerOpen(false);
-      setDetail(null);
-      setApprovalComment("");
+      closeDrawer();
       await loadTasks();
     } catch (error) {
       messageApi.error(errorText(error, "审批操作失败"));
@@ -141,10 +168,7 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
     try {
       await crmApi.approvals.reject(detail.instance.id, { comment: comment.trim() });
       messageApi.success("审批已驳回");
-      setRejectOpen(false);
-      setDrawerOpen(false);
-      setDetail(null);
-      rejectForm.resetFields();
+      closeDrawer();
       await loadTasks();
     } catch (error) {
       messageApi.error(errorText(error, "驳回操作失败"));
@@ -205,7 +229,7 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
             icon={<Eye size={15} />}
             onClick={(event) => {
               event.stopPropagation();
-              void openDetail(task.instance.id);
+              void openDetail(task);
             }}
           >
             查看
@@ -213,14 +237,21 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
         )
       }
     ],
-    []
+    [openDetail]
   );
 
   const orderedNodes = useMemo(
     () => [...(detail?.nodes ?? [])].sort((left, right) => left.step_order - right.step_order),
     [detail]
   );
-  const canDecide = currentUser.permissions.includes("approval.approve") && detail?.instance.status === "pending";
+  const currentNode = selectedTask?.current_node;
+  const userRoles = (currentUser as ApprovalCenterUser).roles ?? [];
+  const canDecide =
+    bucket === "pending" &&
+    currentUser.permissions.includes("approval.approve") &&
+    detail?.instance.status === "pending" &&
+    Boolean(currentNode) &&
+    userRoles.some((role) => role.id === currentNode?.approver_role_id);
 
   return (
     <section style={{ minWidth: 0 }}>
@@ -249,7 +280,7 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
         pagination={{ pageSize: 10, showSizeChanger: false }}
         locale={{ emptyText: "暂无审批任务" }}
         onRow={(task) => ({
-          onClick: () => void openDetail(task.instance.id),
+          onClick: () => void openDetail(task),
           style: { cursor: "pointer" }
         })}
       />
@@ -259,10 +290,7 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
         open={drawerOpen}
         size={720}
         loading={detailLoading}
-        onClose={() => {
-          setDrawerOpen(false);
-          setDetail(null);
-        }}
+        onClose={closeDrawer}
       >
         {detail ? (
           <Space orientation="vertical" size={20} style={{ width: "100%" }}>
@@ -311,17 +339,33 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
                   <div
                     key={action.id}
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "100px 110px 150px minmax(0, 1fr)",
-                      gap: 12,
+                      display: "flex",
+                      flexWrap: "wrap",
+                      alignItems: "baseline",
+                      gap: "6px 12px",
+                      minWidth: 0,
+                      maxWidth: "100%",
                       padding: "10px 0",
                       borderBottom: "1px solid #f0f0f0"
                     }}
                   >
-                    <Typography.Text strong>{actionLabels[action.action]}</Typography.Text>
-                    <span>用户 {action.actor_user_id}</span>
-                    <span>{dateText(action.action_at)}</span>
-                    <span>{action.comment || "无意见"}</span>
+                    <Typography.Text strong style={{ flex: "0 1 100px" }}>
+                      {actionLabels[action.action]}
+                    </Typography.Text>
+                    <span style={{ flex: "0 1 110px" }}>用户 {action.actor_user_id}</span>
+                    <span style={{ flex: "0 1 150px" }}>{dateText(action.action_at)}</span>
+                    <span
+                      style={{
+                        flex: "1 1 180px",
+                        minWidth: 0,
+                        maxWidth: "100%",
+                        overflowWrap: "anywhere",
+                        wordBreak: "break-word",
+                        whiteSpace: "pre-wrap"
+                      }}
+                    >
+                      {action.comment || "无意见"}
+                    </span>
                   </div>
                 ))}
               </div>
