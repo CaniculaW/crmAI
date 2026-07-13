@@ -6,6 +6,7 @@ import type { ApprovalObjectStatus, ApprovalObjectType } from "../../api/crm";
 export type ApprovalStatusPanelProps = {
   objectType: ApprovalObjectType;
   objectId: number;
+  canRead?: boolean;
   canSubmit: boolean;
   isPending: boolean;
   onSubmitted?: () => void | Promise<void>;
@@ -41,6 +42,7 @@ function errorText(error: unknown) {
 export function ApprovalStatusPanel({
   objectType,
   objectId,
+  canRead = true,
   canSubmit,
   isPending,
   onSubmitted
@@ -52,6 +54,13 @@ export function ApprovalStatusPanel({
 
   useEffect(() => {
     let active = true;
+
+    if (!canRead) {
+      setLoading(false);
+      setError(null);
+      setStatus(null);
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -77,7 +86,7 @@ export function ApprovalStatusPanel({
     return () => {
       active = false;
     };
-  }, [objectId, objectType]);
+  }, [canRead, objectId, objectType]);
 
   async function handleSubmit() {
     setSubmitting(true);
@@ -89,15 +98,32 @@ export function ApprovalStatusPanel({
       } else {
         await crmApi.solutions.submitApproval(objectId);
       }
-
-      const nextStatus = await crmApi.approvals.objectStatus(objectType, objectId);
-      setStatus(nextStatus);
-      await onSubmitted?.();
     } catch (submitError) {
       setError(`提交审批失败：${errorText(submitError)}`);
-    } finally {
       setSubmitting(false);
+      return;
     }
+
+    let refreshFailed = false;
+    if (canRead) {
+      try {
+        const nextStatus = await crmApi.approvals.objectStatus(objectType, objectId);
+        setStatus(nextStatus);
+      } catch {
+        refreshFailed = true;
+      }
+    }
+
+    try {
+      await onSubmitted?.();
+    } catch {
+      refreshFailed = true;
+    }
+
+    if (refreshFailed) {
+      setError("审批已提交，状态刷新失败");
+    }
+    setSubmitting(false);
   }
 
   const canSubmitNow =
@@ -108,7 +134,25 @@ export function ApprovalStatusPanel({
   return (
     <Spin spinning={loading}>
       {error ? <Alert type="error" showIcon title={error} /> : null}
-      {status && !status.instance ? (
+      {!canRead ? (
+        isPending ? (
+          <Descriptions
+            size="small"
+            column={1}
+            items={[
+              {
+                key: "status",
+                label: "当前状态",
+                children: <Tag color="processing">审批中</Tag>
+              }
+            ]}
+          />
+        ) : canSubmitNow ? (
+          <Button type="primary" loading={submitting} onClick={() => void handleSubmit()}>
+            提交审批
+          </Button>
+        ) : null
+      ) : status && !status.instance ? (
         <Empty description="尚未提交审批">
           {canSubmitNow ? (
             <Button type="primary" loading={submitting} onClick={() => void handleSubmit()}>

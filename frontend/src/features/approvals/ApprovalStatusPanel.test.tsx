@@ -124,6 +124,67 @@ describe("ApprovalStatusPanel", () => {
     expect(await screen.findByRole("button", { name: "提交审批" })).toBeInTheDocument();
   });
 
+  it("skips status loading and shows submit when approval read is unavailable", async () => {
+    const objectStatus = vi.spyOn(crmApi.approvals, "objectStatus").mockResolvedValue(emptyStatus);
+
+    render(
+      <ApprovalStatusPanel
+        objectType="quotation"
+        objectId={12}
+        canRead={false}
+        canSubmit
+        isPending={false}
+      />
+    );
+
+    expect(await screen.findByRole("button", { name: "提交审批" })).toBeInTheDocument();
+    expect(objectStatus).not.toHaveBeenCalled();
+  });
+
+  it("shows business pending without status loading or a submit action", async () => {
+    const objectStatus = vi.spyOn(crmApi.approvals, "objectStatus").mockResolvedValue(emptyStatus);
+
+    render(
+      <ApprovalStatusPanel
+        objectType="quotation"
+        objectId={12}
+        canRead={false}
+        canSubmit
+        isPending
+      />
+    );
+
+    expect(await screen.findByText("审批中")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "提交审批" })).not.toBeInTheDocument();
+    expect(objectStatus).not.toHaveBeenCalled();
+  });
+
+  it("submits and notifies without status reads when approval read is unavailable", async () => {
+    const objectStatus = vi.spyOn(crmApi.approvals, "objectStatus").mockResolvedValue(emptyStatus);
+    const submitApproval = vi
+      .spyOn(crmApi.solutions, "submitApproval")
+      .mockResolvedValue({} as SolutionDocument);
+    const onSubmitted = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <ApprovalStatusPanel
+        objectType="quotation"
+        objectId={12}
+        canRead={false}
+        canSubmit
+        isPending={false}
+        onSubmitted={onSubmitted}
+      />
+    );
+
+    await user.click(await screen.findByRole("button", { name: "提交审批" }));
+
+    await waitFor(() => expect(submitApproval).toHaveBeenCalledWith(12));
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce());
+    expect(objectStatus).not.toHaveBeenCalled();
+  });
+
   it.each([
     ["quotation", "solutions"],
     ["bid", "solutions"],
@@ -303,5 +364,53 @@ describe("ApprovalStatusPanel", () => {
     expect(screen.getByRole("button", { name: /提交审批/ })).not.toHaveClass("ant-btn-loading");
     expect(objectStatus).toHaveBeenCalledOnce();
     expect(onSubmitted).not.toHaveBeenCalled();
+  });
+
+  it("reports a refresh failure after a successful submission accurately", async () => {
+    vi.spyOn(crmApi.approvals, "objectStatus")
+      .mockResolvedValueOnce(emptyStatus)
+      .mockRejectedValueOnce(new Error("状态刷新失败"));
+    vi.spyOn(crmApi.solutions, "submitApproval").mockResolvedValue({} as SolutionDocument);
+    const onSubmitted = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <ApprovalStatusPanel
+        objectType="quotation"
+        objectId={12}
+        canSubmit
+        isPending={false}
+        onSubmitted={onSubmitted}
+      />
+    );
+
+    await user.click(await screen.findByRole("button", { name: "提交审批" }));
+
+    expect(await screen.findByText("审批已提交，状态刷新失败")).toBeInTheDocument();
+    expect(screen.queryByText(/提交审批失败/)).not.toBeInTheDocument();
+    expect(onSubmitted).toHaveBeenCalledOnce();
+  });
+
+  it("reports a parent refresh failure after a successful submission accurately", async () => {
+    vi.spyOn(crmApi.approvals, "objectStatus").mockResolvedValue(emptyStatus);
+    vi.spyOn(crmApi.solutions, "submitApproval").mockResolvedValue({} as SolutionDocument);
+    const onSubmitted = vi.fn().mockRejectedValue(new Error("父级刷新失败"));
+    const user = userEvent.setup();
+
+    render(
+      <ApprovalStatusPanel
+        objectType="quotation"
+        objectId={12}
+        canSubmit
+        isPending={false}
+        onSubmitted={onSubmitted}
+      />
+    );
+
+    await user.click(await screen.findByRole("button", { name: "提交审批" }));
+
+    expect(await screen.findByText("审批已提交，状态刷新失败")).toBeInTheDocument();
+    expect(screen.queryByText(/提交审批失败/)).not.toBeInTheDocument();
+    expect(onSubmitted).toHaveBeenCalledOnce();
   });
 });
