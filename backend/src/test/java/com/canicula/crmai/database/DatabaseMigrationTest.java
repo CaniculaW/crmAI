@@ -496,4 +496,30 @@ class DatabaseMigrationTest {
         assertThat(tableCount).isEqualTo(1);
         assertThat(permissionCount).isEqualTo(1);
     }
+
+    @Test
+    void createsApprovalWorkflowTablesAndPermissions() {
+        Integer tableCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.tables
+                where lower(table_name) in (
+                  'approval_templates', 'approval_template_nodes', 'approval_instances',
+                  'approval_instance_nodes', 'approval_actions'
+                )
+                """,
+                Integer.class);
+        Integer permissionCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_permissions
+                where permission_code in (
+                  'approval.read', 'approval.submit', 'approval.approve', 'approval.config.manage'
+                )
+                """,
+                Integer.class);
+
+        assertThat(tableCount).isEqualTo(5);
+        assertThat(permissionCount).isEqualTo(4);
+    }
 }
