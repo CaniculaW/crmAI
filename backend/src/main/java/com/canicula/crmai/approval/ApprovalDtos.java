@@ -1,5 +1,6 @@
 package com.canicula.crmai.approval;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -14,9 +15,14 @@ record ApprovalTemplateCreateRequest(
 }
 
 record ApprovalTemplateUpdateRequest(
-        String template_name,
+        @Pattern(regexp = "(?s).*\\S.*") String template_name,
         Boolean is_default,
         @Pattern(regexp = "active|inactive") String status) {
+
+    @AssertTrue(message = "至少提供一个模板更新字段")
+    public boolean isValidPatch() {
+        return template_name != null || is_default != null || status != null;
+    }
 }
 
 record ApprovalTemplateResponse(
@@ -41,9 +47,14 @@ record ApprovalTemplateNodeCreateRequest(
 
 record ApprovalTemplateNodeUpdateRequest(
         @Positive Integer step_order,
-        String node_name,
+        @Pattern(regexp = "(?s).*\\S.*") String node_name,
         @Positive Long approver_role_id,
         @Pattern(regexp = "active|inactive") String status) {
+
+    @AssertTrue(message = "至少提供一个节点更新字段")
+    public boolean isValidPatch() {
+        return step_order != null || node_name != null || approver_role_id != null || status != null;
+    }
 }
 
 record ApprovalTemplateNodeResponse(

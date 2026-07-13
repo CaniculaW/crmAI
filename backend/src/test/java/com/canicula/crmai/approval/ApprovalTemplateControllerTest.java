@@ -100,8 +100,10 @@ class ApprovalTemplateControllerTest {
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(findById(listResponse.getBody().path("data"), templateId).path("template_name").asText())
                 .isEqualTo("Quotation Updated " + suffix);
-        assertThat(auditCount("approval.template.create", "approval_template", templateId)).isEqualTo(1);
-        assertThat(auditCount("approval.template.update", "approval_template", templateId)).isEqualTo(1);
+        assertThat(auditCount(
+                "approval.template.create", "approval_template", templateId, manager.userId())).isEqualTo(1);
+        assertThat(auditCount(
+                "approval.template.update", "approval_template", templateId, manager.userId())).isEqualTo(1);
     }
 
     @Test
@@ -116,6 +118,40 @@ class ApprovalTemplateControllerTest {
                 "select is_default from approval_templates where id = ?", Boolean.class, firstId)).isFalse();
         assertThat(jdbcTemplate.queryForObject(
                 "select is_default from approval_templates where id = ?", Boolean.class, secondId)).isTrue();
+        assertThat(auditCount(
+                "approval.template.create", "approval_template", secondId, manager.userId())).isEqualTo(1);
+        assertThat(auditCount(
+                "approval.template.update", "approval_template", firstId, manager.userId())).isEqualTo(1);
+
+        JsonNode before = auditSnapshot(firstId, manager.userId(), "before_data");
+        JsonNode after = auditSnapshot(firstId, manager.userId(), "after_data");
+        assertThat(before.path("id").asLong()).isEqualTo(firstId);
+        assertThat(before.path("is_default").asBoolean()).isTrue();
+        assertThat(after.path("id").asLong()).isEqualTo(firstId);
+        assertThat(after.path("is_default").asBoolean()).isFalse();
+
+        long thirdId = createTemplate(manager.token(), "contract", "C Contract " + suffix, false);
+        ResponseEntity<JsonNode> updateResponse = exchange(
+                "/api/approval-templates/" + thirdId,
+                HttpMethod.PATCH,
+                Map.of("is_default", true),
+                manager.token(),
+                "approval-switch-default-by-update");
+
+        assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(jdbcTemplate.queryForObject(
+                "select is_default from approval_templates where id = ?", Boolean.class, secondId)).isFalse();
+        assertThat(jdbcTemplate.queryForObject(
+                "select is_default from approval_templates where id = ?", Boolean.class, thirdId)).isTrue();
+        assertThat(auditCount(
+                "approval.template.update", "approval_template", secondId, manager.userId())).isEqualTo(1);
+        assertThat(auditCount(
+                "approval.template.update", "approval_template", thirdId, manager.userId())).isEqualTo(1);
+
+        JsonNode updateBefore = auditSnapshot(secondId, manager.userId(), "before_data");
+        JsonNode updateAfter = auditSnapshot(secondId, manager.userId(), "after_data");
+        assertThat(updateBefore.path("is_default").asBoolean()).isTrue();
+        assertThat(updateAfter.path("is_default").asBoolean()).isFalse();
     }
 
     @Test
@@ -173,8 +209,10 @@ class ApprovalTemplateControllerTest {
         assertThat(updated.path("node_name").asText()).isEqualTo("Legal Review");
         assertThat(updated.path("approver_role_id").asLong()).isEqualTo(secondRoleId);
         assertThat(updated.path("status").asText()).isEqualTo("inactive");
-        assertThat(auditCount("approval.template-node.create", "approval_template_node", nodeId)).isEqualTo(1);
-        assertThat(auditCount("approval.template-node.update", "approval_template_node", nodeId)).isEqualTo(1);
+        assertThat(auditCount(
+                "approval.template-node.create", "approval_template_node", nodeId, manager.userId())).isEqualTo(1);
+        assertThat(auditCount(
+                "approval.template-node.update", "approval_template_node", nodeId, manager.userId())).isEqualTo(1);
     }
 
     @Test
@@ -182,7 +220,7 @@ class ApprovalTemplateControllerTest {
         String suffix = suffix();
         TestUser manager = createAndLoginUser("approval_invalid_" + suffix, "approval.config.manage");
 
-        assertBadRequest(exchange(
+        assertConflict(exchange(
                 "/api/approval-templates",
                 HttpMethod.POST,
                 Map.of("object_type", "invoice", "template_name", "Invalid " + suffix),
@@ -190,7 +228,7 @@ class ApprovalTemplateControllerTest {
                 "approval-invalid-object"));
 
         long templateId = createTemplate(manager.token(), "quotation", "Valid " + suffix, false);
-        assertBadRequest(exchange(
+        assertValidationBadRequest(exchange(
                 "/api/approval-templates/" + templateId,
                 HttpMethod.PATCH,
                 Map.of("status", "archived"),
@@ -198,12 +236,66 @@ class ApprovalTemplateControllerTest {
                 "approval-invalid-template-status"));
 
         long roleId = createRole("approval_invalid_role_" + suffix);
-        assertBadRequest(exchange(
+        assertValidationBadRequest(exchange(
                 "/api/approval-templates/" + templateId + "/nodes",
                 HttpMethod.POST,
                 Map.of("step_order", 0, "node_name", "Invalid", "approver_role_id", roleId),
                 manager.token(),
                 "approval-invalid-step"));
+    }
+
+    @Test
+    void rejectsEmptyOrBlankTemplatePatchesWithBeanValidation() {
+        String suffix = suffix();
+        TestUser manager = createAndLoginUser("approval_template_patch_" + suffix, "approval.config.manage");
+        long templateId = createTemplate(manager.token(), "quotation", "Patch " + suffix, false);
+
+        assertValidationBadRequest(exchange(
+                "/api/approval-templates/" + templateId,
+                HttpMethod.PATCH,
+                Map.of(),
+                manager.token(),
+                "approval-empty-template-patch"));
+        assertValidationBadRequest(exchange(
+                "/api/approval-templates/" + templateId,
+                HttpMethod.PATCH,
+                Map.of("template_name", ""),
+                manager.token(),
+                "approval-empty-template-name"));
+        assertValidationBadRequest(exchange(
+                "/api/approval-templates/" + templateId,
+                HttpMethod.PATCH,
+                Map.of("template_name", "   "),
+                manager.token(),
+                "approval-blank-template-name"));
+    }
+
+    @Test
+    void rejectsEmptyOrBlankNodePatchesWithBeanValidation() {
+        String suffix = suffix();
+        TestUser manager = createAndLoginUser("approval_node_patch_" + suffix, "approval.config.manage");
+        long templateId = createTemplate(manager.token(), "bid", "Node Patch " + suffix, false);
+        long roleId = createRole("approval_node_patch_role_" + suffix);
+        long nodeId = createNode(manager.token(), templateId, 1, "Review", roleId);
+
+        assertValidationBadRequest(exchange(
+                "/api/approval-templates/" + templateId + "/nodes/" + nodeId,
+                HttpMethod.PATCH,
+                Map.of(),
+                manager.token(),
+                "approval-empty-node-patch"));
+        assertValidationBadRequest(exchange(
+                "/api/approval-templates/" + templateId + "/nodes/" + nodeId,
+                HttpMethod.PATCH,
+                Map.of("node_name", ""),
+                manager.token(),
+                "approval-empty-node-name"));
+        assertValidationBadRequest(exchange(
+                "/api/approval-templates/" + templateId + "/nodes/" + nodeId,
+                HttpMethod.PATCH,
+                Map.of("node_name", "   "),
+                manager.token(),
+                "approval-blank-node-name"));
     }
 
     @Test
@@ -220,7 +312,7 @@ class ApprovalTemplateControllerTest {
                 manager.token(),
                 "approval-inactivate-node");
 
-        assertBadRequest(exchange(
+        assertConflict(exchange(
                 "/api/approval-templates/" + templateId + "/nodes",
                 HttpMethod.POST,
                 Map.of("step_order", 1, "node_name", "Duplicate", "approver_role_id", roleId),
@@ -234,7 +326,7 @@ class ApprovalTemplateControllerTest {
         TestUser manager = createAndLoginUser("approval_role_check_" + suffix, "approval.config.manage");
         long templateId = createTemplate(manager.token(), "quotation", "Role Check " + suffix, false);
 
-        assertBadRequest(exchange(
+        assertConflict(exchange(
                 "/api/approval-templates/" + templateId + "/nodes",
                 HttpMethod.POST,
                 Map.of("step_order", 1, "node_name", "Missing Role", "approver_role_id", Long.MAX_VALUE),
@@ -243,7 +335,7 @@ class ApprovalTemplateControllerTest {
 
         long deletedRoleId = createRole("approval_deleted_role_" + suffix);
         jdbcTemplate.update("update sys_roles set deleted_at = current_timestamp where id = ?", deletedRoleId);
-        assertBadRequest(exchange(
+        assertConflict(exchange(
                 "/api/approval-templates/" + templateId + "/nodes",
                 HttpMethod.POST,
                 Map.of("step_order", 2, "node_name", "Deleted Role", "approver_role_id", deletedRoleId),
@@ -399,7 +491,7 @@ class ApprovalTemplateControllerTest {
                 "Approval Test Role"));
     }
 
-    private Integer auditCount(String actionCode, String objectType, long objectId) {
+    private Integer auditCount(String actionCode, String objectType, long objectId, long actorUserId) {
         return jdbcTemplate.queryForObject(
                 """
                 select count(*)
@@ -407,15 +499,46 @@ class ApprovalTemplateControllerTest {
                 where action_code = ?
                   and object_type = ?
                   and object_id = ?
+                  and actor_user_id = ?
                 """,
                 Integer.class,
                 actionCode,
                 objectType,
-                objectId);
+                objectId,
+                actorUserId);
     }
 
-    private static void assertBadRequest(ResponseEntity<JsonNode> response) {
+    private JsonNode auditSnapshot(long objectId, long actorUserId, String columnName) {
+        String snapshot = jdbcTemplate.queryForObject(
+                """
+                select cast(%s as varchar)
+                from sys_audit_logs
+                where action_code = 'approval.template.update'
+                  and object_type = 'approval_template'
+                  and object_id = ?
+                  and actor_user_id = ?
+                order by id desc
+                limit 1
+                """.formatted(columnName),
+                String.class,
+                objectId,
+                actorUserId);
+        try {
+            JsonNode parsed = objectMapper.readTree(snapshot);
+            return parsed.isTextual() ? objectMapper.readTree(parsed.asText()) : parsed;
+        } catch (Exception exception) {
+            throw new IllegalStateException("Audit snapshot is not valid JSON", exception);
+        }
+    }
+
+    private static void assertValidationBadRequest(ResponseEntity<JsonNode> response) {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().path("code").asText()).isEqualTo("VALIDATION_ERROR");
+    }
+
+    private static void assertConflict(ResponseEntity<JsonNode> response) {
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody().path("code").asText()).isEqualTo("BUSINESS_RULE_FAILED");
     }
 
     private static JsonNode findById(JsonNode array, long id) {

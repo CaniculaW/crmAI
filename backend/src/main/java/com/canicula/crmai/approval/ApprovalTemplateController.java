@@ -1,17 +1,11 @@
 package com.canicula.crmai.approval;
 
-import com.canicula.crmai.api.ApiResponse;
-import com.canicula.crmai.api.BusinessRuleException;
 import com.canicula.crmai.audit.AuditLogEntry;
 import com.canicula.crmai.audit.AuditLogService;
 import com.canicula.crmai.auth.RequirePermission;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Map;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +36,9 @@ public class ApprovalTemplateController {
             @Valid @RequestBody ApprovalTemplateCreateRequest request,
             HttpServletRequest httpRequest) {
         Long actorUserId = currentUserId(httpRequest);
+        ApprovalTemplateResponse previousDefault = Boolean.TRUE.equals(request.is_default())
+                ? approvalService.findDefaultTemplate(request.object_type(), null)
+                : null;
         ApprovalTemplateResponse response = approvalService.createTemplate(request, actorUserId);
         audit(
                 actorUserId,
@@ -51,6 +48,7 @@ public class ApprovalTemplateController {
                 null,
                 response,
                 httpRequest);
+        auditClearedDefault(previousDefault, actorUserId, httpRequest);
         return response;
     }
 
@@ -62,6 +60,9 @@ public class ApprovalTemplateController {
             HttpServletRequest httpRequest) {
         Long actorUserId = currentUserId(httpRequest);
         ApprovalTemplateResponse before = approvalService.findTemplate(templateId);
+        ApprovalTemplateResponse previousDefault = Boolean.TRUE.equals(request.is_default())
+                ? approvalService.findDefaultTemplate(before.object_type(), templateId)
+                : null;
         ApprovalTemplateResponse response = approvalService.updateTemplate(templateId, request, actorUserId);
         audit(
                 actorUserId,
@@ -71,6 +72,7 @@ public class ApprovalTemplateController {
                 before,
                 response,
                 httpRequest);
+        auditClearedDefault(previousDefault, actorUserId, httpRequest);
         return response;
     }
 
@@ -120,17 +122,25 @@ public class ApprovalTemplateController {
         return response;
     }
 
-    @ExceptionHandler(BusinessRuleException.class)
-    ResponseEntity<ApiResponse<Map<String, Object>>> handleBusinessRule(
-            BusinessRuleException exception,
+    private void auditClearedDefault(
+            ApprovalTemplateResponse previousDefault,
+            Long actorUserId,
             HttpServletRequest request) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(
-                        "BUSINESS_RULE_FAILED",
-                        exception.getMessage(),
-                        Map.of(),
-                        (String) request.getAttribute("crm.traceId")));
+        if (previousDefault == null) {
+            return;
+        }
+        ApprovalTemplateResponse after = approvalService.findTemplate(previousDefault.id());
+        if (!previousDefault.is_default() || after.is_default()) {
+            return;
+        }
+        audit(
+                actorUserId,
+                "approval.template.update",
+                "approval_template",
+                previousDefault.id(),
+                previousDefault,
+                after,
+                request);
     }
 
     private void audit(

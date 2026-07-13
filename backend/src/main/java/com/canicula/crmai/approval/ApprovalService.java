@@ -60,6 +60,47 @@ public class ApprovalService {
         return templates.get(0);
     }
 
+    public ApprovalTemplateResponse findDefaultTemplate(String objectType, Long exceptTemplateId) {
+        String normalizedObjectType = requireObjectType(objectType);
+        List<ApprovalTemplateResponse> templates;
+        if (exceptTemplateId == null) {
+            templates = jdbcTemplate.query(
+                    """
+                    select id, tenant_id, object_type, template_name, status, is_default,
+                           created_by, created_at, updated_by, updated_at
+                    from approval_templates
+                    where tenant_id = ?
+                      and object_type = ?
+                      and is_default = true
+                      and deleted_at is null
+                    order by id
+                    limit 1
+                    """,
+                    ApprovalService::mapTemplate,
+                    TENANT_ID,
+                    normalizedObjectType);
+        } else {
+            templates = jdbcTemplate.query(
+                    """
+                    select id, tenant_id, object_type, template_name, status, is_default,
+                           created_by, created_at, updated_by, updated_at
+                    from approval_templates
+                    where tenant_id = ?
+                      and object_type = ?
+                      and id <> ?
+                      and is_default = true
+                      and deleted_at is null
+                    order by id
+                    limit 1
+                    """,
+                    ApprovalService::mapTemplate,
+                    TENANT_ID,
+                    normalizedObjectType,
+                    exceptTemplateId);
+        }
+        return templates.isEmpty() ? null : templates.get(0);
+    }
+
     @Transactional
     public ApprovalTemplateResponse createTemplate(ApprovalTemplateCreateRequest request, Long actorUserId) {
         String objectType = requireObjectType(request.object_type());
