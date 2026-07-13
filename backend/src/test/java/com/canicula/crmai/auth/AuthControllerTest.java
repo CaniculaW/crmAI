@@ -25,6 +25,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AuthControllerTest {
@@ -40,6 +41,9 @@ class AuthControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @LocalServerPort
     private int port;
@@ -121,6 +125,63 @@ class AuthControllerTest {
         assertThat(inactiveResponse.body().path("code").asText()).isEqualTo("UNAUTHORIZED");
     }
 
+    @Test
+    void invalidatesExistingSessionWhenUserIsDisabled() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String username = "disabled_user_" + suffix;
+        Long userId = createLoginReadyUser(username, "disabled_user_" + suffix + "@example.com");
+        passwordCredentialService.createPasswordCredential(userId, "S3cure!123");
+        String accessToken = login(username, "auth-disabled-user-login");
+
+        jdbcTemplate.update("update sys_users set status = 'disabled' where id = ?", userId);
+
+        ResponseEntity<JsonNode> meResponse = me(accessToken, "auth-disabled-user-me");
+
+        assertThat(meResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(meResponse.getBody().path("code").asText()).isEqualTo("UNAUTHORIZED");
+    }
+
+    @Test
+    void invalidatesExistingSessionWhenLoginAccountIsDisabled() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String username = "disabled_login_" + suffix;
+        Long userId = createLoginReadyUser(username, "disabled_login_" + suffix + "@example.com");
+        passwordCredentialService.createPasswordCredential(userId, "S3cure!123");
+        String accessToken = login(username, "auth-disabled-login-account-login");
+
+        identityService.updateLoginAccountStatus("username", username, "disabled");
+
+        ResponseEntity<JsonNode> meResponse = me(accessToken, "auth-disabled-login-account-me");
+
+        assertThat(meResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(meResponse.getBody().path("code").asText()).isEqualTo("UNAUTHORIZED");
+    }
+
+    @Test
+    void excludesDeletedRolesAndTheirPermissionsFromExistingSession() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String username = "deleted_role_" + suffix;
+        String roleCode = "sales_rep_" + username;
+        Long userId = createLoginReadyUser(username, "deleted_role_" + suffix + "@example.com");
+        passwordCredentialService.createPasswordCredential(userId, "S3cure!123");
+        String accessToken = login(username, "auth-deleted-role-login");
+        Long roleId = jdbcTemplate.queryForObject(
+                "select role_id from sys_user_roles where user_id = ?",
+                Long.class,
+                userId);
+
+        jdbcTemplate.update("update sys_roles set deleted_at = current_timestamp where id = ?", roleId);
+
+        ResponseEntity<JsonNode> meResponse = me(accessToken, "auth-deleted-role-me");
+
+        assertThat(meResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode meData = meResponse.getBody().path("data");
+        assertThat(meData.path("roles")).noneSatisfy(role ->
+                assertThat(role.path("code").asText()).isEqualTo(roleCode));
+        assertThat(meData.path("permissions")).noneSatisfy(permission ->
+                assertThat(permission.asText()).isEqualTo("account.create"));
+    }
+
     private Long createLoginReadyUser(String username, String email) {
         Long departmentId = identityService.createDepartment(new DepartmentCreateRequest(
                 null,
@@ -161,6 +222,26 @@ class AuthControllerTest {
         HttpHeaders headers = traceHeaders(traceId);
         headers.setBearerAuth(accessToken);
         return headers;
+    }
+
+    private String login(String username, String traceId) {
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/auth/login",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "username", username,
+                        "password", "S3cure!123"), traceHeaders(traceId)),
+                JsonNode.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return response.getBody().path("data").path("access_token").asText();
+    }
+
+    private ResponseEntity<JsonNode> me(String accessToken, String traceId) {
+        return restTemplate.exchange(
+                "/api/auth/me",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(accessToken, traceId)),
+                JsonNode.class);
     }
 
     private HttpJsonResponse postJson(String path, Map<String, String> body, String traceId) throws Exception {
