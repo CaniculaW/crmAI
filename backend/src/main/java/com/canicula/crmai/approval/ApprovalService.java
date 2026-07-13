@@ -378,6 +378,7 @@ public class ApprovalService {
                   and u.deleted_at is null
                   and r.deleted_at is null
                   and p.permission_code = ?
+                  and p.is_active = true
                 """,
                 Integer.class,
                 actorUserId,

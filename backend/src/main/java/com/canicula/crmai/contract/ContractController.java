@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -79,12 +80,17 @@ public class ContractController {
 
     @RequirePermission("contract.update")
     @PostMapping("/api/contracts/{contractId}/submit-approval")
+    @Transactional
     ContractResponse submitApproval(
             @PathVariable Long contractId,
             HttpServletRequest httpRequest) {
         Long actorUserId = currentUserId(httpRequest);
-        ContractResponse response = contractService.submitApproval(contractId, actorUserId);
+        ContractResponse before = contractService.readableDetail(contractId, actorUserId);
+        long instanceId = contractService.submitApproval(contractId, actorUserId);
+        ContractResponse response = contractService.readableDetail(contractId, actorUserId);
         audit(actorUserId, "contract.submit-approval", response, httpRequest);
+        auditApprovalSubmit(actorUserId, instanceId, response, httpRequest);
+        auditBusinessStatus(actorUserId, before, response, httpRequest);
         return response;
     }
 
@@ -148,6 +154,50 @@ public class ContractController {
                 Map.of(
                         "contract_name", response.contract_name(),
                         "account_id", response.account_id()),
+                "success",
+                null,
+                request.getRemoteAddr(),
+                request.getHeader("User-Agent"),
+                (String) request.getAttribute("crm.traceId")));
+    }
+
+    private void auditApprovalSubmit(
+            Long actorUserId,
+            long instanceId,
+            ContractResponse response,
+            HttpServletRequest request) {
+        auditLogService.record(new AuditLogEntry(
+                actorUserId,
+                "approval",
+                "approval.submit",
+                "approval_instance",
+                instanceId,
+                null,
+                Map.of(
+                        "object_type", "contract",
+                        "object_id", response.id(),
+                        "object_name", response.contract_name(),
+                        "status", "pending"),
+                "success",
+                null,
+                request.getRemoteAddr(),
+                request.getHeader("User-Agent"),
+                (String) request.getAttribute("crm.traceId")));
+    }
+
+    private void auditBusinessStatus(
+            Long actorUserId,
+            ContractResponse before,
+            ContractResponse after,
+            HttpServletRequest request) {
+        auditLogService.record(new AuditLogEntry(
+                actorUserId,
+                "approval",
+                "approval.business-status.update",
+                "crm_contract",
+                after.id(),
+                Map.of("contract_status", before.contract_status()),
+                Map.of("contract_status", after.contract_status()),
                 "success",
                 null,
                 request.getRemoteAddr(),

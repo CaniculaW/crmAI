@@ -10,6 +10,8 @@ import com.canicula.crmai.identity.RoleCreateRequest;
 import com.canicula.crmai.identity.UserCreateRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -212,7 +214,7 @@ class SolutionDocumentControllerTest {
         Long bidDocumentId = createApprovalDocument(
                 token, accountId, opportunityId, userId, "bid_document", "审批投标-bid-document-" + suffix);
 
-        assertSubmission(token, quotationId, "quotation");
+        long quotationInstanceId = assertSubmission(token, quotationId, "quotation");
         assertSubmission(token, bidId, "bid");
         assertSubmission(token, bidDocumentId, "bid");
 
@@ -239,6 +241,9 @@ class SolutionDocumentControllerTest {
         assertThat(remarkUpdate.body().path("data").path("status").asText()).isEqualTo("approving");
         assertThat(remarkUpdate.body().path("data").path("remark").asText()).isEqualTo("审批中补充说明");
         assertAuditCount("solution.submit-approval", quotationId, 1);
+        assertAuditCount("approval.submit", quotationInstanceId, 1);
+        assertAuditCount("approval.business-status.update", quotationId, 1);
+        assertBusinessStatusAudit(quotationId, "drafting", "approving");
     }
 
     @Test
@@ -276,6 +281,11 @@ class SolutionDocumentControllerTest {
                 List.of("approval.submit"),
                 List.of("global"));
         createLoginReadyUser(
+                "solution_no_read_" + suffix,
+                departmentId,
+                List.of("solution.update", "approval.submit"),
+                List.of("global"));
+        createLoginReadyUser(
                 "solution_out_scope_" + suffix,
                 departmentId,
                 List.of("solution.update", "approval.submit"),
@@ -283,11 +293,108 @@ class SolutionDocumentControllerTest {
 
         assertForbiddenSubmission(login("solution_no_approval_" + suffix), solutionId);
         assertForbiddenSubmission(login("solution_no_update_" + suffix), solutionId);
+        assertForbiddenSubmission(login("solution_no_read_" + suffix), solutionId);
         assertForbiddenSubmission(login("solution_out_scope_" + suffix), solutionId);
         assertThat(jdbcTemplate.queryForObject(
                 "select status from crm_solution_documents where id = ?",
                 String.class,
                 solutionId)).isEqualTo("drafting");
+    }
+
+    @Test
+    void rejectsInactiveApprovalSubmitPermission() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String username = "solution_inactive_approval_" + suffix;
+        Long departmentId = createDepartment("solution-inactive-approval-" + suffix);
+        Long userId = createLoginReadyUser(
+                username,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "solution.create",
+                        "solution.read",
+                        "solution.update",
+                        "approval.submit"),
+                List.of("global"));
+        createDefaultWorkflow("quotation", username, userId);
+        String token = login(username);
+        Long accountId = createAccount(token, "停用审批权限客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(token, accountId, "停用审批权限商机-" + suffix, departmentId, userId);
+        Long solutionId = createApprovalDocument(
+                token, accountId, opportunityId, userId, "quotation", "停用审批权限报价-" + suffix);
+
+        jdbcTemplate.update("update sys_permissions set is_active = false where permission_code = 'approval.submit'");
+        try {
+            assertForbiddenSubmission(token, solutionId);
+            assertThat(jdbcTemplate.queryForObject(
+                    "select status from crm_solution_documents where id = ?",
+                    String.class,
+                    solutionId)).isEqualTo("drafting");
+        } finally {
+            jdbcTemplate.update("update sys_permissions set is_active = true where permission_code = 'approval.submit'");
+        }
+    }
+
+    @Test
+    void guardsApprovalSensitiveWritesWithAtomicStatusConditions() throws Exception {
+        String serviceSource = Files.readString(Path.of(
+                "src/main/java/com/canicula/crmai/solution/SolutionDocumentService.java"));
+        String controllerSource = Files.readString(Path.of(
+                "src/main/java/com/canicula/crmai/solution/SolutionDocumentController.java"));
+
+        assertThat(serviceSource).contains("and status <> 'approving'");
+        assertThat(serviceSource).contains("if (updatedCount != 1)");
+        assertThat(controllerSource).contains("@Transactional\n    SolutionDocumentResponse submitApproval");
+    }
+
+    @Test
+    void rollsBackShortcutSubmissionWhenAnyAuditWriteFails() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String username = "solution_audit_rollback_" + suffix;
+        Long departmentId = createDepartment("solution-audit-rollback-" + suffix);
+        Long userId = createLoginReadyUser(
+                username,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "solution.create",
+                        "solution.read",
+                        "solution.update",
+                        "approval.submit"),
+                List.of("global"));
+        createDefaultWorkflow("quotation", username, userId);
+        String token = login(username);
+        Long accountId = createAccount(token, "审计回滚客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(token, accountId, "审计回滚商机-" + suffix, departmentId, userId);
+        Long solutionId = createApprovalDocument(
+                token, accountId, opportunityId, userId, "quotation", "审计回滚报价-" + suffix);
+        String constraintName = "ck_audit_rollback_" + suffix;
+
+        jdbcTemplate.execute("alter table sys_audit_logs add constraint " + constraintName
+                + " check (trace_id <> 'solution-audit-rollback'"
+                + " or action_code <> 'approval.business-status.update')");
+        try {
+            HttpJsonResponse response = postJson(
+                    "/api/solutions/" + solutionId + "/submit-approval",
+                    Map.of(),
+                    authHeaders(token, "solution-audit-rollback"));
+            assertThat(response.status()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            assertThat(jdbcTemplate.queryForObject(
+                    "select status from crm_solution_documents where id = ?",
+                    String.class,
+                    solutionId)).isEqualTo("drafting");
+            assertThat(jdbcTemplate.queryForObject(
+                    "select count(*) from approval_instances where object_type = 'quotation' and object_id = ?",
+                    Integer.class,
+                    solutionId)).isZero();
+            assertAuditCount("solution.submit-approval", solutionId, 0);
+        } finally {
+            jdbcTemplate.execute("alter table sys_audit_logs drop constraint " + constraintName);
+        }
     }
 
     private Long createSolutionDocument(
@@ -339,7 +446,7 @@ class SolutionDocumentControllerTest {
         return response.body().path("data").path("id").asLong();
     }
 
-    private void assertSubmission(String accessToken, Long solutionId, String expectedObjectType) {
+    private long assertSubmission(String accessToken, Long solutionId, String expectedObjectType) {
         HttpJsonResponse response = postJson(
                 "/api/solutions/" + solutionId + "/submit-approval",
                 Map.of(),
@@ -350,6 +457,10 @@ class SolutionDocumentControllerTest {
                 "select object_type from approval_instances where object_id = ? order by id desc limit 1",
                 String.class,
                 solutionId)).isEqualTo(expectedObjectType);
+        return jdbcTemplate.queryForObject(
+                "select id from approval_instances where object_id = ? order by id desc limit 1",
+                Long.class,
+                solutionId);
     }
 
     private void assertForbiddenSubmission(String accessToken, Long solutionId) {
@@ -553,6 +664,22 @@ class SolutionDocumentControllerTest {
                 actionCode,
                 objectId);
         assertThat(auditCount).isEqualTo(expectedCount);
+    }
+
+    private void assertBusinessStatusAudit(Long objectId, String beforeStatus, String afterStatus) {
+        Map<String, Object> audit = jdbcTemplate.queryForMap(
+                """
+                select cast(before_data as varchar) as before_data,
+                       cast(after_data as varchar) as after_data
+                from sys_audit_logs
+                where action_code = 'approval.business-status.update'
+                  and object_id = ?
+                order by id desc
+                limit 1
+                """,
+                objectId);
+        assertThat(String.valueOf(audit.get("before_data"))).contains(beforeStatus);
+        assertThat(String.valueOf(audit.get("after_data"))).contains(afterStatus);
     }
 
     private record HttpJsonResponse(int status, JsonNode body) {

@@ -88,9 +88,11 @@ public class SolutionDocumentService {
             SolutionDocumentUpdateRequest request,
             Long actorUserId) {
         SolutionDocumentResponse current = readableDetail(solutionId, actorUserId);
-        requireApprovalSafeUpdate(current, request);
-        jdbcTemplate.update(
-                """
+        boolean approvalSensitiveUpdate = hasApprovalSensitiveInput(request);
+        requireApprovalSafeUpdate(current, approvalSensitiveUpdate);
+        String approvalStatusGuard = approvalSensitiveUpdate ? "and status <> 'approving'" : "";
+        int updatedCount = jdbcTemplate.update(
+                ("""
                 update crm_solution_documents
                 set document_name = coalesce(?, document_name),
                     document_type = coalesce(?, document_type),
@@ -113,7 +115,8 @@ public class SolutionDocumentService {
                     version = version + 1
                 where id = ?
                   and deleted_at is null
-                """,
+                  %s
+                """).formatted(approvalStatusGuard),
                 normalizeText(request.document_name()),
                 normalizeText(request.document_type()),
                 normalizeText(request.version_no()),
@@ -132,19 +135,22 @@ public class SolutionDocumentService {
                 normalizeText(request.remark()),
                 actorUserId,
                 solutionId);
+        if (updatedCount != 1) {
+            throw new BusinessRuleException("方案标书状态已变化，请刷新后重试");
+        }
         return findById(solutionId);
     }
 
     @Transactional
-    public SolutionDocumentResponse submitApproval(Long solutionId, Long actorUserId) {
+    public long submitApproval(Long solutionId, Long actorUserId) {
+        approvalService.requireActorPermission(actorUserId, "solution.read");
         approvalService.requireActorPermission(actorUserId, "approval.submit");
         SolutionDocumentResponse current = readableDetail(solutionId, actorUserId);
-        approvalService.submitBusinessObject(
+        return approvalService.submitBusinessObject(
                 approvalObjectType(current),
                 current.id(),
                 current.document_name(),
                 actorUserId);
-        return findById(solutionId);
     }
 
     @Transactional
@@ -159,7 +165,7 @@ public class SolutionDocumentService {
         if (!hasText(request.void_reason())) {
             throw new BusinessRuleException("作废方案标书必须填写原因");
         }
-        jdbcTemplate.update(
+        int updatedCount = jdbcTemplate.update(
                 """
                 update crm_solution_documents
                 set status = 'voided',
@@ -171,11 +177,15 @@ public class SolutionDocumentService {
                     version = version + 1
                 where id = ?
                   and deleted_at is null
+                  and status <> 'approving'
                 """,
                 request.void_reason().trim(),
                 actorUserId,
                 actorUserId,
                 solutionId);
+        if (updatedCount != 1) {
+            throw new BusinessRuleException("方案标书状态已变化，请刷新后重试");
+        }
         return findById(solutionId);
     }
 
@@ -264,7 +274,7 @@ public class SolutionDocumentService {
         }
     }
 
-    private static String approvalObjectType(SolutionDocumentResponse document) {
+    static String approvalObjectType(SolutionDocumentResponse document) {
         String documentType = normalizeText(document.document_type());
         if (documentType != null
                 && ("bid".equalsIgnoreCase(documentType) || "bid_document".equalsIgnoreCase(documentType))) {
@@ -279,43 +289,31 @@ public class SolutionDocumentService {
 
     private static void requireApprovalSafeUpdate(
             SolutionDocumentResponse current,
-            SolutionDocumentUpdateRequest request) {
+            boolean approvalSensitiveUpdate) {
         if (!"approving".equalsIgnoreCase(current.status())) {
             return;
         }
-        boolean changed = changed(request.document_name(), current.document_name())
-                || changed(request.document_type(), current.document_type())
-                || changed(request.version_no(), current.version_no())
-                || changed(request.status(), current.status())
-                || changed(request.owner_user_id(), current.owner_user_id())
-                || changed(request.customer_requirement_summary(), current.customer_requirement_summary())
-                || changed(request.technical_solution_summary(), current.technical_solution_summary())
-                || changed(request.stakeholder_strategy(), current.stakeholder_strategy())
-                || changed(request.quotation_amount(), current.quotation_amount())
-                || changed(request.cost_amount(), current.cost_amount())
-                || changed(request.estimated_gross_margin_rate(), current.estimated_gross_margin_rate())
-                || changed(request.bid_self_check_result(), current.bid_self_check_result())
-                || changed(request.bid_risk_description(), current.bid_risk_description())
-                || changed(request.submitted_to_customer_at(), current.submitted_to_customer_at())
-                || changed(request.customer_feedback(), current.customer_feedback());
-        if (changed) {
+        if (approvalSensitiveUpdate) {
             throw new BusinessRuleException("审批中的报价或投标不能修改关键字段，仅允许更新备注");
         }
     }
 
-    private static boolean changed(String requested, String current) {
-        return requested != null && !Objects.equals(normalizeText(requested), normalizeText(current));
-    }
-
-    private static boolean changed(java.math.BigDecimal requested, java.math.BigDecimal current) {
-        if (requested == null) {
-            return false;
-        }
-        return current == null || requested.compareTo(current) != 0;
-    }
-
-    private static boolean changed(Object requested, Object current) {
-        return requested != null && !Objects.equals(requested, current);
+    private static boolean hasApprovalSensitiveInput(SolutionDocumentUpdateRequest request) {
+        return request.document_name() != null
+                || request.document_type() != null
+                || request.version_no() != null
+                || request.status() != null
+                || request.owner_user_id() != null
+                || request.customer_requirement_summary() != null
+                || request.technical_solution_summary() != null
+                || request.stakeholder_strategy() != null
+                || request.quotation_amount() != null
+                || request.cost_amount() != null
+                || request.estimated_gross_margin_rate() != null
+                || request.bid_self_check_result() != null
+                || request.bid_risk_description() != null
+                || request.submitted_to_customer_at() != null
+                || request.customer_feedback() != null;
     }
 
     private static void appendKeywordFilter(StringBuilder sql, List<Object> parameters, String keyword) {

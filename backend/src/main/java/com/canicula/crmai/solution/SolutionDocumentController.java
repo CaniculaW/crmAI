@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -81,12 +82,17 @@ public class SolutionDocumentController {
 
     @RequirePermission("solution.update")
     @PostMapping("/api/solutions/{solutionId}/submit-approval")
+    @Transactional
     SolutionDocumentResponse submitApproval(
             @PathVariable Long solutionId,
             HttpServletRequest httpRequest) {
         Long actorUserId = currentUserId(httpRequest);
-        SolutionDocumentResponse response = solutionDocumentService.submitApproval(solutionId, actorUserId);
+        SolutionDocumentResponse before = solutionDocumentService.readableDetail(solutionId, actorUserId);
+        long instanceId = solutionDocumentService.submitApproval(solutionId, actorUserId);
+        SolutionDocumentResponse response = solutionDocumentService.readableDetail(solutionId, actorUserId);
         audit(actorUserId, "solution.submit-approval", response, httpRequest);
+        auditApprovalSubmit(actorUserId, instanceId, before, response, httpRequest);
+        auditBusinessStatus(actorUserId, before, response, httpRequest);
         return response;
     }
 
@@ -118,6 +124,51 @@ public class SolutionDocumentController {
                         "document_name", response.document_name(),
                         "account_id", response.account_id(),
                         "opportunity_id", response.opportunity_id()),
+                "success",
+                null,
+                request.getRemoteAddr(),
+                request.getHeader("User-Agent"),
+                (String) request.getAttribute("crm.traceId")));
+    }
+
+    private void auditApprovalSubmit(
+            Long actorUserId,
+            long instanceId,
+            SolutionDocumentResponse before,
+            SolutionDocumentResponse after,
+            HttpServletRequest request) {
+        auditLogService.record(new AuditLogEntry(
+                actorUserId,
+                "approval",
+                "approval.submit",
+                "approval_instance",
+                instanceId,
+                null,
+                Map.of(
+                        "object_type", SolutionDocumentService.approvalObjectType(before),
+                        "object_id", after.id(),
+                        "object_name", after.document_name(),
+                        "status", "pending"),
+                "success",
+                null,
+                request.getRemoteAddr(),
+                request.getHeader("User-Agent"),
+                (String) request.getAttribute("crm.traceId")));
+    }
+
+    private void auditBusinessStatus(
+            Long actorUserId,
+            SolutionDocumentResponse before,
+            SolutionDocumentResponse after,
+            HttpServletRequest request) {
+        auditLogService.record(new AuditLogEntry(
+                actorUserId,
+                "approval",
+                "approval.business-status.update",
+                "crm_solution_document",
+                after.id(),
+                Map.of("status", before.status()),
+                Map.of("status", after.status()),
                 "success",
                 null,
                 request.getRemoteAddr(),
