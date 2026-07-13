@@ -192,7 +192,7 @@ git commit -m "feat: add approval template configuration"
 - Create: `backend/src/main/java/com/canicula/crmai/approval/ApprovalController.java`
 - Create: `backend/src/test/java/com/canicula/crmai/approval/ApprovalControllerTest.java`
 
-- [ ] **Step 1: Write failing state-machine tests**
+- [x] **Step 1: Write failing state-machine tests**
 
 Cover submit, duplicate pending submission, missing template, template without nodes, current-role task visibility, wrong-role denial, first-node approval, final approval, rejection, started bucket, processed bucket, and object history. The first transition must assert:
 
@@ -206,13 +206,13 @@ mockMvc.perform(post("/api/approvals/instances/{instanceId}/approve", instanceId
         .andExpect(jsonPath("$.data.current_step_order").value(2));
 ```
 
-- [ ] **Step 2: Run state-machine tests and verify RED**
+- [x] **Step 2: Run state-machine tests and verify RED**
 
 Run: `mvn -Dtest=ApprovalControllerTest test`
 
 Expected: FAIL with 404 because approval instance endpoints are missing.
 
-- [ ] **Step 3: Implement workflow transitions and queries**
+- [x] **Step 3: Implement workflow transitions and queries**
 
 Implement these service entry points:
 
@@ -228,17 +228,17 @@ ApprovalObjectStatusResponse objectStatus(String objectType, Long objectId, Long
 
 Submission copies active template nodes, marks the first node `pending` and the rest `waiting`, writes a `submit` action, and calls the business-state mapper. Approval verifies membership in the current node role through `sys_user_roles`, marks the node approved, advances one node or completes the instance, and writes an action. Rejection requires a nonblank comment, marks the current node and instance rejected, resets the business object to its draft state, and writes an action. All transitions run in a transaction and update rows only when their prior status is still `pending`.
 
-- [ ] **Step 4: Add controller permissions and audit**
+- [x] **Step 4: Add controller permissions and audit**
 
 Use `approval.read` for task/detail/history endpoints, `approval.submit` for generic submission, and `approval.approve` for decisions. Record `approval.submit`, `approval.approve`, and `approval.reject` with the existing `AuditLogService`.
 
-- [ ] **Step 5: Run state-machine tests and verify GREEN**
+- [x] **Step 5: Run state-machine tests and verify GREEN**
 
 Run: `mvn -Dtest=ApprovalControllerTest test`
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit workflow engine**
+- [x] **Step 6: Commit workflow engine**
 
 ```bash
 git add backend/src/main/java/com/canicula/crmai/approval backend/src/test/java/com/canicula/crmai/approval/ApprovalControllerTest.java
