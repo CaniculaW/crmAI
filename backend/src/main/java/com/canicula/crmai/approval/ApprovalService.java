@@ -355,6 +355,40 @@ public class ApprovalService {
     }
 
     @Transactional
+    public long submitBusinessObject(
+            String objectType,
+            Long objectId,
+            String objectName,
+            Long actorUserId) {
+        return submit(objectType, objectId, objectName, actorUserId).id();
+    }
+
+    public void requireActorPermission(Long actorUserId, String permissionCode) {
+        Integer count = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from sys_users u
+                join sys_user_roles ur on ur.user_id = u.id
+                join sys_roles r on r.id = ur.role_id
+                join sys_role_permissions rp on rp.role_id = r.id
+                join sys_permissions p on p.id = rp.permission_id
+                where u.id = ?
+                  and u.tenant_id = ?
+                  and u.status = 'active'
+                  and u.deleted_at is null
+                  and r.deleted_at is null
+                  and p.permission_code = ?
+                """,
+                Integer.class,
+                actorUserId,
+                TENANT_ID,
+                permissionCode);
+        if (count == null || count == 0) {
+            throw new ForbiddenException("无权执行审批操作");
+        }
+    }
+
+    @Transactional
     public ApprovalInstanceResponse approve(Long instanceId, String comment, Long actorUserId) {
         DecisionContext context = requireDecisionContext(instanceId, actorUserId);
         String normalizedComment = cleanOptional(comment);

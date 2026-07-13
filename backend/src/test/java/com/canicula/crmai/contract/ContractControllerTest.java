@@ -266,6 +266,128 @@ class ContractControllerTest {
         assertThat(detailResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
+    @Test
+    void submitsApprovesAndRejectsContractsAndLocksApprovalCriticalFields() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String username = "contract_approval_" + suffix;
+        Long departmentId = createDepartment("contract-approval-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                username,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "contract.create",
+                        "contract.read",
+                        "contract.update",
+                        "approval.submit",
+                        "approval.approve"),
+                List.of("global"));
+        createDefaultWorkflow(username, userId);
+        String token = login(username);
+        Long accountId = createAccount(token, "审批合同客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(token, accountId, "审批合同商机-" + suffix, departmentId, userId);
+
+        Long approvedContractId = createContract(token, accountId, opportunityId, userId, suffix + "-approve");
+        long approvedInstanceId = submitContract(token, approvedContractId);
+
+        HttpJsonResponse criticalUpdate = patchJson(
+                "/api/contracts/" + approvedContractId,
+                Map.of(
+                        "contract_status", "pending_signature",
+                        "contract_amount", 1300000,
+                        "tax_rate", 0.09,
+                        "payment_terms", "全额预付",
+                        "invoice_terms", "预付款到账后开票",
+                        "delivery_scope", "变更交付范围",
+                        "acceptance_criteria", "变更验收标准",
+                        "risk_level", "high",
+                        "change_reason", "审批中不应允许变更"),
+                authHeaders(token, "contract-approval-critical-update"));
+        assertThat(criticalUpdate.status()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(criticalUpdate.body().path("message").asText()).contains("审批中");
+
+        HttpJsonResponse remarkUpdate = patchJson(
+                "/api/contracts/" + approvedContractId,
+                Map.of("remark", "审批中补充合同说明"),
+                authHeaders(token, "contract-approval-remark-update"));
+        assertThat(remarkUpdate.status()).isEqualTo(HttpStatus.OK.value());
+        assertThat(remarkUpdate.body().path("data").path("contract_status").asText()).isEqualTo("approving");
+        assertThat(remarkUpdate.body().path("data").path("remark").asText()).isEqualTo("审批中补充合同说明");
+
+        HttpJsonResponse approveResponse = postJson(
+                "/api/approvals/instances/" + approvedInstanceId + "/approve",
+                Map.of("comment", "合同条款通过"),
+                authHeaders(token, "contract-approval-approve"));
+        assertThat(approveResponse.status()).isEqualTo(HttpStatus.OK.value());
+        assertThat(jdbcTemplate.queryForObject(
+                "select contract_status from crm_contracts where id = ?",
+                String.class,
+                approvedContractId)).isEqualTo("pending_signature");
+
+        Long rejectedContractId = createContract(token, accountId, opportunityId, userId, suffix + "-reject");
+        long rejectedInstanceId = submitContract(token, rejectedContractId);
+        HttpJsonResponse rejectResponse = postJson(
+                "/api/approvals/instances/" + rejectedInstanceId + "/reject",
+                Map.of("comment", "付款条件需调整"),
+                authHeaders(token, "contract-approval-reject"));
+        assertThat(rejectResponse.status()).isEqualTo(HttpStatus.OK.value());
+        assertThat(jdbcTemplate.queryForObject(
+                "select contract_status from crm_contracts where id = ?",
+                String.class,
+                rejectedContractId)).isEqualTo("drafting");
+        assertAuditCount("contract.submit-approval", approvedContractId, 1);
+    }
+
+    @Test
+    void requiresBothContractUpdateAndApprovalSubmitAndPreservesDataScope() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("contract-approval-permission-" + suffix);
+        String ownerUsername = "contract_approval_owner_" + suffix;
+        Long ownerId = createLoginReadyUser(
+                ownerUsername,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "contract.create",
+                        "contract.read",
+                        "contract.update",
+                        "approval.submit"),
+                List.of("global"));
+        createDefaultWorkflow(ownerUsername, ownerId);
+        String ownerToken = login(ownerUsername);
+        Long accountId = createAccount(ownerToken, "合同审批权限客户-" + suffix, departmentId, ownerId);
+        Long opportunityId = createOpportunity(ownerToken, accountId, "合同审批权限商机-" + suffix, departmentId, ownerId);
+        Long contractId = createContract(ownerToken, accountId, opportunityId, ownerId, suffix);
+
+        createLoginReadyUser(
+                "contract_no_approval_" + suffix,
+                departmentId,
+                List.of("contract.update"),
+                List.of("global"));
+        createLoginReadyUser(
+                "contract_no_update_" + suffix,
+                departmentId,
+                List.of("approval.submit"),
+                List.of("global"));
+        createLoginReadyUser(
+                "contract_out_scope_" + suffix,
+                departmentId,
+                List.of("contract.update", "approval.submit"),
+                List.of("own"));
+
+        assertForbiddenSubmission(login("contract_no_approval_" + suffix), contractId);
+        assertForbiddenSubmission(login("contract_no_update_" + suffix), contractId);
+        assertForbiddenSubmission(login("contract_out_scope_" + suffix), contractId);
+        assertThat(jdbcTemplate.queryForObject(
+                "select contract_status from crm_contracts where id = ?",
+                String.class,
+                contractId)).isEqualTo("drafting");
+    }
+
     private Long createContract(
             String accessToken,
             Long accountId,
@@ -278,6 +400,58 @@ class ContractControllerTest {
                 authHeaders(accessToken, "contract-helper-create-trace-001"));
         assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
         return response.body().path("data").path("id").asLong();
+    }
+
+    private long submitContract(String accessToken, Long contractId) {
+        HttpJsonResponse response = postJson(
+                "/api/contracts/" + contractId + "/submit-approval",
+                Map.of(),
+                authHeaders(accessToken, "contract-submit-approval-" + contractId));
+        assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+        assertThat(response.body().path("data").path("contract_status").asText()).isEqualTo("approving");
+        return jdbcTemplate.queryForObject(
+                "select id from approval_instances where object_type = 'contract' and object_id = ? order by id desc limit 1",
+                Long.class,
+                contractId);
+    }
+
+    private void assertForbiddenSubmission(String accessToken, Long contractId) {
+        HttpJsonResponse response = postJson(
+                "/api/contracts/" + contractId + "/submit-approval",
+                Map.of(),
+                authHeaders(accessToken, "contract-forbidden-submit-" + UUID.randomUUID()));
+        assertThat(response.status()).isEqualTo(HttpStatus.FORBIDDEN.value());
+    }
+
+    private void createDefaultWorkflow(String approverUsername, Long createdBy) {
+        Long roleId = jdbcTemplate.queryForObject(
+                "select id from sys_roles where code = ?",
+                Long.class,
+                "contract_role_" + approverUsername);
+        jdbcTemplate.update(
+                "update approval_templates set is_default = false where tenant_id = 1 and object_type = 'contract'");
+        String templateName = "合同快捷审批-" + UUID.randomUUID();
+        jdbcTemplate.update(
+                """
+                insert into approval_templates (
+                    tenant_id, object_type, template_name, status, is_default, created_by
+                ) values (1, 'contract', ?, 'active', true, ?)
+                """,
+                templateName,
+                createdBy);
+        Long templateId = jdbcTemplate.queryForObject(
+                "select id from approval_templates where template_name = ? and created_by = ?",
+                Long.class,
+                templateName,
+                createdBy);
+        jdbcTemplate.update(
+                """
+                insert into approval_template_nodes (
+                    template_id, step_order, node_name, approver_role_id, status
+                ) values (?, 1, '合同负责人审批', ?, 'active')
+                """,
+                templateId,
+                roleId);
     }
 
     private Map<String, Object> contractRequest(Long accountId, Long opportunityId, Long ownerUserId, String suffix) {

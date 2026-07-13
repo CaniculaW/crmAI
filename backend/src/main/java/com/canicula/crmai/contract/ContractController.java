@@ -77,6 +77,17 @@ public class ContractController {
         return response;
     }
 
+    @RequirePermission("contract.update")
+    @PostMapping("/api/contracts/{contractId}/submit-approval")
+    ContractResponse submitApproval(
+            @PathVariable Long contractId,
+            HttpServletRequest httpRequest) {
+        Long actorUserId = currentUserId(httpRequest);
+        ContractResponse response = contractService.submitApproval(contractId, actorUserId);
+        audit(actorUserId, "contract.submit-approval", response, httpRequest);
+        return response;
+    }
+
     @RequirePermission("contract.terminate")
     @PostMapping("/api/contracts/{contractId}/terminate")
     ContractResponse terminate(

@@ -182,6 +182,114 @@ class SolutionDocumentControllerTest {
         assertThat(detailResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
+    @Test
+    void submitsQuotationAndBidDocumentsAndLocksApprovalCriticalFields() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String username = "solution_approval_" + suffix;
+        Long departmentId = createDepartment("solution-approval-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                username,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "solution.create",
+                        "solution.read",
+                        "solution.update",
+                        "approval.submit"),
+                List.of("global"));
+        createDefaultWorkflow("quotation", username, userId);
+        createDefaultWorkflow("bid", username, userId);
+        String token = login(username);
+        Long accountId = createAccount(token, "审批方案客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(token, accountId, "审批方案商机-" + suffix, departmentId, userId);
+
+        Long quotationId = createApprovalDocument(
+                token, accountId, opportunityId, userId, "quotation", "审批报价-" + suffix);
+        Long bidId = createApprovalDocument(
+                token, accountId, opportunityId, userId, "bid", "审批投标-bid-" + suffix);
+        Long bidDocumentId = createApprovalDocument(
+                token, accountId, opportunityId, userId, "bid_document", "审批投标-bid-document-" + suffix);
+
+        assertSubmission(token, quotationId, "quotation");
+        assertSubmission(token, bidId, "bid");
+        assertSubmission(token, bidDocumentId, "bid");
+
+        HttpJsonResponse criticalUpdate = patchJson(
+                "/api/solutions/" + quotationId,
+                Map.of(
+                        "document_type", "bid_document",
+                        "version_no", "V2.0",
+                        "status", "approved",
+                        "quotation_amount", 990000,
+                        "cost_amount", 700000,
+                        "estimated_gross_margin_rate", 0.29,
+                        "bid_self_check_result", "pass",
+                        "bid_risk_description", "风险已消除"),
+                authHeaders(token, "solution-approval-critical-update"));
+        assertThat(criticalUpdate.status()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(criticalUpdate.body().path("message").asText()).contains("审批中");
+
+        HttpJsonResponse remarkUpdate = patchJson(
+                "/api/solutions/" + quotationId,
+                Map.of("remark", "审批中补充说明"),
+                authHeaders(token, "solution-approval-remark-update"));
+        assertThat(remarkUpdate.status()).isEqualTo(HttpStatus.OK.value());
+        assertThat(remarkUpdate.body().path("data").path("status").asText()).isEqualTo("approving");
+        assertThat(remarkUpdate.body().path("data").path("remark").asText()).isEqualTo("审批中补充说明");
+        assertAuditCount("solution.submit-approval", quotationId, 1);
+    }
+
+    @Test
+    void requiresBothSolutionUpdateAndApprovalSubmitAndPreservesDataScope() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("solution-approval-permission-" + suffix);
+        String ownerUsername = "solution_approval_owner_" + suffix;
+        Long ownerId = createLoginReadyUser(
+                ownerUsername,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "solution.create",
+                        "solution.read",
+                        "solution.update",
+                        "approval.submit"),
+                List.of("global"));
+        createDefaultWorkflow("quotation", ownerUsername, ownerId);
+        String ownerToken = login(ownerUsername);
+        Long accountId = createAccount(ownerToken, "审批权限客户-" + suffix, departmentId, ownerId);
+        Long opportunityId = createOpportunity(ownerToken, accountId, "审批权限商机-" + suffix, departmentId, ownerId);
+        Long solutionId = createApprovalDocument(
+                ownerToken, accountId, opportunityId, ownerId, "quotation", "审批权限报价-" + suffix);
+
+        createLoginReadyUser(
+                "solution_no_approval_" + suffix,
+                departmentId,
+                List.of("solution.update"),
+                List.of("global"));
+        createLoginReadyUser(
+                "solution_no_update_" + suffix,
+                departmentId,
+                List.of("approval.submit"),
+                List.of("global"));
+        createLoginReadyUser(
+                "solution_out_scope_" + suffix,
+                departmentId,
+                List.of("solution.update", "approval.submit"),
+                List.of("own"));
+
+        assertForbiddenSubmission(login("solution_no_approval_" + suffix), solutionId);
+        assertForbiddenSubmission(login("solution_no_update_" + suffix), solutionId);
+        assertForbiddenSubmission(login("solution_out_scope_" + suffix), solutionId);
+        assertThat(jdbcTemplate.queryForObject(
+                "select status from crm_solution_documents where id = ?",
+                String.class,
+                solutionId)).isEqualTo("drafting");
+    }
+
     private Long createSolutionDocument(
             String accessToken,
             Long accountId,
@@ -201,6 +309,88 @@ class SolutionDocumentControllerTest {
                 authHeaders(accessToken, "solution-helper-create-trace-001"));
         assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
         return response.body().path("data").path("id").asLong();
+    }
+
+    private Long createApprovalDocument(
+            String accessToken,
+            Long accountId,
+            Long opportunityId,
+            Long ownerUserId,
+            String documentType,
+            String documentName) {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("account_id", accountId);
+        request.put("opportunity_id", opportunityId);
+        request.put("document_name", documentName);
+        request.put("document_type", documentType);
+        request.put("version_no", "V1.0");
+        request.put("status", "drafting");
+        request.put("owner_user_id", ownerUserId);
+        request.put("quotation_amount", 880000);
+        request.put("cost_amount", 620000);
+        request.put("estimated_gross_margin_rate", 0.2955);
+        request.put("bid_self_check_result", "risk");
+        request.put("bid_risk_description", "资质材料待补齐");
+        HttpJsonResponse response = postJson(
+                "/api/solutions",
+                request,
+                authHeaders(accessToken, "solution-approval-helper-create"));
+        assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+        return response.body().path("data").path("id").asLong();
+    }
+
+    private void assertSubmission(String accessToken, Long solutionId, String expectedObjectType) {
+        HttpJsonResponse response = postJson(
+                "/api/solutions/" + solutionId + "/submit-approval",
+                Map.of(),
+                authHeaders(accessToken, "solution-submit-approval-" + solutionId));
+        assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+        assertThat(response.body().path("data").path("status").asText()).isEqualTo("approving");
+        assertThat(jdbcTemplate.queryForObject(
+                "select object_type from approval_instances where object_id = ? order by id desc limit 1",
+                String.class,
+                solutionId)).isEqualTo(expectedObjectType);
+    }
+
+    private void assertForbiddenSubmission(String accessToken, Long solutionId) {
+        HttpJsonResponse response = postJson(
+                "/api/solutions/" + solutionId + "/submit-approval",
+                Map.of(),
+                authHeaders(accessToken, "solution-forbidden-submit-" + UUID.randomUUID()));
+        assertThat(response.status()).isEqualTo(HttpStatus.FORBIDDEN.value());
+    }
+
+    private void createDefaultWorkflow(String objectType, String approverUsername, Long createdBy) {
+        Long roleId = jdbcTemplate.queryForObject(
+                "select id from sys_roles where code = ?",
+                Long.class,
+                "solution_role_" + approverUsername);
+        jdbcTemplate.update(
+                "update approval_templates set is_default = false where tenant_id = 1 and object_type = ?",
+                objectType);
+        String templateName = "方案快捷审批-" + objectType + "-" + UUID.randomUUID();
+        jdbcTemplate.update(
+                """
+                insert into approval_templates (
+                    tenant_id, object_type, template_name, status, is_default, created_by
+                ) values (1, ?, ?, 'active', true, ?)
+                """,
+                objectType,
+                templateName,
+                createdBy);
+        Long templateId = jdbcTemplate.queryForObject(
+                "select id from approval_templates where template_name = ? and created_by = ?",
+                Long.class,
+                templateName,
+                createdBy);
+        jdbcTemplate.update(
+                """
+                insert into approval_template_nodes (
+                    template_id, step_order, node_name, approver_role_id, status
+                ) values (?, 1, '业务负责人审批', ?, 'active')
+                """,
+                templateId,
+                roleId);
     }
 
     private Long createAccount(String accessToken, String accountName, Long departmentId, Long ownerUserId) {

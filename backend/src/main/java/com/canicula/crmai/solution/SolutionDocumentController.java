@@ -79,6 +79,17 @@ public class SolutionDocumentController {
         return response;
     }
 
+    @RequirePermission("solution.update")
+    @PostMapping("/api/solutions/{solutionId}/submit-approval")
+    SolutionDocumentResponse submitApproval(
+            @PathVariable Long solutionId,
+            HttpServletRequest httpRequest) {
+        Long actorUserId = currentUserId(httpRequest);
+        SolutionDocumentResponse response = solutionDocumentService.submitApproval(solutionId, actorUserId);
+        audit(actorUserId, "solution.submit-approval", response, httpRequest);
+        return response;
+    }
+
     @RequirePermission("solution.void")
     @PostMapping("/api/solutions/{solutionId}/void")
     SolutionDocumentResponse voidDocument(

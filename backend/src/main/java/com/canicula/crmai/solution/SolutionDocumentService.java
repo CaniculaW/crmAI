@@ -1,6 +1,7 @@
 package com.canicula.crmai.solution;
 
 import com.canicula.crmai.api.BusinessRuleException;
+import com.canicula.crmai.approval.ApprovalService;
 import com.canicula.crmai.auth.ForbiddenException;
 import com.canicula.crmai.opportunity.OpportunityResponse;
 import com.canicula.crmai.opportunity.OpportunityService;
@@ -21,10 +22,15 @@ public class SolutionDocumentService {
 
     private final JdbcTemplate jdbcTemplate;
     private final OpportunityService opportunityService;
+    private final ApprovalService approvalService;
 
-    SolutionDocumentService(JdbcTemplate jdbcTemplate, OpportunityService opportunityService) {
+    SolutionDocumentService(
+            JdbcTemplate jdbcTemplate,
+            OpportunityService opportunityService,
+            ApprovalService approvalService) {
         this.jdbcTemplate = jdbcTemplate;
         this.opportunityService = opportunityService;
+        this.approvalService = approvalService;
     }
 
     @Transactional
@@ -81,7 +87,8 @@ public class SolutionDocumentService {
             Long solutionId,
             SolutionDocumentUpdateRequest request,
             Long actorUserId) {
-        readableDetail(solutionId, actorUserId);
+        SolutionDocumentResponse current = readableDetail(solutionId, actorUserId);
+        requireApprovalSafeUpdate(current, request);
         jdbcTemplate.update(
                 """
                 update crm_solution_documents
@@ -129,11 +136,26 @@ public class SolutionDocumentService {
     }
 
     @Transactional
+    public SolutionDocumentResponse submitApproval(Long solutionId, Long actorUserId) {
+        approvalService.requireActorPermission(actorUserId, "approval.submit");
+        SolutionDocumentResponse current = readableDetail(solutionId, actorUserId);
+        approvalService.submitBusinessObject(
+                approvalObjectType(current),
+                current.id(),
+                current.document_name(),
+                actorUserId);
+        return findById(solutionId);
+    }
+
+    @Transactional
     public SolutionDocumentResponse voidDocument(
             Long solutionId,
             SolutionDocumentVoidRequest request,
             Long actorUserId) {
-        readableDetail(solutionId, actorUserId);
+        SolutionDocumentResponse current = readableDetail(solutionId, actorUserId);
+        if ("approving".equalsIgnoreCase(current.status())) {
+            throw new BusinessRuleException("审批中的报价或投标不能修改状态");
+        }
         if (!hasText(request.void_reason())) {
             throw new BusinessRuleException("作废方案标书必须填写原因");
         }
@@ -240,6 +262,60 @@ public class SolutionDocumentService {
         if (!Objects.equals(requestAccountId, opportunityAccountId)) {
             throw new BusinessRuleException("方案标书必须关联同一客户下的商机");
         }
+    }
+
+    private static String approvalObjectType(SolutionDocumentResponse document) {
+        String documentType = normalizeText(document.document_type());
+        if (documentType != null
+                && ("bid".equalsIgnoreCase(documentType) || "bid_document".equalsIgnoreCase(documentType))) {
+            return "bid";
+        }
+        if ((documentType != null && "quotation".equalsIgnoreCase(documentType))
+                || document.quotation_amount() != null) {
+            return "quotation";
+        }
+        throw new BusinessRuleException("仅报价和投标文件支持审批");
+    }
+
+    private static void requireApprovalSafeUpdate(
+            SolutionDocumentResponse current,
+            SolutionDocumentUpdateRequest request) {
+        if (!"approving".equalsIgnoreCase(current.status())) {
+            return;
+        }
+        boolean changed = changed(request.document_name(), current.document_name())
+                || changed(request.document_type(), current.document_type())
+                || changed(request.version_no(), current.version_no())
+                || changed(request.status(), current.status())
+                || changed(request.owner_user_id(), current.owner_user_id())
+                || changed(request.customer_requirement_summary(), current.customer_requirement_summary())
+                || changed(request.technical_solution_summary(), current.technical_solution_summary())
+                || changed(request.stakeholder_strategy(), current.stakeholder_strategy())
+                || changed(request.quotation_amount(), current.quotation_amount())
+                || changed(request.cost_amount(), current.cost_amount())
+                || changed(request.estimated_gross_margin_rate(), current.estimated_gross_margin_rate())
+                || changed(request.bid_self_check_result(), current.bid_self_check_result())
+                || changed(request.bid_risk_description(), current.bid_risk_description())
+                || changed(request.submitted_to_customer_at(), current.submitted_to_customer_at())
+                || changed(request.customer_feedback(), current.customer_feedback());
+        if (changed) {
+            throw new BusinessRuleException("审批中的报价或投标不能修改关键字段，仅允许更新备注");
+        }
+    }
+
+    private static boolean changed(String requested, String current) {
+        return requested != null && !Objects.equals(normalizeText(requested), normalizeText(current));
+    }
+
+    private static boolean changed(java.math.BigDecimal requested, java.math.BigDecimal current) {
+        if (requested == null) {
+            return false;
+        }
+        return current == null || requested.compareTo(current) != 0;
+    }
+
+    private static boolean changed(Object requested, Object current) {
+        return requested != null && !Objects.equals(requested, current);
     }
 
     private static void appendKeywordFilter(StringBuilder sql, List<Object> parameters, String keyword) {
