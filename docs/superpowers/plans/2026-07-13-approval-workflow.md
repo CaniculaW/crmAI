@@ -127,7 +127,7 @@ git commit -m "feat: add approval workflow schema"
 - Create: `backend/src/main/java/com/canicula/crmai/approval/ApprovalTemplateController.java`
 - Create: `backend/src/test/java/com/canicula/crmai/approval/ApprovalTemplateControllerTest.java`
 
-- [ ] **Step 1: Write failing template API tests**
+- [x] **Step 1: Write failing template API tests**
 
 Cover list, create, update, add node, update node, default uniqueness, unsupported object type, duplicate step order, and missing role. Use the existing authentication helper and assert:
 
@@ -143,13 +143,13 @@ mockMvc.perform(post("/api/approval-templates")
         .andExpect(jsonPath("$.data.is_default").value(true));
 ```
 
-- [ ] **Step 2: Run template tests and verify RED**
+- [x] **Step 2: Run template tests and verify RED**
 
 Run: `mvn -Dtest=ApprovalTemplateControllerTest test`
 
 Expected: FAIL with 404 because `/api/approval-templates` is missing.
 
-- [ ] **Step 3: Implement DTOs, template service methods, and controller**
+- [x] **Step 3: Implement DTOs, template service methods, and controller**
 
 Define records with snake-case component names matching the existing JSON contract:
 
@@ -171,13 +171,13 @@ Implement `listTemplates`, `createTemplate`, `updateTemplate`, `listTemplateNode
 
 Expose the configured endpoints with `@RequirePermission("approval.config.manage")` and record template create/update actions through `AuditLogService` using module `approval`.
 
-- [ ] **Step 4: Run template tests and verify GREEN**
+- [x] **Step 4: Run template tests and verify GREEN**
 
 Run: `mvn -Dtest=ApprovalTemplateControllerTest test`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit template configuration**
+- [x] **Step 5: Commit template configuration**
 
 ```bash
 git add backend/src/main/java/com/canicula/crmai/approval backend/src/test/java/com/canicula/crmai/approval/ApprovalTemplateControllerTest.java
