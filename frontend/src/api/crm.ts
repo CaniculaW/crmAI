@@ -180,6 +180,135 @@ export type ContractMilestone = {
   updated_at?: string;
 };
 
+export type ApprovalObjectType = "quotation" | "bid" | "contract";
+export type ApprovalInstanceStatus = "pending" | "approved" | "rejected";
+export type ApprovalInstanceNodeStatus = "waiting" | "pending" | "approved" | "rejected";
+export type ApprovalActionType = "submit" | "approve" | "reject";
+export type ApprovalTemplateStatus = "active" | "inactive";
+export type ApprovalTaskBucket = "pending" | "started" | "processed";
+
+export type ApprovalTemplate = {
+  id: number;
+  tenant_id: number;
+  object_type: ApprovalObjectType;
+  template_name: string;
+  status: ApprovalTemplateStatus;
+  is_default: boolean;
+  created_by: number;
+  created_at: string;
+  updated_by: number | null;
+  updated_at: string;
+};
+
+export type ApprovalTemplateNode = {
+  id: number;
+  template_id: number;
+  step_order: number;
+  node_name: string;
+  approver_role_id: number;
+  approver_role_name: string;
+  status: ApprovalTemplateStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ApprovalInstance = {
+  id: number;
+  tenant_id: number;
+  template_id: number;
+  object_type: ApprovalObjectType;
+  object_id: number;
+  object_name: string;
+  status: ApprovalInstanceStatus;
+  current_step_order: number | null;
+  submitted_by: number;
+  submitted_at: string;
+  completed_at: string | null;
+  result_comment: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ApprovalInstanceNode = {
+  id: number;
+  instance_id: number;
+  step_order: number;
+  node_name: string;
+  approver_role_id: number;
+  approver_role_name: string;
+  status: ApprovalInstanceNodeStatus;
+  handled_by: number | null;
+  handled_at: string | null;
+  comment: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ApprovalAction = {
+  id: number;
+  instance_id: number;
+  node_id: number | null;
+  action: ApprovalActionType;
+  actor_user_id: number;
+  comment: string | null;
+  action_at: string;
+};
+
+export type ApprovalInstanceDetail = {
+  instance: ApprovalInstance;
+  nodes: ApprovalInstanceNode[];
+  actions: ApprovalAction[];
+};
+
+export type ApprovalTask = {
+  instance: ApprovalInstance;
+  current_node: ApprovalInstanceNode | null;
+};
+
+export type ApprovalObjectStatus = {
+  object_type: ApprovalObjectType;
+  object_id: number;
+  instance: ApprovalInstanceDetail | null;
+  history: ApprovalInstanceDetail[];
+};
+
+export type ApprovalSubmitRequest = {
+  object_type: ApprovalObjectType;
+  object_id: number;
+  object_name: string;
+};
+
+export type ApprovalDecisionRequest = {
+  comment?: string;
+};
+
+export type ApprovalTemplateCreateRequest = {
+  object_type: ApprovalObjectType;
+  template_name: string;
+  is_default?: boolean;
+  status?: ApprovalTemplateStatus;
+};
+
+export type ApprovalTemplateUpdateRequest = {
+  template_name?: string;
+  is_default?: boolean;
+  status?: ApprovalTemplateStatus;
+};
+
+export type ApprovalTemplateNodeCreateRequest = {
+  step_order: number;
+  node_name: string;
+  approver_role_id: number;
+  status?: ApprovalTemplateStatus;
+};
+
+export type ApprovalTemplateNodeUpdateRequest = {
+  step_order?: number;
+  node_name?: string;
+  approver_role_id?: number;
+  status?: ApprovalTemplateStatus;
+};
+
 export type Invoice = {
   id: number;
   tenant_id?: number;
@@ -1154,7 +1283,9 @@ export const crmApi = {
     update: (id: number, body: Record<string, unknown>) =>
       requestJson<SolutionDocument>(`/api/solutions/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
     void: (id: number, body: Record<string, unknown>) =>
-      requestJson<SolutionDocument>(`/api/solutions/${id}/void`, { method: "POST", body: JSON.stringify(body) })
+      requestJson<SolutionDocument>(`/api/solutions/${id}/void`, { method: "POST", body: JSON.stringify(body) }),
+    submitApproval: (id: number) =>
+      requestJson<SolutionDocument>(`/api/solutions/${id}/submit-approval`, { method: "POST" })
   },
   contracts: {
     list: (query?: QueryParams) => requestJson<Contract[]>(withQuery("/api/contracts", query)),
@@ -1165,12 +1296,53 @@ export const crmApi = {
       requestJson<Contract>(`/api/contracts/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
     terminate: (id: number, body: Record<string, unknown>) =>
       requestJson<Contract>(`/api/contracts/${id}/terminate`, { method: "POST", body: JSON.stringify(body) }),
+    submitApproval: (id: number) =>
+      requestJson<Contract>(`/api/contracts/${id}/submit-approval`, { method: "POST" }),
     changes: (id: number) => requestJson<ContractChange[]>(`/api/contracts/${id}/changes`),
     milestones: (id: number) => requestJson<ContractMilestone[]>(`/api/contracts/${id}/milestones`),
     createMilestone: (id: number, body: Record<string, unknown>) =>
       requestJson<ContractMilestone>(`/api/contracts/${id}/milestones`, { method: "POST", body: JSON.stringify(body) }),
     updateMilestone: (id: number, milestoneId: number, body: Record<string, unknown>) =>
       requestJson<ContractMilestone>(`/api/contracts/${id}/milestones/${milestoneId}`, {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      })
+  },
+  approvals: {
+    tasks: (bucket: ApprovalTaskBucket) =>
+      requestJson<ApprovalTask[]>(withQuery("/api/approvals/tasks", { bucket })),
+    detail: (id: number) => requestJson<ApprovalInstanceDetail>(`/api/approvals/instances/${id}`),
+    objectStatus: (objectType: ApprovalObjectType, objectId: number) =>
+      requestJson<ApprovalObjectStatus>(`/api/approvals/object/${objectType}/${objectId}`),
+    submit: (body: ApprovalSubmitRequest) =>
+      requestJson<ApprovalInstance>("/api/approvals/instances", { method: "POST", body: JSON.stringify(body) }),
+    approve: (id: number, body?: ApprovalDecisionRequest) =>
+      requestJson<ApprovalInstance>(`/api/approvals/instances/${id}/approve`, {
+        method: "POST",
+        body: body === undefined ? undefined : JSON.stringify(body)
+      }),
+    reject: (id: number, body?: ApprovalDecisionRequest) =>
+      requestJson<ApprovalInstance>(`/api/approvals/instances/${id}/reject`, {
+        method: "POST",
+        body: body === undefined ? undefined : JSON.stringify(body)
+      })
+  },
+  approvalTemplates: {
+    list: () => requestJson<ApprovalTemplate[]>("/api/approval-templates"),
+    create: (body: ApprovalTemplateCreateRequest) =>
+      requestJson<ApprovalTemplate>("/api/approval-templates", { method: "POST", body: JSON.stringify(body) }),
+    update: (id: number, body: ApprovalTemplateUpdateRequest) =>
+      requestJson<ApprovalTemplate>(`/api/approval-templates/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body)
+      }),
+    addNode: (templateId: number, body: ApprovalTemplateNodeCreateRequest) =>
+      requestJson<ApprovalTemplateNode>(`/api/approval-templates/${templateId}/nodes`, {
+        method: "POST",
+        body: JSON.stringify(body)
+      }),
+    updateNode: (templateId: number, nodeId: number, body: ApprovalTemplateNodeUpdateRequest) =>
+      requestJson<ApprovalTemplateNode>(`/api/approval-templates/${templateId}/nodes/${nodeId}`, {
         method: "PATCH",
         body: JSON.stringify(body)
       })
