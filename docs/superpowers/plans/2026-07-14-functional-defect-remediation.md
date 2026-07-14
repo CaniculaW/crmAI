@@ -113,17 +113,17 @@ git commit -m "fix: map client API errors to stable 4xx responses"
 - Modify: `backend/src/test/java/com/canicula/crmai/activity/ActivityControllerTest.java`
 - Modify: `backend/src/main/java/com/canicula/crmai/activity/ActivityService.java`
 
-- [ ] **Step 1: Write a failing duplicate completion test**
+- [x] **Step 1: Write a failing duplicate completion test**
 
 Complete one activity twice and assert the second request returns 409 while `completed_at`, account/opportunity summaries, and `activity.complete` audit count remain unchanged.
 
-- [ ] **Step 2: Verify duplicate completion currently succeeds**
+- [x] **Step 2: Verify duplicate completion currently succeeds**
 
 Run: `cd backend && mvn -Dtest=ActivityControllerTest test`
 
 Expected: the second completion returns 200, causing the new assertion to fail.
 
-- [ ] **Step 3: Enforce a single state transition**
+- [x] **Step 3: Enforce a single state transition**
 
 Before updating, reject an already completed activity and add `activity_status <> 'completed'` to the update predicate. Check the update count before replacing risks or backfilling linked records.
 
@@ -133,13 +133,13 @@ if ("completed".equalsIgnoreCase(current.activity_status())) {
 }
 ```
 
-- [ ] **Step 4: Verify the activity suite passes**
+- [x] **Step 4: Verify the activity suite passes**
 
 Run: `cd backend && mvn -Dtest=ActivityControllerTest test`
 
 Expected: all activity tests pass.
 
-- [ ] **Step 5: Commit the state-machine fix**
+- [x] **Step 5: Commit the state-machine fix**
 
 ```bash
 git add backend/src/main/java/com/canicula/crmai/activity/ActivityService.java backend/src/test/java/com/canicula/crmai/activity/ActivityControllerTest.java

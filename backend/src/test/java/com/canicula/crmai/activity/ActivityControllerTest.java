@@ -280,6 +280,31 @@ class ActivityControllerTest {
         assertThat(opportunity.path("risk_status").asText()).isEqualTo("risk");
         assertThat(opportunity.path("risk_description").asText()).isEqualTo("预算审批链路未明确");
         assertThat(auditCount).isEqualTo(1);
+
+        ResponseEntity<JsonNode> duplicateCompleteResponse = restTemplate.exchange(
+                "/api/activities/" + activityId + "/complete",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "activity_result", "aligned",
+                        "conclusion", "不应覆盖首次完成结论"), authHeaders(token, "activity-duplicate-complete-trace-001")),
+                JsonNode.class);
+        ResponseEntity<JsonNode> detailAfterDuplicate = restTemplate.exchange(
+                "/api/activities/" + activityId,
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "activity-duplicate-detail-trace-001")),
+                JsonNode.class);
+        Integer auditCountAfterDuplicate = jdbcTemplate.queryForObject(
+                "select count(*) from sys_audit_logs where action_code = 'activity.complete' and object_id = ?",
+                Integer.class,
+                activityId);
+
+        assertThat(duplicateCompleteResponse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(duplicateCompleteResponse.getBody().path("code").asText()).isEqualTo("BUSINESS_RULE_FAILED");
+        assertThat(detailAfterDuplicate.getBody().path("data").path("conclusion").asText())
+                .isEqualTo("客户预算存在审批风险");
+        assertThat(detailAfterDuplicate.getBody().path("data").path("completed_at").asText())
+                .isEqualTo(completed.path("completed_at").asText());
+        assertThat(auditCountAfterDuplicate).isEqualTo(1);
     }
 
     @Test

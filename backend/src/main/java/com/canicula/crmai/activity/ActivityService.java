@@ -2,6 +2,7 @@ package com.canicula.crmai.activity;
 
 import com.canicula.crmai.account.AccountResponse;
 import com.canicula.crmai.account.AccountService;
+import com.canicula.crmai.api.BusinessRuleException;
 import com.canicula.crmai.identity.DataPermissionColumns;
 import com.canicula.crmai.identity.DataPermissionCondition;
 import com.canicula.crmai.identity.DataPermissionService;
@@ -197,11 +198,14 @@ public class ActivityService {
     @Transactional
     public ActivityResponse complete(Long activityId, ActivityCompleteRequest request, Long actorUserId) {
         ActivityResponse current = readableDetail(activityId, actorUserId);
+        if ("completed".equalsIgnoreCase(current.activity_status())) {
+            throw new BusinessRuleException("销售行动已完成，不能重复完成");
+        }
         String conclusion = coalesceText(request.conclusion(), current.conclusion(), current.subject());
         String nextPlan = coalesceText(request.next_plan(), current.next_plan(), null);
         String riskDescription = coalesceText(request.risk_description(), current.risk_description(), null);
         String activityResult = coalesceText(request.activity_result(), current.activity_result(), "milestone_completed");
-        jdbcTemplate.update(
+        int updatedCount = jdbcTemplate.update(
                 """
                 update crm_sales_activities
                 set activity_status = 'completed',
@@ -216,6 +220,7 @@ public class ActivityService {
                     version = version + 1
                 where id = ?
                   and deleted_at is null
+                  and activity_status <> 'completed'
                 """,
                 activityResult,
                 conclusion,
@@ -224,6 +229,9 @@ public class ActivityService {
                 actorUserId,
                 actorUserId,
                 activityId);
+        if (updatedCount != 1) {
+            throw new BusinessRuleException("销售行动状态已变化，请刷新后重试");
+        }
         if (request.risk_types() != null) {
             replaceRiskTypes(activityId, request.risk_types());
         }
