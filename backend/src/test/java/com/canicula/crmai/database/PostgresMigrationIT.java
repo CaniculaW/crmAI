@@ -202,6 +202,16 @@ class PostgresMigrationIT {
                 )
                 """,
                 Integer.class);
+        Integer positiveContractAmountConstraintCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.table_constraints
+                where table_schema = 'public'
+                  and table_name = 'crm_contracts'
+                  and constraint_name = 'ck_crm_contracts_positive_amount'
+                  and constraint_type = 'CHECK'
+                """,
+                Integer.class);
         Integer invoiceTableCount = jdbcTemplate.queryForObject(
                 """
                 select count(*)
@@ -430,7 +440,7 @@ class PostgresMigrationIT {
                 """,
                 String.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("38");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("39");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -452,6 +462,7 @@ class PostgresMigrationIT {
         assertThat(solutionPermissionCount).isEqualTo(4);
         assertThat(contractTableCount).isEqualTo(3);
         assertThat(contractPermissionCount).isEqualTo(5);
+        assertThat(positiveContractAmountConstraintCount).isEqualTo(1);
         assertThat(invoiceTableCount).isEqualTo(1);
         assertThat(invoicePermissionCount).isEqualTo(8);
         assertThat(receivablePlanTableCount).isEqualTo(1);
