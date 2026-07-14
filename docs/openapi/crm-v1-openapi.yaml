@@ -1956,7 +1956,7 @@ paths:
             format: int64
       responses:
         '200':
-          description: Created approval instance.
+          description: Solution document detail.
   /api/contracts:
     get:
       tags: [Contracts]
@@ -2083,7 +2083,7 @@ paths:
             format: int64
       responses:
         '200':
-          description: Created approval instance.
+          description: Contract detail.
   /api/contracts/{contractId}/changes:
     get:
       tags: [Contracts]
@@ -2979,7 +2979,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [object_type, object_id]
+              required: [object_type, object_id, object_name]
               properties:
                 object_type:
                   type: string
@@ -2987,6 +2987,8 @@ paths:
                 object_id:
                   type: integer
                   format: int64
+                object_name:
+                  type: string
       responses:
         '200':
           description: Created approval instance.

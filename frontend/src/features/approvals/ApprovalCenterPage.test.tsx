@@ -238,6 +238,21 @@ describe("ApprovalCenterPage", () => {
     expect(drawerText.indexOf("销售总监审批")).toBeLessThan(drawerText.indexOf("财务负责人审批"));
   });
 
+  it("does not reset a disconnected reject form when opening approval details", async () => {
+    const user = userEvent.setup();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(crmApi.approvals, "tasks").mockResolvedValue([pendingTask]);
+    vi.spyOn(crmApi.approvals, "detail").mockResolvedValue(pendingDetail);
+
+    render(<ApprovalCenterPage currentUser={approverUser} />);
+
+    await user.click(await screen.findByRole("row", { name: /V2试点项目合同/ }));
+    await screen.findByRole("dialog", { name: "审批详情" });
+
+    const consoleOutput = consoleError.mock.calls.flat().join(" ");
+    expect(consoleOutput).not.toContain("Instance created by `useForm` is not connected");
+  });
+
   it("wraps operation history and breaks long opinions in a narrow drawer", async () => {
     const user = userEvent.setup();
     vi.spyOn(crmApi.approvals, "tasks").mockResolvedValue([pendingTask]);
@@ -296,6 +311,39 @@ describe("ApprovalCenterPage", () => {
     await waitFor(() => expect(detail).toHaveBeenLastCalledWith(42));
 
     expect(await screen.findByRole("textbox", { name: "审批意见（选填）" })).toHaveValue("");
+  });
+
+  it("ignores a stale detail response after another task is selected", async () => {
+    const user = userEvent.setup();
+    const firstRequest = deferred<ApprovalInstanceDetail>();
+    const secondRequest = deferred<ApprovalInstanceDetail>();
+    vi.spyOn(crmApi.approvals, "tasks").mockResolvedValue([pendingTask, secondTask]);
+    vi.spyOn(crmApi.approvals, "detail").mockImplementation((id) =>
+      id === secondTask.instance.id ? secondRequest.promise : firstRequest.promise
+    );
+    const approve = vi.spyOn(crmApi.approvals, "approve").mockResolvedValue({
+      ...secondTask.instance,
+      status: "approved"
+    });
+
+    render(<ApprovalCenterPage currentUser={approverUser} />);
+
+    await user.click(await screen.findByRole("row", { name: /V2试点项目合同/ }));
+    fireEvent.click(screen.getByRole("row", { name: /续签项目合同/, hidden: true }));
+    await act(async () => {
+      secondRequest.resolve(secondDetail);
+      await secondRequest.promise;
+    });
+    const drawer = within(await screen.findByRole("dialog", { name: "审批详情" }));
+    expect(await drawer.findByText("续签项目合同")).toBeInTheDocument();
+
+    await act(async () => {
+      firstRequest.resolve(pendingDetail);
+      await firstRequest.promise;
+    });
+    await user.click(screen.getByRole("button", { name: "通过" }));
+
+    await waitFor(() => expect(approve).toHaveBeenCalledWith(42, undefined));
   });
 
   it("clears the reject form after closing the drawer before another task", async () => {

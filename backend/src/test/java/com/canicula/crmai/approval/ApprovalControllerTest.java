@@ -135,6 +135,45 @@ class ApprovalControllerTest {
                 new NodeSpec(1, "Unstaffed Review", emptyRoleId, "active"));
         long contractId = createContract(submitter, suffix);
         assertConflict(submit(submitter.token(), "contract", contractId, "No approver " + suffix));
+
+        TestUser activeUserWithoutApprovalPermission = createAndLoginUser(
+                "approval_unqualified_actor_" + suffix,
+                "account.read");
+        long unqualifiedRoleId = createRole("approval_unqualified_role_" + suffix);
+        identityService.assignRole(activeUserWithoutApprovalPermission.userId(), unqualifiedRoleId);
+        createWorkflow(
+                "quotation",
+                submitter.userId(),
+                new NodeSpec(1, "Unqualified Review", unqualifiedRoleId, "active"));
+        long unqualifiedQuotationId = createSolutionDocument(
+                submitter, "quotation", "draft", true, suffix + "-unqualified");
+        assertConflict(submit(
+                submitter.token(),
+                "quotation",
+                unqualifiedQuotationId,
+                "No qualified approver " + suffix));
+
+        TestUser inactivePermissionApprover = createAndLoginUser(
+                "approval_inactive_permission_actor_" + suffix,
+                "approval.approve");
+        long inactivePermissionRoleId = createRole("approval_inactive_permission_role_" + suffix);
+        identityService.assignRole(inactivePermissionApprover.userId(), inactivePermissionRoleId);
+        createWorkflow(
+                "quotation",
+                submitter.userId(),
+                new NodeSpec(1, "Inactive Permission Review", inactivePermissionRoleId, "active"));
+        long inactivePermissionQuotationId = createSolutionDocument(
+                submitter, "quotation", "draft", true, suffix + "-inactive-permission");
+        jdbcTemplate.update("update sys_permissions set is_active = false where permission_code = 'approval.approve'");
+        try {
+            assertConflict(submit(
+                    submitter.token(),
+                    "quotation",
+                    inactivePermissionQuotationId,
+                    "Inactive approval permission " + suffix));
+        } finally {
+            jdbcTemplate.update("update sys_permissions set is_active = true where permission_code = 'approval.approve'");
+        }
     }
 
     @Test

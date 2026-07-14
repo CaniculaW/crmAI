@@ -209,7 +209,8 @@ class SolutionDocumentControllerTest {
                         "solution.create",
                         "solution.read",
                         "solution.update",
-                        "approval.submit"),
+                        "approval.submit",
+                        "approval.approve"),
                 List.of("global"));
         createDefaultWorkflow("quotation", username, userId);
         createDefaultWorkflow("bid", username, userId);
@@ -374,7 +375,8 @@ class SolutionDocumentControllerTest {
                         "solution.create",
                         "solution.read",
                         "solution.update",
-                        "approval.submit"),
+                        "approval.submit",
+                        "approval.approve"),
                 List.of("global"));
         createDefaultWorkflow("quotation", username, userId);
         String token = login(username);
@@ -422,7 +424,8 @@ class SolutionDocumentControllerTest {
                         "solution.create",
                         "solution.read",
                         "solution.update",
-                        "approval.submit"),
+                        "approval.submit",
+                        "approval.approve"),
                 List.of("global"));
         createDefaultWorkflow("quotation", username, userId);
         String token = login(username);

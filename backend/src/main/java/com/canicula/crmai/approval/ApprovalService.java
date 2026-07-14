@@ -46,16 +46,31 @@ public class ApprovalService {
     public List<ApprovalApproverRoleResponse> listApproverRoles() {
         return jdbcTemplate.query(
                 """
-                select id, code, name
-                from sys_roles
-                where tenant_id = ?
-                  and deleted_at is null
-                order by code, id
+                select r.id, r.code, r.name
+                from sys_roles r
+                where r.tenant_id = ?
+                  and r.deleted_at is null
+                  and exists (
+                      select 1
+                      from sys_user_roles node_membership
+                      join sys_users u on u.id = node_membership.user_id
+                      join sys_user_roles permission_membership on permission_membership.user_id = u.id
+                      join sys_role_permissions rp on rp.role_id = permission_membership.role_id
+                      join sys_permissions p on p.id = rp.permission_id
+                      where node_membership.role_id = r.id
+                        and u.tenant_id = ?
+                        and u.status = 'active'
+                        and u.deleted_at is null
+                        and p.permission_code = 'approval.approve'
+                        and p.is_active = true
+                  )
+                order by r.code, r.id
                 """,
                 (rs, rowNum) -> new ApprovalApproverRoleResponse(
                         rs.getLong("id"),
                         rs.getString("code"),
                         rs.getString("name")),
+                TENANT_ID,
                 TENANT_ID);
     }
 
@@ -130,23 +145,27 @@ public class ApprovalService {
         }
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbcTemplate.update(connection -> {
-            PreparedStatement statement = connection.prepareStatement(
-                    """
-                    insert into approval_templates (
-                        tenant_id, object_type, template_name, status, is_default, created_by
-                    )
-                    values (?, ?, ?, ?, ?, ?)
-                    """,
-                    new String[] {"id"});
-            statement.setLong(1, TENANT_ID);
-            statement.setString(2, objectType);
-            statement.setString(3, templateName);
-            statement.setString(4, status);
-            statement.setBoolean(5, isDefault);
-            statement.setLong(6, actorUserId);
-            return statement;
-        }, keyHolder);
+        try {
+            jdbcTemplate.update(connection -> {
+                PreparedStatement statement = connection.prepareStatement(
+                        """
+                        insert into approval_templates (
+                            tenant_id, object_type, template_name, status, is_default, created_by
+                        )
+                        values (?, ?, ?, ?, ?, ?)
+                        """,
+                        new String[] {"id"});
+                statement.setLong(1, TENANT_ID);
+                statement.setString(2, objectType);
+                statement.setString(3, templateName);
+                statement.setString(4, status);
+                statement.setBoolean(5, isDefault);
+                statement.setLong(6, actorUserId);
+                return statement;
+            }, keyHolder);
+        } catch (DuplicateKeyException exception) {
+            throw new BusinessRuleException("默认审批模板已被其他用户更新，请刷新后重试");
+        }
 
         Number key = keyHolder.getKey();
         if (key == null) {
@@ -174,25 +193,29 @@ public class ApprovalService {
         if (isDefault) {
             clearDefaultTemplates(existing.object_type(), templateId, actorUserId);
         }
-        jdbcTemplate.update(
-                """
-                update approval_templates
-                set template_name = ?,
-                    status = ?,
-                    is_default = ?,
-                    updated_by = ?,
-                    updated_at = current_timestamp,
-                    version = version + 1
-                where id = ?
-                  and tenant_id = ?
-                  and deleted_at is null
-                """,
-                templateName,
-                status,
-                isDefault,
-                actorUserId,
-                templateId,
-                TENANT_ID);
+        try {
+            jdbcTemplate.update(
+                    """
+                    update approval_templates
+                    set template_name = ?,
+                        status = ?,
+                        is_default = ?,
+                        updated_by = ?,
+                        updated_at = current_timestamp,
+                        version = version + 1
+                    where id = ?
+                      and tenant_id = ?
+                      and deleted_at is null
+                    """,
+                    templateName,
+                    status,
+                    isDefault,
+                    actorUserId,
+                    templateId,
+                    TENANT_ID);
+        } catch (DuplicateKeyException exception) {
+            throw new BusinessRuleException("默认审批模板已被其他用户更新，请刷新后重试");
+        }
         return findTemplate(templateId);
     }
 
@@ -795,14 +818,19 @@ public class ApprovalService {
                 """
                 select count(*)
                 from sys_roles r
-                join sys_user_roles ur on ur.role_id = r.id
-                join sys_users u on u.id = ur.user_id
+                join sys_user_roles node_membership on node_membership.role_id = r.id
+                join sys_users u on u.id = node_membership.user_id
+                join sys_user_roles permission_membership on permission_membership.user_id = u.id
+                join sys_role_permissions rp on rp.role_id = permission_membership.role_id
+                join sys_permissions p on p.id = rp.permission_id
                 where r.id = ?
                   and r.tenant_id = ?
                   and r.deleted_at is null
                   and u.tenant_id = ?
                   and u.status = 'active'
                   and u.deleted_at is null
+                  and p.permission_code = 'approval.approve'
+                  and p.is_active = true
                 """,
                 Integer.class,
                 node.approverRoleId(),

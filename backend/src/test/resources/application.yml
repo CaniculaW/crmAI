@@ -11,6 +11,7 @@ spring:
     locations: classpath:db/migration
     placeholders:
       activeRecordFilter:
+      approvalDefaultUniqueIndex: create index uk_approval_templates_default_active on approval_templates (tenant_id, object_type, is_default);
       jsonDataType: json
 
 server:

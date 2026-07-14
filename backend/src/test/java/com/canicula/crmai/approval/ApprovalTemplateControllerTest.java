@@ -366,11 +366,14 @@ class ApprovalTemplateControllerTest {
     }
 
     @Test
-    void listsAssignableApproverRolesWithApprovalConfigPermissionOnly() {
+    void listsOnlyRolesWithAnActiveUserWhoCanApprove() {
         String suffix = suffix();
         TestUser manager = createAndLoginUser("approval_roles_" + suffix, "approval.config.manage");
+        TestUser approver = createAndLoginUser("approval_role_actor_" + suffix, "approval.approve");
         String assignableCode = "approval_assignable_" + suffix;
         long assignableRoleId = createRole(assignableCode);
+        identityService.assignRole(approver.userId(), assignableRoleId);
+        long unstaffedRoleId = createRole("approval_unstaffed_" + suffix);
         long deletedRoleId = createRole("approval_unassignable_" + suffix);
         jdbcTemplate.update("update sys_roles set deleted_at = current_timestamp where id = ?", deletedRoleId);
 
@@ -388,7 +391,32 @@ class ApprovalTemplateControllerTest {
         assertThat(role.path("id").asLong()).isEqualTo(assignableRoleId);
         assertThat(role.path("code").asText()).isEqualTo(assignableCode);
         assertThat(role.path("name").asText()).isEqualTo("Approval Test Role");
+        assertThat(containsId(data, unstaffedRoleId)).isFalse();
         assertThat(containsId(data, deletedRoleId)).isFalse();
+    }
+
+    @Test
+    void excludesApproverRolesWhenTheApprovePermissionIsInactive() {
+        String suffix = suffix();
+        TestUser manager = createAndLoginUser("approval_inactive_permission_mgr_" + suffix, "approval.config.manage");
+        TestUser approver = createAndLoginUser("approval_inactive_permission_actor_" + suffix, "approval.approve");
+        long approverRoleId = createRole("approval_inactive_permission_role_" + suffix);
+        identityService.assignRole(approver.userId(), approverRoleId);
+
+        jdbcTemplate.update("update sys_permissions set is_active = false where permission_code = 'approval.approve'");
+        try {
+            ResponseEntity<JsonNode> response = exchange(
+                    "/api/approval-templates/approver-roles",
+                    HttpMethod.GET,
+                    null,
+                    manager.token(),
+                    "approval-inactive-permission-role-list");
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(containsId(response.getBody().path("data"), approverRoleId)).isFalse();
+        } finally {
+            jdbcTemplate.update("update sys_permissions set is_active = true where permission_code = 'approval.approve'");
+        }
     }
 
     @Test

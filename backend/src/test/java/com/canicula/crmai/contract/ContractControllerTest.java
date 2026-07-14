@@ -436,7 +436,8 @@ class ContractControllerTest {
                         "contract.create",
                         "contract.read",
                         "contract.update",
-                        "approval.submit"),
+                        "approval.submit",
+                        "approval.approve"),
                 List.of("global"));
         createDefaultWorkflow(username, userId);
         String token = login(username);

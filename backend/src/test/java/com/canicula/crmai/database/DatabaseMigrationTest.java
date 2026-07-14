@@ -551,7 +551,9 @@ class DatabaseMigrationTest {
         isolatedDataSource.setPassword("");
         Map<String, String> placeholders = Map.of(
                 "activeRecordFilter", "",
-                "jsonDataType", "json");
+                "jsonDataType", "json",
+                "approvalDefaultUniqueIndex",
+                "create index uk_approval_templates_default_active on approval_templates (tenant_id, object_type, is_default);");
 
         Flyway.configure()
                 .dataSource(isolatedDataSource)

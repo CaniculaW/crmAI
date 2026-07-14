@@ -86,15 +86,16 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
   const [approvalComment, setApprovalComment] = useState("");
   const [decisionLoading, setDecisionLoading] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
-  const [rejectForm] = Form.useForm<{ comment: string }>();
+  const [rejectFormVersion, setRejectFormVersion] = useState(0);
   const taskRequestSequence = useRef(0);
+  const detailRequestSequence = useRef(0);
 
   const resetDecisionInputs = useCallback(() => {
     setApprovalComment("");
-    rejectForm.resetFields();
-  }, [rejectForm]);
+  }, []);
 
   const closeDrawer = useCallback(() => {
+    detailRequestSequence.current += 1;
     setDrawerOpen(false);
     setDetail(null);
     setSelectedTask(null);
@@ -127,6 +128,7 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
   }, [loadTasks]);
 
   const openDetail = useCallback(async (task: ApprovalTask) => {
+    const requestSequence = ++detailRequestSequence.current;
     resetDecisionInputs();
     setRejectOpen(false);
     setSelectedTask(task);
@@ -134,11 +136,18 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
     setDetail(null);
     setDetailLoading(true);
     try {
-      setDetail(await crmApi.approvals.detail(task.instance.id));
+      const nextDetail = await crmApi.approvals.detail(task.instance.id);
+      if (requestSequence === detailRequestSequence.current) {
+        setDetail(nextDetail);
+      }
     } catch (error) {
-      messageApi.error(errorText(error, "加载审批详情失败"));
+      if (requestSequence === detailRequestSequence.current) {
+        messageApi.error(errorText(error, "加载审批详情失败"));
+      }
     } finally {
-      setDetailLoading(false);
+      if (requestSequence === detailRequestSequence.current) {
+        setDetailLoading(false);
+      }
     }
   }, [messageApi, resetDecisionInputs]);
 
@@ -386,7 +395,10 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
                       danger
                       icon={<XCircle size={16} />}
                       disabled={decisionLoading}
-                      onClick={() => setRejectOpen(true)}
+                      onClick={() => {
+                        setRejectFormVersion((version) => version + 1);
+                        setRejectOpen(true);
+                      }}
                     >
                       驳回
                     </Button>
@@ -411,12 +423,9 @@ export function ApprovalCenterPage({ currentUser }: { currentUser: CurrentUser }
         open={rejectOpen}
         footer={null}
         destroyOnHidden
-        onCancel={() => {
-          setRejectOpen(false);
-          rejectForm.resetFields();
-        }}
+        onCancel={() => setRejectOpen(false)}
       >
-        <Form form={rejectForm} layout="vertical" onFinish={(values) => void handleReject(values)}>
+        <Form key={rejectFormVersion} layout="vertical" onFinish={(values) => void handleReject(values)}>
           <Form.Item
             name="comment"
             label="驳回意见"

@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -1193,6 +1193,20 @@ describe("CRM frontend V1 workflow", () => {
     expect(stylesCss).toMatch(/\.app-content\s*{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;[^}]*}/s);
   });
 
+  it("uses a drawer navigation instead of stacking the full sidebar on mobile", async () => {
+    mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("button", { name: "打开导航" }));
+
+    expect(await screen.findByRole("dialog", { name: "导航菜单" })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "工作台" })).toHaveLength(2);
+    expect(stylesCss).toMatch(/@media\s*\(max-width:\s*860px\)[\s\S]*?\.app-sidebar\s*{[^}]*display:\s*none\s*!important;/s);
+  });
+
   it("shows a dashboard command center with priority and quick entries", async () => {
     const user = userEvent.setup();
     mockCrmFetch();
@@ -2381,6 +2395,30 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.queryByRole("link", { name: "系统概览" })).not.toBeInTheDocument();
   });
 
+  it("redirects direct approval routes when the required permission is missing", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch({
+      user: {
+        ...apiData.user,
+        permissions: ["account.read"]
+      }
+    });
+    window.history.pushState({}, "", "/approvals");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "工作台" })).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/approvals/tasks"), expect.anything());
+
+    act(() => {
+      window.history.pushState({}, "", "/system/approval-templates");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    expect(await screen.findByRole("heading", { name: "工作台" })).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/approval-templates", expect.anything());
+  });
+
   it("shows approval status inside a quotation detail drawer", async () => {
     const user = userEvent.setup();
     const fetchMock = mockCrmFetch();
@@ -2394,6 +2432,25 @@ describe("CRM frontend V1 workflow", () => {
     expect(await screen.findByText("尚未提交审批")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "提交审批" })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/approvals/object/quotation/91", expect.anything());
+  });
+
+  it("renders approval lifecycle solution statuses in Chinese", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch({
+      solutions: [
+        { ...apiData.solutions[0], status: "approving" },
+        { ...apiData.solutions[0], id: 92, document_name: "已审批方案", status: "approved" }
+      ]
+    });
+
+    render(<App />);
+    await loginThroughUi(user);
+    await user.click(screen.getByRole("link", { name: "方案标书" }));
+
+    expect(await screen.findByText("审批中")).toBeInTheDocument();
+    expect(screen.getByText("已通过")).toBeInTheDocument();
+    expect(screen.queryByText("approving")).not.toBeInTheDocument();
+    expect(screen.queryByText("approved")).not.toBeInTheDocument();
   });
 
   it("renders OpenAI model configuration under system AI config", async () => {

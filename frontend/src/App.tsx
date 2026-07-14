@@ -30,6 +30,7 @@ import {
   FileSignature,
   FileText,
   LayoutDashboard,
+  Menu as MenuIcon,
   Paperclip,
   Plus,
   ReceiptText,
@@ -371,6 +372,7 @@ function CrmShell() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   const [passwordForm] = Form.useForm();
 
@@ -391,6 +393,10 @@ function CrmShell() {
   useEffect(() => {
     void restoreSession();
   }, [restoreSession]);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
 
   const handleLogin = async (username: string, password: string) => {
     const current = await loginApi(username, password);
@@ -431,6 +437,15 @@ function CrmShell() {
   const selectedMenuKey = location.pathname;
   const selectedRootKey = allowedNav.find((item) => item.children?.some((child) => child.key === selectedMenuKey))?.key;
   const defaultOpenKeys = Array.from(new Set(["/dashboard-root", "/system-root", selectedRootKey ? `${selectedRootKey}-root` : ""])).filter(Boolean);
+  const menuItems = allowedNav.map((item) => ({
+    key: item.children ? `${item.key}-root` : item.key,
+    icon: item.icon,
+    label: item.children && item.key !== "/dashboard" ? item.label : <Link to={item.key}>{item.label}</Link>,
+    children: item.children?.map((child) => ({
+      key: child.key,
+      label: <Link to={child.key}>{child.label}</Link>
+    }))
+  }));
 
   return (
     <Layout className="app-shell">
@@ -447,22 +462,45 @@ function CrmShell() {
           mode="inline"
           selectedKeys={[selectedMenuKey]}
           defaultOpenKeys={defaultOpenKeys}
-          items={allowedNav.map((item) => ({
-            key: item.children ? `${item.key}-root` : item.key,
-            icon: item.icon,
-            label: item.children && item.key !== "/dashboard" ? item.label : <Link to={item.key}>{item.label}</Link>,
-            children: item.children?.map((child) => ({
-              key: child.key,
-              label: <Link to={child.key}>{child.label}</Link>
-            }))
-          }))}
+          items={menuItems}
         />
       </Sider>
+      <Drawer
+        className="mobile-nav-drawer"
+        title="导航菜单"
+        placement="left"
+        open={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+      >
+        <div className="brand-block mobile-brand-block">
+          <div className="brand-mark">C</div>
+          <div>
+            <Typography.Title level={2}>项目型大客户 CRM</Typography.Title>
+            <span>{user.name}</span>
+          </div>
+        </div>
+        <Menu
+          mode="inline"
+          selectedKeys={[selectedMenuKey]}
+          defaultOpenKeys={defaultOpenKeys}
+          items={menuItems}
+          onClick={() => setMobileNavOpen(false)}
+        />
+      </Drawer>
       <Layout>
         <Header className="app-header">
-          <div>
-            <strong>项目型大客户 CRM</strong>
-            <span>销售、商务、财务与经营驾驶舱</span>
+          <div className="header-identity">
+            <Button
+              className="mobile-nav-trigger"
+              type="text"
+              icon={<MenuIcon size={20} />}
+              aria-label="打开导航"
+              onClick={() => setMobileNavOpen(true)}
+            />
+            <div>
+              <strong>项目型大客户 CRM</strong>
+              <span>销售、商务、财务与经营驾驶舱</span>
+            </div>
           </div>
           <div className="header-actions">
             <Tag color="blue">{user.permissions.length} 个权限点</Tag>
@@ -494,7 +532,12 @@ function CrmShell() {
             <Route path="/reconciliations" element={<ReconciliationWorkbenchPage />} />
             <Route path="/activities" element={<ActivitiesPage currentUser={user} />} />
             <Route path="/weekly-progress" element={<WeeklyProgressPage />} />
-            <Route path="/approvals" element={<ApprovalCenterPage currentUser={user} />} />
+            <Route
+              path="/approvals"
+              element={user.permissions.includes("approval.read")
+                ? <ApprovalCenterPage currentUser={user} />
+                : <Navigate to="/" replace />}
+            />
             <Route path="/ai-assistant" element={<AiAssistantPage />} />
             <Route path="/ai-assistant/drafts" element={<AiDraftsPage />} />
             <Route path="/ai-assistant/weekly-report" element={<AiWeeklyReportPage />} />
@@ -509,7 +552,12 @@ function CrmShell() {
             <Route path="/system/audit-logs" element={<SystemPage section="auditLogs" />} />
             <Route path="/system/dictionaries" element={<SystemPage section="dictionaries" />} />
             <Route path="/system/ai-config" element={<SystemPage section="aiConfig" />} />
-            <Route path="/system/approval-templates" element={<ApprovalTemplateConfigPage />} />
+            <Route
+              path="/system/approval-templates"
+              element={user.permissions.includes("approval.config.manage")
+                ? <ApprovalTemplateConfigPage />
+                : <Navigate to="/" replace />}
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Content>
@@ -8546,8 +8594,12 @@ function solutionStatusText(status?: string) {
     return "-";
   }
   const labels: Record<string, string> = {
+    draft: "编制中",
     drafting: "编制中",
     internal_review: "内部评审",
+    approving: "审批中",
+    approved: "已通过",
+    rejected: "已驳回",
     submitted: "已提交客户",
     feedback: "客户反馈",
     won: "已中标",
@@ -8561,7 +8613,16 @@ function solutionStatusTag(status?: string) {
   if (!status) {
     return "-";
   }
-  const color = status === "won" ? "green" : status === "lost" || status === "voided" ? "default" : status === "feedback" ? "gold" : "blue";
+  const color =
+    status === "won" || status === "approved"
+      ? "green"
+      : status === "rejected"
+        ? "red"
+        : status === "approving" || status === "feedback"
+          ? "gold"
+          : status === "lost" || status === "voided"
+            ? "default"
+            : "blue";
   return <Tag color={color}>{solutionStatusText(status)}</Tag>;
 }
 

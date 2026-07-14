@@ -17,7 +17,7 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { Pencil, Plus, Settings } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   crmApi,
   type ApprovalApproverRole,
@@ -66,6 +66,7 @@ export function ApprovalTemplateConfigPage() {
   const [editingNode, setEditingNode] = useState<ApprovalTemplateNode | null>(null);
   const [nodeSaving, setNodeSaving] = useState(false);
   const [nodeForm] = Form.useForm<NodeFormValues>();
+  const drawerRequestSequence = useRef(0);
 
   const loadTemplates = useCallback(async () => {
     setTemplatesLoading(true);
@@ -126,9 +127,13 @@ export function ApprovalTemplateConfigPage() {
   };
 
   const openNodeDrawer = async (template: ApprovalTemplate) => {
+    const requestSequence = ++drawerRequestSequence.current;
     setActiveTemplate(template);
     setNodes([]);
     setRoles([]);
+    setNodeModalOpen(false);
+    setEditingNode(null);
+    nodeForm.resetFields();
     setDrawerOpen(true);
     setDrawerLoading(true);
     try {
@@ -136,12 +141,18 @@ export function ApprovalTemplateConfigPage() {
         crmApi.approvalTemplates.listNodes(template.id),
         crmApi.approvalTemplates.approverRoles()
       ]);
-      setNodes(sortNodes(loadedNodes));
-      setRoles(loadedRoles);
+      if (requestSequence === drawerRequestSequence.current) {
+        setNodes(sortNodes(loadedNodes));
+        setRoles(loadedRoles);
+      }
     } catch (error) {
-      message.error(errorText(error, "审批节点加载失败"));
+      if (requestSequence === drawerRequestSequence.current) {
+        message.error(errorText(error, "审批节点加载失败"));
+      }
     } finally {
-      setDrawerLoading(false);
+      if (requestSequence === drawerRequestSequence.current) {
+        setDrawerLoading(false);
+      }
     }
   };
 
@@ -352,6 +363,7 @@ export function ApprovalTemplateConfigPage() {
         size="large"
         destroyOnHidden
         onClose={() => {
+          drawerRequestSequence.current += 1;
           setDrawerOpen(false);
           setActiveTemplate(null);
           setNodes([]);

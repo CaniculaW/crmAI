@@ -16,6 +16,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 class PostgresMigrationIT {
 
+    private static final Map<String, String> POSTGRES_PLACEHOLDERS = Map.of(
+            "activeRecordFilter", "where deleted_at is null",
+            "approvalDefaultUniqueIndex", "create unique index uk_approval_templates_default_active on approval_templates (tenant_id, object_type) where is_default = true and deleted_at is null;",
+            "jsonDataType", "jsonb");
+
     @Container
     private static final PostgreSQLContainer<?> POSTGRES =
             new PostgreSQLContainer<>("postgres:16-alpine")
@@ -28,9 +33,7 @@ class PostgresMigrationIT {
         Flyway flyway = Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
                 .locations("classpath:db/migration")
-                .placeholders(Map.of(
-                        "activeRecordFilter", "where deleted_at is null",
-                        "jsonDataType", "jsonb"))
+                .placeholders(POSTGRES_PLACEHOLDERS)
                 .load();
 
         flyway.migrate();
@@ -409,8 +412,16 @@ class PostgresMigrationIT {
                   and indexname = 'idx_approval_instances_object'
                 """,
                 Integer.class);
+        String approvalDefaultIndex = jdbcTemplate.queryForObject(
+                """
+                select indexdef
+                from pg_indexes
+                where schemaname = 'public'
+                  and indexname = 'uk_approval_templates_default_active'
+                """,
+                String.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("36");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("37");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -456,6 +467,8 @@ class PostgresMigrationIT {
         assertThat(approvalTableCount).isEqualTo(5);
         assertThat(approvalPermissionCount).isEqualTo(4);
         assertThat(approvalObjectIndexCount).isEqualTo(1);
+        assertThat(approvalDefaultIndex)
+                .contains("UNIQUE", "tenant_id", "object_type", "is_default", "deleted_at IS NULL");
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type
@@ -492,9 +505,7 @@ class PostgresMigrationIT {
         Flyway flyway = Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
                 .locations("classpath:db/migration")
-                .placeholders(Map.of(
-                        "activeRecordFilter", "where deleted_at is null",
-                        "jsonDataType", "jsonb"))
+                .placeholders(POSTGRES_PLACEHOLDERS)
                 .load();
 
         flyway.migrate();
@@ -519,9 +530,7 @@ class PostgresMigrationIT {
         Flyway flyway = Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
                 .locations("classpath:db/migration")
-                .placeholders(Map.of(
-                        "activeRecordFilter", "where deleted_at is null",
-                        "jsonDataType", "jsonb"))
+                .placeholders(POSTGRES_PLACEHOLDERS)
                 .load();
 
         flyway.migrate();
@@ -546,9 +555,7 @@ class PostgresMigrationIT {
         Flyway flyway = Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
                 .locations("classpath:db/migration")
-                .placeholders(Map.of(
-                        "activeRecordFilter", "where deleted_at is null",
-                        "jsonDataType", "jsonb"))
+                .placeholders(POSTGRES_PLACEHOLDERS)
                 .load();
 
         flyway.migrate();
@@ -573,9 +580,7 @@ class PostgresMigrationIT {
         Flyway flyway = Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
                 .locations("classpath:db/migration")
-                .placeholders(Map.of(
-                        "activeRecordFilter", "where deleted_at is null",
-                        "jsonDataType", "jsonb"))
+                .placeholders(POSTGRES_PLACEHOLDERS)
                 .load();
 
         flyway.migrate();
@@ -600,9 +605,7 @@ class PostgresMigrationIT {
         Flyway flyway = Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
                 .locations("classpath:db/migration")
-                .placeholders(Map.of(
-                        "activeRecordFilter", "where deleted_at is null",
-                        "jsonDataType", "jsonb"))
+                .placeholders(POSTGRES_PLACEHOLDERS)
                 .load();
 
         flyway.migrate();
@@ -627,9 +630,7 @@ class PostgresMigrationIT {
         Flyway flyway = Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
                 .locations("classpath:db/migration")
-                .placeholders(Map.of(
-                        "activeRecordFilter", "where deleted_at is null",
-                        "jsonDataType", "jsonb"))
+                .placeholders(POSTGRES_PLACEHOLDERS)
                 .load();
 
         flyway.migrate();

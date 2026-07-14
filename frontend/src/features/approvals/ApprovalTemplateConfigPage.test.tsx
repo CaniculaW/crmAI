@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { message } from "antd";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -254,6 +254,34 @@ describe("ApprovalTemplateConfigPage", () => {
     });
   });
 
+  it("ignores stale nodes when another template drawer is opened", async () => {
+    const api = mockApprovalApis();
+    const firstRequest = deferred<ApprovalTemplateNode[]>();
+    const secondRequest = deferred<ApprovalTemplateNode[]>();
+    api.listNodes.mockImplementation((templateId) =>
+      templateId === templates[1].id ? secondRequest.promise : firstRequest.promise
+    );
+    const user = userEvent.setup();
+    render(<ApprovalTemplateConfigPage />);
+
+    await user.click(await screen.findByRole("button", { name: "配置模板 合同审批" }));
+    fireEvent.click(screen.getByRole("button", { name: "配置模板 投标审批", hidden: true }));
+    await act(async () => {
+      secondRequest.resolve([{ ...nodes[0], id: 81, template_id: 8, node_name: "投标审批节点" }]);
+      await secondRequest.promise;
+    });
+    expect(await screen.findByText("投标审批节点")).toBeInTheDocument();
+
+    await act(async () => {
+      firstRequest.resolve(nodes);
+      await firstRequest.promise;
+    });
+
+    const drawer = within(screen.getByRole("dialog", { name: "审批节点：投标审批" }));
+    expect(drawer.getByText("投标审批节点")).toBeInTheDocument();
+    expect(drawer.queryByText("法务审批")).not.toBeInTheDocument();
+  });
+
   it("reports template loading errors with an Ant Design message", async () => {
     mockApprovalApis();
     vi.spyOn(crmApi.approvalTemplates, "list").mockRejectedValue(new Error("模板接口不可用"));
@@ -287,4 +315,12 @@ function latestDialog(name: string) {
   const modal = titles[titles.length - 1].closest(".ant-modal");
   if (!modal) throw new Error(`Modal not found for title: ${name}`);
   return within(modal as HTMLElement);
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
 }
