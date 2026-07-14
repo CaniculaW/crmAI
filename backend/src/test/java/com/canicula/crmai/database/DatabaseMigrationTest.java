@@ -157,6 +157,15 @@ class DatabaseMigrationTest {
                 where table_name in ('crm_contracts', 'crm_contract_changes', 'crm_contract_milestones')
                 """,
                 Integer.class);
+        Integer positiveContractAmountConstraintCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from information_schema.table_constraints
+                where lower(table_name) = 'crm_contracts'
+                  and lower(constraint_name) = 'ck_crm_contracts_positive_amount'
+                  and constraint_type = 'CHECK'
+                """,
+                Integer.class);
         Integer contractPermissionCount = jdbcTemplate.queryForObject(
                 """
                 select count(*)
@@ -271,8 +280,8 @@ class DatabaseMigrationTest {
                 Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("38");
-        assertThat(migrationCount).isGreaterThanOrEqualTo(33);
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("39");
+        assertThat(migrationCount).isGreaterThanOrEqualTo(34);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
         assertThat(identityTableCount).isEqualTo(11);
@@ -291,6 +300,7 @@ class DatabaseMigrationTest {
         assertThat(solutionTableCount).isEqualTo(1);
         assertThat(solutionPermissionCount).isEqualTo(4);
         assertThat(contractTableCount).isEqualTo(3);
+        assertThat(positiveContractAmountConstraintCount).isEqualTo(1);
         assertThat(contractPermissionCount).isEqualTo(5);
         assertThat(invoiceTableCount).isEqualTo(1);
         assertThat(invoicePermissionCount).isEqualTo(8);

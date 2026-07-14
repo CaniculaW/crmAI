@@ -1,5 +1,6 @@
 package com.canicula.crmai.contract;
 
+import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -8,7 +9,7 @@ public record ContractUpdateRequest(
         String contract_no,
         String contract_type,
         String contract_status,
-        BigDecimal contract_amount,
+        @Positive BigDecimal contract_amount,
         BigDecimal tax_rate,
         String our_signing_entity,
         String customer_signing_entity,

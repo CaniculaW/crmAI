@@ -18,9 +18,9 @@
 - Modify: `backend/src/main/java/com/canicula/crmai/contract/ContractUpdateRequest.java`
 - Modify: `backend/src/main/java/com/canicula/crmai/contract/ContractService.java`
 - Create: `backend/src/main/resources/db/migration/V39__enforce_positive_contract_amount.sql`
-- Modify: `backend/src/test/java/com/canicula/crmai/DatabaseMigrationTest.java`
+- Modify: `backend/src/test/java/com/canicula/crmai/database/DatabaseMigrationTest.java`
 
-- [ ] **Step 1: Write failing create and update tests**
+- [x] **Step 1: Write failing create and update tests**
 
 Add integration cases that submit `contract_amount: -1` on create and update, then assert HTTP 400, code `VALIDATION_ERROR`, and no negative row persisted.
 
@@ -29,13 +29,13 @@ assertThat(response.status()).isEqualTo(HttpStatus.BAD_REQUEST.value());
 assertThat(response.body().path("code").asText()).isEqualTo("VALIDATION_ERROR");
 ```
 
-- [ ] **Step 2: Verify the tests fail for the expected reason**
+- [x] **Step 2: Verify the tests fail for the expected reason**
 
 Run: `cd backend && mvn -Dtest=ContractControllerTest test`
 
 Expected: the new negative amount tests fail because create/update currently accept the value.
 
-- [ ] **Step 3: Add application and database validation**
+- [x] **Step 3: Add application and database validation**
 
 Apply `@Positive` to both request records, call a service-layer helper before create/update persistence, and add this migration:
 
@@ -45,16 +45,16 @@ alter table crm_contracts
     check (contract_amount > 0);
 ```
 
-- [ ] **Step 4: Verify controller and migration tests pass**
+- [x] **Step 4: Verify controller and migration tests pass**
 
 Run: `cd backend && mvn -Dtest=ContractControllerTest,DatabaseMigrationTest test`
 
 Expected: all selected tests pass and V39 is applied.
 
-- [ ] **Step 5: Commit the integrity fix**
+- [x] **Step 5: Commit the integrity fix**
 
 ```bash
-git add backend/src/main/java/com/canicula/crmai/contract backend/src/main/resources/db/migration/V39__enforce_positive_contract_amount.sql backend/src/test/java/com/canicula/crmai/contract/ContractControllerTest.java backend/src/test/java/com/canicula/crmai/DatabaseMigrationTest.java
+git add backend/src/main/java/com/canicula/crmai/contract backend/src/main/resources/db/migration/V39__enforce_positive_contract_amount.sql backend/src/test/java/com/canicula/crmai/contract/ContractControllerTest.java backend/src/test/java/com/canicula/crmai/database/DatabaseMigrationTest.java
 git commit -m "fix: enforce positive contract amounts"
 ```
 

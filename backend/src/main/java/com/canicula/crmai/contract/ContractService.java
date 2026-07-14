@@ -42,6 +42,7 @@ public class ContractService {
 
     @Transactional
     public ContractResponse create(ContractCreateRequest request, Long actorUserId) {
+        validatePositiveAmount(request.contract_amount());
         validateReadableBusinessObject(request.account_id(), request.opportunity_id(), actorUserId);
         Long contractId = insertContract(request, actorUserId);
         return findById(contractId);
@@ -91,6 +92,9 @@ public class ContractService {
 
     @Transactional
     public ContractResponse update(Long contractId, ContractUpdateRequest request, Long actorUserId) {
+        if (request.contract_amount() != null) {
+            validatePositiveAmount(request.contract_amount());
+        }
         ContractResponse current = readableDetail(contractId, actorUserId);
         boolean approvalSensitiveUpdate = hasApprovalSensitiveInput(request);
         requireApprovalSafeUpdate(current, approvalSensitiveUpdate);
@@ -542,6 +546,12 @@ public class ContractService {
             return contractAmount;
         }
         return contractAmount.divide(BigDecimal.ONE.add(taxRate), 2, RoundingMode.HALF_UP);
+    }
+
+    private static void validatePositiveAmount(BigDecimal contractAmount) {
+        if (contractAmount == null || contractAmount.signum() <= 0) {
+            throw new IllegalArgumentException("合同金额必须大于0");
+        }
     }
 
     private static void appendKeywordFilter(StringBuilder sql, List<Object> parameters, String keyword) {

@@ -148,6 +148,55 @@ class ContractControllerTest {
     }
 
     @Test
+    void rejectsNonPositiveContractAmountOnCreateAndUpdate() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("contract-amount-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "contract_amount_" + suffix,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "contract.create",
+                        "contract.read",
+                        "contract.update"),
+                List.of("global"));
+        String token = login("contract_amount_" + suffix);
+        Long accountId = createAccount(token, "合同金额客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(token, accountId, "合同金额商机-" + suffix, departmentId, userId);
+
+        Map<String, Object> invalidCreateRequest = contractRequest(accountId, opportunityId, userId, suffix);
+        invalidCreateRequest.put("contract_amount", -1);
+        HttpJsonResponse createResponse = postJson(
+                "/api/contracts",
+                invalidCreateRequest,
+                authHeaders(token, "contract-negative-create-trace-001"));
+
+        assertThat(createResponse.status()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(createResponse.body().path("code").asText()).isEqualTo("VALIDATION_ERROR");
+        Integer invalidCreateCount = jdbcTemplate.queryForObject(
+                "select count(*) from crm_contracts where contract_no = ?",
+                Integer.class,
+                "CRM-" + suffix);
+        assertThat(invalidCreateCount).isZero();
+
+        Long contractId = createContract(token, accountId, opportunityId, userId, suffix);
+        HttpJsonResponse updateResponse = patchJson(
+                "/api/contracts/" + contractId,
+                Map.of("contract_amount", -1, "change_reason", "负金额校验"),
+                authHeaders(token, "contract-negative-update-trace-001"));
+
+        assertThat(updateResponse.status()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(updateResponse.body().path("code").asText()).isEqualTo("VALIDATION_ERROR");
+        Number persistedAmount = jdbcTemplate.queryForObject(
+                "select contract_amount from crm_contracts where id = ?",
+                Number.class,
+                contractId);
+        assertThat(persistedAmount.doubleValue()).isEqualTo(1200000.0);
+    }
+
+    @Test
     void rejectsCriticalContractChangesWithoutReason() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         Long departmentId = createDepartment("contract-rule-dept-" + suffix);
