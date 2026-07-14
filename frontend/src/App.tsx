@@ -524,37 +524,37 @@ function CrmShell() {
         </Header>
         <Content className="app-content">
           <Routes>
-            <Route index element={<Dashboard />} />
-            <Route path="/dashboard" element={<DashboardOverviewPage />} />
-            <Route path="/dashboard/funnel" element={<DashboardFunnelPage />} />
-            <Route path="/dashboard/contracts" element={<DashboardContractsPage />} />
-            <Route path="/dashboard/invoices" element={<DashboardInvoicesPage />} />
-            <Route path="/dashboard/receivables" element={<DashboardReceivablesPage />} />
-            <Route path="/dashboard/risks" element={<DashboardRisksPage />} />
-            <Route path="/accounts" element={<AccountsPage currentUser={user} />} />
-            <Route path="/contacts" element={<ContactsPage currentUser={user} />} />
-            <Route path="/opportunities" element={<OpportunitiesPage currentUser={user} />} />
-            <Route path="/solutions" element={<SolutionDocumentsPage currentUser={user} />} />
-            <Route path="/contracts" element={<ContractsPage currentUser={user} />} />
-            <Route path="/invoices" element={<InvoicesPage currentUser={user} />} />
-            <Route path="/receivables" element={<ReceivablesPage currentUser={user} />} />
-            <Route path="/payments" element={<PaymentsPage />} />
-            <Route path="/reconciliations" element={<ReconciliationWorkbenchPage />} />
-            <Route path="/activities" element={<ActivitiesPage currentUser={user} />} />
-            <Route path="/weekly-progress" element={<WeeklyProgressPage />} />
+            <Route index element={<Dashboard grantedPermissions={user.permissions} />} />
+            <Route path="/dashboard" element={hasPermission("dashboard.read") ? <DashboardOverviewPage /> : <Navigate to="/" replace />} />
+            <Route path="/dashboard/funnel" element={hasPermission("dashboard.funnel.read") ? <DashboardFunnelPage /> : <Navigate to="/" replace />} />
+            <Route path="/dashboard/contracts" element={hasPermission("dashboard.contracts.read") ? <DashboardContractsPage /> : <Navigate to="/" replace />} />
+            <Route path="/dashboard/invoices" element={hasPermission("dashboard.invoices.read") ? <DashboardInvoicesPage /> : <Navigate to="/" replace />} />
+            <Route path="/dashboard/receivables" element={hasPermission("dashboard.receivables.read") ? <DashboardReceivablesPage /> : <Navigate to="/" replace />} />
+            <Route path="/dashboard/risks" element={hasPermission("dashboard.risks.read") ? <DashboardRisksPage /> : <Navigate to="/" replace />} />
+            <Route path="/accounts" element={hasPermission("account.read") ? <AccountsPage currentUser={user} /> : <Navigate to="/" replace />} />
+            <Route path="/contacts" element={hasPermission("contact.read") ? <ContactsPage currentUser={user} /> : <Navigate to="/" replace />} />
+            <Route path="/opportunities" element={hasPermission("opportunity.read") ? <OpportunitiesPage currentUser={user} /> : <Navigate to="/" replace />} />
+            <Route path="/solutions" element={hasPermission("solution.read") ? <SolutionDocumentsPage currentUser={user} /> : <Navigate to="/" replace />} />
+            <Route path="/contracts" element={hasPermission("contract.read") ? <ContractsPage currentUser={user} /> : <Navigate to="/" replace />} />
+            <Route path="/invoices" element={hasPermission("invoice.read") ? <InvoicesPage currentUser={user} /> : <Navigate to="/" replace />} />
+            <Route path="/receivables" element={hasPermission("receivable.read") ? <ReceivablesPage currentUser={user} /> : <Navigate to="/" replace />} />
+            <Route path="/payments" element={hasPermission("payment.read") ? <PaymentsPage /> : <Navigate to="/" replace />} />
+            <Route path="/reconciliations" element={hasPermission("reconciliation.read") ? <ReconciliationWorkbenchPage /> : <Navigate to="/" replace />} />
+            <Route path="/activities" element={hasPermission("activity.read") ? <ActivitiesPage currentUser={user} /> : <Navigate to="/" replace />} />
+            <Route path="/weekly-progress" element={hasPermission("weekly_progress.read") ? <WeeklyProgressPage /> : <Navigate to="/" replace />} />
             <Route
               path="/approvals"
               element={user.permissions.includes("approval.read")
                 ? <ApprovalCenterPage currentUser={user} />
                 : <Navigate to="/" replace />}
             />
-            <Route path="/ai-assistant" element={<AiAssistantPage />} />
-            <Route path="/ai-assistant/drafts" element={<AiDraftsPage />} />
-            <Route path="/ai-assistant/weekly-report" element={<AiWeeklyReportPage />} />
-            <Route path="/ai-assistant/opportunities" element={<AiOpportunityAnalysisPage />} />
-            <Route path="/ai-assistant/visit-plans" element={<AiVisitPlanPage />} />
-            <Route path="/ai-assistant/communication" element={<AiCommunicationRecommendationPage />} />
-            <Route path="/ai-assistant/logs" element={<AiLogPage />} />
+            <Route path="/ai-assistant" element={hasPermission("ai.context.read") ? <AiAssistantPage /> : <Navigate to="/" replace />} />
+            <Route path="/ai-assistant/drafts" element={hasPermission("ai.draft.manage") ? <AiDraftsPage /> : <Navigate to="/" replace />} />
+            <Route path="/ai-assistant/weekly-report" element={hasPermission("ai.weekly.manage") ? <AiWeeklyReportPage /> : <Navigate to="/" replace />} />
+            <Route path="/ai-assistant/opportunities" element={hasPermission("ai.opportunity.analyze") ? <AiOpportunityAnalysisPage /> : <Navigate to="/" replace />} />
+            <Route path="/ai-assistant/visit-plans" element={hasPermission("ai.visit.plan") ? <AiVisitPlanPage /> : <Navigate to="/" replace />} />
+            <Route path="/ai-assistant/communication" element={hasPermission("ai.communication.recommend") ? <AiCommunicationRecommendationPage /> : <Navigate to="/" replace />} />
+            <Route path="/ai-assistant/logs" element={hasPermission("ai.log.read") ? <AiLogPage /> : <Navigate to="/" replace />} />
             <Route
               path="/system"
               element={hasSystemPermission ? <SystemPage section="overview" grantedPermissions={user.permissions} /> : <Navigate to="/" replace />}
@@ -668,10 +668,22 @@ function LoginPage({ onLogin }: { onLogin: (username: string, password: string) 
   );
 }
 
-function Dashboard() {
-  const { data: reminders, loading: reminderLoading, refresh: refreshReminders } = useResource(crmApi.reminders.list, []);
-  const { data: opportunities, loading: opportunityLoading } = useResource(crmApi.opportunities.list, []);
-  const { data: activities, loading: activityLoading } = useResource(crmApi.activities.list, []);
+function Dashboard({ grantedPermissions }: { grantedPermissions: string[] }) {
+  const canReadReminders = grantedPermissions.includes("reminder.read");
+  const canReadOpportunities = grantedPermissions.includes("opportunity.read");
+  const canReadActivities = grantedPermissions.includes("activity.read");
+  const { data: reminders, loading: reminderLoading, refresh: refreshReminders } = useResource(
+    () => canReadReminders ? crmApi.reminders.list() : Promise.resolve([]),
+    [canReadReminders]
+  );
+  const { data: opportunities, loading: opportunityLoading } = useResource(
+    () => canReadOpportunities ? crmApi.opportunities.list() : Promise.resolve([]),
+    [canReadOpportunities]
+  );
+  const { data: activities, loading: activityLoading } = useResource(
+    () => canReadActivities ? crmApi.activities.list() : Promise.resolve([]),
+    [canReadActivities]
+  );
 
   const pendingReminders = reminders.filter((reminder) => reminder.status === "pending" || reminder.status === "overdue");
   const activeOpportunities = opportunities.filter((opportunity) => opportunity.status === "following");
@@ -688,7 +700,7 @@ function Dashboard() {
       <PageTitle
         title="工作台"
         description="从待办、商机和行动中判断今天先处理什么。"
-        action={<RefreshButton onClick={refreshReminders} />}
+        action={canReadReminders ? <RefreshButton onClick={refreshReminders} /> : null}
       />
       <section className="dashboard-command-center">
         <div>

@@ -2441,6 +2441,43 @@ describe("CRM frontend V1 workflow", () => {
     expect(fetchMock).not.toHaveBeenCalledWith("/api/system/users", expect.anything());
   });
 
+  it("keeps the fallback workbench quiet for a user with only account read permission", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch({
+      user: {
+        ...apiData.user,
+        permissions: ["account.read"]
+      }
+    });
+    window.history.pushState({}, "", "/system/users");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "工作台" })).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/reminders"), expect.anything());
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/opportunities"), expect.anything());
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/activities"), expect.anything());
+  });
+
+  it("redirects a direct business route before its protected content loads", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch({
+      user: {
+        ...apiData.user,
+        permissions: ["account.read"]
+      }
+    });
+    window.history.pushState({}, "", "/contacts");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "工作台" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "联系人" })).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/contacts"), expect.anything());
+  });
+
   it.each([
     {
       path: "/system/departments",
