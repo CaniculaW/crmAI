@@ -67,7 +67,7 @@ git commit -m "fix: enforce positive contract amounts"
 - Modify: `backend/src/main/java/com/canicula/crmai/account/AccountService.java`
 - Modify: `backend/src/test/java/com/canicula/crmai/account/AccountControllerTest.java`
 
-- [ ] **Step 1: Write failing 404 and 400 contract tests**
+- [x] **Step 1: Write failing 404 and 400 contract tests**
 
 Add tests for an unknown `/api/...` route, a missing readable account, and a probe controller throwing `IllegalArgumentException`.
 
@@ -76,13 +76,13 @@ assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 assertThat(response.getBody()).containsEntry("code", "NOT_FOUND");
 ```
 
-- [ ] **Step 2: Verify the tests currently return 500**
+- [x] **Step 2: Verify the tests currently return 500**
 
 Run: `cd backend && mvn -Dtest=ApiResponseContractTest,AccountControllerTest test`
 
 Expected: new cases fail with HTTP 500.
 
-- [ ] **Step 3: Add explicit exception mappings**
+- [x] **Step 3: Add explicit exception mappings**
 
 Create `ResourceNotFoundException`; map it and `NoResourceFoundException` to 404 `NOT_FOUND`; map `IllegalArgumentException` and parameter conversion errors to 400 `VALIDATION_ERROR`. Change `AccountService.readableDetail` to throw the dedicated not-found exception.
 
@@ -94,13 +94,13 @@ ResponseEntity<ApiResponse<Map<String, Object>>> handleNotFound(Exception except
 }
 ```
 
-- [ ] **Step 4: Verify the error contract tests pass**
+- [x] **Step 4: Verify the error contract tests pass**
 
 Run: `cd backend && mvn -Dtest=ApiResponseContractTest,AccountControllerTest test`
 
 Expected: all selected tests pass with preserved trace IDs.
 
-- [ ] **Step 5: Commit the error contract fix**
+- [x] **Step 5: Commit the error contract fix**
 
 ```bash
 git add backend/src/main/java/com/canicula/crmai/api backend/src/main/java/com/canicula/crmai/account/AccountService.java backend/src/test/java/com/canicula/crmai/api/ApiResponseContractTest.java backend/src/test/java/com/canicula/crmai/account/AccountControllerTest.java

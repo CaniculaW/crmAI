@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -57,12 +58,54 @@ class ApiResponseContractTest {
                                 .isEqualTo("name")));
     }
 
+    @Test
+    void returnsNotFoundForUnknownApiRoute() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Trace-Id", "missing-route-trace-001");
+
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                "/api/test/route-that-does-not-exist",
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                new ParameterizedTypeReference<>() {
+                });
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody())
+                .containsEntry("code", "NOT_FOUND")
+                .containsEntry("trace_id", "missing-route-trace-001");
+    }
+
+    @Test
+    void returnsBadRequestForIllegalArgument() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Trace-Id", "illegal-argument-trace-001");
+
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                "/api/test/illegal-argument",
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                new ParameterizedTypeReference<>() {
+                });
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody())
+                .containsEntry("code", "VALIDATION_ERROR")
+                .containsEntry("message", "测试参数无效")
+                .containsEntry("trace_id", "illegal-argument-trace-001");
+    }
+
     @RestController
     static class ValidationProbeController {
 
         @PostMapping("/api/test/validation")
         ValidationProbeResponse validate(@Valid @RequestBody ValidationProbeRequest request) {
             return new ValidationProbeResponse(request.name());
+        }
+
+        @GetMapping("/api/test/illegal-argument")
+        ValidationProbeResponse illegalArgument() {
+            throw new IllegalArgumentException("测试参数无效");
         }
     }
 

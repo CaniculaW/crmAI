@@ -14,6 +14,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -86,6 +88,35 @@ public class ApiExceptionHandler {
                         "BUSINESS_RULE_FAILED",
                         exception.getMessage(),
                         Map.of(),
+                        TraceIdFilter.currentTraceId(request)));
+    }
+
+    @ExceptionHandler({ResourceNotFoundException.class, NoResourceFoundException.class})
+    ResponseEntity<ApiResponse<Map<String, Object>>> handleNotFound(
+            Exception exception,
+            HttpServletRequest request) {
+        String message = exception instanceof ResourceNotFoundException
+                ? exception.getMessage()
+                : "资源不存在";
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(
+                        "NOT_FOUND",
+                        message,
+                        Map.of(),
+                        TraceIdFilter.currentTraceId(request)));
+    }
+
+    @ExceptionHandler({IllegalArgumentException.class, MethodArgumentTypeMismatchException.class})
+    ResponseEntity<ApiResponse<Map<String, Object>>> handleInvalidArgument(
+            Exception exception,
+            HttpServletRequest request) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(
+                        "VALIDATION_ERROR",
+                        exception.getMessage(),
+                        Map.of("field_errors", List.of()),
                         TraceIdFilter.currentTraceId(request)));
     }
 

@@ -1,5 +1,6 @@
 package com.canicula.crmai.account;
 
+import com.canicula.crmai.api.ResourceNotFoundException;
 import com.canicula.crmai.identity.DataPermissionColumns;
 import com.canicula.crmai.identity.DataPermissionCondition;
 import com.canicula.crmai.identity.DataPermissionService;
@@ -67,7 +68,7 @@ public class AccountService {
                     (rs, rowNum) -> toResponse(rs.getLong("id")),
                     parameters.toArray());
         } catch (EmptyResultDataAccessException exception) {
-            throw new IllegalArgumentException("客户不存在或无权访问");
+            throw new ResourceNotFoundException("客户不存在或无权访问");
         }
     }
 

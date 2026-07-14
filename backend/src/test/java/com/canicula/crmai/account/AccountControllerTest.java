@@ -45,6 +45,28 @@ class AccountControllerTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Test
+    void returnsNotFoundForMissingReadableAccount() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("account-missing-dept-" + suffix);
+        createLoginReadyUser(
+                "account_missing_" + suffix,
+                departmentId,
+                List.of("account.read"),
+                List.of("global"));
+        String token = login("account_missing_" + suffix);
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/accounts/999999999",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "account-missing-trace-001")),
+                JsonNode.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().path("code").asText()).isEqualTo("NOT_FOUND");
+        assertThat(response.getBody().path("trace_id").asText()).isEqualTo("account-missing-trace-001");
+    }
+
     @Autowired
     private ObjectMapper objectMapper;
 
