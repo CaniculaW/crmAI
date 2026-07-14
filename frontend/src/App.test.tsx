@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -76,7 +76,11 @@ const apiData = {
       "system.dict.manage",
       "system.user.manage",
       "system.role.manage",
-      "system.ai-config.manage"
+      "system.ai-config.manage",
+      "approval.read",
+      "approval.submit",
+      "approval.approve",
+      "approval.config.manage"
     ]
   },
   accounts: [
@@ -1187,6 +1191,20 @@ describe("CRM frontend V1 workflow", () => {
     expect(stylesCss).toMatch(/\.app-sidebar\s*{[^}]*position:\s*sticky;[^}]*top:\s*0;[^}]*height:\s*100vh;[^}]*overflow-y:\s*auto;[^}]*}/s);
     expect(stylesCss).toMatch(/\.app-shell\s*>\s*\.ant-layout\s*{[^}]*height:\s*100vh;[^}]*overflow:\s*hidden;[^}]*}/s);
     expect(stylesCss).toMatch(/\.app-content\s*{[^}]*min-height:\s*0;[^}]*overflow-y:\s*auto;[^}]*}/s);
+  });
+
+  it("uses a drawer navigation instead of stacking the full sidebar on mobile", async () => {
+    mockCrmFetch();
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("button", { name: "打开导航" }));
+
+    expect(await screen.findByRole("dialog", { name: "导航菜单" })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "工作台" })).toHaveLength(2);
+    expect(stylesCss).toMatch(/@media\s*\(max-width:\s*860px\)[\s\S]*?\.app-sidebar\s*{[^}]*display:\s*none\s*!important;/s);
   });
 
   it("shows a dashboard command center with priority and quick entries", async () => {
@@ -2339,6 +2357,100 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getAllByRole("link", { name: "审计日志" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "字典管理" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "AI配置" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "审批配置" }).length).toBeGreaterThan(0);
+  });
+
+  it("routes approval center and approval configuration as independent work pages", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "审批中心" }));
+    expect(await screen.findByRole("heading", { name: "审批中心" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "待我审批" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "我发起的" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "已处理" })).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("link", { name: "审批配置" })[0]);
+    expect(await screen.findByRole("heading", { name: "审批配置" })).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledWith("/api/approval-templates", expect.anything());
+  });
+
+  it("shows approval configuration without exposing system overview to a config-only user", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch({
+      user: {
+        ...apiData.user,
+        permissions: ["approval.config.manage"]
+      }
+    });
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(screen.getByRole("menuitem", { name: "系统" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "审批配置" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "系统概览" })).not.toBeInTheDocument();
+  });
+
+  it("redirects direct approval routes when the required permission is missing", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch({
+      user: {
+        ...apiData.user,
+        permissions: ["account.read"]
+      }
+    });
+    window.history.pushState({}, "", "/approvals");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "工作台" })).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/approvals/tasks"), expect.anything());
+
+    act(() => {
+      window.history.pushState({}, "", "/system/approval-templates");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    expect(await screen.findByRole("heading", { name: "工作台" })).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/approval-templates", expect.anything());
+  });
+
+  it("shows approval status inside a quotation detail drawer", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "方案标书" }));
+    await user.click(await screen.findByRole("button", { name: "V2试点技术方案" }));
+
+    expect(await screen.findByText("尚未提交审批")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "提交审批" })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/approvals/object/quotation/91", expect.anything());
+  });
+
+  it("renders approval lifecycle solution statuses in Chinese", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch({
+      solutions: [
+        { ...apiData.solutions[0], status: "approving" },
+        { ...apiData.solutions[0], id: 92, document_name: "已审批方案", status: "approved" }
+      ]
+    });
+
+    render(<App />);
+    await loginThroughUi(user);
+    await user.click(screen.getByRole("link", { name: "方案标书" }));
+
+    expect(await screen.findByText("审批中")).toBeInTheDocument();
+    expect(screen.getByText("已通过")).toBeInTheDocument();
+    expect(screen.queryByText("approving")).not.toBeInTheDocument();
+    expect(screen.queryByText("approved")).not.toBeInTheDocument();
   });
 
   it("renders OpenAI model configuration under system AI config", async () => {
@@ -2887,6 +2999,18 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/system/dicts")) {
       return jsonResponse({ code: "OK", data: data.dictionaries });
+    }
+    if (path.endsWith("/api/approvals/tasks")) {
+      return jsonResponse({ code: "OK", data: [] });
+    }
+    if (path.endsWith("/api/approvals/object/quotation/91")) {
+      return jsonResponse({
+        code: "OK",
+        data: { object_type: "quotation", object_id: 91, instance: null, history: [] }
+      });
+    }
+    if (path.endsWith("/api/approval-templates")) {
+      return jsonResponse({ code: "OK", data: [] });
     }
     if (path.endsWith("/api/system/audit-logs")) {
       return jsonResponse({ code: "OK", data: data.auditLogs });

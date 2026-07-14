@@ -25,10 +25,12 @@ import {
   CalendarCheck,
   CheckCircle2,
   CircleDollarSign,
+  ClipboardCheck,
   Contact,
   FileSignature,
   FileText,
   LayoutDashboard,
+  Menu as MenuIcon,
   Paperclip,
   Plus,
   ReceiptText,
@@ -110,6 +112,9 @@ import {
   resetPassword
 } from "./api/crm";
 import { getAuthToken } from "./api/client";
+import { ApprovalCenterPage } from "./features/approvals/ApprovalCenterPage";
+import { ApprovalStatusPanel } from "./features/approvals/ApprovalStatusPanel";
+import { ApprovalTemplateConfigPage } from "./features/approvals/ApprovalTemplateConfigPage";
 import "./styles.css";
 
 const { Header, Sider, Content } = Layout;
@@ -153,6 +158,7 @@ const navItems: NavItem[] = [
   { key: "/reconciliations", label: "核销工作台", icon: <ReceiptText size={18} />, permission: "reconciliation.read" },
   { key: "/activities", label: "销售行动", icon: <CalendarCheck size={18} />, permission: "activity.read" },
   { key: "/weekly-progress", label: "周进展", icon: <BarChart3 size={18} />, permission: "weekly_progress.read" },
+  { key: "/approvals", label: "审批中心", icon: <ClipboardCheck size={18} />, permission: "approval.read" },
   {
     key: "/ai-assistant",
     label: "AI助手",
@@ -180,7 +186,7 @@ const navItems: NavItem[] = [
     key: "/system",
     label: "系统",
     icon: <ShieldCheck size={18} />,
-    permissions: ["system.dict.manage", "system.user.manage", "system.role.manage", "system.audit.read", "system.ai-config.manage"],
+    permissions: ["system.dict.manage", "system.user.manage", "system.role.manage", "system.audit.read", "system.ai-config.manage", "approval.config.manage"],
     children: [
       {
         key: "/system",
@@ -192,7 +198,8 @@ const navItems: NavItem[] = [
       { key: "/system/roles", label: "角色权限", permission: "system.role.manage" },
       { key: "/system/audit-logs", label: "审计日志", permission: "system.audit.read" },
       { key: "/system/dictionaries", label: "字典管理", permission: "system.dict.manage" },
-      { key: "/system/ai-config", label: "AI配置", permission: "system.ai-config.manage" }
+      { key: "/system/ai-config", label: "AI配置", permission: "system.ai-config.manage" },
+      { key: "/system/approval-templates", label: "审批配置", permission: "approval.config.manage" }
     ]
   }
 ];
@@ -239,6 +246,7 @@ const permissionGroups = [
   { label: "V2 核销", modules: ["reconciliation"] },
   { label: "附件", modules: ["attachment"] },
   { label: "AI 助手", modules: ["ai"] },
+  { label: "审批流", modules: ["approval"] },
   { label: "系统管理", modules: ["system"] }
 ];
 
@@ -364,6 +372,7 @@ function CrmShell() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   const [passwordForm] = Form.useForm();
 
@@ -384,6 +393,10 @@ function CrmShell() {
   useEffect(() => {
     void restoreSession();
   }, [restoreSession]);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
 
   const handleLogin = async (username: string, password: string) => {
     const current = await loginApi(username, password);
@@ -424,6 +437,15 @@ function CrmShell() {
   const selectedMenuKey = location.pathname;
   const selectedRootKey = allowedNav.find((item) => item.children?.some((child) => child.key === selectedMenuKey))?.key;
   const defaultOpenKeys = Array.from(new Set(["/dashboard-root", "/system-root", selectedRootKey ? `${selectedRootKey}-root` : ""])).filter(Boolean);
+  const menuItems = allowedNav.map((item) => ({
+    key: item.children ? `${item.key}-root` : item.key,
+    icon: item.icon,
+    label: item.children && item.key !== "/dashboard" ? item.label : <Link to={item.key}>{item.label}</Link>,
+    children: item.children?.map((child) => ({
+      key: child.key,
+      label: <Link to={child.key}>{child.label}</Link>
+    }))
+  }));
 
   return (
     <Layout className="app-shell">
@@ -440,22 +462,45 @@ function CrmShell() {
           mode="inline"
           selectedKeys={[selectedMenuKey]}
           defaultOpenKeys={defaultOpenKeys}
-          items={allowedNav.map((item) => ({
-            key: item.children ? `${item.key}-root` : item.key,
-            icon: item.icon,
-            label: item.children && item.key !== "/dashboard" ? item.label : <Link to={item.key}>{item.label}</Link>,
-            children: item.children?.map((child) => ({
-              key: child.key,
-              label: <Link to={child.key}>{child.label}</Link>
-            }))
-          }))}
+          items={menuItems}
         />
       </Sider>
+      <Drawer
+        className="mobile-nav-drawer"
+        title="导航菜单"
+        placement="left"
+        open={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+      >
+        <div className="brand-block mobile-brand-block">
+          <div className="brand-mark">C</div>
+          <div>
+            <Typography.Title level={2}>项目型大客户 CRM</Typography.Title>
+            <span>{user.name}</span>
+          </div>
+        </div>
+        <Menu
+          mode="inline"
+          selectedKeys={[selectedMenuKey]}
+          defaultOpenKeys={defaultOpenKeys}
+          items={menuItems}
+          onClick={() => setMobileNavOpen(false)}
+        />
+      </Drawer>
       <Layout>
         <Header className="app-header">
-          <div>
-            <strong>项目型大客户 CRM</strong>
-            <span>销售、商务、财务与经营驾驶舱</span>
+          <div className="header-identity">
+            <Button
+              className="mobile-nav-trigger"
+              type="text"
+              icon={<MenuIcon size={20} />}
+              aria-label="打开导航"
+              onClick={() => setMobileNavOpen(true)}
+            />
+            <div>
+              <strong>项目型大客户 CRM</strong>
+              <span>销售、商务、财务与经营驾驶舱</span>
+            </div>
           </div>
           <div className="header-actions">
             <Tag color="blue">{user.permissions.length} 个权限点</Tag>
@@ -487,6 +532,12 @@ function CrmShell() {
             <Route path="/reconciliations" element={<ReconciliationWorkbenchPage />} />
             <Route path="/activities" element={<ActivitiesPage currentUser={user} />} />
             <Route path="/weekly-progress" element={<WeeklyProgressPage />} />
+            <Route
+              path="/approvals"
+              element={user.permissions.includes("approval.read")
+                ? <ApprovalCenterPage currentUser={user} />
+                : <Navigate to="/" replace />}
+            />
             <Route path="/ai-assistant" element={<AiAssistantPage />} />
             <Route path="/ai-assistant/drafts" element={<AiDraftsPage />} />
             <Route path="/ai-assistant/weekly-report" element={<AiWeeklyReportPage />} />
@@ -501,6 +552,12 @@ function CrmShell() {
             <Route path="/system/audit-logs" element={<SystemPage section="auditLogs" />} />
             <Route path="/system/dictionaries" element={<SystemPage section="dictionaries" />} />
             <Route path="/system/ai-config" element={<SystemPage section="aiConfig" />} />
+            <Route
+              path="/system/approval-templates"
+              element={user.permissions.includes("approval.config.manage")
+                ? <ApprovalTemplateConfigPage />
+                : <Navigate to="/" replace />}
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Content>
@@ -4140,6 +4197,16 @@ function OpportunitySummaryItem({ label, value }: { label: string; value: React.
   );
 }
 
+function solutionApprovalObjectType(solution: SolutionDocument): "quotation" | "bid" | null {
+  if (["bid", "bid_document"].includes(solution.document_type)) {
+    return "bid";
+  }
+  if (solution.document_type === "quotation" || solution.quotation_amount != null) {
+    return "quotation";
+  }
+  return null;
+}
+
 function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
   const initialFilters = useInitialQueryFilters(["account_id", "opportunity_id"]);
   const [filters, setFilters] = useState<Record<string, unknown>>(initialFilters);
@@ -4205,18 +4272,22 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
           <Button size="small" onClick={() => setSelected(record)}>
             查看
           </Button>
-          <Button
-            size="small"
-            onClick={() => {
-              setEditing(record);
-              editForm.setFieldsValue(record);
-            }}
-          >
-            编辑
-          </Button>
-          <Button size="small" danger disabled={record.status === "voided"} onClick={() => setVoiding(record)}>
-            作废
-          </Button>
+          {record.status !== "approving" ? (
+            <>
+              <Button
+                size="small"
+                onClick={() => {
+                  setEditing(record);
+                  editForm.setFieldsValue(record);
+                }}
+              >
+                编辑
+              </Button>
+              <Button size="small" danger disabled={record.status === "voided"} onClick={() => setVoiding(record)}>
+                作废
+              </Button>
+            </>
+          ) : null}
         </Space>
       )
     }
@@ -4341,6 +4412,27 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
           account={selected ? accountById.get(selected.account_id) : undefined}
           opportunity={selected ? opportunityById.get(selected.opportunity_id) : undefined}
         />
+        {selected && solutionApprovalObjectType(selected) ? (
+          <section className="drawer-section">
+            <Typography.Title level={4}>审批状态</Typography.Title>
+            <ApprovalStatusPanel
+              objectType={solutionApprovalObjectType(selected)!}
+              objectId={selected.id}
+              canRead={currentUser.permissions.includes("approval.read")}
+              canSubmit={
+                currentUser.permissions.includes("solution.read") &&
+                currentUser.permissions.includes("solution.update") &&
+                currentUser.permissions.includes("approval.submit") &&
+                ["draft", "drafting", "rejected"].includes(selected.status)
+              }
+              isPending={selected.status === "approving"}
+              onSubmitted={async () => {
+                setSelected(await crmApi.solutions.detail(selected.id));
+                await solutions.refresh();
+              }}
+            />
+          </section>
+        ) : null}
         <section className="drawer-section">
           <div className="section-title-row">
             <Typography.Title level={4}>附件</Typography.Title>
@@ -4475,18 +4567,22 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
           <Button size="small" onClick={() => setSelected(record)}>
             查看
           </Button>
-          <Button
-            size="small"
-            onClick={() => {
-              setEditing(record);
-              editForm.setFieldsValue(record);
-            }}
-          >
-            编辑
-          </Button>
-          <Button size="small" danger disabled={record.contract_status === "terminated"} onClick={() => setTerminating(record)}>
-            终止
-          </Button>
+          {record.contract_status !== "approving" ? (
+            <>
+              <Button
+                size="small"
+                onClick={() => {
+                  setEditing(record);
+                  editForm.setFieldsValue(record);
+                }}
+              >
+                编辑
+              </Button>
+              <Button size="small" danger disabled={record.contract_status === "terminated"} onClick={() => setTerminating(record)}>
+                终止
+              </Button>
+            </>
+          ) : null}
         </Space>
       )
     }
@@ -4632,6 +4728,25 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
                 <OpportunitySummaryItem label="风险" value={contractRiskText(selected.risk_level)} />
                 <OpportunitySummaryItem label="付款条件" value={selected.payment_terms ?? "-"} />
               </div>
+            </section>
+            <section className="drawer-section">
+              <Typography.Title level={4}>审批状态</Typography.Title>
+              <ApprovalStatusPanel
+                objectType="contract"
+                objectId={selected.id}
+                canRead={currentUser.permissions.includes("approval.read")}
+                canSubmit={
+                  currentUser.permissions.includes("contract.read") &&
+                  currentUser.permissions.includes("contract.update") &&
+                  currentUser.permissions.includes("approval.submit") &&
+                  ["draft", "drafting", "rejected"].includes(selected.contract_status)
+                }
+                isPending={selected.contract_status === "approving"}
+                onSubmitted={async () => {
+                  setSelected(await crmApi.contracts.detail(selected.id));
+                  await contracts.refresh();
+                }}
+              />
             </section>
             <section className="drawer-section">
               <Typography.Title level={4}>合同条款</Typography.Title>
@@ -8479,8 +8594,12 @@ function solutionStatusText(status?: string) {
     return "-";
   }
   const labels: Record<string, string> = {
+    draft: "编制中",
     drafting: "编制中",
     internal_review: "内部评审",
+    approving: "审批中",
+    approved: "已通过",
+    rejected: "已驳回",
     submitted: "已提交客户",
     feedback: "客户反馈",
     won: "已中标",
@@ -8494,7 +8613,16 @@ function solutionStatusTag(status?: string) {
   if (!status) {
     return "-";
   }
-  const color = status === "won" ? "green" : status === "lost" || status === "voided" ? "default" : status === "feedback" ? "gold" : "blue";
+  const color =
+    status === "won" || status === "approved"
+      ? "green"
+      : status === "rejected"
+        ? "red"
+        : status === "approving" || status === "feedback"
+          ? "gold"
+          : status === "lost" || status === "voided"
+            ? "default"
+            : "blue";
   return <Tag color={color}>{solutionStatusText(status)}</Tag>;
 }
 

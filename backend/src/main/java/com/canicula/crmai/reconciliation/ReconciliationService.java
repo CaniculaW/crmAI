@@ -11,6 +11,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -355,7 +356,7 @@ public class ReconciliationService {
             PaymentSnapshot payment,
             Long actorUserId) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        String reconciliationNo = "REC-" + actorUserId + "-" + System.nanoTime();
+        String reconciliationNo = "REC-" + actorUserId + "-" + UUID.randomUUID();
         OffsetDateTime reconciledAt = request.reconciled_at() == null ? OffsetDateTime.now() : request.reconciled_at();
         jdbcTemplate.update(connection -> {
             PreparedStatement statement = connection.prepareStatement(

@@ -10,6 +10,8 @@ import com.canicula.crmai.identity.RoleCreateRequest;
 import com.canicula.crmai.identity.UserCreateRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -18,6 +20,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,6 +36,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ContractControllerTest {
@@ -47,6 +56,9 @@ class ContractControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @LocalServerPort
     private int port;
@@ -266,6 +278,212 @@ class ContractControllerTest {
         assertThat(detailResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
+    @Test
+    void submitsApprovesAndRejectsContractsAndLocksApprovalCriticalFields() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String username = "contract_approval_" + suffix;
+        Long departmentId = createDepartment("contract-approval-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                username,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "contract.create",
+                        "contract.read",
+                        "contract.update",
+                        "approval.submit",
+                        "approval.approve"),
+                List.of("global"));
+        createDefaultWorkflow(username, userId);
+        String token = login(username);
+        Long accountId = createAccount(token, "审批合同客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(token, accountId, "审批合同商机-" + suffix, departmentId, userId);
+
+        Long approvedContractId = createContract(token, accountId, opportunityId, userId, suffix + "-approve");
+        long approvedInstanceId = submitContract(token, approvedContractId);
+        assertAuditCount("contract.submit-approval", approvedContractId, 1);
+        assertAuditCount("approval.submit", approvedInstanceId, 1);
+        assertAuditCount("approval.business-status.update", approvedContractId, 1);
+        assertBusinessStatusAudit(approvedContractId, "drafting", "approving");
+
+        HttpJsonResponse criticalUpdate = patchJson(
+                "/api/contracts/" + approvedContractId,
+                Map.of(
+                        "contract_status", "pending_signature",
+                        "contract_amount", 1300000,
+                        "tax_rate", 0.09,
+                        "payment_terms", "全额预付",
+                        "invoice_terms", "预付款到账后开票",
+                        "delivery_scope", "变更交付范围",
+                        "acceptance_criteria", "变更验收标准",
+                        "risk_level", "high",
+                        "change_reason", "审批中不应允许变更"),
+                authHeaders(token, "contract-approval-critical-update"));
+        assertThat(criticalUpdate.status()).isEqualTo(HttpStatus.CONFLICT.value());
+        assertThat(criticalUpdate.body().path("message").asText()).contains("审批中");
+
+        HttpJsonResponse remarkUpdate = patchJson(
+                "/api/contracts/" + approvedContractId,
+                Map.of("remark", "审批中补充合同说明"),
+                authHeaders(token, "contract-approval-remark-update"));
+        assertThat(remarkUpdate.status()).isEqualTo(HttpStatus.OK.value());
+        assertThat(remarkUpdate.body().path("data").path("contract_status").asText()).isEqualTo("approving");
+        assertThat(remarkUpdate.body().path("data").path("remark").asText()).isEqualTo("审批中补充合同说明");
+
+        HttpJsonResponse approveResponse = postJson(
+                "/api/approvals/instances/" + approvedInstanceId + "/approve",
+                Map.of("comment", "合同条款通过"),
+                authHeaders(token, "contract-approval-approve"));
+        assertThat(approveResponse.status()).isEqualTo(HttpStatus.OK.value());
+        assertThat(jdbcTemplate.queryForObject(
+                "select contract_status from crm_contracts where id = ?",
+                String.class,
+                approvedContractId)).isEqualTo("pending_signature");
+
+        Long rejectedContractId = createContract(token, accountId, opportunityId, userId, suffix + "-reject");
+        long rejectedInstanceId = submitContract(token, rejectedContractId);
+        HttpJsonResponse rejectResponse = postJson(
+                "/api/approvals/instances/" + rejectedInstanceId + "/reject",
+                Map.of("comment", "付款条件需调整"),
+                authHeaders(token, "contract-approval-reject"));
+        assertThat(rejectResponse.status()).isEqualTo(HttpStatus.OK.value());
+        assertThat(jdbcTemplate.queryForObject(
+                "select contract_status from crm_contracts where id = ?",
+                String.class,
+                rejectedContractId)).isEqualTo("drafting");
+    }
+
+    @Test
+    void requiresBothContractUpdateAndApprovalSubmitAndPreservesDataScope() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("contract-approval-permission-" + suffix);
+        String ownerUsername = "contract_approval_owner_" + suffix;
+        Long ownerId = createLoginReadyUser(
+                ownerUsername,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "contract.create",
+                        "contract.read",
+                        "contract.update",
+                        "approval.submit"),
+                List.of("global"));
+        createDefaultWorkflow(ownerUsername, ownerId);
+        String ownerToken = login(ownerUsername);
+        Long accountId = createAccount(ownerToken, "合同审批权限客户-" + suffix, departmentId, ownerId);
+        Long opportunityId = createOpportunity(ownerToken, accountId, "合同审批权限商机-" + suffix, departmentId, ownerId);
+        Long contractId = createContract(ownerToken, accountId, opportunityId, ownerId, suffix);
+
+        createLoginReadyUser(
+                "contract_no_approval_" + suffix,
+                departmentId,
+                List.of("contract.update"),
+                List.of("global"));
+        createLoginReadyUser(
+                "contract_no_update_" + suffix,
+                departmentId,
+                List.of("approval.submit"),
+                List.of("global"));
+        createLoginReadyUser(
+                "contract_no_read_" + suffix,
+                departmentId,
+                List.of("contract.update", "approval.submit"),
+                List.of("global"));
+        createLoginReadyUser(
+                "contract_out_scope_" + suffix,
+                departmentId,
+                List.of("contract.update", "approval.submit"),
+                List.of("own"));
+
+        assertForbiddenSubmission(login("contract_no_approval_" + suffix), contractId);
+        assertForbiddenSubmission(login("contract_no_update_" + suffix), contractId);
+        assertForbiddenSubmission(login("contract_no_read_" + suffix), contractId);
+        assertForbiddenSubmission(login("contract_out_scope_" + suffix), contractId);
+        assertThat(jdbcTemplate.queryForObject(
+                "select contract_status from crm_contracts where id = ?",
+                String.class,
+                contractId)).isEqualTo("drafting");
+    }
+
+    @Test
+    void guardsApprovalSensitiveWritesWithAtomicStatusConditions() throws Exception {
+        String serviceSource = Files.readString(Path.of(
+                "src/main/java/com/canicula/crmai/contract/ContractService.java"));
+        String controllerSource = Files.readString(Path.of(
+                "src/main/java/com/canicula/crmai/contract/ContractController.java"));
+
+        assertThat(serviceSource).contains("and contract_status <> 'approving'");
+        assertThat(serviceSource).contains("if (updatedCount != 1)");
+        assertThat(controllerSource).contains("@Transactional\n    ContractResponse submitApproval");
+    }
+
+    @Test
+    void submitApprovalUsesContractSnapshotAfterConcurrentUpdateCommits() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String username = "contract_snapshot_" + suffix;
+        Long departmentId = createDepartment("contract-snapshot-" + suffix);
+        Long userId = createLoginReadyUser(
+                username,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "contract.create",
+                        "contract.read",
+                        "contract.update",
+                        "approval.submit",
+                        "approval.approve"),
+                List.of("global"));
+        createDefaultWorkflow(username, userId);
+        String token = login(username);
+        Long accountId = createAccount(token, "并发合同客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(token, accountId, "并发合同商机-" + suffix, departmentId, userId);
+        Long contractId = createContract(token, accountId, opportunityId, userId, suffix);
+        String committedName = "并发合同新名称-" + suffix;
+
+        CountDownLatch updateLocked = new CountDownLatch(1);
+        CountDownLatch releaseUpdate = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        try {
+            Future<?> updateFuture = executor.submit(() -> transactionTemplate.executeWithoutResult(status -> {
+                jdbcTemplate.update(
+                        "update crm_contracts set contract_name = ?, version = version + 1 where id = ?",
+                        committedName,
+                        contractId);
+                updateLocked.countDown();
+                awaitLatch(releaseUpdate);
+            }));
+            assertThat(updateLocked.await(5, TimeUnit.SECONDS)).isTrue();
+
+            Future<HttpJsonResponse> submitFuture = executor.submit(() -> postJson(
+                    "/api/contracts/" + contractId + "/submit-approval",
+                    Map.of(),
+                    authHeaders(token, "contract-concurrent-snapshot")));
+            Thread.sleep(300);
+            assertThat(submitFuture.isDone()).isFalse();
+
+            releaseUpdate.countDown();
+            updateFuture.get(5, TimeUnit.SECONDS);
+            HttpJsonResponse response = submitFuture.get(5, TimeUnit.SECONDS);
+
+            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+            assertThat(jdbcTemplate.queryForObject(
+                    "select object_name from approval_instances where object_type = 'contract' and object_id = ?",
+                    String.class,
+                    contractId)).isEqualTo(committedName);
+        } finally {
+            releaseUpdate.countDown();
+            executor.shutdownNow();
+            executor.awaitTermination(5, TimeUnit.SECONDS);
+        }
+    }
+
     private Long createContract(
             String accessToken,
             Long accountId,
@@ -278,6 +496,58 @@ class ContractControllerTest {
                 authHeaders(accessToken, "contract-helper-create-trace-001"));
         assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
         return response.body().path("data").path("id").asLong();
+    }
+
+    private long submitContract(String accessToken, Long contractId) {
+        HttpJsonResponse response = postJson(
+                "/api/contracts/" + contractId + "/submit-approval",
+                Map.of(),
+                authHeaders(accessToken, "contract-submit-approval-" + contractId));
+        assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+        assertThat(response.body().path("data").path("contract_status").asText()).isEqualTo("approving");
+        return jdbcTemplate.queryForObject(
+                "select id from approval_instances where object_type = 'contract' and object_id = ? order by id desc limit 1",
+                Long.class,
+                contractId);
+    }
+
+    private void assertForbiddenSubmission(String accessToken, Long contractId) {
+        HttpJsonResponse response = postJson(
+                "/api/contracts/" + contractId + "/submit-approval",
+                Map.of(),
+                authHeaders(accessToken, "contract-forbidden-submit-" + UUID.randomUUID()));
+        assertThat(response.status()).isEqualTo(HttpStatus.FORBIDDEN.value());
+    }
+
+    private void createDefaultWorkflow(String approverUsername, Long createdBy) {
+        Long roleId = jdbcTemplate.queryForObject(
+                "select id from sys_roles where code = ?",
+                Long.class,
+                "contract_role_" + approverUsername);
+        jdbcTemplate.update(
+                "update approval_templates set is_default = false where tenant_id = 1 and object_type = 'contract'");
+        String templateName = "合同快捷审批-" + UUID.randomUUID();
+        jdbcTemplate.update(
+                """
+                insert into approval_templates (
+                    tenant_id, object_type, template_name, status, is_default, created_by
+                ) values (1, 'contract', ?, 'active', true, ?)
+                """,
+                templateName,
+                createdBy);
+        Long templateId = jdbcTemplate.queryForObject(
+                "select id from approval_templates where template_name = ? and created_by = ?",
+                Long.class,
+                templateName,
+                createdBy);
+        jdbcTemplate.update(
+                """
+                insert into approval_template_nodes (
+                    template_id, step_order, node_name, approver_role_id, status
+                ) values (?, 1, '合同负责人审批', ?, 'active')
+                """,
+                templateId,
+                roleId);
     }
 
     private Map<String, Object> contractRequest(Long accountId, Long opportunityId, Long ownerUserId, String suffix) {
@@ -464,6 +734,33 @@ class ContractControllerTest {
                 actionCode,
                 objectId);
         assertThat(auditCount).isEqualTo(expectedCount);
+    }
+
+    private void assertBusinessStatusAudit(Long objectId, String beforeStatus, String afterStatus) {
+        Map<String, Object> audit = jdbcTemplate.queryForMap(
+                """
+                select cast(before_data as varchar) as before_data,
+                       cast(after_data as varchar) as after_data
+                from sys_audit_logs
+                where action_code = 'approval.business-status.update'
+                  and object_id = ?
+                order by id desc
+                limit 1
+                """,
+                objectId);
+        assertThat(String.valueOf(audit.get("before_data"))).contains(beforeStatus);
+        assertThat(String.valueOf(audit.get("after_data"))).contains(afterStatus);
+    }
+
+    private static void awaitLatch(CountDownLatch latch) {
+        try {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("Timed out waiting for concurrent test transaction");
+            }
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(exception);
+        }
     }
 
     private record HttpJsonResponse(int status, JsonNode body) {

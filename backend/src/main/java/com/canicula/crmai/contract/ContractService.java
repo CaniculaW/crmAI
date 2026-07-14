@@ -3,6 +3,7 @@ package com.canicula.crmai.contract;
 import com.canicula.crmai.account.AccountResponse;
 import com.canicula.crmai.account.AccountService;
 import com.canicula.crmai.api.BusinessRuleException;
+import com.canicula.crmai.approval.ApprovalService;
 import com.canicula.crmai.auth.ForbiddenException;
 import com.canicula.crmai.opportunity.OpportunityResponse;
 import com.canicula.crmai.opportunity.OpportunityService;
@@ -26,14 +27,17 @@ public class ContractService {
     private final JdbcTemplate jdbcTemplate;
     private final AccountService accountService;
     private final OpportunityService opportunityService;
+    private final ApprovalService approvalService;
 
     ContractService(
             JdbcTemplate jdbcTemplate,
             AccountService accountService,
-            OpportunityService opportunityService) {
+            OpportunityService opportunityService,
+            ApprovalService approvalService) {
         this.jdbcTemplate = jdbcTemplate;
         this.accountService = accountService;
         this.opportunityService = opportunityService;
+        this.approvalService = approvalService;
     }
 
     @Transactional
@@ -88,6 +92,8 @@ public class ContractService {
     @Transactional
     public ContractResponse update(Long contractId, ContractUpdateRequest request, Long actorUserId) {
         ContractResponse current = readableDetail(contractId, actorUserId);
+        boolean approvalSensitiveUpdate = hasApprovalSensitiveInput(request);
+        requireApprovalSafeUpdate(current, approvalSensitiveUpdate);
         List<ContractChange> changes = detectChanges(current, request);
         if (!changes.isEmpty() && !hasText(request.change_reason())) {
             throw new BusinessRuleException("修改合同金额、付款条件、开票条件、交付范围或风险必须填写变更原因");
@@ -99,8 +105,9 @@ public class ContractService {
                 ? current.tax_rate()
                 : request.tax_rate();
         BigDecimal effectiveNetAmount = calculateNetAmount(effectiveAmount, effectiveTaxRate);
-        jdbcTemplate.update(
-                """
+        String approvalStatusGuard = approvalSensitiveUpdate ? "and contract_status <> 'approving'" : "";
+        int updatedCount = jdbcTemplate.update(
+                ("""
                 update crm_contracts
                 set contract_name = coalesce(?, contract_name),
                     contract_no = coalesce(?, contract_no),
@@ -128,7 +135,8 @@ public class ContractService {
                     version = version + 1
                 where id = ?
                   and deleted_at is null
-                """,
+                  %s
+                """).formatted(approvalStatusGuard),
                 normalizeText(request.contract_name()),
                 normalizeText(request.contract_no()),
                 normalizeText(request.contract_type()),
@@ -152,6 +160,9 @@ public class ContractService {
                 normalizeText(request.remark()),
                 actorUserId,
                 contractId);
+        if (updatedCount != 1) {
+            throw new BusinessRuleException("合同状态已变化，请刷新后重试");
+        }
         for (ContractChange change : changes) {
             insertChange(contractId, change, request.change_reason().trim(), actorUserId);
         }
@@ -159,12 +170,26 @@ public class ContractService {
     }
 
     @Transactional
+    public ApprovalSubmission submitApproval(Long contractId, Long actorUserId) {
+        approvalService.requireActorPermission(actorUserId, "contract.read");
+        approvalService.requireActorPermission(actorUserId, "approval.submit");
+        lockById(contractId);
+        ContractResponse current = readableDetail(contractId, actorUserId);
+        long instanceId = approvalService.submitBusinessObject(
+                "contract", current.id(), current.contract_name(), actorUserId);
+        return new ApprovalSubmission(instanceId, current, findById(contractId));
+    }
+
+    @Transactional
     public ContractResponse terminate(Long contractId, ContractTerminateRequest request, Long actorUserId) {
-        readableDetail(contractId, actorUserId);
+        ContractResponse current = readableDetail(contractId, actorUserId);
+        if ("approving".equalsIgnoreCase(current.contract_status())) {
+            throw new BusinessRuleException("审批中的合同不能修改状态");
+        }
         if (!hasText(request.termination_reason())) {
             throw new BusinessRuleException("终止合同必须填写原因");
         }
-        jdbcTemplate.update(
+        int updatedCount = jdbcTemplate.update(
                 """
                 update crm_contracts
                 set contract_status = 'terminated',
@@ -176,11 +201,15 @@ public class ContractService {
                     version = version + 1
                 where id = ?
                   and deleted_at is null
+                  and contract_status <> 'approving'
                 """,
                 request.termination_reason().trim(),
                 actorUserId,
                 actorUserId,
                 contractId);
+        if (updatedCount != 1) {
+            throw new BusinessRuleException("合同状态已变化，请刷新后重试");
+        }
         return findById(contractId);
     }
 
@@ -392,6 +421,23 @@ public class ContractService {
         }
     }
 
+    private void lockById(Long contractId) {
+        try {
+            jdbcTemplate.queryForObject(
+                    "select id from crm_contracts where id = ? and deleted_at is null for update",
+                    Long.class,
+                    contractId);
+        } catch (EmptyResultDataAccessException exception) {
+            throw new IllegalArgumentException("合同不存在或无权访问");
+        }
+    }
+
+    public record ApprovalSubmission(
+            long instanceId,
+            ContractResponse before,
+            ContractResponse after) {
+    }
+
     private void insertChange(Long contractId, ContractChange change, String reason, Long actorUserId) {
         jdbcTemplate.update(
                 """
@@ -432,6 +478,37 @@ public class ContractService {
         } catch (EmptyResultDataAccessException exception) {
             throw new IllegalArgumentException("合同节点不存在或已删除");
         }
+    }
+
+    private static void requireApprovalSafeUpdate(ContractResponse current, boolean approvalSensitiveUpdate) {
+        if (!"approving".equalsIgnoreCase(current.contract_status())) {
+            return;
+        }
+        if (approvalSensitiveUpdate) {
+            throw new BusinessRuleException("审批中的合同不能修改关键字段，仅允许更新备注");
+        }
+    }
+
+    private static boolean hasApprovalSensitiveInput(ContractUpdateRequest request) {
+        return request.contract_name() != null
+                || request.contract_no() != null
+                || request.contract_type() != null
+                || request.contract_status() != null
+                || request.contract_amount() != null
+                || request.tax_rate() != null
+                || request.our_signing_entity() != null
+                || request.customer_signing_entity() != null
+                || request.owner_user_id() != null
+                || request.business_owner_id() != null
+                || request.signed_at() != null
+                || request.effective_at() != null
+                || request.ended_at() != null
+                || request.payment_terms() != null
+                || request.invoice_terms() != null
+                || request.delivery_scope() != null
+                || request.acceptance_criteria() != null
+                || request.risk_level() != null
+                || request.risk_description() != null;
     }
 
     private static List<ContractChange> detectChanges(ContractResponse current, ContractUpdateRequest request) {

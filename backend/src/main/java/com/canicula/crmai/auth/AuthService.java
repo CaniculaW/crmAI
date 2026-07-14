@@ -135,7 +135,13 @@ public class AuthService {
 
     private CurrentUserResponse currentUserById(Long userId) {
         UserSummary user = jdbcTemplate.queryForObject(
-                "select id, name, email from sys_users where id = ?",
+                """
+                select id, name, email
+                from sys_users
+                where id = ?
+                  and status = 'active'
+                  and deleted_at is null
+                """,
                 (rs, rowNum) -> new UserSummary(
                         rs.getLong("id"),
                         rs.getString("name"),
@@ -147,6 +153,7 @@ public class AuthService {
                 from sys_roles r
                 join sys_user_roles ur on ur.role_id = r.id
                 where ur.user_id = ?
+                  and r.deleted_at is null
                 order by r.code
                 """,
                 (rs, rowNum) -> new RoleSummary(
@@ -159,9 +166,11 @@ public class AuthService {
                 select distinct p.permission_code
                 from sys_permissions p
                 join sys_role_permissions rp on rp.permission_id = p.id
+                join sys_roles r on r.id = rp.role_id
                 join sys_user_roles ur on ur.role_id = rp.role_id
                 where ur.user_id = ?
                   and p.is_active = true
+                  and r.deleted_at is null
                 order by p.permission_code
                 """,
                 String.class,
@@ -179,11 +188,18 @@ public class AuthService {
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(
                     """
-                    select id, user_id
-                    from sys_sessions
-                    where session_token_hash = ?
-                      and revoked_at is null
-                      and expires_at > current_timestamp
+                    select s.id, s.user_id
+                    from sys_sessions s
+                    join sys_users u on u.id = s.user_id
+                    join sys_login_accounts la
+                      on la.id = s.login_account_id
+                     and la.user_id = s.user_id
+                    where s.session_token_hash = ?
+                      and s.revoked_at is null
+                      and s.expires_at > current_timestamp
+                      and u.status = 'active'
+                      and u.deleted_at is null
+                      and la.status = 'active'
                     """,
                     (rs, rowNum) -> new SessionSubject(rs.getLong("id"), rs.getLong("user_id")),
                     sha256(accessToken)));

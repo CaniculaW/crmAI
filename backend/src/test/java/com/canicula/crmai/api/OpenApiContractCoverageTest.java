@@ -37,6 +37,18 @@ class OpenApiContractCoverageTest {
                 .containsAll(runtimeOperations);
     }
 
+    @Test
+    void approvalSchemasMatchRuntimeRequestAndShortcutResponses() throws IOException {
+        String contract = Files.readString(openApiSpecPath());
+
+        assertThat(operationBlock(contract, "/api/approvals/instances:", "/api/approvals/instances/{instanceId}:"))
+                .contains("required: [object_type, object_id, object_name]", "object_name:");
+        assertThat(operationBlock(contract, "/api/solutions/{solutionId}/submit-approval:", "/api/contracts:"))
+                .contains("description: Solution document detail.");
+        assertThat(operationBlock(contract, "/api/contracts/{contractId}/submit-approval:", "/api/contracts/{contractId}/changes:"))
+                .contains("description: Contract detail.");
+    }
+
     private Set<String> runtimeApiOperations() {
         Set<String> operations = new LinkedHashSet<>();
         handlerMapping.getHandlerMethods().forEach((mapping, handlerMethod) ->
@@ -90,5 +102,13 @@ class OpenApiContractCoverageTest {
         return Path.of(System.getProperty("user.dir"))
                 .resolve("docs/openapi/crm-v1-openapi.yaml")
                 .normalize();
+    }
+
+    private static String operationBlock(String contract, String startMarker, String endMarker) {
+        int start = contract.indexOf("  " + startMarker);
+        int end = contract.indexOf("  " + endMarker, start + startMarker.length());
+        assertThat(start).as("OpenAPI start marker %s", startMarker).isGreaterThanOrEqualTo(0);
+        assertThat(end).as("OpenAPI end marker %s", endMarker).isGreaterThan(start);
+        return contract.substring(start, end);
     }
 }
