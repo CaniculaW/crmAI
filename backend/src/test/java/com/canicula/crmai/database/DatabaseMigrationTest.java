@@ -271,6 +271,7 @@ class DatabaseMigrationTest {
                 Integer.class);
 
         assertThat(flyway.info().current()).isNotNull();
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("38");
         assertThat(migrationCount).isGreaterThanOrEqualTo(33);
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(1);
         assertThat(auditTableCount).isEqualTo(2);
@@ -553,7 +554,9 @@ class DatabaseMigrationTest {
                 "activeRecordFilter", "",
                 "jsonDataType", "json",
                 "approvalDefaultUniqueIndex",
-                "create index uk_approval_templates_default_active on approval_templates (tenant_id, object_type, is_default);");
+                "create index uk_approval_templates_default_active on approval_templates (tenant_id, object_type, is_default);",
+                "approvalPendingUniqueIndex",
+                "create index uk_approval_instances_pending on approval_instances (tenant_id, object_type, object_id, status);");
 
         Flyway.configure()
                 .dataSource(isolatedDataSource)

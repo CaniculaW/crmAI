@@ -12,6 +12,7 @@ spring:
     placeholders:
       activeRecordFilter: where deleted_at is null
       approvalDefaultUniqueIndex: create unique index uk_approval_templates_default_active on approval_templates (tenant_id, object_type) where is_default = true and deleted_at is null;
+      approvalPendingUniqueIndex: create unique index uk_approval_instances_pending on approval_instances (tenant_id, object_type, object_id) where status = 'pending';
       jsonDataType: jsonb
 
 server:

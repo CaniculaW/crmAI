@@ -19,6 +19,7 @@ class PostgresMigrationIT {
     private static final Map<String, String> POSTGRES_PLACEHOLDERS = Map.of(
             "activeRecordFilter", "where deleted_at is null",
             "approvalDefaultUniqueIndex", "create unique index uk_approval_templates_default_active on approval_templates (tenant_id, object_type) where is_default = true and deleted_at is null;",
+            "approvalPendingUniqueIndex", "create unique index uk_approval_instances_pending on approval_instances (tenant_id, object_type, object_id) where status = 'pending';",
             "jsonDataType", "jsonb");
 
     @Container
@@ -420,8 +421,16 @@ class PostgresMigrationIT {
                   and indexname = 'uk_approval_templates_default_active'
                 """,
                 String.class);
+        String approvalPendingIndex = jdbcTemplate.queryForObject(
+                """
+                select indexdef
+                from pg_indexes
+                where schemaname = 'public'
+                  and indexname = 'uk_approval_instances_pending'
+                """,
+                String.class);
 
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("37");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("38");
         assertThat(dictionaryTypeCount).isGreaterThanOrEqualTo(3);
         assertThat(activeTypeIndex).contains("WHERE", "deleted_at IS NULL");
         assertThat(accountTableCount).isEqualTo(2);
@@ -469,6 +478,8 @@ class PostgresMigrationIT {
         assertThat(approvalObjectIndexCount).isEqualTo(1);
         assertThat(approvalDefaultIndex)
                 .contains("UNIQUE", "tenant_id", "object_type", "is_default", "deleted_at IS NULL");
+        assertThat(approvalPendingIndex)
+                .contains("UNIQUE", "tenant_id", "object_type", "object_id", "status", "pending");
         assertThat(jdbcTemplate.queryForObject(
                 """
                 select data_type
@@ -498,6 +509,63 @@ class PostgresMigrationIT {
                 "account_type");
 
         assertThat(activeAccountTypeCount).isEqualTo(1);
+
+        Long approvalActorId = jdbcTemplate.queryForObject(
+                "insert into sys_users (name, email) values ('Approval migration actor', 'approval-migration@example.com') returning id",
+                Long.class);
+        Long approvalTemplateId = jdbcTemplate.queryForObject(
+                """
+                insert into approval_templates (
+                    object_type, template_name, status, is_default, created_by
+                ) values ('quotation', 'Migration quotation approval', 'active', true, ?) returning id
+                """,
+                Long.class,
+                approvalActorId);
+
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                """
+                insert into approval_templates (
+                    object_type, template_name, status, is_default, created_by
+                ) values ('quotation', 'Duplicate quotation approval', 'active', true, ?)
+                """,
+                approvalActorId))
+                .hasRootCauseInstanceOf(org.postgresql.util.PSQLException.class);
+        jdbcTemplate.update("update approval_templates set deleted_at = current_timestamp where id = ?", approvalTemplateId);
+        Long replacementTemplateId = jdbcTemplate.queryForObject(
+                """
+                insert into approval_templates (
+                    object_type, template_name, status, is_default, created_by
+                ) values ('quotation', 'Replacement quotation approval', 'active', true, ?) returning id
+                """,
+                Long.class,
+                approvalActorId);
+        jdbcTemplate.update(
+                """
+                insert into approval_instances (
+                    template_id, object_type, object_id, object_name, status, current_step_order, submitted_by
+                ) values (?, 'quotation', 90001, 'Migration quotation', 'pending', 1, ?)
+                """,
+                replacementTemplateId,
+                approvalActorId);
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                """
+                insert into approval_instances (
+                    template_id, object_type, object_id, object_name, status, current_step_order, submitted_by
+                ) values (?, 'quotation', 90001, 'Duplicate migration quotation', 'pending', 1, ?)
+                """,
+                replacementTemplateId,
+                approvalActorId))
+                .hasRootCauseInstanceOf(org.postgresql.util.PSQLException.class);
+        jdbcTemplate.update(
+                "update approval_instances set status = 'approved', current_step_order = null where object_type = 'quotation' and object_id = 90001");
+        jdbcTemplate.update(
+                """
+                insert into approval_instances (
+                    template_id, object_type, object_id, object_name, status, current_step_order, submitted_by
+                ) values (?, 'quotation', 90001, 'Resubmitted migration quotation', 'pending', 1, ?)
+                """,
+                replacementTemplateId,
+                approvalActorId);
     }
 
     @Test

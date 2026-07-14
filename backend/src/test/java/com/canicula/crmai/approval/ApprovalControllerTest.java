@@ -177,6 +177,35 @@ class ApprovalControllerTest {
     }
 
     @Test
+    void rejectsSubmissionWhenApproverPermissionComesOnlyFromADeletedRole() {
+        String suffix = suffix();
+        TestUser submitter = createAndLoginUser(
+                "approval_deleted_permission_submit_" + suffix,
+                "approval.submit",
+                "solution.read",
+                "solution.update");
+        TestUser approver = createAndLoginUser(
+                "approval_deleted_permission_actor_" + suffix,
+                "approval.approve");
+        long approverRoleId = createRole("approval_deleted_permission_node_role_" + suffix);
+        identityService.assignRole(approver.userId(), approverRoleId);
+        createWorkflow(
+                "quotation",
+                submitter.userId(),
+                new NodeSpec(1, "Deleted Permission Review", approverRoleId, "active"));
+        long quotationId = createSolutionDocument(
+                submitter, "quotation", "draft", true, suffix + "-deleted-permission");
+        long permissionRoleId = permissionRoleId(approver.userId(), "approval.approve");
+        jdbcTemplate.update("update sys_roles set deleted_at = current_timestamp where id = ?", permissionRoleId);
+
+        assertConflict(submit(
+                submitter.token(),
+                "quotation",
+                quotationId,
+                "Deleted permission role " + suffix));
+    }
+
+    @Test
     void pendingTasksAreRoleScopedAndFirstApprovalAdvancesTheWorkflow() {
         String suffix = suffix();
         TestUser submitter = createAndLoginUser(
@@ -864,6 +893,21 @@ class ApprovalControllerTest {
                 roleCode,
                 "Approval Test Role",
                 "Approval Test Role"));
+    }
+
+    private long permissionRoleId(long userId, String permissionCode) {
+        return jdbcTemplate.queryForObject(
+                """
+                select rp.role_id
+                from sys_user_roles ur
+                join sys_role_permissions rp on rp.role_id = ur.role_id
+                join sys_permissions p on p.id = rp.permission_id
+                where ur.user_id = ?
+                  and p.permission_code = ?
+                """,
+                Long.class,
+                userId,
+                permissionCode);
     }
 
     private long createWorkflow(String objectType, long createdBy, NodeSpec... nodes) {

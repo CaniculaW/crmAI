@@ -420,6 +420,27 @@ class ApprovalTemplateControllerTest {
     }
 
     @Test
+    void excludesApproverRolesWhenTheApprovePermissionComesOnlyFromADeletedRole() {
+        String suffix = suffix();
+        TestUser manager = createAndLoginUser("approval_deleted_permission_mgr_" + suffix, "approval.config.manage");
+        TestUser approver = createAndLoginUser("approval_deleted_permission_actor_" + suffix, "approval.approve");
+        long approverRoleId = createRole("approval_deleted_permission_role_" + suffix);
+        identityService.assignRole(approver.userId(), approverRoleId);
+        long permissionRoleId = permissionRoleId(approver.userId(), "approval.approve");
+        jdbcTemplate.update("update sys_roles set deleted_at = current_timestamp where id = ?", permissionRoleId);
+
+        ResponseEntity<JsonNode> response = exchange(
+                "/api/approval-templates/approver-roles",
+                HttpMethod.GET,
+                null,
+                manager.token(),
+                "approval-deleted-permission-role-list");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(containsId(response.getBody().path("data"), approverRoleId)).isFalse();
+    }
+
+    @Test
     void requiresApprovalConfigManagePermissionForTemplateAndNodeEndpoints() {
         String suffix = suffix();
         TestUser lowUser = createAndLoginUser("approval_low_" + suffix, "account.read");
@@ -551,6 +572,21 @@ class ApprovalTemplateControllerTest {
                 roleCode,
                 "Approval Test Role",
                 "Approval Test Role"));
+    }
+
+    private long permissionRoleId(long userId, String permissionCode) {
+        return jdbcTemplate.queryForObject(
+                """
+                select rp.role_id
+                from sys_user_roles ur
+                join sys_role_permissions rp on rp.role_id = ur.role_id
+                join sys_permissions p on p.id = rp.permission_id
+                where ur.user_id = ?
+                  and p.permission_code = ?
+                """,
+                Long.class,
+                userId,
+                permissionCode);
     }
 
     private Integer auditCount(String actionCode, String objectType, long objectId, long actorUserId) {

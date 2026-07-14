@@ -55,12 +55,14 @@ public class ApprovalService {
                       from sys_user_roles node_membership
                       join sys_users u on u.id = node_membership.user_id
                       join sys_user_roles permission_membership on permission_membership.user_id = u.id
+                      join sys_roles permission_role on permission_role.id = permission_membership.role_id
                       join sys_role_permissions rp on rp.role_id = permission_membership.role_id
                       join sys_permissions p on p.id = rp.permission_id
                       where node_membership.role_id = r.id
                         and u.tenant_id = ?
                         and u.status = 'active'
                         and u.deleted_at is null
+                        and permission_role.deleted_at is null
                         and p.permission_code = 'approval.approve'
                         and p.is_active = true
                   )
@@ -821,6 +823,7 @@ public class ApprovalService {
                 join sys_user_roles node_membership on node_membership.role_id = r.id
                 join sys_users u on u.id = node_membership.user_id
                 join sys_user_roles permission_membership on permission_membership.user_id = u.id
+                join sys_roles permission_role on permission_role.id = permission_membership.role_id
                 join sys_role_permissions rp on rp.role_id = permission_membership.role_id
                 join sys_permissions p on p.id = rp.permission_id
                 where r.id = ?
@@ -829,6 +832,7 @@ public class ApprovalService {
                   and u.tenant_id = ?
                   and u.status = 'active'
                   and u.deleted_at is null
+                  and permission_role.deleted_at is null
                   and p.permission_code = 'approval.approve'
                   and p.is_active = true
                 """,
@@ -849,25 +853,29 @@ public class ApprovalService {
             Integer currentStepOrder,
             Long actorUserId) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbcTemplate.update(connection -> {
-            PreparedStatement statement = connection.prepareStatement(
-                    """
-                    insert into approval_instances (
-                        tenant_id, template_id, object_type, object_id, object_name,
-                        status, current_step_order, submitted_by
-                    )
-                    values (?, ?, ?, ?, ?, 'pending', ?, ?)
-                    """,
-                    new String[] {"id"});
-            statement.setLong(1, TENANT_ID);
-            statement.setLong(2, templateId);
-            statement.setString(3, objectType);
-            statement.setLong(4, objectId);
-            statement.setString(5, objectName);
-            statement.setInt(6, currentStepOrder);
-            statement.setLong(7, actorUserId);
-            return statement;
-        }, keyHolder);
+        try {
+            jdbcTemplate.update(connection -> {
+                PreparedStatement statement = connection.prepareStatement(
+                        """
+                        insert into approval_instances (
+                            tenant_id, template_id, object_type, object_id, object_name,
+                            status, current_step_order, submitted_by
+                        )
+                        values (?, ?, ?, ?, ?, 'pending', ?, ?)
+                        """,
+                        new String[] {"id"});
+                statement.setLong(1, TENANT_ID);
+                statement.setLong(2, templateId);
+                statement.setString(3, objectType);
+                statement.setLong(4, objectId);
+                statement.setString(5, objectName);
+                statement.setInt(6, currentStepOrder);
+                statement.setLong(7, actorUserId);
+                return statement;
+            }, keyHolder);
+        } catch (DuplicateKeyException exception) {
+            throw new BusinessRuleException("该对象已有待处理审批实例");
+        }
         Number key = keyHolder.getKey();
         if (key == null) {
             throw new IllegalStateException("审批实例创建失败");

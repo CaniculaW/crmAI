@@ -12,6 +12,7 @@ spring:
     placeholders:
       activeRecordFilter:
       approvalDefaultUniqueIndex: create index uk_approval_templates_default_active on approval_templates (tenant_id, object_type, is_default);
+      approvalPendingUniqueIndex: create index uk_approval_instances_pending on approval_instances (tenant_id, object_type, object_id, status);
       jsonDataType: json
 
 server:
