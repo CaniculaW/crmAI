@@ -457,7 +457,9 @@ function CrmShell() {
   const menuItems = allowedNav.map((item) => ({
     key: item.children ? `${item.key}-root` : item.key,
     icon: item.icon,
-    label: item.children && item.key !== "/dashboard" ? item.label : <Link to={item.key}>{item.label}</Link>,
+    label: item.children && item.key !== "/dashboard"
+      ? item.label
+      : <Link to={item.key === "/dashboard" ? item.children?.[0]?.key ?? item.key : item.key}>{item.label}</Link>,
     children: item.children?.map((child) => ({
       key: child.key,
       label: <Link to={child.key}>{child.label}</Link>
@@ -557,7 +559,7 @@ function CrmShell() {
             />
             <Route path="/ai-assistant" element={hasPermission("ai.context.read") ? <AiAssistantPage currentUser={user} /> : <Navigate to="/" replace />} />
             <Route path="/ai-assistant/drafts" element={hasPermission("ai.draft.manage") ? <AiDraftsPage /> : <Navigate to="/" replace />} />
-            <Route path="/ai-assistant/weekly-report" element={hasPermission("ai.weekly.manage") ? <AiWeeklyReportPage /> : <Navigate to="/" replace />} />
+            <Route path="/ai-assistant/weekly-report" element={hasPermission("ai.weekly.manage") ? <AiWeeklyReportPage currentUser={user} /> : <Navigate to="/" replace />} />
             <Route path="/ai-assistant/opportunities" element={hasPermission("ai.opportunity.analyze") ? <AiOpportunityAnalysisPage currentUser={user} /> : <Navigate to="/" replace />} />
             <Route path="/ai-assistant/visit-plans" element={hasPermission("ai.visit.plan") ? <AiVisitPlanPage currentUser={user} /> : <Navigate to="/" replace />} />
             <Route path="/ai-assistant/communication" element={hasPermission("ai.communication.recommend") ? <AiCommunicationRecommendationPage currentUser={user} /> : <Navigate to="/" replace />} />
@@ -1136,6 +1138,15 @@ function AiAssistantPage({ currentUser }: { currentUser: CurrentUser }) {
   const canAnalyzeOpportunities = currentUser.permissions.includes("ai.opportunity.analyze");
   const canPlanVisits = currentUser.permissions.includes("ai.visit.plan");
   const canRecommendCommunication = currentUser.permissions.includes("ai.communication.recommend");
+  const canReadAccounts = currentUser.permissions.includes("account.read");
+  const canReadOpportunities = currentUser.permissions.includes("opportunity.read");
+  const canReadActivities = currentUser.permissions.includes("activity.read");
+  const canOpenEvidence = (url: string) => {
+    if (url.startsWith("/accounts")) return canReadAccounts;
+    if (url.startsWith("/opportunities")) return canReadOpportunities;
+    if (url.startsWith("/activities")) return canReadActivities;
+    return false;
+  };
   const { data, loading, error, refresh } = useObjectResource<AiContextSummary>(
     crmApi.aiContext.summary,
     emptyAiContextSummary,
@@ -1421,16 +1432,17 @@ function AiAssistantPage({ currentUser }: { currentUser: CurrentUser }) {
           <SimpleList
             items={data.accounts}
             empty="暂无客户上下文"
-            render={(account) => (
-              <Link to={`/accounts?account_id=${account.id}`}>
+            render={(account) => {
+              const content = <>
                 <strong>{account.account_name}</strong>
                 <small>
                   {[account.account_level, account.account_status, account.last_activity_summary]
                     .filter(Boolean)
                     .join(" · ")}
                 </small>
-              </Link>
-            )}
+              </>;
+              return canReadAccounts ? <Link to={`/accounts?account_id=${account.id}`}>{content}</Link> : <div>{content}</div>;
+            }}
           />
         </Card>
 
@@ -1438,8 +1450,8 @@ function AiAssistantPage({ currentUser }: { currentUser: CurrentUser }) {
           <SimpleList
             items={data.opportunities}
             empty="暂无商机上下文"
-            render={(opportunity) => (
-              <Link to={`/opportunities?opportunity_id=${opportunity.id}`}>
+            render={(opportunity) => {
+              const content = <>
                 <strong>{opportunity.opportunity_name}</strong>
                 <small>
                   {[
@@ -1452,8 +1464,11 @@ function AiAssistantPage({ currentUser }: { currentUser: CurrentUser }) {
                     .filter(Boolean)
                     .join(" · ")}
                 </small>
-              </Link>
-            )}
+              </>;
+              return canReadOpportunities
+                ? <Link to={`/opportunities?opportunity_id=${opportunity.id}`}>{content}</Link>
+                : <div>{content}</div>;
+            }}
           />
         </Card>
 
@@ -1461,16 +1476,17 @@ function AiAssistantPage({ currentUser }: { currentUser: CurrentUser }) {
           <SimpleList
             items={data.recent_activities}
             empty="暂无近期销售行动"
-            render={(activity) => (
-              <Link to={`/activities?activity_id=${activity.id}`}>
+            render={(activity) => {
+              const content = <>
                 <strong>{activity.subject}</strong>
                 <small>
                   {[activity.activity_type, activity.activity_status, dateText(activity.activity_time)]
                     .filter(Boolean)
                     .join(" · ")}
                 </small>
-              </Link>
-            )}
+              </>;
+              return canReadActivities ? <Link to={`/activities?activity_id=${activity.id}`}>{content}</Link> : <div>{content}</div>;
+            }}
           />
         </Card>
 
@@ -1486,7 +1502,7 @@ function AiAssistantPage({ currentUser }: { currentUser: CurrentUser }) {
           <SimpleList
             items={data.evidence}
             empty="暂无AI证据链"
-            render={(evidence) => <AiEvidenceLine evidence={evidence} />}
+            render={(evidence) => <AiEvidenceLine evidence={evidence} linked={canOpenEvidence(evidence.drilldown_url)} />}
           />
         </Card>
       </div>
@@ -1556,7 +1572,7 @@ function AiDraftsPage() {
   );
 }
 
-function AiWeeklyReportPage() {
+function AiWeeklyReportPage({ currentUser }: { currentUser: CurrentUser }) {
   const { data, loading, error, refresh, setData } = useObjectResource<AiWeeklyReport[]>(
     () => crmApi.aiWeeklyReports.list(),
     () => [],
@@ -1631,7 +1647,7 @@ function AiWeeklyReportPage() {
           <Button type="primary" icon={<Sparkles size={16} />} loading={generating} onClick={handleGenerate}>
             生成周报
           </Button>
-          {currentReport?.status === "confirmed" ? (
+          {currentReport?.status === "confirmed" && currentUser.permissions.includes("weekly_progress.read") ? (
             <Link to="/weekly-progress">
               <Button icon={<BarChart3 size={16} />}>查看周进展</Button>
             </Link>
@@ -1759,7 +1775,7 @@ function AiOpportunityAnalysisPage({ currentUser }: { currentUser: CurrentUser }
       />
       {error || opportunities.error ? <div className="error-banner">{error || opportunities.error}</div> : null}
 
-      <Card title={<Typography.Title level={3}>分析设置</Typography.Title>} className="dashboard-overview__card">
+      {canReadOpportunities ? <Card title={<Typography.Title level={3}>分析设置</Typography.Title>} className="dashboard-overview__card">
         <Space wrap>
           <Select
             aria-label="选择商机"
@@ -1778,13 +1794,13 @@ function AiOpportunityAnalysisPage({ currentUser }: { currentUser: CurrentUser }
           >
             生成商机分析
           </Button>
-          {currentAnalysis?.status === "confirmed" && currentAnalysis.write_activity_id ? (
+          {currentAnalysis?.status === "confirmed" && currentAnalysis.write_activity_id && currentUser.permissions.includes("activity.read") ? (
             <Link to={`/activities?activity_id=${currentAnalysis.write_activity_id}`}>
               <Button icon={<CalendarCheck size={16} />}>查看写入行动</Button>
             </Link>
           ) : null}
         </Space>
-      </Card>
+      </Card> : null}
 
       {currentAnalysis ? (
         <AiOpportunityAnalysisDetail
@@ -1977,7 +1993,7 @@ function AiVisitPlanPage({ currentUser }: { currentUser: CurrentUser }) {
       />
       {error || opportunities.error ? <div className="error-banner">{error || opportunities.error}</div> : null}
 
-      <Card title={<Typography.Title level={3}>计划设置</Typography.Title>} className="dashboard-overview__card">
+      {canReadOpportunities ? <Card title={<Typography.Title level={3}>计划设置</Typography.Title>} className="dashboard-overview__card">
         <Space wrap>
           <Select
             aria-label="选择商机"
@@ -1996,13 +2012,13 @@ function AiVisitPlanPage({ currentUser }: { currentUser: CurrentUser }) {
           >
             生成拜访计划
           </Button>
-          {currentPlan?.status === "confirmed" && currentPlan.write_activity_id ? (
+          {currentPlan?.status === "confirmed" && currentPlan.write_activity_id && currentUser.permissions.includes("activity.read") ? (
             <Link to={`/activities?activity_id=${currentPlan.write_activity_id}`}>
               <Button icon={<CalendarCheck size={16} />}>查看写入行动</Button>
             </Link>
           ) : null}
         </Space>
-      </Card>
+      </Card> : null}
 
       {currentPlan ? (
         <AiVisitPlanDetail
@@ -2210,7 +2226,7 @@ function AiCommunicationRecommendationPage({ currentUser }: { currentUser: Curre
       />
       {error || opportunities.error || contacts.error ? <div className="error-banner">{error || opportunities.error || contacts.error}</div> : null}
 
-      <Card title={<Typography.Title level={3}>推荐设置</Typography.Title>} className="dashboard-overview__card">
+      {canReadOpportunities && canReadContacts ? <Card title={<Typography.Title level={3}>推荐设置</Typography.Title>} className="dashboard-overview__card">
         <Space wrap>
           <Select
             aria-label="选择商机"
@@ -2240,13 +2256,13 @@ function AiCommunicationRecommendationPage({ currentUser }: { currentUser: Curre
           >
             生成沟通建议
           </Button>
-          {currentRecommendation?.status === "confirmed" && currentRecommendation.write_activity_id ? (
+          {currentRecommendation?.status === "confirmed" && currentRecommendation.write_activity_id && currentUser.permissions.includes("activity.read") ? (
             <Link to={`/activities?activity_id=${currentRecommendation.write_activity_id}`}>
               <Button icon={<CalendarCheck size={16} />}>查看写入行动</Button>
             </Link>
           ) : null}
         </Space>
-      </Card>
+      </Card> : null}
 
       {currentRecommendation ? (
         <AiCommunicationRecommendationDetail
@@ -2868,15 +2884,14 @@ function confidenceColor(confidence: string) {
   return "orange";
 }
 
-function AiEvidenceLine({ evidence }: { evidence: AiEvidenceItem }) {
+function AiEvidenceLine({ evidence, linked = true }: { evidence: AiEvidenceItem; linked?: boolean }) {
   const meta = [evidence.object_type, dateText(evidence.occurred_at)].filter(Boolean).join(" · ");
+  const content = <>
+    <strong>{evidence.title}</strong>
+    <small>{[meta, evidence.summary].filter(Boolean).join(" · ")}</small>
+  </>;
 
-  return (
-    <Link to={evidence.drilldown_url}>
-      <strong>{evidence.title}</strong>
-      <small>{[meta, evidence.summary].filter(Boolean).join(" · ")}</small>
-    </Link>
-  );
+  return linked ? <Link to={evidence.drilldown_url}>{content}</Link> : <div>{content}</div>;
 }
 
 function DashboardMetricCardView({ metric }: { metric: DashboardMetricCard }) {
@@ -4283,6 +4298,7 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
   const solutions = useResource(() => crmApi.solutions.list(filters), [filters]);
   const canReadAccounts = currentUser.permissions.includes("account.read");
   const canReadOpportunities = currentUser.permissions.includes("opportunity.read");
+  const canReadAttachments = currentUser.permissions.includes("attachment.read");
   const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
   const opportunities = useResource(() => canReadOpportunities ? crmApi.opportunities.list() : Promise.resolve([]), [canReadOpportunities]);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -4304,13 +4320,17 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
   );
 
   const loadAttachments = useCallback(async (solutionId: number) => {
+    if (!canReadAttachments) {
+      setAttachments([]);
+      return;
+    }
     setAttachmentLoading(true);
     try {
       setAttachments(await crmApi.attachments.list({ object_type: "solution_document", object_id: solutionId }));
     } finally {
       setAttachmentLoading(false);
     }
-  }, []);
+  }, [canReadAttachments]);
 
   useEffect(() => {
     if (!selected) {
@@ -4505,7 +4525,7 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
             />
           </section>
         ) : null}
-        <section className="drawer-section">
+        {canReadAttachments ? <section className="drawer-section">
           <div className="section-title-row">
             <Typography.Title level={4}>附件</Typography.Title>
             <Space>
@@ -4528,7 +4548,7 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
             <AttachmentUploadFormFields options={attachmentFileTypeOptions()} />
             <Button type="primary" htmlType="submit">上传附件</Button>
           </Form>
-        </section>
+        </section> : null}
       </Drawer>
 
       <Modal title="编辑方案" open={!!editing} onCancel={() => setEditing(null)} footer={null}>
@@ -4557,6 +4577,7 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
   const contracts = useResource(() => crmApi.contracts.list(filters), [filters]);
   const canReadAccounts = currentUser.permissions.includes("account.read");
   const canReadOpportunities = currentUser.permissions.includes("opportunity.read");
+  const canReadAttachments = currentUser.permissions.includes("attachment.read");
   const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
   const opportunities = useResource(() => canReadOpportunities ? crmApi.opportunities.list() : Promise.resolve([]), [canReadOpportunities]);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -4586,7 +4607,9 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
       const [nextChanges, nextMilestones, nextAttachments] = await Promise.all([
         crmApi.contracts.changes(contractId),
         crmApi.contracts.milestones(contractId),
-        crmApi.attachments.list({ object_type: "contract", object_id: contractId })
+        canReadAttachments
+          ? crmApi.attachments.list({ object_type: "contract", object_id: contractId })
+          : Promise.resolve([])
       ]);
       setChanges(nextChanges);
       setMilestones(nextMilestones);
@@ -4594,7 +4617,7 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
     } finally {
       setDetailLoading(false);
     }
-  }, []);
+  }, [canReadAttachments]);
 
   const openContractDetail = useCallback(async (contractId: number) => {
     const nextContract = await crmApi.contracts.detail(contractId);
@@ -4887,7 +4910,7 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
                 </Form.Item>
               </Form>
             </section>
-            <section className="drawer-section">
+            {canReadAttachments ? <section className="drawer-section">
               <div className="section-title-row">
                 <Typography.Title level={4}>附件</Typography.Title>
                 <Button icon={<Paperclip size={16} />} onClick={() => attachmentForm.submit()}>添加附件</Button>
@@ -4904,7 +4927,7 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
               <Form form={attachmentForm} layout="vertical" className="inline-create-form" onFinish={createAttachment}>
                 <AttachmentUploadFormFields options={contractAttachmentFileTypeOptions()} />
               </Form>
-            </section>
+            </section> : null}
           </>
         )}
       </Drawer>
@@ -4939,6 +4962,7 @@ function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
   const canReadAccounts = currentUser.permissions.includes("account.read");
   const canReadOpportunities = currentUser.permissions.includes("opportunity.read");
   const canReadContracts = currentUser.permissions.includes("contract.read");
+  const canReadAttachments = currentUser.permissions.includes("attachment.read");
   const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
   const opportunities = useResource(() => canReadOpportunities ? crmApi.opportunities.list() : Promise.resolve([]), [canReadOpportunities]);
   const contracts = useResource(() => canReadContracts ? crmApi.contracts.list() : Promise.resolve([]), [canReadContracts]);
@@ -4975,14 +4999,16 @@ function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
     try {
       const [nextInvoice, nextAttachments] = await Promise.all([
         crmApi.invoices.detail(invoiceId),
-        crmApi.attachments.list({ object_type: "invoice", object_id: invoiceId })
+        canReadAttachments
+          ? crmApi.attachments.list({ object_type: "invoice", object_id: invoiceId })
+          : Promise.resolve([])
       ]);
       setSelected(nextInvoice);
       setAttachments(nextAttachments);
     } finally {
       setDetailLoading(false);
     }
-  }, []);
+  }, [canReadAttachments]);
 
   useEffect(() => {
     if (!selected) {
@@ -5308,7 +5334,7 @@ function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
                 ]}
               />
             </section>
-            <section className="drawer-section">
+            {canReadAttachments ? <section className="drawer-section">
               <div className="section-title-row">
                 <Typography.Title level={4}>附件</Typography.Title>
                 <Button icon={<Paperclip size={16} />} onClick={() => attachmentForm.submit()}>添加附件</Button>
@@ -5325,7 +5351,7 @@ function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
               <Form form={attachmentForm} layout="vertical" className="inline-create-form" onFinish={createAttachment}>
                 <AttachmentUploadFormFields options={invoiceAttachmentFileTypeOptions()} />
               </Form>
-            </section>
+            </section> : null}
             <section className="drawer-section">
               <Typography.Title level={4}>后续回款/核销</Typography.Title>
               <p className="muted">当前发票已形成独立对象，后续回款模块将从已开票和已签收状态进入核销。</p>
@@ -5437,6 +5463,8 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
   const receivables = useResource(() => crmApi.receivablePlans.list(filters), [filters]);
   const canReadAccounts = currentUser.permissions.includes("account.read");
   const canReadContracts = currentUser.permissions.includes("contract.read");
+  const canReadPayments = currentUser.permissions.includes("payment.read");
+  const canReadAttachments = currentUser.permissions.includes("attachment.read");
   const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
   const contracts = useResource(() => canReadContracts ? crmApi.contracts.list() : Promise.resolve([]), [canReadContracts]);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -5459,9 +5487,11 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
     try {
       const [nextPlan, nextPayments, nextFollowUps, nextAttachments] = await Promise.all([
         crmApi.receivablePlans.detail(planId),
-        crmApi.payments.list({ receivable_plan_id: planId }),
+        canReadPayments ? crmApi.payments.list({ receivable_plan_id: planId }) : Promise.resolve([]),
         crmApi.receivablePlans.followUps(planId),
-        crmApi.attachments.list({ object_type: "receivable_plan", object_id: planId })
+        canReadAttachments
+          ? crmApi.attachments.list({ object_type: "receivable_plan", object_id: planId })
+          : Promise.resolve([])
       ]);
       setSelected(nextPlan);
       setPayments(nextPayments);
@@ -5470,7 +5500,7 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
     } finally {
       setDetailLoading(false);
     }
-  }, []);
+  }, [canReadAttachments, canReadPayments]);
 
   useEffect(() => {
     if (initialPlanId) {
@@ -5757,7 +5787,7 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
               </div>
             </section>
 
-            <section className="drawer-section">
+            {canReadPayments ? <section className="drawer-section">
               <div className="section-title-row">
                 <Typography.Title level={4}>到账流水</Typography.Title>
                 <Button icon={<Plus size={16} />} onClick={() => paymentForm.submit()}>登记到账</Button>
@@ -5791,7 +5821,7 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
                   <Input />
                 </Form.Item>
               </Form>
-            </section>
+            </section> : null}
 
             <section className="drawer-section">
               <div className="section-title-row">
@@ -5828,7 +5858,7 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
               <p className="muted">已确认且未核销的到账流水将进入模块 6 核销工作台。</p>
             </section>
 
-            <section className="drawer-section">
+            {canReadAttachments ? <section className="drawer-section">
               <div className="section-title-row">
                 <Typography.Title level={4}>附件</Typography.Title>
                 <Button icon={<Paperclip size={16} />} onClick={() => attachmentForm.submit()}>添加附件</Button>
@@ -5845,7 +5875,7 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
               <Form form={attachmentForm} layout="vertical" className="inline-create-form" onFinish={createAttachment}>
                 <AttachmentUploadFormFields options={receivableAttachmentFileTypeOptions()} />
               </Form>
-            </section>
+            </section> : null}
           </>
         )}
       </Drawer>

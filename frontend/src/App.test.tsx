@@ -592,7 +592,8 @@ const apiData = {
         }
       ],
       source_activity_count: 2,
-      source_evidence_count: 1
+      source_evidence_count: 1,
+      write_activity_id: undefined as number | undefined
     }
   ],
   aiVisitPlans: [
@@ -2496,20 +2497,20 @@ describe("CRM frontend V1 workflow", () => {
   });
 
   it.each([
-    { path: "/contacts", permission: "contact.read", heading: "联系人", denied: ["/api/accounts"] },
-    { path: "/opportunities", permission: "opportunity.read", heading: "商机", denied: ["/api/accounts"] },
-    { path: "/solutions", permission: "solution.read", heading: "方案标书", denied: ["/api/accounts", "/api/opportunities"] },
-    { path: "/contracts", permission: "contract.read", heading: "合同", denied: ["/api/accounts", "/api/opportunities"] },
-    { path: "/invoices", permission: "invoice.read", heading: "开票管理", denied: ["/api/accounts", "/api/opportunities", "/api/contracts"] },
-    { path: "/receivables", permission: "receivable.read", heading: "回款管理", denied: ["/api/accounts", "/api/contracts"] },
-    { path: "/payments", permission: "payment.read", heading: "到账流水", denied: ["/api/accounts", "/api/contracts", "/api/receivable-plans"] },
-    { path: "/reconciliations", permission: "reconciliation.read", heading: "核销工作台", denied: ["/api/accounts", "/api/contracts"] },
-    { path: "/activities", permission: "activity.read", heading: "销售行动", denied: ["/api/accounts", "/api/contacts", "/api/opportunities"] },
-    { path: "/weekly-progress", permission: "weekly_progress.read", heading: "周进展", denied: ["/api/accounts", "/api/opportunities"] },
-    { path: "/ai-assistant/opportunities", permission: "ai.opportunity.analyze", heading: "AI商机分析", denied: ["/api/opportunities"] },
-    { path: "/ai-assistant/visit-plans", permission: "ai.visit.plan", heading: "AI拜访计划", denied: ["/api/opportunities"] },
-    { path: "/ai-assistant/communication", permission: "ai.communication.recommend", heading: "AI沟通建议", denied: ["/api/opportunities", "/api/contacts"] }
-  ])("loads $path without cross-module requests for its minimum permission", async ({ path, permission, heading, denied }) => {
+    { path: "/contacts", permission: "contact.read", heading: "联系人", target: "/api/contacts", denied: ["/api/accounts"] },
+    { path: "/opportunities", permission: "opportunity.read", heading: "商机", target: "/api/opportunities", denied: ["/api/accounts"] },
+    { path: "/solutions", permission: "solution.read", heading: "方案标书", target: "/api/solutions", denied: ["/api/accounts", "/api/opportunities"] },
+    { path: "/contracts", permission: "contract.read", heading: "合同", target: "/api/contracts", denied: ["/api/accounts", "/api/opportunities"] },
+    { path: "/invoices", permission: "invoice.read", heading: "开票管理", target: "/api/invoices", denied: ["/api/accounts", "/api/opportunities", "/api/contracts"] },
+    { path: "/receivables", permission: "receivable.read", heading: "回款管理", target: "/api/receivable-plans", denied: ["/api/accounts", "/api/contracts"] },
+    { path: "/payments", permission: "payment.read", heading: "到账流水", target: "/api/payments", denied: ["/api/accounts", "/api/contracts", "/api/receivable-plans"] },
+    { path: "/reconciliations", permission: "reconciliation.read", heading: "核销工作台", target: "/api/reconciliations", denied: ["/api/accounts", "/api/contracts"] },
+    { path: "/activities", permission: "activity.read", heading: "销售行动", target: "/api/activities", denied: ["/api/accounts", "/api/contacts", "/api/opportunities"] },
+    { path: "/weekly-progress", permission: "weekly_progress.read", heading: "周进展", target: "/api/weekly-progress/opportunities", denied: ["/api/accounts", "/api/opportunities"] },
+    { path: "/ai-assistant/opportunities", permission: "ai.opportunity.analyze", heading: "AI商机分析", target: "/api/ai-opportunity-analyses", denied: ["/api/opportunities"] },
+    { path: "/ai-assistant/visit-plans", permission: "ai.visit.plan", heading: "AI拜访计划", target: "/api/ai-visit-plans", denied: ["/api/opportunities"] },
+    { path: "/ai-assistant/communication", permission: "ai.communication.recommend", heading: "AI沟通建议", target: "/api/ai-communication-recommendations", denied: ["/api/opportunities", "/api/contacts"] }
+  ])("loads $path without cross-module requests for its minimum permission", async ({ path, permission, heading, target, denied }) => {
     const user = userEvent.setup();
     const fetchMock = mockCrmFetch({
       user: {
@@ -2524,7 +2525,117 @@ describe("CRM frontend V1 workflow", () => {
 
     expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
     const requestedPaths = fetchMock.mock.calls.map(([url]) => new URL(String(url), "http://localhost").pathname);
+    expect(requestedPaths).toContain(target);
     denied.forEach((endpoint) => expect(requestedPaths).not.toContain(endpoint));
+  });
+
+  it.each([
+    {
+      path: "/contracts?contract_id=301",
+      permission: "contract.read",
+      heading: "合同",
+      required: ["/api/contracts/301", "/api/contracts/301/changes", "/api/contracts/301/milestones"],
+      denied: ["/api/attachments"]
+    },
+    {
+      path: "/invoices?invoice_id=401",
+      permission: "invoice.read",
+      heading: "开票管理",
+      required: ["/api/invoices/401"],
+      denied: ["/api/attachments"]
+    },
+    {
+      path: "/receivables?receivable_plan_id=601",
+      permission: "receivable.read",
+      heading: "回款管理",
+      required: ["/api/receivable-plans/601", "/api/receivable-plans/601/follow-ups"],
+      denied: ["/api/payments", "/api/attachments"]
+    }
+  ])("opens $path without unauthorized detail requests", async ({ path, permission, heading, required, denied }) => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch({ user: { ...apiData.user, permissions: [permission] } });
+    window.history.pushState({}, "", path);
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
+    await waitFor(() => {
+      const requestedPaths = fetchMock.mock.calls.map(([url]) => new URL(String(url), "http://localhost").pathname);
+      required.forEach((endpoint) => expect(requestedPaths).toContain(endpoint));
+      denied.forEach((endpoint) => expect(requestedPaths).not.toContain(endpoint));
+    });
+  });
+
+  it("does not request solution attachments without attachment read permission", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch({ user: { ...apiData.user, permissions: ["solution.read"] } });
+    window.history.pushState({}, "", "/solutions");
+
+    render(<App />);
+    await loginThroughUi(user);
+    await user.click(await screen.findByRole("button", { name: apiData.solutions[0].document_name }));
+
+    await screen.findByText("方案详情");
+    const requestedPaths = fetchMock.mock.calls.map(([url]) => new URL(String(url), "http://localhost").pathname);
+    expect(requestedPaths).not.toContain("/api/attachments");
+  });
+
+  it.each([
+    { path: "/ai-assistant/opportunities", permission: "ai.opportunity.analyze", heading: "AI商机分析", button: "生成商机分析" },
+    { path: "/ai-assistant/visit-plans", permission: "ai.visit.plan", heading: "AI拜访计划", button: "生成拜访计划" },
+    { path: "/ai-assistant/communication", permission: "ai.communication.recommend", heading: "AI沟通建议", button: "生成沟通建议" }
+  ])("hides unavailable AI generation controls on $path", async ({ path, permission, heading, button }) => {
+    const user = userEvent.setup();
+    mockCrmFetch({ user: { ...apiData.user, permissions: [permission] } });
+    window.history.pushState({}, "", path);
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: button })).not.toBeInTheDocument();
+  });
+
+  it("links the dashboard parent to the first permitted child page", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch({ user: { ...apiData.user, permissions: ["dashboard.funnel.read"] } });
+    window.history.pushState({}, "", "/");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("link", { name: "驾驶舱" })).toHaveAttribute("href", "/dashboard/funnel");
+  });
+
+  it("hides the weekly progress link without weekly progress read permission", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch({
+      user: { ...apiData.user, permissions: ["ai.weekly.manage"] },
+      aiWeeklyReports: [{ ...apiData.aiWeeklyReports[0], status: "confirmed" }]
+    });
+    window.history.pushState({}, "", "/ai-assistant/weekly-report");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "AI周报" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "查看周进展" })).not.toBeInTheDocument();
+  });
+
+  it("hides the written activity link without activity read permission", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch({
+      user: { ...apiData.user, permissions: ["ai.opportunity.analyze"] },
+      aiOpportunityAnalyses: [{ ...apiData.aiOpportunityAnalyses[0], status: "confirmed", write_activity_id: 88 }]
+    });
+    window.history.pushState({}, "", "/ai-assistant/opportunities");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "AI商机分析" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "查看写入行动" })).not.toBeInTheDocument();
   });
 
   it("loads only the permitted AI workbench resources", async () => {
@@ -2552,6 +2663,9 @@ describe("CRM frontend V1 workflow", () => {
       expect(requestedPaths).not.toContain(endpoint);
     });
     expect(screen.queryByRole("button", { name: "生成草稿" })).not.toBeInTheDocument();
+    expect(document.querySelector('a[href^="/accounts"]')).not.toBeInTheDocument();
+    expect(document.querySelector('a[href^="/opportunities"]')).not.toBeInTheDocument();
+    expect(document.querySelector('a[href^="/activities"]')).not.toBeInTheDocument();
   });
 
   it.each([
