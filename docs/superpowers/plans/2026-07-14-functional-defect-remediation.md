@@ -195,27 +195,27 @@ git commit -m "fix: reject invalid reporting date filters"
 - Modify: `frontend/src/App.test.tsx`
 - Modify: `frontend/src/App.tsx`
 
-- [ ] **Step 1: Write failing direct-route tests**
+- [x] **Step 1: Write failing direct-route tests**
 
 For a user with only `account.read`, navigate directly to every system child route and assert the page redirects to the workbench without requesting the protected API or rendering management controls.
 
-- [ ] **Step 2: Verify `/system/users` currently renders**
+- [x] **Step 2: Verify `/system/users` currently renders**
 
 Run: `cd frontend && npm test -- --run src/App.test.tsx`
 
 Expected: the new direct-route test fails because `SystemPage` renders before the API returns 403.
 
-- [ ] **Step 3: Guard all system routes before rendering**
+- [x] **Step 3: Guard all system routes before rendering**
 
 Use the existing `Navigate` pattern with these permissions: departments/users `system.user.manage`, roles `system.role.manage`, audit logs `system.audit.read`, dictionaries `system.dict.manage`, AI config `system.ai-config.manage`; `/system` requires any system permission.
 
-- [ ] **Step 4: Verify frontend route tests pass**
+- [x] **Step 4: Verify frontend route tests pass**
 
 Run: `cd frontend && npm test -- --run src/App.test.tsx`
 
 Expected: all App tests pass and no protected API is called.
 
-- [ ] **Step 5: Commit the frontend permission fix**
+- [x] **Step 5: Commit the frontend permission fix**
 
 ```bash
 git add frontend/src/App.tsx frontend/src/App.test.tsx

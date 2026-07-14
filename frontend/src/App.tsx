@@ -434,6 +434,15 @@ function CrmShell() {
   }
 
   const allowedNav = allowedNavItems(navItems, user.permissions);
+  const hasPermission = (permission: string) => user.permissions.includes(permission);
+  const hasSystemPermission = [
+    "system.user.manage",
+    "system.role.manage",
+    "system.audit.read",
+    "system.dict.manage",
+    "system.ai-config.manage",
+    "approval.config.manage"
+  ].some(hasPermission);
   const selectedMenuKey = location.pathname;
   const selectedRootKey = allowedNav.find((item) => item.children?.some((child) => child.key === selectedMenuKey))?.key;
   const defaultOpenKeys = Array.from(new Set(["/dashboard-root", "/system-root", selectedRootKey ? `${selectedRootKey}-root` : ""])).filter(Boolean);
@@ -545,13 +554,34 @@ function CrmShell() {
             <Route path="/ai-assistant/visit-plans" element={<AiVisitPlanPage />} />
             <Route path="/ai-assistant/communication" element={<AiCommunicationRecommendationPage />} />
             <Route path="/ai-assistant/logs" element={<AiLogPage />} />
-            <Route path="/system" element={<SystemPage section="overview" />} />
-            <Route path="/system/departments" element={<SystemPage section="departments" />} />
-            <Route path="/system/users" element={<SystemPage section="users" />} />
-            <Route path="/system/roles" element={<SystemPage section="roles" />} />
-            <Route path="/system/audit-logs" element={<SystemPage section="auditLogs" />} />
-            <Route path="/system/dictionaries" element={<SystemPage section="dictionaries" />} />
-            <Route path="/system/ai-config" element={<SystemPage section="aiConfig" />} />
+            <Route
+              path="/system"
+              element={hasSystemPermission ? <SystemPage section="overview" /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="/system/departments"
+              element={hasPermission("system.user.manage") ? <SystemPage section="departments" /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="/system/users"
+              element={hasPermission("system.user.manage") ? <SystemPage section="users" /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="/system/roles"
+              element={hasPermission("system.role.manage") ? <SystemPage section="roles" /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="/system/audit-logs"
+              element={hasPermission("system.audit.read") ? <SystemPage section="auditLogs" /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="/system/dictionaries"
+              element={hasPermission("system.dict.manage") ? <SystemPage section="dictionaries" /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="/system/ai-config"
+              element={hasPermission("system.ai-config.manage") ? <SystemPage section="aiConfig" /> : <Navigate to="/" replace />}
+            />
             <Route
               path="/system/approval-templates"
               element={user.permissions.includes("approval.config.manage")

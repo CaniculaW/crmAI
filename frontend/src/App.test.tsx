@@ -2419,6 +2419,24 @@ describe("CRM frontend V1 workflow", () => {
     expect(fetchMock).not.toHaveBeenCalledWith("/api/approval-templates", expect.anything());
   });
 
+  it("redirects a direct system user route before protected content loads", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch({
+      user: {
+        ...apiData.user,
+        permissions: ["account.read"]
+      }
+    });
+    window.history.pushState({}, "", "/system/users");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "工作台" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "用户管理" })).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/system/users", expect.anything());
+  });
+
   it("shows approval status inside a quotation detail drawer", async () => {
     const user = userEvent.setup();
     const fetchMock = mockCrmFetch();
