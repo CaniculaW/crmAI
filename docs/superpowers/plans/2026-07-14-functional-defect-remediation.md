@@ -267,32 +267,32 @@ git commit -m "fix: disclose AI rules fallback mode"
 
 **Files:**
 - Modify: `frontend/scripts/v1-browser-smoke.mjs`
-- Modify: `frontend/src/browser-smoke.test.ts`
+- Modify: `frontend/scripts/v1-browser-smoke.test.mjs`
 
-- [ ] **Step 1: Add a failing cleanup retry unit test**
+- [x] **Step 1: Add a failing cleanup retry unit test**
 
 Export a cleanup helper and inject a remover that fails once with `EBUSY`; assert it retries and completes on the second attempt.
 
-- [ ] **Step 2: Verify the helper does not exist**
+- [x] **Step 2: Verify the helper does not exist**
 
-Run: `cd frontend && npm test -- --run src/browser-smoke.test.ts`
+Run: `cd frontend && npm test -- --run scripts/v1-browser-smoke.test.mjs`
 
 Expected: the new test fails because the cleanup helper is not exported.
 
-- [ ] **Step 3: Add bounded cleanup retries**
+- [x] **Step 3: Add bounded cleanup retries**
 
 Implement three attempts with a short delay for `EBUSY`, `EPERM`, and `ENOTEMPTY`; rethrow all other errors and the final transient error.
 
-- [ ] **Step 4: Verify browser smoke tests pass**
+- [x] **Step 4: Verify browser smoke tests pass**
 
-Run: `cd frontend && npm test -- --run src/browser-smoke.test.ts`
+Run: `cd frontend && npm test -- --run scripts/v1-browser-smoke.test.mjs`
 
 Expected: all selected tests pass.
 
-- [ ] **Step 5: Commit the test-tool fix**
+- [x] **Step 5: Commit the test-tool fix**
 
 ```bash
-git add frontend/scripts/v1-browser-smoke.mjs frontend/src/browser-smoke.test.ts
+git add frontend/scripts/v1-browser-smoke.mjs frontend/scripts/v1-browser-smoke.test.mjs
 git commit -m "test: retry Chrome smoke profile cleanup"
 ```
 

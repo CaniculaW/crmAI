@@ -34,6 +34,22 @@ export function assertSmokeResult(result, expectedTexts = DEFAULT_EXPECTED_TEXTS
   }
 }
 
+export async function cleanupUserDataDir(userDataDir, remover = rm, wait = sleep) {
+  const transientCodes = new Set(["EBUSY", "EPERM", "ENOTEMPTY"]);
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      await remover(userDataDir, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      const isTransient = error && typeof error === "object" && transientCodes.has(error.code);
+      if (!isTransient || attempt === 3) {
+        throw error;
+      }
+      await wait(attempt * 100);
+    }
+  }
+}
+
 async function runSmoke(config = resolveSmokeConfig()) {
   if (!config.chromePath) {
     throw new Error("Chrome executable not found. Set CRM_SMOKE_CHROME_PATH to run the V1 browser smoke.");
@@ -106,8 +122,12 @@ async function runSmoke(config = resolveSmokeConfig()) {
     };
   } finally {
     chrome.kill("SIGTERM");
-    await rm(userDataDir, { recursive: true, force: true });
+    await cleanupUserDataDir(userDataDir);
   }
+}
+
+function sleep(delayMs) {
+  return new Promise((resolve) => setTimeout(resolve, delayMs));
 }
 
 async function login(page, username, password) {

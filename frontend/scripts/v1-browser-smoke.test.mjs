@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertSmokeResult, resolveSmokeConfig } from "./v1-browser-smoke.mjs";
+import { assertSmokeResult, cleanupUserDataDir, resolveSmokeConfig } from "./v1-browser-smoke.mjs";
 
 describe("v1 browser smoke script helpers", () => {
   it("resolves defaults for the local V1 system smoke flow", () => {
@@ -42,5 +42,21 @@ describe("v1 browser smoke script helpers", () => {
         consoleFailures: [{ type: "error", text: "boom" }]
       })
     ).toThrow("browser console");
+  });
+
+  it("retries transient Chrome profile cleanup failures", async () => {
+    let attempts = 0;
+    const remover = async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        const error = new Error("profile is busy");
+        error.code = "EBUSY";
+        throw error;
+      }
+    };
+
+    await cleanupUserDataDir("/tmp/crm-smoke-profile", remover, async () => {});
+
+    expect(attempts).toBe(2);
   });
 });
