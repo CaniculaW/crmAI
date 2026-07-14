@@ -41,6 +41,27 @@ class ActivityControllerTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
+    void returnsNotFoundForMissingActivity() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("activity-missing-dept-" + suffix);
+        createLoginReadyUser(
+                "activity_missing_" + suffix,
+                departmentId,
+                List.of("activity.read"),
+                List.of("global"));
+        String token = login("activity_missing_" + suffix);
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/activities/999999999",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "activity-missing-trace-001")),
+                JsonNode.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().path("code").asText()).isEqualTo("NOT_FOUND");
+    }
+
+    @Test
     void createsCustomerActivityWithoutOpportunityAndReadsByAccount() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         Long departmentId = createDepartment("activity-customer-dept-" + suffix);

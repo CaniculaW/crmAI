@@ -3,6 +3,7 @@ package com.canicula.crmai.activity;
 import com.canicula.crmai.account.AccountResponse;
 import com.canicula.crmai.account.AccountService;
 import com.canicula.crmai.api.BusinessRuleException;
+import com.canicula.crmai.api.ResourceNotFoundException;
 import com.canicula.crmai.identity.DataPermissionColumns;
 import com.canicula.crmai.identity.DataPermissionCondition;
 import com.canicula.crmai.identity.DataPermissionService;
@@ -85,7 +86,7 @@ public class ActivityService {
                     (rs, rowNum) -> findById(rs.getLong("id")),
                     parameters.toArray());
         } catch (EmptyResultDataAccessException exception) {
-            throw new IllegalArgumentException("销售行动不存在或无权访问");
+            throw new ResourceNotFoundException("销售行动不存在或无权访问");
         }
     }
 
