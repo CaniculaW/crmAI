@@ -405,6 +405,28 @@ class ActivityControllerTest {
                 assertThat(item.path("conclusion").asText()).isEqualTo("客户经营行动结论"));
     }
 
+    @Test
+    void rejectsInvalidWeeklyProgressMonth() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("activity-invalid-month-dept-" + suffix);
+        createLoginReadyUser(
+                "activity_invalid_month_" + suffix,
+                departmentId,
+                List.of("weekly_progress.read"),
+                List.of("global"));
+        String token = login("activity_invalid_month_" + suffix);
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/weekly-progress/opportunities?month=2026-13",
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "weekly-invalid-month-trace-001")),
+                JsonNode.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().path("code").asText()).isEqualTo("VALIDATION_ERROR");
+        assertThat(response.getBody().path("trace_id").asText()).isEqualTo("weekly-invalid-month-trace-001");
+    }
+
     private Long createActivity(
             String accessToken,
             Long accountId,

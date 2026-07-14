@@ -4,6 +4,7 @@ import com.canicula.crmai.auth.RequirePermission;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,12 +31,13 @@ public class WeeklyProgressController {
             @RequestParam(name = "month", required = false) String month,
             @RequestParam(name = "risk_only", required = false) Boolean riskOnly,
             HttpServletRequest httpRequest) {
+        YearMonth parsedMonth = parseMonth(month);
         WeeklyProgressFilter filter = new WeeklyProgressFilter(
                 opportunityId,
                 ownerUserId,
                 accountId,
-                effectiveWeekStart(weekStart, month),
-                effectiveWeekEnd(weekEnd, month),
+                effectiveWeekStart(weekStart, parsedMonth),
+                effectiveWeekEnd(weekEnd, parsedMonth),
                 riskOnly);
         return weeklyProgressService.readableList(currentUserId(httpRequest), filter);
     }
@@ -57,18 +59,29 @@ public class WeeklyProgressController {
         return weeklyProgressService.readableList(currentUserId(httpRequest), filter);
     }
 
-    private static LocalDate effectiveWeekStart(LocalDate weekStart, String month) {
-        if (weekStart != null || month == null || month.isBlank()) {
+    private static LocalDate effectiveWeekStart(LocalDate weekStart, YearMonth month) {
+        if (weekStart != null || month == null) {
             return weekStart;
         }
-        return YearMonth.parse(month).atDay(1);
+        return month.atDay(1);
     }
 
-    private static LocalDate effectiveWeekEnd(LocalDate weekEnd, String month) {
-        if (weekEnd != null || month == null || month.isBlank()) {
+    private static LocalDate effectiveWeekEnd(LocalDate weekEnd, YearMonth month) {
+        if (weekEnd != null || month == null) {
             return weekEnd;
         }
-        return YearMonth.parse(month).atEndOfMonth();
+        return month.atEndOfMonth();
+    }
+
+    private static YearMonth parseMonth(String month) {
+        if (month == null || month.isBlank()) {
+            return null;
+        }
+        try {
+            return YearMonth.parse(month);
+        } catch (DateTimeParseException exception) {
+            throw new IllegalArgumentException("月份格式必须为YYYY-MM且月份有效", exception);
+        }
     }
 
     private static Long currentUserId(HttpServletRequest request) {

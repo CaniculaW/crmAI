@@ -29,6 +29,7 @@ public class DashboardController {
             @RequestParam(name = "account_id", required = false) Long accountId,
             @RequestParam(name = "opportunity_id", required = false) Long opportunityId,
             HttpServletRequest httpRequest) {
+        validateDateRange(dateFrom, dateTo);
         return dashboardService.overview(
                 currentUserId(httpRequest),
                 new DashboardFilter(dateFrom, dateTo, departmentId, ownerId, accountId, opportunityId));
@@ -46,6 +47,7 @@ public class DashboardController {
             @RequestParam(name = "account_id", required = false) Long accountId,
             @RequestParam(name = "risk_status", required = false) String riskStatus,
             HttpServletRequest httpRequest) {
+        validateDateRange(dateFrom, dateTo);
         return dashboardService.funnel(
                 currentUserId(httpRequest),
                 new DashboardFunnelFilter(dateFrom, dateTo, departmentId, ownerId, accountId, riskStatus));
@@ -65,6 +67,7 @@ public class DashboardController {
             @RequestParam(name = "contract_status", required = false) String contractStatus,
             @RequestParam(name = "risk_level", required = false) String riskLevel,
             HttpServletRequest httpRequest) {
+        validateDateRange(dateFrom, dateTo);
         return dashboardService.contracts(
                 currentUserId(httpRequest),
                 new DashboardContractFilter(
@@ -93,6 +96,7 @@ public class DashboardController {
             @RequestParam(name = "invoice_status", required = false) String invoiceStatus,
             @RequestParam(name = "exception_only", required = false) Boolean exceptionOnly,
             HttpServletRequest httpRequest) {
+        validateDateRange(dateFrom, dateTo);
         return dashboardService.invoices(
                 currentUserId(httpRequest),
                 new DashboardInvoiceFilter(
@@ -122,6 +126,7 @@ public class DashboardController {
             @RequestParam(name = "receivable_status", required = false) String receivableStatus,
             @RequestParam(name = "overdue_only", required = false) Boolean overdueOnly,
             HttpServletRequest httpRequest) {
+        validateDateRange(dateFrom, dateTo);
         return dashboardService.receivables(
                 currentUserId(httpRequest),
                 new DashboardReceivableFilter(
@@ -152,6 +157,7 @@ public class DashboardController {
             @RequestParam(name = "object_type", required = false) String objectType,
             @RequestParam(name = "high_priority_only", required = false) Boolean highPriorityOnly,
             HttpServletRequest httpRequest) {
+        validateDateRange(dateFrom, dateTo);
         return dashboardService.risks(
                 currentUserId(httpRequest),
                 new DashboardRiskFilter(
@@ -169,5 +175,11 @@ public class DashboardController {
 
     private static Long currentUserId(HttpServletRequest request) {
         return (Long) request.getAttribute("crm.currentUserId");
+    }
+
+    private static void validateDateRange(LocalDate dateFrom, LocalDate dateTo) {
+        if (dateFrom != null && dateTo != null && dateFrom.isAfter(dateTo)) {
+            throw new IllegalArgumentException("开始日期不能晚于结束日期");
+        }
     }
 }

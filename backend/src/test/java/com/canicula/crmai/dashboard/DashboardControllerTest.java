@@ -126,6 +126,30 @@ class DashboardControllerTest {
     }
 
     @Test
+    void rejectsInvertedDateRangeForEveryDashboard() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("dashboard-invalid-range-dept-" + suffix);
+        TestUser user = createLoginReadyUser(
+                "dashboard_invalid_range_" + suffix,
+                departmentId,
+                allDashboardPermissions(),
+                List.of("global"));
+
+        for (String dashboard : List.of("overview", "funnel", "contracts", "invoices", "receivables", "risks")) {
+            ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    "/api/dashboard/" + dashboard + "?date_from=2026-08-01&date_to=2026-07-01",
+                    HttpMethod.GET,
+                    new HttpEntity<>(authHeaders(user.token(), "dashboard-invalid-range-" + dashboard)),
+                    JsonNode.class);
+
+            assertThat(response.getStatusCode())
+                    .as("dashboard %s must reject an inverted range", dashboard)
+                    .isEqualTo(HttpStatus.BAD_REQUEST);
+            assertThat(response.getBody().path("code").asText()).isEqualTo("VALIDATION_ERROR");
+        }
+    }
+
+    @Test
     void funnelReturnsStageForecastTrendAndAttentionOpportunities() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         Long departmentId = createDepartment("dashboard-funnel-dept-" + suffix);

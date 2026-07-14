@@ -154,17 +154,17 @@ git commit -m "fix: prevent duplicate activity completion"
 - Modify: `backend/src/test/java/com/canicula/crmai/dashboard/DashboardControllerTest.java`
 - Modify: `backend/src/main/java/com/canicula/crmai/dashboard/DashboardController.java`
 
-- [ ] **Step 1: Write failing invalid-date tests**
+- [x] **Step 1: Write failing invalid-date tests**
 
 Assert `month=2026-13` returns 400 and each dashboard endpoint rejects `date_from=2026-08-01&date_to=2026-07-01` with 400 `VALIDATION_ERROR`.
 
-- [ ] **Step 2: Verify current behavior is 500/200**
+- [x] **Step 2: Verify current behavior is 500/200**
 
 Run: `cd backend && mvn -Dtest=ActivityControllerTest,DashboardControllerTest test`
 
 Expected: invalid month returns 500 and inverted dashboard range returns 200.
 
-- [ ] **Step 3: Validate before service invocation**
+- [x] **Step 3: Validate before service invocation**
 
 Catch invalid `YearMonth` through the common 400 mapping and add one controller helper called by all six dashboard endpoints:
 
@@ -176,13 +176,13 @@ private static void validateDateRange(LocalDate dateFrom, LocalDate dateTo) {
 }
 ```
 
-- [ ] **Step 4: Verify date validation suites pass**
+- [x] **Step 4: Verify date validation suites pass**
 
 Run: `cd backend && mvn -Dtest=ActivityControllerTest,DashboardControllerTest test`
 
 Expected: all selected tests pass.
 
-- [ ] **Step 5: Commit the date validation fix**
+- [x] **Step 5: Commit the date validation fix**
 
 ```bash
 git add backend/src/main/java/com/canicula/crmai/weekly/WeeklyProgressController.java backend/src/main/java/com/canicula/crmai/dashboard/DashboardController.java backend/src/test/java/com/canicula/crmai/activity/ActivityControllerTest.java backend/src/test/java/com/canicula/crmai/dashboard/DashboardControllerTest.java
