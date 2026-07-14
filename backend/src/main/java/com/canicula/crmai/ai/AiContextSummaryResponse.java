@@ -7,6 +7,8 @@ import com.canicula.crmai.opportunity.OpportunityResponse;
 import java.util.List;
 
 public record AiContextSummaryResponse(
+        String generation_mode,
+        String generation_notice,
         List<AccountResponse> accounts,
         List<OpportunityResponse> opportunities,
         List<ActivityResponse> recent_activities,

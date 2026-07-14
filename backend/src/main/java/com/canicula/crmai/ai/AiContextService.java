@@ -30,6 +30,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class AiContextService {
 
+    private static final String GENERATION_MODE = "rules_fallback";
+    private static final String GENERATION_NOTICE =
+            "当前版本由业务规则辅助生成，未调用远程模型；AI配置仅用于连接测试。";
+
     private final AccountService accountService;
     private final ContactService contactService;
     private final OpportunityService opportunityService;
@@ -87,7 +91,14 @@ public class AiContextService {
         List<AiEvidenceItem> evidence = recentActivities.stream()
                 .map(this::activityEvidence)
                 .toList();
-        return new AiContextSummaryResponse(accounts, opportunities, recentActivities, List.of(), evidence);
+        return new AiContextSummaryResponse(
+                GENERATION_MODE,
+                GENERATION_NOTICE,
+                accounts,
+                opportunities,
+                recentActivities,
+                List.of(),
+                evidence);
     }
 
     public AiAccountContextResponse accountContext(Long accountId, Long userId) {

@@ -113,6 +113,9 @@ class AiContextControllerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode data = response.getBody().path("data");
+        assertThat(data.path("generation_mode").asText()).isEqualTo("rules_fallback");
+        assertThat(data.path("generation_notice").asText())
+                .isEqualTo("当前版本由业务规则辅助生成，未调用远程模型；AI配置仅用于连接测试。");
         assertThat(data.path("accounts")).anySatisfy(account ->
                 assertThat(account.path("account_name").asText()).isEqualTo("AI上下文客户-" + suffix));
         assertThat(data.path("opportunities")).anySatisfy(opportunity ->

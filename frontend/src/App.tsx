@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   Card,
   Checkbox,
@@ -1278,6 +1279,9 @@ function AiAssistantPage() {
         }
       />
       {workbenchError ? <div className="error-banner">{workbenchError}</div> : null}
+      {data.generation_notice ? (
+        <Alert type="info" showIcon message={data.generation_notice} />
+      ) : null}
 
       <div className="ai-workbench-summary">
         <Card className="dashboard-overview__card">
@@ -3247,6 +3251,8 @@ function emptyDashboardRisks(): DashboardRisks {
 
 function emptyAiContextSummary(): AiContextSummary {
   return {
+    generation_mode: "rules_fallback",
+    generation_notice: "当前版本由业务规则辅助生成，未调用远程模型；AI配置仅用于连接测试。",
     accounts: [],
     opportunities: [],
     recent_activities: [],

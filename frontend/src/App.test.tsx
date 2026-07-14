@@ -422,6 +422,8 @@ const apiData = {
     ]
   },
   aiContextSummary: {
+    generation_mode: "rules_fallback",
+    generation_notice: "当前版本由业务规则辅助生成，未调用远程模型；AI配置仅用于连接测试。",
     accounts: [
       {
         id: 1,
@@ -1231,6 +1233,8 @@ describe("CRM frontend V1 workflow", () => {
     await loginThroughUi(user);
 
     expect(await screen.findByRole("heading", { name: "AI销售作战助手" })).toBeInTheDocument();
+    expect(screen.getByText("当前版本由业务规则辅助生成，未调用远程模型；AI配置仅用于连接测试。"))
+      .toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "待确认队列" })).toBeInTheDocument();
     expect(screen.getByText("6 项待确认")).toBeInTheDocument();
     expect(screen.getAllByText("草稿确认").length).toBeGreaterThanOrEqual(1);

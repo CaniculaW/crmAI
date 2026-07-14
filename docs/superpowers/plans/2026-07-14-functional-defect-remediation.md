@@ -232,11 +232,11 @@ git commit -m "fix: guard system management routes by permission"
 - Modify: `frontend/src/App.tsx`
 - Modify: `frontend/src/App.test.tsx`
 
-- [ ] **Step 1: Write failing backend and UI tests**
+- [x] **Step 1: Write failing backend and UI tests**
 
 Assert the context summary contains `generation_mode: rules_fallback` and a Chinese notice when no enabled model exists; assert the AI workbench renders that notice.
 
-- [ ] **Step 2: Verify the fields and notice are absent**
+- [x] **Step 2: Verify the fields and notice are absent**
 
 Run: `cd backend && mvn -Dtest=AiContextControllerTest test`
 
@@ -244,11 +244,11 @@ Run: `cd frontend && npm test -- --run src/App.test.tsx`
 
 Expected: both new assertions fail.
 
-- [ ] **Step 3: Return and display generation provenance**
+- [x] **Step 3: Return and display generation provenance**
 
-Extend the summary contract with `generation_mode` and `generation_notice`. Determine `openai` only when an enabled OpenAI configuration exists; otherwise return `rules_fallback` and `当前未启用 OpenAI 模型，以下内容由业务规则辅助生成，未调用远程模型。`. Render the notice as an Ant Design info `Alert` under the page title.
+Extend the summary contract with `generation_mode` and `generation_notice`. Because the current generation services do not invoke OpenAI, return `rules_fallback` and `当前版本由业务规则辅助生成，未调用远程模型；AI配置仅用于连接测试。`. Render the notice as an Ant Design info `Alert` under the page title. Do not report `openai` merely because a connectivity-test configuration exists.
 
-- [ ] **Step 4: Verify backend and frontend AI tests pass**
+- [x] **Step 4: Verify backend and frontend AI tests pass**
 
 Run: `cd backend && mvn -Dtest=AiContextControllerTest test`
 
@@ -256,7 +256,7 @@ Run: `cd frontend && npm test -- --run src/App.test.tsx`
 
 Expected: all selected tests pass.
 
-- [ ] **Step 5: Commit the AI transparency fix**
+- [x] **Step 5: Commit the AI transparency fix**
 
 ```bash
 git add backend/src/main/java/com/canicula/crmai/ai backend/src/test/java/com/canicula/crmai/ai/AiContextControllerTest.java frontend/src/api/crm.ts frontend/src/App.tsx frontend/src/App.test.tsx

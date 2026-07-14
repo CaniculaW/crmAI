@@ -592,6 +592,8 @@ export type AiEvidenceItem = {
 };
 
 export type AiContextSummary = {
+  generation_mode: "openai" | "rules_fallback";
+  generation_notice: string;
   accounts: Account[];
   opportunities: Opportunity[];
   recent_activities: Activity[];
