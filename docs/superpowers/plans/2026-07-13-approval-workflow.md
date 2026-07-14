@@ -374,35 +374,35 @@ git commit -m "feat: add approval frontend api"
 - Modify: `frontend/src/App.test.tsx`
 - Modify: `frontend/src/styles.css`
 
-- [ ] **Step 1: Write failing approval center UI tests**
+- [x] **Step 1: Write failing approval center UI tests**
 
 Assert users with `approval.read` see the first-level `审批中心` menu, the three tabs `待我审批`, `我发起的`, and `已处理`, and a pending task opens a drawer where `通过` and `驳回` call the matching API. Assert users without `approval.approve` do not see decision buttons.
 
-- [ ] **Step 2: Run center tests and verify RED**
+- [x] **Step 2: Run center tests and verify RED**
 
 Run: `npm test -- --run src/App.test.tsx -t "审批中心"`
 
 Expected: FAIL because the menu and page do not exist.
 
-- [ ] **Step 3: Implement the approval center**
+- [x] **Step 3: Implement the approval center**
 
 Add `/approvals` to navigation and routing. Use an Ant Design `Tabs` control, compact task table, and detail drawer. Keep task columns to object type, object name, current node, submitter, submitted time, and status. Decisions use a modal text area for comments, require a comment on rejection, refresh the current bucket after success, and show API errors through the existing message/error pattern.
 
-- [ ] **Step 4: Write failing approval configuration UI tests**
+- [x] **Step 4: Write failing approval configuration UI tests**
 
 Assert `审批配置` appears under system management for `approval.config.manage`, lists quotation/bid/contract templates, and supports adding a sequential role node.
 
-- [ ] **Step 5: Implement approval configuration**
+- [x] **Step 5: Implement approval configuration**
 
 Add a dedicated system route or existing `SystemPage` section for approval templates. The page contains a template table and a drawer for ordered nodes. Use role selectors populated from the existing role API, numeric step order, active/inactive status, and a default-template switch.
 
-- [ ] **Step 6: Run focused and full frontend tests**
+- [x] **Step 6: Run focused and full frontend tests**
 
 Run: `npm test -- --run src/App.test.tsx`
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit approval pages**
+- [x] **Step 7: Commit approval pages**
 
 ```bash
 git add frontend/src/App.tsx frontend/src/App.test.tsx frontend/src/styles.css
@@ -417,21 +417,21 @@ git commit -m "feat: add approval center and configuration"
 - Modify: `frontend/src/styles.css`
 - Create: `docs/testing/evidence/approval-workflow-validation.md`
 
-- [ ] **Step 1: Write failing business-detail tests**
+- [x] **Step 1: Write failing business-detail tests**
 
 For a quotation/bid solution and a drafting contract, assert the detail drawer loads object approval history, shows `提交审批` only with both the business update permission and `approval.submit`, and hides critical edit actions while approval is pending. Assert the node timeline and decision comments are visible after completion.
 
-- [ ] **Step 2: Run detail tests and verify RED**
+- [x] **Step 2: Run detail tests and verify RED**
 
 Run: `npm test -- --run src/App.test.tsx -t "审批状态"`
 
 Expected: FAIL because business details have no approval panel.
 
-- [ ] **Step 3: Implement reusable approval status panel**
+- [x] **Step 3: Implement reusable approval status panel**
 
 Create an internal `ApprovalStatusPanel` component in `App.tsx` following the file's existing component style. Derive solution object type as `bid` for `bid_document`, otherwise `quotation` when the type is `quotation` or quotation amount exists. Load `/api/approvals/object/{type}/{id}` when the drawer opens; render current state, sequential nodes, action history, and submit button. Contracts always use `contract`.
 
-- [ ] **Step 4: Run frontend verification**
+- [x] **Step 4: Run frontend verification**
 
 Run: `npm test -- --run`
 
@@ -441,7 +441,7 @@ Run: `npm run build`
 
 Expected: TypeScript and Vite build complete without errors.
 
-- [ ] **Step 5: Run backend verification**
+- [x] **Step 5: Run backend verification**
 
 Run: `mvn test`
 
@@ -451,7 +451,7 @@ Run: `mvn verify -Ppostgres-it`
 
 Expected: PostgreSQL integration profile PASS, including Flyway migration and approval workflow tests.
 
-- [ ] **Step 6: Run browser smoke verification**
+- [x] **Step 6: Run browser smoke verification**
 
 Start the existing local backend and frontend stack, then verify with the in-app browser:
 
@@ -464,11 +464,11 @@ Start the existing local backend and frontend stack, then verify with the in-app
 
 Record exact commands, test counts, browser URLs, tested object IDs, observed state transitions, and any residual risks in `docs/testing/evidence/approval-workflow-validation.md`.
 
-- [ ] **Step 7: Request final code review and resolve findings**
+- [x] **Step 7: Request final code review and resolve findings**
 
 Provide the reviewer the design spec, this implementation plan, base SHA, and head SHA. Fix all Critical and Important findings, then rerun the affected test suites.
 
-- [ ] **Step 8: Commit validation evidence**
+- [x] **Step 8: Commit validation evidence**
 
 ```bash
 git add frontend/src/App.tsx frontend/src/App.test.tsx frontend/src/styles.css docs/testing/evidence/approval-workflow-validation.md
