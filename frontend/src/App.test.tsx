@@ -2595,6 +2595,7 @@ describe("CRM frontend V1 workflow", () => {
 
     expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: button })).not.toBeInTheDocument();
+    expect(document.querySelector('a[href^="/activities"]')).not.toBeInTheDocument();
   });
 
   it("links the dashboard parent to the first permitted child page", async () => {
@@ -2621,6 +2622,7 @@ describe("CRM frontend V1 workflow", () => {
 
     expect(await screen.findByRole("heading", { name: "AI周报" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "查看周进展" })).not.toBeInTheDocument();
+    expect(document.querySelector('a[href^="/activities"]')).not.toBeInTheDocument();
   });
 
   it("hides the written activity link without activity read permission", async () => {
@@ -2666,6 +2668,7 @@ describe("CRM frontend V1 workflow", () => {
     expect(document.querySelector('a[href^="/accounts"]')).not.toBeInTheDocument();
     expect(document.querySelector('a[href^="/opportunities"]')).not.toBeInTheDocument();
     expect(document.querySelector('a[href^="/activities"]')).not.toBeInTheDocument();
+    expect(document.querySelector('a[href^="/receivables"]')).not.toBeInTheDocument();
   });
 
   it.each([

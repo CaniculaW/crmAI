@@ -367,6 +367,26 @@ function allowedNavItems(items: NavItem[], permissions: string[]): NavItem[] {
     .filter((item): item is NavItem => Boolean(item));
 }
 
+const businessRoutePermissions: Array<[string, string]> = [
+  ["/accounts", "account.read"],
+  ["/contacts", "contact.read"],
+  ["/opportunities", "opportunity.read"],
+  ["/solutions", "solution.read"],
+  ["/contracts", "contract.read"],
+  ["/invoices", "invoice.read"],
+  ["/receivables", "receivable.read"],
+  ["/payments", "payment.read"],
+  ["/reconciliations", "reconciliation.read"],
+  ["/activities", "activity.read"],
+  ["/weekly-progress", "weekly_progress.read"]
+];
+
+function canAccessBusinessUrl(url: string, permissions: string[]) {
+  const path = url.split("?", 1)[0];
+  const route = businessRoutePermissions.find(([prefix]) => path === prefix || path.startsWith(`${prefix}/`));
+  return route ? permissions.includes(route[1]) : false;
+}
+
 export function App() {
   return (
     <BrowserRouter>
@@ -1141,12 +1161,6 @@ function AiAssistantPage({ currentUser }: { currentUser: CurrentUser }) {
   const canReadAccounts = currentUser.permissions.includes("account.read");
   const canReadOpportunities = currentUser.permissions.includes("opportunity.read");
   const canReadActivities = currentUser.permissions.includes("activity.read");
-  const canOpenEvidence = (url: string) => {
-    if (url.startsWith("/accounts")) return canReadAccounts;
-    if (url.startsWith("/opportunities")) return canReadOpportunities;
-    if (url.startsWith("/activities")) return canReadActivities;
-    return false;
-  };
   const { data, loading, error, refresh } = useObjectResource<AiContextSummary>(
     crmApi.aiContext.summary,
     emptyAiContextSummary,
@@ -1494,7 +1508,7 @@ function AiAssistantPage({ currentUser }: { currentUser: CurrentUser }) {
           <SimpleList
             items={data.risk_signals}
             empty="暂无风险信号"
-            render={(risk) => <DashboardRiskItemRow risk={risk} />}
+            render={(risk) => <DashboardRiskItemRow risk={risk} linked={canAccessBusinessUrl(risk.drilldown_url, currentUser.permissions)} />}
           />
         </Card>
 
@@ -1502,7 +1516,7 @@ function AiAssistantPage({ currentUser }: { currentUser: CurrentUser }) {
           <SimpleList
             items={data.evidence}
             empty="暂无AI证据链"
-            render={(evidence) => <AiEvidenceLine evidence={evidence} linked={canOpenEvidence(evidence.drilldown_url)} />}
+            render={(evidence) => <AiEvidenceLine evidence={evidence} linked={canAccessBusinessUrl(evidence.drilldown_url, currentUser.permissions)} />}
           />
         </Card>
       </div>
@@ -1658,6 +1672,7 @@ function AiWeeklyReportPage({ currentUser }: { currentUser: CurrentUser }) {
       {currentReport ? (
         <AiWeeklyReportDetail
           report={currentReport}
+          grantedPermissions={currentUser.permissions}
           operating={operatingId === currentReport.id}
           onConfirm={() => handleConfirm(currentReport)}
           onReject={() => handleReject(currentReport)}
@@ -1805,6 +1820,7 @@ function AiOpportunityAnalysisPage({ currentUser }: { currentUser: CurrentUser }
       {currentAnalysis ? (
         <AiOpportunityAnalysisDetail
           analysis={currentAnalysis}
+          grantedPermissions={currentUser.permissions}
           operating={operatingId === currentAnalysis.id}
           onConfirm={() => handleConfirm(currentAnalysis)}
           onReject={() => handleReject(currentAnalysis)}
@@ -1835,11 +1851,13 @@ function AiOpportunityAnalysisPage({ currentUser }: { currentUser: CurrentUser }
 
 function AiOpportunityAnalysisDetail({
   analysis,
+  grantedPermissions,
   operating,
   onConfirm,
   onReject
 }: {
   analysis: AiOpportunityAnalysis;
+  grantedPermissions: string[];
   operating: boolean;
   onConfirm: () => void;
   onReject: () => void;
@@ -1901,7 +1919,7 @@ function AiOpportunityAnalysisDetail({
         <SimpleList
           items={analysis.evidence}
           empty="暂无证据"
-          render={(evidence) => <AiEvidenceLine evidence={evidence} />}
+          render={(evidence) => <AiEvidenceLine evidence={evidence} linked={canAccessBusinessUrl(evidence.drilldown_url, grantedPermissions)} />}
         />
       </Card>
     </Space>
@@ -2023,6 +2041,7 @@ function AiVisitPlanPage({ currentUser }: { currentUser: CurrentUser }) {
       {currentPlan ? (
         <AiVisitPlanDetail
           plan={currentPlan}
+          grantedPermissions={currentUser.permissions}
           operating={operatingId === currentPlan.id}
           onConfirm={() => handleConfirm(currentPlan)}
           onReject={() => handleReject(currentPlan)}
@@ -2051,11 +2070,13 @@ function AiVisitPlanPage({ currentUser }: { currentUser: CurrentUser }) {
 
 function AiVisitPlanDetail({
   plan,
+  grantedPermissions,
   operating,
   onConfirm,
   onReject
 }: {
   plan: AiVisitPlan;
+  grantedPermissions: string[];
   operating: boolean;
   onConfirm: () => void;
   onReject: () => void;
@@ -2111,7 +2132,11 @@ function AiVisitPlanDetail({
       </Card>
 
       <Card title={<Typography.Title level={3}>证据链</Typography.Title>} className="dashboard-overview__card">
-        <SimpleList items={plan.evidence} empty="暂无证据" render={(evidence) => <AiEvidenceLine evidence={evidence} />} />
+        <SimpleList
+          items={plan.evidence}
+          empty="暂无证据"
+          render={(evidence) => <AiEvidenceLine evidence={evidence} linked={canAccessBusinessUrl(evidence.drilldown_url, grantedPermissions)} />}
+        />
       </Card>
     </Space>
   );
@@ -2267,6 +2292,7 @@ function AiCommunicationRecommendationPage({ currentUser }: { currentUser: Curre
       {currentRecommendation ? (
         <AiCommunicationRecommendationDetail
           recommendation={currentRecommendation}
+          grantedPermissions={currentUser.permissions}
           operating={operatingId === currentRecommendation.id}
           onConfirm={() => handleConfirm(currentRecommendation)}
           onReject={() => handleReject(currentRecommendation)}
@@ -2295,11 +2321,13 @@ function AiCommunicationRecommendationPage({ currentUser }: { currentUser: Curre
 
 function AiCommunicationRecommendationDetail({
   recommendation,
+  grantedPermissions,
   operating,
   onConfirm,
   onReject
 }: {
   recommendation: AiCommunicationRecommendation;
+  grantedPermissions: string[];
   operating: boolean;
   onConfirm: () => void;
   onReject: () => void;
@@ -2362,7 +2390,7 @@ function AiCommunicationRecommendationDetail({
         <SimpleList
           items={recommendation.evidence}
           empty="暂无证据"
-          render={(evidence) => <AiEvidenceLine evidence={evidence} />}
+          render={(evidence) => <AiEvidenceLine evidence={evidence} linked={canAccessBusinessUrl(evidence.drilldown_url, grantedPermissions)} />}
         />
       </Card>
     </Space>
@@ -2371,11 +2399,13 @@ function AiCommunicationRecommendationDetail({
 
 function AiWeeklyReportDetail({
   report,
+  grantedPermissions,
   operating,
   onConfirm,
   onReject
 }: {
   report: AiWeeklyReport;
+  grantedPermissions: string[];
   operating: boolean;
   onConfirm: () => void;
   onReject: () => void;
@@ -2442,7 +2472,7 @@ function AiWeeklyReportDetail({
               <SimpleList
                 items={progress.evidence}
                 empty="暂无证据"
-                render={(evidence) => <AiEvidenceLine evidence={evidence} />}
+                render={(evidence) => <AiEvidenceLine evidence={evidence} linked={canAccessBusinessUrl(evidence.drilldown_url, grantedPermissions)} />}
               />
             </Space>
           </Card>
@@ -3207,9 +3237,8 @@ function DashboardRiskSummaryRow({ risk }: { risk: DashboardRiskSummary }) {
   );
 }
 
-function DashboardRiskItemRow({ risk }: { risk: DashboardRiskItem }) {
-  return (
-    <Link className="dashboard-overview__top-risk" to={risk.drilldown_url}>
+function DashboardRiskItemRow({ risk, linked = true }: { risk: DashboardRiskItem; linked?: boolean }) {
+  const content = <>
       <span>
         <strong>{risk.title}</strong>
         {contractRiskTag(risk.risk_level)}
@@ -3218,8 +3247,10 @@ function DashboardRiskItemRow({ risk }: { risk: DashboardRiskItem }) {
         {currencyText(risk.amount)}
         {risk.occurred_at ? ` · ${dateText(risk.occurred_at)}` : ""}
       </small>
-    </Link>
-  );
+    </>;
+  return linked
+    ? <Link className="dashboard-overview__top-risk" to={risk.drilldown_url}>{content}</Link>
+    : <div className="dashboard-overview__top-risk">{content}</div>;
 }
 
 function dashboardMetricValue(metric: DashboardMetricCard) {
