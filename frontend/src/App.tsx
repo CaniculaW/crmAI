@@ -557,31 +557,31 @@ function CrmShell() {
             <Route path="/ai-assistant/logs" element={<AiLogPage />} />
             <Route
               path="/system"
-              element={hasSystemPermission ? <SystemPage section="overview" /> : <Navigate to="/" replace />}
+              element={hasSystemPermission ? <SystemPage section="overview" grantedPermissions={user.permissions} /> : <Navigate to="/" replace />}
             />
             <Route
               path="/system/departments"
-              element={hasPermission("system.user.manage") ? <SystemPage section="departments" /> : <Navigate to="/" replace />}
+              element={hasPermission("system.user.manage") ? <SystemPage section="departments" grantedPermissions={user.permissions} /> : <Navigate to="/" replace />}
             />
             <Route
               path="/system/users"
-              element={hasPermission("system.user.manage") ? <SystemPage section="users" /> : <Navigate to="/" replace />}
+              element={hasPermission("system.user.manage") ? <SystemPage section="users" grantedPermissions={user.permissions} /> : <Navigate to="/" replace />}
             />
             <Route
               path="/system/roles"
-              element={hasPermission("system.role.manage") ? <SystemPage section="roles" /> : <Navigate to="/" replace />}
+              element={hasPermission("system.role.manage") ? <SystemPage section="roles" grantedPermissions={user.permissions} /> : <Navigate to="/" replace />}
             />
             <Route
               path="/system/audit-logs"
-              element={hasPermission("system.audit.read") ? <SystemPage section="auditLogs" /> : <Navigate to="/" replace />}
+              element={hasPermission("system.audit.read") ? <SystemPage section="auditLogs" grantedPermissions={user.permissions} /> : <Navigate to="/" replace />}
             />
             <Route
               path="/system/dictionaries"
-              element={hasPermission("system.dict.manage") ? <SystemPage section="dictionaries" /> : <Navigate to="/" replace />}
+              element={hasPermission("system.dict.manage") ? <SystemPage section="dictionaries" grantedPermissions={user.permissions} /> : <Navigate to="/" replace />}
             />
             <Route
               path="/system/ai-config"
-              element={hasPermission("system.ai-config.manage") ? <SystemPage section="aiConfig" /> : <Navigate to="/" replace />}
+              element={hasPermission("system.ai-config.manage") ? <SystemPage section="aiConfig" grantedPermissions={user.permissions} /> : <Navigate to="/" replace />}
             />
             <Route
               path="/system/approval-templates"
@@ -6959,15 +6959,50 @@ function WeeklyProgressItems({ items }: { items: WeeklyProgress["progress_items"
   );
 }
 
-function SystemPage({ section }: { section: SystemSection }) {
+function SystemPage({ section, grantedPermissions }: { section: SystemSection; grantedPermissions: string[] }) {
   const [auditQuery, setAuditQuery] = useState<Record<string, unknown>>({ limit: 20 });
-  const dictionaries = useResource(crmApi.dictionaries.list, []);
-  const auditLogs = useResource(() => crmApi.auditLogs.list(auditQuery), [auditQuery]);
-  const users = useResource(crmApi.users.list, []);
-  const departments = useResource(crmApi.departments.list, []);
-  const roles = useResource(crmApi.roles.list, []);
-  const permissions = useResource(crmApi.permissions.list, []);
-  const aiModelConfigs = useResource(crmApi.aiModelConfigs.list, []);
+  const hasPermission = (permission: string) => grantedPermissions.includes(permission);
+  const isOverview = section === "overview";
+  const canManageUsers = hasPermission("system.user.manage");
+  const canManageRoles = hasPermission("system.role.manage");
+  const canReadAudit = hasPermission("system.audit.read");
+  const canManageDictionaries = hasPermission("system.dict.manage");
+  const canManageAiConfig = hasPermission("system.ai-config.manage");
+  const loadDictionaries = canManageDictionaries && (isOverview || section === "dictionaries");
+  const loadAuditLogs = canReadAudit && (isOverview || section === "auditLogs");
+  const loadUsers = canManageUsers && (isOverview || section === "users");
+  const loadDepartments = canManageUsers && (isOverview || section === "departments" || section === "users");
+  const loadRoles = canManageRoles && (isOverview || section === "roles" || section === "users");
+  const loadPermissions = canManageRoles && (isOverview || section === "roles");
+  const loadAiModelConfigs = canManageAiConfig && (isOverview || section === "aiConfig");
+  const dictionaries = useResource<DictionaryType>(
+    () => loadDictionaries ? crmApi.dictionaries.list() : Promise.resolve([]),
+    [loadDictionaries]
+  );
+  const auditLogs = useResource<AuditLog>(
+    () => loadAuditLogs ? crmApi.auditLogs.list(auditQuery) : Promise.resolve([]),
+    [auditQuery, loadAuditLogs]
+  );
+  const users = useResource<SystemUser>(
+    () => loadUsers ? crmApi.users.list() : Promise.resolve([]),
+    [loadUsers]
+  );
+  const departments = useResource<SystemDepartment>(
+    () => loadDepartments ? crmApi.departments.list() : Promise.resolve([]),
+    [loadDepartments]
+  );
+  const roles = useResource<SystemRole>(
+    () => loadRoles ? crmApi.roles.list() : Promise.resolve([]),
+    [loadRoles]
+  );
+  const permissions = useResource<SystemPermission>(
+    () => loadPermissions ? crmApi.permissions.list() : Promise.resolve([]),
+    [loadPermissions]
+  );
+  const aiModelConfigs = useResource<AiModelConfig>(
+    () => loadAiModelConfigs ? crmApi.aiModelConfigs.list() : Promise.resolve([]),
+    [loadAiModelConfigs]
+  );
   const [typeOpen, setTypeOpen] = useState(false);
   const [departmentOpen, setDepartmentOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
@@ -7283,7 +7318,13 @@ function SystemPage({ section }: { section: SystemSection }) {
   };
 
   const sectionLoading: Record<SystemSection, boolean> = {
-    overview: dictionaries.loading || departments.loading || users.loading || roles.loading || auditLogs.loading || aiModelConfigs.loading,
+    overview: (loadDictionaries && dictionaries.loading)
+      || (loadDepartments && departments.loading)
+      || (loadUsers && users.loading)
+      || (loadRoles && roles.loading)
+      || (loadPermissions && permissions.loading)
+      || (loadAuditLogs && auditLogs.loading)
+      || (loadAiModelConfigs && aiModelConfigs.loading),
     departments: departments.loading,
     users: users.loading || roles.loading,
     roles: roles.loading || permissions.loading,
@@ -7293,7 +7334,13 @@ function SystemPage({ section }: { section: SystemSection }) {
   };
 
   const sectionError: Record<SystemSection, string> = {
-    overview: dictionaries.error || departments.error || users.error || roles.error || auditLogs.error || aiModelConfigs.error,
+    overview: (loadDictionaries ? dictionaries.error : "")
+      || (loadDepartments ? departments.error : "")
+      || (loadUsers ? users.error : "")
+      || (loadRoles ? roles.error : "")
+      || (loadPermissions ? permissions.error : "")
+      || (loadAuditLogs ? auditLogs.error : "")
+      || (loadAiModelConfigs ? aiModelConfigs.error : ""),
     departments: departments.error,
     users: users.error || roles.error,
     roles: roles.error || permissions.error,
@@ -7304,7 +7351,15 @@ function SystemPage({ section }: { section: SystemSection }) {
 
   const sectionRefresh: Record<SystemSection, () => Promise<void>> = {
     overview: async () => {
-      await Promise.all([dictionaries.refresh(), users.refresh(), departments.refresh(), roles.refresh(), auditLogs.refresh(), aiModelConfigs.refresh()]);
+      await Promise.all([
+        loadDictionaries ? dictionaries.refresh() : Promise.resolve(),
+        loadUsers ? users.refresh() : Promise.resolve(),
+        loadDepartments ? departments.refresh() : Promise.resolve(),
+        loadRoles ? roles.refresh() : Promise.resolve(),
+        loadPermissions ? permissions.refresh() : Promise.resolve(),
+        loadAuditLogs ? auditLogs.refresh() : Promise.resolve(),
+        loadAiModelConfigs ? aiModelConfigs.refresh() : Promise.resolve()
+      ]);
     },
     departments: departments.refresh,
     users: async () => {
@@ -7363,20 +7418,22 @@ function SystemPage({ section }: { section: SystemSection }) {
     >
       {section === "overview" ? (
         <>
-          <Card size="small" title="V2治理覆盖">
-            <div className="summary-grid compact">
-              <SummaryPanel title="V2权限点" value={v2PermissionCount} loading={permissions.loading} />
-              <SummaryPanel title="V2字典类型" value={v2DictionaryCount} loading={dictionaries.loading} />
-              <SummaryPanel title="V2审计记录" value={v2AuditCount} loading={auditLogs.loading} />
-            </div>
-          </Card>
+          {canManageRoles || canManageDictionaries || canReadAudit ? (
+            <Card size="small" title="V2治理覆盖">
+              <div className="summary-grid compact">
+                {canManageRoles ? <SummaryPanel title="V2权限点" value={v2PermissionCount} loading={permissions.loading} /> : null}
+                {canManageDictionaries ? <SummaryPanel title="V2字典类型" value={v2DictionaryCount} loading={dictionaries.loading} /> : null}
+                {canReadAudit ? <SummaryPanel title="V2审计记录" value={v2AuditCount} loading={auditLogs.loading} /> : null}
+              </div>
+            </Card>
+          ) : null}
           <div className="system-module-grid">
-            <SystemModuleCard title="组织管理" description="部门、区域和组织状态维护" path="/system/departments" value={departments.data.length} />
-            <SystemModuleCard title="用户管理" description="账号、角色和状态维护" path="/system/users" value={users.data.length} />
-            <SystemModuleCard title="角色权限" description="角色授权和权限点配置" path="/system/roles" value={roles.data.length} />
-            <SystemModuleCard title="审计日志" description="操作轨迹、对象和结果追溯" path="/system/audit-logs" value={auditLogs.data.length} />
-            <SystemModuleCard title="字典管理" description="基础选项、启停和排序维护" path="/system/dictionaries" value={dictionaries.data.length} />
-            <SystemModuleCard title="AI配置" description="OpenAI模型、密钥和连接测试" path="/system/ai-config" value={aiModelConfigs.data.length} />
+            {canManageUsers ? <SystemModuleCard title="组织管理" description="部门、区域和组织状态维护" path="/system/departments" value={departments.data.length} /> : null}
+            {canManageUsers ? <SystemModuleCard title="用户管理" description="账号、角色和状态维护" path="/system/users" value={users.data.length} /> : null}
+            {canManageRoles ? <SystemModuleCard title="角色权限" description="角色授权和权限点配置" path="/system/roles" value={roles.data.length} /> : null}
+            {canReadAudit ? <SystemModuleCard title="审计日志" description="操作轨迹、对象和结果追溯" path="/system/audit-logs" value={auditLogs.data.length} /> : null}
+            {canManageDictionaries ? <SystemModuleCard title="字典管理" description="基础选项、启停和排序维护" path="/system/dictionaries" value={dictionaries.data.length} /> : null}
+            {canManageAiConfig ? <SystemModuleCard title="AI配置" description="OpenAI模型、密钥和连接测试" path="/system/ai-config" value={aiModelConfigs.data.length} /> : null}
           </div>
         </>
       ) : null}

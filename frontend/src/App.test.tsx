@@ -2441,6 +2441,106 @@ describe("CRM frontend V1 workflow", () => {
     expect(fetchMock).not.toHaveBeenCalledWith("/api/system/users", expect.anything());
   });
 
+  it.each([
+    {
+      path: "/system/departments",
+      permission: "system.user.manage",
+      heading: "组织管理",
+      allowedEndpoints: ["/api/system/departments"]
+    },
+    {
+      path: "/system/users",
+      permission: "system.user.manage",
+      heading: "用户管理",
+      allowedEndpoints: ["/api/system/users", "/api/system/departments"]
+    },
+    {
+      path: "/system/roles",
+      permission: "system.role.manage",
+      heading: "角色权限",
+      allowedEndpoints: ["/api/system/roles", "/api/system/permissions"]
+    },
+    {
+      path: "/system/audit-logs",
+      permission: "system.audit.read",
+      heading: "审计日志",
+      allowedEndpoints: ["/api/system/audit-logs"]
+    },
+    {
+      path: "/system/dictionaries",
+      permission: "system.dict.manage",
+      heading: "字典管理",
+      allowedEndpoints: ["/api/system/dicts"]
+    },
+    {
+      path: "/system/ai-config",
+      permission: "system.ai-config.manage",
+      heading: "AI配置",
+      allowedEndpoints: ["/api/system/ai-model-configs"]
+    }
+  ])("loads only authorized resources for $path with its minimum permission", async ({ path, permission, heading, allowedEndpoints }) => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch({
+      user: {
+        ...apiData.user,
+        permissions: [permission]
+      }
+    });
+    window.history.pushState({}, "", path);
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
+    await waitFor(() => {
+      allowedEndpoints.forEach((endpoint) => {
+        expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining(endpoint), expect.anything());
+      });
+    });
+
+    const systemEndpoints = [
+      "/api/system/dicts",
+      "/api/system/audit-logs",
+      "/api/system/users",
+      "/api/system/departments",
+      "/api/system/roles",
+      "/api/system/permissions",
+      "/api/system/ai-model-configs"
+    ];
+    systemEndpoints
+      .filter((endpoint) => !allowedEndpoints.includes(endpoint))
+      .forEach((endpoint) => {
+        expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining(endpoint), expect.anything());
+      });
+  });
+
+  it("limits the system overview to resources allowed by its minimum permission", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch({
+      user: {
+        ...apiData.user,
+        permissions: ["system.dict.manage"]
+      }
+    });
+    window.history.pushState({}, "", "/system");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "系统概览" })).toBeInTheDocument();
+    expect((await screen.findAllByRole("link", { name: "字典管理" })).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("link", { name: "用户管理" })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/system/dicts"), expect.anything());
+    });
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/system/users"), expect.anything());
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/system/departments"), expect.anything());
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/system/roles"), expect.anything());
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/system/permissions"), expect.anything());
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/system/audit-logs"), expect.anything());
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/system/ai-model-configs"), expect.anything());
+  });
+
   it("shows approval status inside a quotation detail drawer", async () => {
     const user = userEvent.setup();
     const fetchMock = mockCrmFetch();
