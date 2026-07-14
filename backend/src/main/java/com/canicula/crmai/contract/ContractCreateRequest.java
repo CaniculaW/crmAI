@@ -2,7 +2,8 @@ package com.canicula.crmai.contract;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -13,7 +14,7 @@ public record ContractCreateRequest(
         String contract_no,
         @NotBlank String contract_type,
         @NotBlank String contract_status,
-        @NotNull @Positive BigDecimal contract_amount,
+        @NotNull @DecimalMin("0.01") @Digits(integer = 16, fraction = 2) BigDecimal contract_amount,
         BigDecimal tax_rate,
         String our_signing_entity,
         String customer_signing_entity,

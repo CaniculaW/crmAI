@@ -10,6 +10,7 @@ import com.canicula.crmai.identity.RoleCreateRequest;
 import com.canicula.crmai.identity.UserCreateRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.net.URI;
@@ -194,6 +195,78 @@ class ContractControllerTest {
                 Number.class,
                 contractId);
         assertThat(persistedAmount.doubleValue()).isEqualTo(1200000.0);
+    }
+
+    @Test
+    void rejectsContractAmountsOutsideDatabasePrecisionOnCreateAndUpdate() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("contract-precision-dept-" + suffix);
+        Long userId = createLoginReadyUser(
+                "contract_precision_" + suffix,
+                departmentId,
+                List.of(
+                        "account.create",
+                        "opportunity.create",
+                        "opportunity.read",
+                        "contract.create",
+                        "contract.read",
+                        "contract.update"),
+                List.of("global"));
+        String token = login("contract_precision_" + suffix);
+        Long accountId = createAccount(token, "合同精度客户-" + suffix, departmentId, userId);
+        Long opportunityId = createOpportunity(token, accountId, "合同精度商机-" + suffix, departmentId, userId);
+        List<BigDecimal> invalidAmounts = List.of(
+                new BigDecimal("0.001"),
+                new BigDecimal("10000000000000000.00"));
+
+        for (BigDecimal invalidAmount : invalidAmounts) {
+            Map<String, Object> invalidCreateRequest = contractRequest(accountId, opportunityId, userId, suffix);
+            invalidCreateRequest.put("contract_amount", invalidAmount);
+            HttpJsonResponse createResponse = postJson(
+                    "/api/contracts",
+                    invalidCreateRequest,
+                    authHeaders(token, "contract-precision-create-" + invalidAmount));
+
+            assertThat(createResponse.status()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+            assertThat(createResponse.body().path("code").asText()).isEqualTo("VALIDATION_ERROR");
+        }
+
+        Long contractId = createContract(token, accountId, opportunityId, userId, suffix);
+        for (BigDecimal invalidAmount : invalidAmounts) {
+            HttpJsonResponse updateResponse = patchJson(
+                    "/api/contracts/" + contractId,
+                    Map.of("contract_amount", invalidAmount, "change_reason", "金额精度校验"),
+                    authHeaders(token, "contract-precision-update-" + invalidAmount));
+
+            assertThat(updateResponse.status()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+            assertThat(updateResponse.body().path("code").asText()).isEqualTo("VALIDATION_ERROR");
+        }
+        BigDecimal persistedAmount = jdbcTemplate.queryForObject(
+                "select contract_amount from crm_contracts where id = ?",
+                BigDecimal.class,
+                contractId);
+        assertThat(persistedAmount).isEqualByComparingTo("1200000.00");
+    }
+
+    @Test
+    void returnsNotFoundWhenContractDetailDoesNotExist() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Long departmentId = createDepartment("contract-not-found-dept-" + suffix);
+        createLoginReadyUser(
+                "contract_not_found_" + suffix,
+                departmentId,
+                List.of("contract.read"),
+                List.of("global"));
+        String token = login("contract_not_found_" + suffix);
+
+        ResponseEntity<JsonNode> response = restTemplate.exchange(
+                "/api/contracts/" + Long.MAX_VALUE,
+                HttpMethod.GET,
+                new HttpEntity<>(authHeaders(token, "contract-not-found-detail")),
+                JsonNode.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().path("code").asText()).isEqualTo("NOT_FOUND");
     }
 
     @Test

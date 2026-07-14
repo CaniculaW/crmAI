@@ -3,6 +3,7 @@ package com.canicula.crmai.contract;
 import com.canicula.crmai.account.AccountResponse;
 import com.canicula.crmai.account.AccountService;
 import com.canicula.crmai.api.BusinessRuleException;
+import com.canicula.crmai.api.ResourceNotFoundException;
 import com.canicula.crmai.approval.ApprovalService;
 import com.canicula.crmai.auth.ForbiddenException;
 import com.canicula.crmai.opportunity.OpportunityResponse;
@@ -42,7 +43,7 @@ public class ContractService {
 
     @Transactional
     public ContractResponse create(ContractCreateRequest request, Long actorUserId) {
-        validatePositiveAmount(request.contract_amount());
+        validateContractAmount(request.contract_amount());
         validateReadableBusinessObject(request.account_id(), request.opportunity_id(), actorUserId);
         Long contractId = insertContract(request, actorUserId);
         return findById(contractId);
@@ -93,7 +94,7 @@ public class ContractService {
     @Transactional
     public ContractResponse update(Long contractId, ContractUpdateRequest request, Long actorUserId) {
         if (request.contract_amount() != null) {
-            validatePositiveAmount(request.contract_amount());
+            validateContractAmount(request.contract_amount());
         }
         ContractResponse current = readableDetail(contractId, actorUserId);
         boolean approvalSensitiveUpdate = hasApprovalSensitiveInput(request);
@@ -421,7 +422,7 @@ public class ContractService {
                             nullableOffsetDateTime(rs.getObject("updated_at"))),
                     contractId);
         } catch (EmptyResultDataAccessException exception) {
-            throw new IllegalArgumentException("合同不存在或已删除");
+            throw new ResourceNotFoundException("合同不存在或已删除");
         }
     }
 
@@ -548,9 +549,13 @@ public class ContractService {
         return contractAmount.divide(BigDecimal.ONE.add(taxRate), 2, RoundingMode.HALF_UP);
     }
 
-    private static void validatePositiveAmount(BigDecimal contractAmount) {
-        if (contractAmount == null || contractAmount.signum() <= 0) {
-            throw new IllegalArgumentException("合同金额必须大于0");
+    private static void validateContractAmount(BigDecimal contractAmount) {
+        if (contractAmount == null || contractAmount.compareTo(new BigDecimal("0.01")) < 0) {
+            throw new IllegalArgumentException("合同金额不能小于0.01");
+        }
+        int integerDigits = contractAmount.precision() - contractAmount.scale();
+        if (integerDigits > 16 || contractAmount.scale() > 2) {
+            throw new IllegalArgumentException("合同金额最多支持16位整数和2位小数");
         }
     }
 
