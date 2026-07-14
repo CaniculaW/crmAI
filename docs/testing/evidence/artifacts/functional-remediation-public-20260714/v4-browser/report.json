@@ -1,0 +1,224 @@
+{
+  "status": "passed",
+  "generatedAt": "2026-07-14T14:24:15.613Z",
+  "baseUrl": "http://120.55.73.23",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "mobile": false,
+      "deviceScaleFactor": 1
+    },
+    {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024,
+      "mobile": true,
+      "deviceScaleFactor": 2
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "mobile": true,
+      "deviceScaleFactor": 2
+    }
+  ],
+  "pageResults": [
+    {
+      "viewport": "desktop",
+      "path": "/",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n驾驶舱\n经营总览\n销售漏斗\n合同看板\n开票看板\n回款看板\n风险预警\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n到账流水\n核销工作台\n销售行动\n周进展\n审批中心\nAI助手\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nAI配置\n审批配置\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n刷新\n今日优先处理\n\n先查看 11 个在办商机，确认阶段、风险和下一步计划。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n11\n待完成行动\n0\n本周行动\n5\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n供货-群益 · lead\n供货-卓创 · lead\nFT-AIAPP-0714商机 · lead\nFT-FIN-0714-商机 · proposal\nFT-SALES-0714-7572471-商机 · proposal",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/desktop-dashboard.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/ai-assistant",
+      "url": "http://120.55.73.23/ai-assistant",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n驾驶舱\n经营总览\n销售漏斗\n合同看板\n开票看板\n回款看板\n风险预警\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n到账流水\n核销工作台\n销售行动\n周进展\n审批中心\nAI助手\nAI工作台\n草稿确认\n周报生成\n商机分析\n拜访计划\n沟通建议\nAI日志\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nAI配置\n审批配置\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI销售作战助手\n\n统一处理销售事实录入、待确认建议、周报、商机分析、拜访计划和沟通方式推荐。\n\n草稿确认\n周报生成\n刷新\n当前版本由业务规则辅助生成，未调用远程模型；AI配置仅用于连接测试。\n待确认\n1 项待确认\n所有 AI 写入仍需人工确认，不自动触达客户。\n上下文\n21 条业务信号\n客户、商机、行动和风险共同支撑建议。\n证据\n5 条证据链\n每条建议需要可回溯来源。\n快捷任务\n录入销售事实\n把客户、联系人、商机和行动文本转成待确认草稿\n生成周报\n从销售行动生成个人周报和商机周进展\n分析商机\n识别阶段健康、关系缺口、风险和下一步动作\n准备拜访\n生成拜访目标、议程、材料、问题和跟进动作\n推荐沟通方式\n选择渠道、语气、重点、时机和升级路径\n待确认队列\n周报生成待确认 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n最近AI建议\n周报生成1 个商机进展 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n周报生成1 个商机进展 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n周报生成2 个商机进展 · 本周跟进 2 个商机，沉淀 2 条有效行动。\n周报生成1 个商机进展 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n周报生成1 个商机进展 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n商机分析智能制造CRM一期试点 · 确认财务审批人、预算口径和审批材料清单。\n文本录入\n生成草稿\n清 空\n客户上下文\nV1演示客户-上海智造集团A · active · 首次完成结论\n信达亿A · following\nFT-AIAPP-0714客户A · following\nFT-FIN-0714-客户A · active\nFT-SALES-0714-7572471-客户B · following · FT-SALES-0714-7572471-拜访完成\n惠州天然气发电厂A · following\n水务科技A · following\n零星散客C · following\n商机上下文\n智能制造CRM一期试点proposal · active · ¥620,000.00\n供货-群益lead · following\n供货-卓创lead · following\nFT-AIAPP-0714商机lead · following · ¥714,000.00\nFT-FIN-0714-商机proposal · following · ¥500,000.00\nFT-SALES-0714-7572471-商机proposal · following · ¥700,000.00\n云盘lead · following\n能耗管理平台lead · following · ¥800,000.00\n近期销售行动\nFT-AIAPP-0714周报隔离行动follow_up · completed · 2026-07-18 02:00\nLOCAL-DUPLICATE-COMPLETE-1784038990410customer_visit · completed · 2026-07-15 14:23\nFT-SALES-0714-7572471-客户拜访-已编辑meeting · completed · 2026-07-14 03:00\nFT-AIAPP-0714需求评审visit · completed · 2026-07-14 02:00\n完成CRM V1试点需求确认会meeting · completed · 2026-07-09 01:59\n风险信号\n暂无风险信号\n证据链\nFT-AIAPP-0714周报隔离行动activity · 2026-07-18 02:00 · 完成周报验收\nLOCAL-DUPLICATE-COMPLETE-1784038990410activity · 2026-07-15 14:23 · 首次完成结论\nFT-SALES-0714-7572471-客户拜访-已编辑activity · 2026-07-14 03:00 · FT-SALES-0714-7572471-拜访完成\nFT-AIAPP-0714需求评审activity · 2026-07-14 02:00 · 进入试点方案评审\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/desktop-ai-assistant.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/ai-assistant/drafts",
+      "url": "http://120.55.73.23/ai-assistant/drafts",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n驾驶舱\n经营总览\n销售漏斗\n合同看板\n开票看板\n回款看板\n风险预警\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n到账流水\n核销工作台\n销售行动\n周进展\n审批中心\nAI助手\nAI工作台\n草稿确认\n周报生成\n商机分析\n拜访计划\n沟通建议\nAI日志\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nAI配置\n审批配置\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\n草稿确认\n\n确认前不写入客户、联系人、商机或销售行动。\n\n刷新\n暂无待确认草稿",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/desktop-ai-assistant-drafts.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/ai-assistant/weekly-report",
+      "url": "http://120.55.73.23/ai-assistant/weekly-report",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n驾驶舱\n经营总览\n销售漏斗\n合同看板\n开票看板\n回款看板\n风险预警\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n到账流水\n核销工作台\n销售行动\n周进展\n审批中心\nAI助手\nAI工作台\n草稿确认\n周报生成\n商机分析\n拜访计划\n沟通建议\nAI日志\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nAI配置\n审批配置\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI周报\n\n基于本周可见销售行动生成个人周报和商机周进展，确认前不写入业务记录。\n\n刷新\n生成设置\n生成周报",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/desktop-ai-assistant-weekly-report.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/ai-assistant/opportunities",
+      "url": "http://120.55.73.23/ai-assistant/opportunities",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n驾驶舱\n经营总览\n销售漏斗\n合同看板\n开票看板\n回款看板\n风险预警\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n到账流水\n核销工作台\n销售行动\n周进展\n审批中心\nAI助手\nAI工作台\n草稿确认\n周报生成\n商机分析\n拜访计划\n沟通建议\nAI日志\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nAI配置\n审批配置\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI商机分析\n\n基于商机、联系人和销售行动生成推进建议，确认前不写入业务记录。\n\n刷新\n分析设置\n智能制造CRM一期试点 · proposal\n生成商机分析\n智能制造CRM一期试点\n已驳回\nV1演示客户-上海智造集团\n销售行动\n2\n证据\n4\n下一步建议\n3\n阶段健康\n当前阶段 proposal，状态 active，预计成交日 2026-08-23。\n当前进展：已完成需求确认，进入试点方案细化。\n关系缺口\n财务审批人未明确，需要补齐预算、采购或财务角色。\n风险\n需持续确认数据迁移范围。\n需在方案中明确历史数据导入范围。\n商机风险状态为 low，需要销售负责人持续复盘。\n阻塞点\n暂无明确阻塞点，建议继续按下一步行动推进并记录客户反馈。\n赢单因素\n客户痛点：客户已认可统一CRM试点价值。\n推进基础：已完成需求确认，进入试点方案细化。\n首次完成结论\n下一步行动\n确认财务审批人、预算口径和审批材料清单。\n继续推进\n提交V1试点方案和实施排期。\n证据链\n智能制造CRM一期试点opportunity · - · 已完成需求确认，进入试点方案细化。\nV1演示客户-上海智造集团account · 2026-07-15 14:23 · 集团正在推进销售数字化和重点客户经营体系建设。\nLOCAL-DUPLICATE-COMPLETE-1784038990410activity · 2026-07-15 14:23 · 首次完成结论\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。\n历史商机分析\nFT-SALES-0714-7572471-商机已驳回 · 1 条行动证据\n智能制造CRM一期试点已驳回 · 1 条行动证据",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/desktop-ai-assistant-opportunities.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/ai-assistant/visit-plans",
+      "url": "http://120.55.73.23/ai-assistant/visit-plans",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n驾驶舱\n经营总览\n销售漏斗\n合同看板\n开票看板\n回款看板\n风险预警\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n到账流水\n核销工作台\n销售行动\n周进展\n审批中心\nAI助手\nAI工作台\n草稿确认\n周报生成\n商机分析\n拜访计划\n沟通建议\nAI日志\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nAI配置\n审批配置\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI拜访计划\n\n基于商机、联系人和行动证据生成拜访目标、参会对象、议程、材料、问题和跟进动作，确认前不写入业务记录。\n\n刷新\n计划设置\n智能制造CRM一期试点 · proposal\n生成拜访计划\n智能制造CRM一期试点\n已驳回\nV1演示客户-上海智造集团\n销售行动\n2\n证据\n4\n跟进动作\n3\n拜访目标\n明确AI助手试点范围、ROI材料和下一步评审安排。\n围绕当前进展复盘客户认可点：已完成需求确认，进入试点方案细化。\n验证上一轮沟通结论：首次完成结论\n参会对象\n王敏 / 数字化办公室 / 角色：decision_maker\n拜访议程\n复盘当前阶段与客户反馈，确认AI助手试点范围。\n对齐预算、财务审批路径和技术集成边界。\n延续上一轮下一步计划：继续推进\n确认商机下一步计划：提交V1试点方案和实施排期。\n准备材料\nAI助手试点范围说明\nROI测算材料\n实施排期与数据迁移清单\n客户痛点与价值映射：客户已认可统一CRM试点价值。\n关键问题\n财务审批人是谁，财务审批材料和预算口径是否已经明确？\nAI助手试点成功标准、上线时间和验收责任人分别是谁？\n技术集成、数据边界和安全要求由谁确认？\n当前风险如何消除：需持续确认数据迁移范围。\n上一轮行动风险如何闭环：需在方案中明确历史数据导入范围。\n预期产出\n形成下一步评审安排、责任人和时间表。\n确认AI助手试点范围、预算审批材料和客户侧验收标准。\n校准预计成交日期：2026-08-23\n跟进动作\n继续推进\n提交V1试点方案和实施排期。\n拜访后24小时内整理会议纪要，安排业务、技术和财务评审并记录反馈。\n证据链\n智能制造CRM一期试点opportunity · - · 已完成需求确认，进入试点方案细化。\nV1演示客户-上海智造集团account · 2026-07-15 14:23 · 集团正在推进销售数字化和重点客户经营体系建设。\nLOCAL-DUPLICATE-COMPLETE-1784038990410activity · 2026-07-15 14:23 · 首次完成结论\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。\n历史拜访计划\nFT-SALES-0714-7572471-商机已驳回 · 1 条行动证据\n智能制造CRM一期试点已驳回 · 1 条行动证据",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/desktop-ai-assistant-visit-plans.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/ai-assistant/communication",
+      "url": "http://120.55.73.23/ai-assistant/communication",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n驾驶舱\n经营总览\n销售漏斗\n合同看板\n开票看板\n回款看板\n风险预警\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n到账流水\n核销工作台\n销售行动\n周进展\n审批中心\nAI助手\nAI工作台\n草稿确认\n周报生成\n商机分析\n拜访计划\n沟通建议\nAI日志\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nAI配置\n审批配置\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI沟通建议\n\n基于联系人角色、态度、关系热度、商机阶段和行动证据生成渠道、语气、重点、时机、升级路径和禁忌提醒，确认前不触达客户。\n\n刷新\n推荐设置\n智能制造CRM一期试点 · proposal\n王敏 · 数字化负责人\n生成沟通建议\n王敏\n已驳回\nV1演示客户-上海智造集团 · 智能制造CRM一期试点\n您好王敏，我想把AI助手试点范围、ROI材料和评审前需要确认的问题同步给您，方便您内部判断下一步。\n销售行动\n2\n证据\n4\n推荐渠道\n2\n沟通渠道\n先用微信或短信发送材料摘要，再跟进电话确认。\n通过电话确认评审时间、关键诉求和决策链路。\n语气策略\n保持专业、简洁、以业务价值为先。\n对方态度中性，先复述已确认事实，再提出低压力下一步。\n沟通重点\n围绕AI助手对销售记录、周报、商机分析和拜访计划的价值展开。\n明确ROI口径、试点范围和评审材料，方便客户内部同步。\n承接上次沟通：完成CRM V1试点需求确认会\n结合客户痛点：客户已认可统一CRM试点价值。\n引用近期反馈：首次完成结论\n沟通时机\n建议在评审前同步材料，给客户预留内部转发和问题收集时间。\n跟随商机下一步：提交V1试点方案和实施排期。\n可衔接下一次跟进时间：2026-07-21T14:23:10.821Z\n升级路径\n先与王敏确认业务价值和ROI材料，再请其牵引内部评审。\n禁忌提醒\n不要在预算审批路径未明确前承诺最终价格、上线日期或客户侧收益。\n不要回避当前风险：需持续确认数据迁移范围。\n证据链\n智能制造CRM一期试点opportunity · - · 已完成需求确认，进入试点方案细化。\nV1演示客户-上海智造集团account · 2026-07-15 14:23 · 集团正在推进销售数字化和重点客户经营体系建设。\nLOCAL-DUPLICATE-COMPLETE-1784038990410activity · 2026-07-15 14:23 · 首次完成结论\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。\n历史沟通建议\nFT-SALES-0714-7572471-联系人已驳回 · FT-SALES-0714-7572471-商机\n王敏已驳回 · 智能制造CRM一期试点",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/desktop-ai-assistant-communication.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/ai-assistant/logs",
+      "url": "http://120.55.73.23/ai-assistant/logs",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n驾驶舱\n经营总览\n销售漏斗\n合同看板\n开票看板\n回款看板\n风险预警\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n到账流水\n核销工作台\n销售行动\n周进展\n审批中心\nAI助手\nAI工作台\n草稿确认\n周报生成\n商机分析\n拜访计划\n沟通建议\nAI日志\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nAI配置\n审批配置\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI日志\n\n追溯AI生成、确认、拒绝、写入结果和权限拒绝审计。\n\n刷新\n日志筛选\n事件类型\nAI模块\n状态\n对象类型\n对象ID\n开始时间\n结束时间\n筛 选\n重 置\nAI操作记录\n时间\t事件\t模块\t动作\t摘要\t状态\t对象\tTrace\t操作\n\n时间\n\t\n事件\n\t\n模块\n\t\n动作\n\t\n摘要\n\t\n状态\n\t\n对象\n\t\nTrace\n\t\n操作\n\n2026-07-14 14:23\t写入/确认\t沟通建议\t拒绝\t\n拒绝AI建议拒绝AI建议：沟通建议 #3\n\t成功\t沟通建议 #3\tv4-api-smoke-1784039035905\t\n详 情\n查看业务对象\n\n2026-07-14 14:23\t生成\t沟通建议\t生成\t\n沟通建议先用微信或短信发送材料摘要，再跟进电话确认。\n\t已拒绝\t-\t-\t\n详 情\n查看AI记录\n\n2026-07-14 14:23\t写入/确认\t拜访计划\t拒绝\t\n拒绝AI建议拒绝AI建议：拜访计划 #3\n\t成功\t拜访计划 #3\tv4-api-smoke-1784039035771\t\n详 情\n查看业务对象\n\n2026-07-14 14:23\t生成\t拜访计划\t生成\t\n拜访计划明确AI助手试点范围、ROI材料和下一步评审安排。\n\t已拒绝\t-\t-\t\n详 情\n查看AI记录\n\n2026-07-14 14:23\t写入/确认\t商机分析\t拒绝\t\n拒绝AI建议拒绝AI建议：商机分析 #3\n\t成功\t商机分析 #3\tv4-api-smoke-1784039035660\t\n详 情\n查看业务对象\n\n2026-07-14 14:23\t生成\t商机分析\t生成\t\n商机分析确认财务审批人、预算口径和审批材料清单。\n\t已拒绝\t-\t-\t\n详 情\n查看AI记录\n\n2026-07-14 14:23\t写入/确认\t周报\t拒绝\t\n拒绝AI建议拒绝AI建议：AI周报 #5\n\t成功\tAI周报 #5\tv4-api-smoke-1784039035531\t\n详 情\n查看业务对象\n\n2026-07-14 14:23\t生成\t周报\t生成\t\nAI周报本周跟进 1 个商机，沉淀 1 条有效行动。\n\t已拒绝\t-\t-\t\n详 情\n查看AI记录\n1\n2\n3\n4\n5\n6",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/desktop-ai-assistant-logs.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n刷新\n今日优先处理\n\n先查看 11 个在办商机，确认阶段、风险和下一步计划。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n11\n待完成行动\n0\n本周行动\n5\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n供货-群益 · lead\n供货-卓创 · lead\nFT-AIAPP-0714商机 · lead\nFT-FIN-0714-商机 · proposal\nFT-SALES-0714-7572471-商机 · proposal",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/tablet-dashboard.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/ai-assistant",
+      "url": "http://120.55.73.23/ai-assistant",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI销售作战助手\n\n统一处理销售事实录入、待确认建议、周报、商机分析、拜访计划和沟通方式推荐。\n\n草稿确认\n周报生成\n刷新\n当前版本由业务规则辅助生成，未调用远程模型；AI配置仅用于连接测试。\n待确认\n1 项待确认\n所有 AI 写入仍需人工确认，不自动触达客户。\n上下文\n21 条业务信号\n客户、商机、行动和风险共同支撑建议。\n证据\n5 条证据链\n每条建议需要可回溯来源。\n快捷任务\n录入销售事实\n把客户、联系人、商机和行动文本转成待确认草稿\n生成周报\n从销售行动生成个人周报和商机周进展\n分析商机\n识别阶段健康、关系缺口、风险和下一步动作\n准备拜访\n生成拜访目标、议程、材料、问题和跟进动作\n推荐沟通方式\n选择渠道、语气、重点、时机和升级路径\n待确认队列\n周报生成待确认 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n最近AI建议\n周报生成1 个商机进展 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n周报生成1 个商机进展 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n周报生成2 个商机进展 · 本周跟进 2 个商机，沉淀 2 条有效行动。\n周报生成1 个商机进展 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n周报生成1 个商机进展 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n商机分析智能制造CRM一期试点 · 确认财务审批人、预算口径和审批材料清单。\n文本录入\n生成草稿\n清 空\n客户上下文\nV1演示客户-上海智造集团A · active · 首次完成结论\n信达亿A · following\nFT-AIAPP-0714客户A · following\nFT-FIN-0714-客户A · active\nFT-SALES-0714-7572471-客户B · following · FT-SALES-0714-7572471-拜访完成\n惠州天然气发电厂A · following\n水务科技A · following\n零星散客C · following\n商机上下文\n智能制造CRM一期试点proposal · active · ¥620,000.00\n供货-群益lead · following\n供货-卓创lead · following\nFT-AIAPP-0714商机lead · following · ¥714,000.00\nFT-FIN-0714-商机proposal · following · ¥500,000.00\nFT-SALES-0714-7572471-商机proposal · following · ¥700,000.00\n云盘lead · following\n能耗管理平台lead · following · ¥800,000.00\n近期销售行动\nFT-AIAPP-0714周报隔离行动follow_up · completed · 2026-07-18 02:00\nLOCAL-DUPLICATE-COMPLETE-1784038990410customer_visit · completed · 2026-07-15 14:23\nFT-SALES-0714-7572471-客户拜访-已编辑meeting · completed · 2026-07-14 03:00\nFT-AIAPP-0714需求评审visit · completed · 2026-07-14 02:00\n完成CRM V1试点需求确认会meeting · completed · 2026-07-09 01:59\n风险信号\n暂无风险信号\n证据链\nFT-AIAPP-0714周报隔离行动activity · 2026-07-18 02:00 · 完成周报验收\nLOCAL-DUPLICATE-COMPLETE-1784038990410activity · 2026-07-15 14:23 · 首次完成结论\nFT-SALES-0714-7572471-客户拜访-已编辑activity · 2026-07-14 03:00 · FT-SALES-0714-7572471-拜访完成\nFT-AIAPP-0714需求评审activity · 2026-07-14 02:00 · 进入试点方案评审\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/tablet-ai-assistant.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/ai-assistant/drafts",
+      "url": "http://120.55.73.23/ai-assistant/drafts",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\n草稿确认\n\n确认前不写入客户、联系人、商机或销售行动。\n\n刷新\n暂无待确认草稿",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/tablet-ai-assistant-drafts.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/ai-assistant/weekly-report",
+      "url": "http://120.55.73.23/ai-assistant/weekly-report",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI周报\n\n基于本周可见销售行动生成个人周报和商机周进展，确认前不写入业务记录。\n\n刷新\n生成设置\n生成周报\n个人周报\n已驳回\n2026-07-06 - 2026-07-12\n本周跟进 1 个商机，沉淀 1 条有效行动。\n有效行动\n1\n商机周进展\n1\n证据\n1\n本周成果\n双方确认进入试点方案细化阶段。\n风险关注\n需在方案中明确历史数据导入范围。\n下周计划\n三日内提交试点方案和演示账号。\n智能制造CRM一期试点\nV1演示客户-上海智造集团\n本周进展\n双方确认进入试点方案细化阶段。\n风险\n需在方案中明确历史数据导入范围。\n下周计划\n三日内提交试点方案和演示账号。\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。\n历史周报\n2026-07-18 - 2026-07-18待确认 · 1 条行动\n2026-07-13 - 2026-07-19已驳回 · 2 条行动\n2026-07-06 - 2026-07-12已驳回 · 1 条行动\n2026-07-06 - 2026-07-12已驳回 · 1 条行动",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/tablet-ai-assistant-weekly-report.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/ai-assistant/opportunities",
+      "url": "http://120.55.73.23/ai-assistant/opportunities",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI商机分析\n\n基于商机、联系人和销售行动生成推进建议，确认前不写入业务记录。\n\n刷新\n分析设置\n智能制造CRM一期试点 · proposal\n生成商机分析\n智能制造CRM一期试点\n已驳回\nV1演示客户-上海智造集团\n销售行动\n2\n证据\n4\n下一步建议\n3\n阶段健康\n当前阶段 proposal，状态 active，预计成交日 2026-08-23。\n当前进展：已完成需求确认，进入试点方案细化。\n关系缺口\n财务审批人未明确，需要补齐预算、采购或财务角色。\n风险\n需持续确认数据迁移范围。\n需在方案中明确历史数据导入范围。\n商机风险状态为 low，需要销售负责人持续复盘。\n阻塞点\n暂无明确阻塞点，建议继续按下一步行动推进并记录客户反馈。\n赢单因素\n客户痛点：客户已认可统一CRM试点价值。\n推进基础：已完成需求确认，进入试点方案细化。\n首次完成结论\n下一步行动\n确认财务审批人、预算口径和审批材料清单。\n继续推进\n提交V1试点方案和实施排期。\n证据链\n智能制造CRM一期试点opportunity · - · 已完成需求确认，进入试点方案细化。\nV1演示客户-上海智造集团account · 2026-07-15 14:23 · 集团正在推进销售数字化和重点客户经营体系建设。\nLOCAL-DUPLICATE-COMPLETE-1784038990410activity · 2026-07-15 14:23 · 首次完成结论\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。\n历史商机分析\nFT-SALES-0714-7572471-商机已驳回 · 1 条行动证据\n智能制造CRM一期试点已驳回 · 1 条行动证据",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/tablet-ai-assistant-opportunities.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/ai-assistant/visit-plans",
+      "url": "http://120.55.73.23/ai-assistant/visit-plans",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI拜访计划\n\n基于商机、联系人和行动证据生成拜访目标、参会对象、议程、材料、问题和跟进动作，确认前不写入业务记录。\n\n刷新\n计划设置\n智能制造CRM一期试点 · proposal\n生成拜访计划\n智能制造CRM一期试点\n已驳回\nV1演示客户-上海智造集团\n销售行动\n2\n证据\n4\n跟进动作\n3\n拜访目标\n明确AI助手试点范围、ROI材料和下一步评审安排。\n围绕当前进展复盘客户认可点：已完成需求确认，进入试点方案细化。\n验证上一轮沟通结论：首次完成结论\n参会对象\n王敏 / 数字化办公室 / 角色：decision_maker\n拜访议程\n复盘当前阶段与客户反馈，确认AI助手试点范围。\n对齐预算、财务审批路径和技术集成边界。\n延续上一轮下一步计划：继续推进\n确认商机下一步计划：提交V1试点方案和实施排期。\n准备材料\nAI助手试点范围说明\nROI测算材料\n实施排期与数据迁移清单\n客户痛点与价值映射：客户已认可统一CRM试点价值。\n关键问题\n财务审批人是谁，财务审批材料和预算口径是否已经明确？\nAI助手试点成功标准、上线时间和验收责任人分别是谁？\n技术集成、数据边界和安全要求由谁确认？\n当前风险如何消除：需持续确认数据迁移范围。\n上一轮行动风险如何闭环：需在方案中明确历史数据导入范围。\n预期产出\n形成下一步评审安排、责任人和时间表。\n确认AI助手试点范围、预算审批材料和客户侧验收标准。\n校准预计成交日期：2026-08-23\n跟进动作\n继续推进\n提交V1试点方案和实施排期。\n拜访后24小时内整理会议纪要，安排业务、技术和财务评审并记录反馈。\n证据链\n智能制造CRM一期试点opportunity · - · 已完成需求确认，进入试点方案细化。\nV1演示客户-上海智造集团account · 2026-07-15 14:23 · 集团正在推进销售数字化和重点客户经营体系建设。\nLOCAL-DUPLICATE-COMPLETE-1784038990410activity · 2026-07-15 14:23 · 首次完成结论\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。\n历史拜访计划\nFT-SALES-0714-7572471-商机已驳回 · 1 条行动证据\n智能制造CRM一期试点已驳回 · 1 条行动证据",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/tablet-ai-assistant-visit-plans.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/ai-assistant/communication",
+      "url": "http://120.55.73.23/ai-assistant/communication",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI沟通建议\n\n基于联系人角色、态度、关系热度、商机阶段和行动证据生成渠道、语气、重点、时机、升级路径和禁忌提醒，确认前不触达客户。\n\n刷新\n推荐设置\n智能制造CRM一期试点 · proposal\n王敏 · 数字化负责人\n生成沟通建议\n王敏\n已驳回\nV1演示客户-上海智造集团 · 智能制造CRM一期试点\n您好王敏，我想把AI助手试点范围、ROI材料和评审前需要确认的问题同步给您，方便您内部判断下一步。\n销售行动\n2\n证据\n4\n推荐渠道\n2\n沟通渠道\n先用微信或短信发送材料摘要，再跟进电话确认。\n通过电话确认评审时间、关键诉求和决策链路。\n语气策略\n保持专业、简洁、以业务价值为先。\n对方态度中性，先复述已确认事实，再提出低压力下一步。\n沟通重点\n围绕AI助手对销售记录、周报、商机分析和拜访计划的价值展开。\n明确ROI口径、试点范围和评审材料，方便客户内部同步。\n承接上次沟通：完成CRM V1试点需求确认会\n结合客户痛点：客户已认可统一CRM试点价值。\n引用近期反馈：首次完成结论\n沟通时机\n建议在评审前同步材料，给客户预留内部转发和问题收集时间。\n跟随商机下一步：提交V1试点方案和实施排期。\n可衔接下一次跟进时间：2026-07-21T14:23:10.821Z\n升级路径\n先与王敏确认业务价值和ROI材料，再请其牵引内部评审。\n禁忌提醒\n不要在预算审批路径未明确前承诺最终价格、上线日期或客户侧收益。\n不要回避当前风险：需持续确认数据迁移范围。\n证据链\n智能制造CRM一期试点opportunity · - · 已完成需求确认，进入试点方案细化。\nV1演示客户-上海智造集团account · 2026-07-15 14:23 · 集团正在推进销售数字化和重点客户经营体系建设。\nLOCAL-DUPLICATE-COMPLETE-1784038990410activity · 2026-07-15 14:23 · 首次完成结论\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。\n历史沟通建议\nFT-SALES-0714-7572471-联系人已驳回 · FT-SALES-0714-7572471-商机\n王敏已驳回 · 智能制造CRM一期试点",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/tablet-ai-assistant-communication.png"
+    },
+    {
+      "viewport": "tablet",
+      "path": "/ai-assistant/logs",
+      "url": "http://120.55.73.23/ai-assistant/logs",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI日志\n\n追溯AI生成、确认、拒绝、写入结果和权限拒绝审计。\n\n刷新\n日志筛选\n事件类型\nAI模块\n状态\n对象类型\n对象ID\n开始时间\n结束时间\n筛 选\n重 置\nAI操作记录\n时间\t事件\t模块\t动作\t摘要\t状态\t对象\tTrace\t操作\n\n时间\n\t\n事件\n\t\n模块\n\t\n动作\n\t\n摘要\n\t\n状态\n\t\n对象\n\t\nTrace\n\t\n操作\n\n2026-07-14 14:23\t写入/确认\t沟通建议\t拒绝\t\n拒绝AI建议拒绝AI建议：沟通建议 #3\n\t成功\t沟通建议 #3\tv4-api-smoke-1784039035905\t\n详 情\n查看业务对象\n\n2026-07-14 14:23\t生成\t沟通建议\t生成\t\n沟通建议先用微信或短信发送材料摘要，再跟进电话确认。\n\t已拒绝\t-\t-\t\n详 情\n查看AI记录\n\n2026-07-14 14:23\t写入/确认\t拜访计划\t拒绝\t\n拒绝AI建议拒绝AI建议：拜访计划 #3\n\t成功\t拜访计划 #3\tv4-api-smoke-1784039035771\t\n详 情\n查看业务对象\n\n2026-07-14 14:23\t生成\t拜访计划\t生成\t\n拜访计划明确AI助手试点范围、ROI材料和下一步评审安排。\n\t已拒绝\t-\t-\t\n详 情\n查看AI记录\n\n2026-07-14 14:23\t写入/确认\t商机分析\t拒绝\t\n拒绝AI建议拒绝AI建议：商机分析 #3\n\t成功\t商机分析 #3\tv4-api-smoke-1784039035660\t\n详 情\n查看业务对象\n\n2026-07-14 14:23\t生成\t商机分析\t生成\t\n商机分析确认财务审批人、预算口径和审批材料清单。\n\t已拒绝\t-\t-\t\n详 情\n查看AI记录\n\n2026-07-14 14:23\t写入/确认\t周报\t拒绝\t\n拒绝AI建议拒绝AI建议：AI周报 #5\n\t成功\tAI周报 #5\tv4-api-smoke-1784039035531\t\n详 情\n查看业务对象\n\n2026-07-14 14:23\t生成\t周报\t生成\t\nAI周报本周跟进 1 个商机，沉淀 1 条有效行动。\n\t已拒绝\t-\t-\t\n详 情\n查看AI记录\n1\n2\n3\n4\n5\n6",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/tablet-ai-assistant-logs.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n刷新\n今日优先处理\n\n先查看 11 个在办商机，确认阶段、风险和下一步计划。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n11\n待完成行动\n0\n本周行动\n5\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n供货-群益 · lead\n供货-卓创 · lead\nFT-AIAPP-0714商机 · lead\nFT-FIN-0714-商机 · proposal\nFT-SALES-0714-7572471-商机 · proposal",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/mobile-dashboard.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/ai-assistant",
+      "url": "http://120.55.73.23/ai-assistant",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI销售作战助手\n\n统一处理销售事实录入、待确认建议、周报、商机分析、拜访计划和沟通方式推荐。\n\n草稿确认\n周报生成\n刷新\n当前版本由业务规则辅助生成，未调用远程模型；AI配置仅用于连接测试。\n待确认\n1 项待确认\n所有 AI 写入仍需人工确认，不自动触达客户。\n上下文\n21 条业务信号\n客户、商机、行动和风险共同支撑建议。\n证据\n5 条证据链\n每条建议需要可回溯来源。\n快捷任务\n录入销售事实\n把客户、联系人、商机和行动文本转成待确认草稿\n生成周报\n从销售行动生成个人周报和商机周进展\n分析商机\n识别阶段健康、关系缺口、风险和下一步动作\n准备拜访\n生成拜访目标、议程、材料、问题和跟进动作\n推荐沟通方式\n选择渠道、语气、重点、时机和升级路径\n待确认队列\n周报生成待确认 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n最近AI建议\n周报生成1 个商机进展 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n周报生成1 个商机进展 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n周报生成2 个商机进展 · 本周跟进 2 个商机，沉淀 2 条有效行动。\n周报生成1 个商机进展 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n周报生成1 个商机进展 · 本周跟进 1 个商机，沉淀 1 条有效行动。\n商机分析智能制造CRM一期试点 · 确认财务审批人、预算口径和审批材料清单。\n文本录入\n生成草稿\n清 空\n客户上下文\nV1演示客户-上海智造集团A · active · 首次完成结论\n信达亿A · following\nFT-AIAPP-0714客户A · following\nFT-FIN-0714-客户A · active\nFT-SALES-0714-7572471-客户B · following · FT-SALES-0714-7572471-拜访完成\n惠州天然气发电厂A · following\n水务科技A · following\n零星散客C · following\n商机上下文\n智能制造CRM一期试点proposal · active · ¥620,000.00\n供货-群益lead · following\n供货-卓创lead · following\nFT-AIAPP-0714商机lead · following · ¥714,000.00\nFT-FIN-0714-商机proposal · following · ¥500,000.00\nFT-SALES-0714-7572471-商机proposal · following · ¥700,000.00\n云盘lead · following\n能耗管理平台lead · following · ¥800,000.00\n近期销售行动\nFT-AIAPP-0714周报隔离行动follow_up · completed · 2026-07-18 02:00\nLOCAL-DUPLICATE-COMPLETE-1784038990410customer_visit · completed · 2026-07-15 14:23\nFT-SALES-0714-7572471-客户拜访-已编辑meeting · completed · 2026-07-14 03:00\nFT-AIAPP-0714需求评审visit · completed · 2026-07-14 02:00\n完成CRM V1试点需求确认会meeting · completed · 2026-07-09 01:59\n风险信号\n暂无风险信号\n证据链\nFT-AIAPP-0714周报隔离行动activity · 2026-07-18 02:00 · 完成周报验收\nLOCAL-DUPLICATE-COMPLETE-1784038990410activity · 2026-07-15 14:23 · 首次完成结论\nFT-SALES-0714-7572471-客户拜访-已编辑activity · 2026-07-14 03:00 · FT-SALES-0714-7572471-拜访完成\nFT-AIAPP-0714需求评审activity · 2026-07-14 02:00 · 进入试点方案评审\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/mobile-ai-assistant.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/ai-assistant/drafts",
+      "url": "http://120.55.73.23/ai-assistant/drafts",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\n草稿确认\n\n确认前不写入客户、联系人、商机或销售行动。\n\n刷新\n暂无待确认草稿",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/mobile-ai-assistant-drafts.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/ai-assistant/weekly-report",
+      "url": "http://120.55.73.23/ai-assistant/weekly-report",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI周报\n\n基于本周可见销售行动生成个人周报和商机周进展，确认前不写入业务记录。\n\n刷新\n生成设置\n生成周报\n个人周报\n已驳回\n2026-07-06 - 2026-07-12\n本周跟进 1 个商机，沉淀 1 条有效行动。\n有效行动\n1\n商机周进展\n1\n证据\n1\n本周成果\n双方确认进入试点方案细化阶段。\n风险关注\n需在方案中明确历史数据导入范围。\n下周计划\n三日内提交试点方案和演示账号。\n智能制造CRM一期试点\nV1演示客户-上海智造集团\n本周进展\n双方确认进入试点方案细化阶段。\n风险\n需在方案中明确历史数据导入范围。\n下周计划\n三日内提交试点方案和演示账号。\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。\n历史周报\n2026-07-18 - 2026-07-18待确认 · 1 条行动\n2026-07-13 - 2026-07-19已驳回 · 2 条行动\n2026-07-06 - 2026-07-12已驳回 · 1 条行动\n2026-07-06 - 2026-07-12已驳回 · 1 条行动",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/mobile-ai-assistant-weekly-report.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/ai-assistant/opportunities",
+      "url": "http://120.55.73.23/ai-assistant/opportunities",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI商机分析\n\n基于商机、联系人和销售行动生成推进建议，确认前不写入业务记录。\n\n刷新\n分析设置\n智能制造CRM一期试点 · proposal\n生成商机分析\n智能制造CRM一期试点\n已驳回\nV1演示客户-上海智造集团\n销售行动\n2\n证据\n4\n下一步建议\n3\n阶段健康\n当前阶段 proposal，状态 active，预计成交日 2026-08-23。\n当前进展：已完成需求确认，进入试点方案细化。\n关系缺口\n财务审批人未明确，需要补齐预算、采购或财务角色。\n风险\n需持续确认数据迁移范围。\n需在方案中明确历史数据导入范围。\n商机风险状态为 low，需要销售负责人持续复盘。\n阻塞点\n暂无明确阻塞点，建议继续按下一步行动推进并记录客户反馈。\n赢单因素\n客户痛点：客户已认可统一CRM试点价值。\n推进基础：已完成需求确认，进入试点方案细化。\n首次完成结论\n下一步行动\n确认财务审批人、预算口径和审批材料清单。\n继续推进\n提交V1试点方案和实施排期。\n证据链\n智能制造CRM一期试点opportunity · - · 已完成需求确认，进入试点方案细化。\nV1演示客户-上海智造集团account · 2026-07-15 14:23 · 集团正在推进销售数字化和重点客户经营体系建设。\nLOCAL-DUPLICATE-COMPLETE-1784038990410activity · 2026-07-15 14:23 · 首次完成结论\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。\n历史商机分析\nFT-SALES-0714-7572471-商机已驳回 · 1 条行动证据\n智能制造CRM一期试点已驳回 · 1 条行动证据",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/mobile-ai-assistant-opportunities.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/ai-assistant/visit-plans",
+      "url": "http://120.55.73.23/ai-assistant/visit-plans",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI拜访计划\n\n基于商机、联系人和行动证据生成拜访目标、参会对象、议程、材料、问题和跟进动作，确认前不写入业务记录。\n\n刷新\n计划设置\n智能制造CRM一期试点 · proposal\n生成拜访计划\n智能制造CRM一期试点\n已驳回\nV1演示客户-上海智造集团\n销售行动\n2\n证据\n4\n跟进动作\n3\n拜访目标\n明确AI助手试点范围、ROI材料和下一步评审安排。\n围绕当前进展复盘客户认可点：已完成需求确认，进入试点方案细化。\n验证上一轮沟通结论：首次完成结论\n参会对象\n王敏 / 数字化办公室 / 角色：decision_maker\n拜访议程\n复盘当前阶段与客户反馈，确认AI助手试点范围。\n对齐预算、财务审批路径和技术集成边界。\n延续上一轮下一步计划：继续推进\n确认商机下一步计划：提交V1试点方案和实施排期。\n准备材料\nAI助手试点范围说明\nROI测算材料\n实施排期与数据迁移清单\n客户痛点与价值映射：客户已认可统一CRM试点价值。\n关键问题\n财务审批人是谁，财务审批材料和预算口径是否已经明确？\nAI助手试点成功标准、上线时间和验收责任人分别是谁？\n技术集成、数据边界和安全要求由谁确认？\n当前风险如何消除：需持续确认数据迁移范围。\n上一轮行动风险如何闭环：需在方案中明确历史数据导入范围。\n预期产出\n形成下一步评审安排、责任人和时间表。\n确认AI助手试点范围、预算审批材料和客户侧验收标准。\n校准预计成交日期：2026-08-23\n跟进动作\n继续推进\n提交V1试点方案和实施排期。\n拜访后24小时内整理会议纪要，安排业务、技术和财务评审并记录反馈。\n证据链\n智能制造CRM一期试点opportunity · - · 已完成需求确认，进入试点方案细化。\nV1演示客户-上海智造集团account · 2026-07-15 14:23 · 集团正在推进销售数字化和重点客户经营体系建设。\nLOCAL-DUPLICATE-COMPLETE-1784038990410activity · 2026-07-15 14:23 · 首次完成结论\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。\n历史拜访计划\nFT-SALES-0714-7572471-商机已驳回 · 1 条行动证据\n智能制造CRM一期试点已驳回 · 1 条行动证据",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/mobile-ai-assistant-visit-plans.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/ai-assistant/communication",
+      "url": "http://120.55.73.23/ai-assistant/communication",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI沟通建议\n\n基于联系人角色、态度、关系热度、商机阶段和行动证据生成渠道、语气、重点、时机、升级路径和禁忌提醒，确认前不触达客户。\n\n刷新\n推荐设置\n智能制造CRM一期试点 · proposal\n王敏 · 数字化负责人\n生成沟通建议\n王敏\n已驳回\nV1演示客户-上海智造集团 · 智能制造CRM一期试点\n您好王敏，我想把AI助手试点范围、ROI材料和评审前需要确认的问题同步给您，方便您内部判断下一步。\n销售行动\n2\n证据\n4\n推荐渠道\n2\n沟通渠道\n先用微信或短信发送材料摘要，再跟进电话确认。\n通过电话确认评审时间、关键诉求和决策链路。\n语气策略\n保持专业、简洁、以业务价值为先。\n对方态度中性，先复述已确认事实，再提出低压力下一步。\n沟通重点\n围绕AI助手对销售记录、周报、商机分析和拜访计划的价值展开。\n明确ROI口径、试点范围和评审材料，方便客户内部同步。\n承接上次沟通：完成CRM V1试点需求确认会\n结合客户痛点：客户已认可统一CRM试点价值。\n引用近期反馈：首次完成结论\n沟通时机\n建议在评审前同步材料，给客户预留内部转发和问题收集时间。\n跟随商机下一步：提交V1试点方案和实施排期。\n可衔接下一次跟进时间：2026-07-21T14:23:10.821Z\n升级路径\n先与王敏确认业务价值和ROI材料，再请其牵引内部评审。\n禁忌提醒\n不要在预算审批路径未明确前承诺最终价格、上线日期或客户侧收益。\n不要回避当前风险：需持续确认数据迁移范围。\n证据链\n智能制造CRM一期试点opportunity · - · 已完成需求确认，进入试点方案细化。\nV1演示客户-上海智造集团account · 2026-07-15 14:23 · 集团正在推进销售数字化和重点客户经营体系建设。\nLOCAL-DUPLICATE-COMPLETE-1784038990410activity · 2026-07-15 14:23 · 首次完成结论\n完成CRM V1试点需求确认会activity · 2026-07-09 01:59 · 双方确认进入试点方案细化阶段。\n历史沟通建议\nFT-SALES-0714-7572471-联系人已驳回 · FT-SALES-0714-7572471-商机\n王敏已驳回 · 智能制造CRM一期试点",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/mobile-ai-assistant-communication.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/ai-assistant/logs",
+      "url": "http://120.55.73.23/ai-assistant/logs",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\nAI日志\n\n追溯AI生成、确认、拒绝、写入结果和权限拒绝审计。\n\n刷新\n日志筛选\n事件类型\nAI模块\n状态\n对象类型\n对象ID\n开始时间\n结束时间\n筛 选\n重 置\nAI操作记录\n时间\t事件\t模块\t动作\t摘要\t状态\t对象\tTrace\t操作\n\n时间\n\t\n事件\n\t\n模块\n\t\n动作\n\t\n摘要\n\t\n状态\n\t\n对象\n\t\nTrace\n\t\n操作\n\n2026-07-14 14:23\t写入/确认\t沟通建议\t拒绝\t\n拒绝AI建议拒绝AI建议：沟通建议 #3\n\t成功\t沟通建议 #3\tv4-api-smoke-1784039035905\t\n详 情\n查看业务对象\n\n2026-07-14 14:23\t生成\t沟通建议\t生成\t\n沟通建议先用微信或短信发送材料摘要，再跟进电话确认。\n\t已拒绝\t-\t-\t\n详 情\n查看AI记录\n\n2026-07-14 14:23\t写入/确认\t拜访计划\t拒绝\t\n拒绝AI建议拒绝AI建议：拜访计划 #3\n\t成功\t拜访计划 #3\tv4-api-smoke-1784039035771\t\n详 情\n查看业务对象\n\n2026-07-14 14:23\t生成\t拜访计划\t生成\t\n拜访计划明确AI助手试点范围、ROI材料和下一步评审安排。\n\t已拒绝\t-\t-\t\n详 情\n查看AI记录\n\n2026-07-14 14:23\t写入/确认\t商机分析\t拒绝\t\n拒绝AI建议拒绝AI建议：商机分析 #3\n\t成功\t商机分析 #3\tv4-api-smoke-1784039035660\t\n详 情\n查看业务对象\n\n2026-07-14 14:23\t生成\t商机分析\t生成\t\n商机分析确认财务审批人、预算口径和审批材料清单。\n\t已拒绝\t-\t-\t\n详 情\n查看AI记录\n\n2026-07-14 14:23\t写入/确认\t周报\t拒绝\t\n拒绝AI建议拒绝AI建议：AI周报 #5\n\t成功\tAI周报 #5\tv4-api-smoke-1784039035531\t\n详 情\n查看业务对象\n\n2026-07-14 14:23\t生成\t周报\t生成\t\nAI周报本周跟进 1 个商机，沉淀 1 条有效行动。\n\t已拒绝\t-\t-\t\n详 情\n查看AI记录\n1\n2\n3\n4\n5\n6",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/v4-browser/mobile-ai-assistant-logs.png"
+    }
+  ],
+  "consoleFailures": [],
+  "failedResponses": []
+}

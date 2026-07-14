@@ -1,0 +1,217 @@
+{
+  "status": "passed",
+  "generatedAt": "2026-07-14T15:10:09.367Z",
+  "suffix": 1784041807841,
+  "checkCount": 29,
+  "assertions": {
+    "quotationApproved": true,
+    "bidRejected": true,
+    "contractApproved": true,
+    "canonicalObjectName": true,
+    "processedTasksContainAll": true,
+    "quotationHistoryRecorded": true
+  },
+  "templateIds": {
+    "quotation": 1,
+    "bid": 2,
+    "contract": 3
+  },
+  "objects": {
+    "quotation": {
+      "objectId": 6,
+      "instanceId": 1,
+      "finalStatus": "approved"
+    },
+    "bid": {
+      "objectId": 7,
+      "instanceId": 2,
+      "finalStatus": "draft"
+    },
+    "contract": {
+      "objectId": 4,
+      "instanceId": 3,
+      "finalStatus": "pending_signature"
+    }
+  },
+  "negativeChecks": {
+    "duplicatePendingSubmission": 409,
+    "wrongRoleDecision": 403,
+    "blankRejectComment": 409
+  },
+  "checks": [
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/accounts",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/opportunities",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/approval-templates/approver-roles",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/solutions",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/solutions",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/contracts",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/approval-templates",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/approval-templates/1/nodes",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/approval-templates",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/approval-templates/2/nodes",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/approval-templates",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/approval-templates/3/nodes",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/instances",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/instances",
+      "status": 409,
+      "expectedStatus": 409
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/instances/1/approve",
+      "status": 403,
+      "expectedStatus": 403
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/instances/1/approve",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/instances",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/instances/2/reject",
+      "status": 409,
+      "expectedStatus": 409
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/instances/2/reject",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/instances",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/instances/3/approve",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/solutions/7",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/solutions/6",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/contracts/4",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/approvals/tasks?bucket=processed",
+      "status": 200,
+      "expectedStatus": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/approvals/object/quotation/6",
+      "status": 200,
+      "expectedStatus": 200
+    }
+  ]
+}

@@ -1,0 +1,169 @@
+{
+  "status": "passed",
+  "generatedAt": "2026-07-14T15:49:44.335Z",
+  "baseUrl": "http://120.55.73.23",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "mobile": false,
+      "deviceScaleFactor": 1
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "mobile": true,
+      "deviceScaleFactor": 2
+    }
+  ],
+  "pageResults": [
+    {
+      "viewport": "desktop",
+      "path": "/system",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nFT受限用户1784044157696\n工作台\n客户池\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/desktop-system.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system/departments",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nFT受限用户1784044157696\n工作台\n客户池\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/desktop-system-departments.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system/users",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nFT受限用户1784044157696\n工作台\n客户池\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/desktop-system-users.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system/roles",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nFT受限用户1784044157696\n工作台\n客户池\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/desktop-system-roles.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system/audit-logs",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nFT受限用户1784044157696\n工作台\n客户池\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/desktop-system-audit-logs.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system/dictionaries",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nFT受限用户1784044157696\n工作台\n客户池\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/desktop-system-dictionaries.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system/ai-config",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nFT受限用户1784044157696\n工作台\n客户池\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/desktop-system-ai-config.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system/approval-templates",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nFT受限用户1784044157696\n工作台\n客户池\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/desktop-system-approval-templates.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/approvals",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nFT受限用户1784044157696\n工作台\n客户池\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/desktop-approvals.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/mobile-system.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system/departments",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/mobile-system-departments.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system/users",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/mobile-system-users.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system/roles",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/mobile-system-roles.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system/audit-logs",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/mobile-system-audit-logs.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system/dictionaries",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/mobile-system-dictionaries.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system/ai-config",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/mobile-system-ai-config.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system/approval-templates",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/mobile-system-approval-templates.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/approvals",
+      "url": "http://120.55.73.23/",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n1 个权限点\n修改密码\n退 出\n工作台\n\n从待办、商机和行动中判断今天先处理什么。\n\n今日优先处理\n\n当前没有待办和在办事项，可先新建客户、商机或行动。\n\n新建客户\n新建商机\n新建行动\n查看周进展\n我的待办\n0\n我的商机\n0\n待完成行动\n0\n本周行动\n0\n近期待办\n暂无待办，可从销售行动创建下次跟进\n活跃商机\n暂无活跃商机，可新建商机或查看客户池",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/restricted-routes/mobile-approvals.png"
+    }
+  ],
+  "consoleFailures": [],
+  "failedResponses": []
+}

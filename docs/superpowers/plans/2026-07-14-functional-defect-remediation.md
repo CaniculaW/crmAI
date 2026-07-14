@@ -302,7 +302,7 @@ git commit -m "test: retry Chrome smoke profile cleanup"
 - Modify: `docs/testing/deployed-functional-test-todolist-2026-07-14.md`
 - Create: `docs/testing/evidence/functional-defect-remediation-regression-2026-07-14.md`
 
-- [ ] **Step 1: Run full local verification**
+- [x] **Step 1: Run full local verification**
 
 Run: `cd backend && mvn test`
 
@@ -312,29 +312,29 @@ Run: `cd frontend && npm run build`
 
 Expected: all backend and frontend tests pass and the production build succeeds.
 
-- [ ] **Step 2: Verify PostgreSQL migrations and local browser flows**
+- [x] **Step 2: Verify PostgreSQL migrations and local browser flows**
 
 Run: `cd backend && mvn verify -Ppostgres-it`
 
 Run the local API and Chrome smoke commands documented in the functional test checklist. Expected: V39 is current, system pages respect permissions, and Chrome exits successfully after cleanup.
 
-- [ ] **Step 3: Prepare the public database safely**
+- [x] **Step 3: Prepare the public database safely**
 
 Back up the public database. Query only the test contract identified by `FT-FIN-0714-负金额异常`; delete that explicit test row after confirming its ID and no dependent business rows. Do not mutate any other contract.
 
-- [ ] **Step 4: Deploy one Git commit**
+- [x] **Step 4: Deploy one Git commit**
 
 Build and deploy frontend/backend from the same checked-out commit. Confirm `/actuator/health`, Flyway V39, current frontend asset hash, approval routes, and administrator approval permissions before functional requests.
 
-- [ ] **Step 5: Execute public defect regression**
+- [x] **Step 5: Execute public defect regression**
 
 Re-run all ten defect reproductions: negative contract amount, disabled-session invalidation, approval availability, unknown route 404, missing account 404, duplicate activity completion 409, invalid month 400, inverted dashboard dates 400, direct system route redirect, and AI fallback notice. Re-run V4 API smoke, approval end-to-end, RBAC new-account login, mobile navigation, and system browser smoke.
 
-- [ ] **Step 6: Update acceptance evidence**
+- [x] **Step 6: Update acceptance evidence**
 
 Record request IDs, response status, screenshots, deployed commit, Flyway version, and pass/fail result in the evidence report. Mark each checklist item complete only after its evidence exists.
 
-- [ ] **Step 7: Commit the acceptance record**
+- [x] **Step 7: Commit the acceptance record**
 
 ```bash
 git add docs/testing/deployed-functional-test-todolist-2026-07-14.md docs/testing/evidence/functional-defect-remediation-regression-2026-07-14.md

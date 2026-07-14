@@ -1,0 +1,57 @@
+{
+  "status": "passed",
+  "generatedAt": "2026-07-14T15:50:31.127Z",
+  "baseUrl": "http://120.55.73.23",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "mobile": false,
+      "deviceScaleFactor": 1
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "mobile": true,
+      "deviceScaleFactor": 2
+    }
+  ],
+  "pageResults": [
+    {
+      "viewport": "desktop",
+      "path": "/approvals",
+      "url": "http://120.55.73.23/approvals",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n驾驶舱\n经营总览\n销售漏斗\n合同看板\n开票看板\n回款看板\n风险预警\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n到账流水\n核销工作台\n销售行动\n周进展\n审批中心\nAI助手\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nAI配置\n审批配置\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\n审批中心\n待我审批\n我发起的\n已处理\n对象类型\t对象名称\t当前节点\t提交人\t提交时间\t状态\t操作\n\n对象类型\n\t\n对象名称\n\t\n当前节点\n\t\n提交人\n\t\n提交时间\n\t\n状态\n\t\n操作\n\n\n暂无审批任务",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/approval-browser/desktop-approvals.png"
+    },
+    {
+      "viewport": "desktop",
+      "path": "/system/approval-templates",
+      "url": "http://120.55.73.23/system/approval-templates",
+      "title": "CRM AI",
+      "bodyText": "C\n项目型大客户 CRM\nV1演示管理员\n工作台\n驾驶舱\n经营总览\n销售漏斗\n合同看板\n开票看板\n回款看板\n风险预警\n客户池\n联系人\n商机\n方案标书\n合同\n开票管理\n回款管理\n到账流水\n核销工作台\n销售行动\n周进展\n审批中心\nAI助手\n系统\n系统概览\n组织管理\n用户管理\n角色权限\n审计日志\n字典管理\nAI配置\n审批配置\n项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\n审批配置\n新建模板\n类型\t名称\t默认\t状态\t更新时间\t操作\n\n类型\n\t\n名称\n\t\n默认\n\t\n状态\n\t\n更新时间\n\t\n操作\n\n标书\tFT-APP-1784041807841-bid\t\n\t启用\t2026/7/14 23:10:08\t\n\n合同\tFT-APP-1784041807841-contract\t\n\t启用\t2026/7/14 23:10:08\t\n\n报价\tFT-APP-1784041807841-quotation\t\n\t启用\t2026/7/14 23:10:08\t",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/approval-browser/desktop-system-approval-templates.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/approvals",
+      "url": "http://120.55.73.23/approvals",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\n审批中心\n待我审批\n我发起的\n已处理\n对象类型\t对象名称\t当前节点\t提交人\t提交时间\t状态\t操作\n\n对象类型\n\t\n对象名称\n\t\n当前节点\n\t\n提交人\n\t\n提交时间\n\t\n状态\n\t\n操作\n\n\n暂无审批任务",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/approval-browser/mobile-approvals.png"
+    },
+    {
+      "viewport": "mobile",
+      "path": "/system/approval-templates",
+      "url": "http://120.55.73.23/system/approval-templates",
+      "title": "CRM AI",
+      "bodyText": "项目型大客户 CRM\n销售、商务、财务与经营驾驶舱\n74 个权限点\n修改密码\n退 出\n审批配置\n新建模板\n类型\t名称\t默认\t状态\t更新时间\t操作\n\n类型\n\t\n名称\n\t\n默认\n\t\n状态\n\t\n更新时间\n\t\n操作\n\n标书\tFT-APP-1784041807841-bid\t\n\t启用\t2026/7/14 23:10:08\t\n\n合同\tFT-APP-1784041807841-contract\t\n\t启用\t2026/7/14 23:10:08\t\n\n报价\tFT-APP-1784041807841-quotation\t\n\t启用\t2026/7/14 23:10:08\t",
+      "screenshotPath": "/Users/shensiwei/AIJob/codex_presolution/code/docs/testing/evidence/artifacts/functional-remediation-public-20260714/approval-browser/mobile-system-approval-templates.png"
+    }
+  ],
+  "consoleFailures": [],
+  "failedResponses": []
+}

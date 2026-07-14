@@ -1,0 +1,78 @@
+{
+  "account": "ft-rbac-0714-user",
+  "checks": [
+    {
+      "id": "UI-AUTH-01",
+      "passed": true,
+      "actual": "HTTP 200"
+    },
+    {
+      "id": "UI-RBAC-01",
+      "passed": true,
+      "actual": {
+        "system_links": [
+          {
+            "text": "系统概览",
+            "path": "/system"
+          },
+          {
+            "text": "字典管理",
+            "path": "/system/dictionaries"
+          }
+        ]
+      }
+    },
+    {
+      "id": "UI-DICT-01",
+      "passed": true,
+      "actual": {
+        "can_create": true,
+        "has_test_dict": true,
+        "service_error": false
+      }
+    },
+    {
+      "id": "UI-RBAC-02",
+      "passed": false,
+      "actual": {
+        "api_403": true,
+        "unauthorized_page_rendered": true,
+        "create_button_visible": true,
+        "error_banner_visible": true
+      },
+      "severity": "P2"
+    }
+  ],
+  "console_failures": [],
+  "failed_responses": [
+    {
+      "status": 403,
+      "url": "/api/system/permissions"
+    },
+    {
+      "status": 403,
+      "url": "/api/system/roles"
+    },
+    {
+      "status": 403,
+      "url": "/api/system/departments"
+    },
+    {
+      "status": 403,
+      "url": "/api/system/users"
+    },
+    {
+      "status": 403,
+      "url": "/api/system/audit-logs?limit=20"
+    },
+    {
+      "status": 403,
+      "url": "/api/system/ai-model-configs"
+    }
+  ],
+  "summary": {
+    "total": 4,
+    "passed": 3,
+    "failed": 1
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "status": "passed",
+  "generatedAt": "2026-07-14T02:54:05.397Z",
+  "baseUrl": "http://120.55.73.23",
+  "user": {
+    "id": 1,
+    "email": "demo_admin@example.com",
+    "aiPermissions": 7
+  },
+  "selectedContext": {
+    "opportunityId": 8,
+    "opportunityName": "FT-SALES-0714-7572471-商机",
+    "contactId": 3
+  },
+  "checks": {
+    "contextCounts": {
+      "accounts": 7,
+      "opportunities": 8,
+      "recentActivities": 2,
+      "evidence": 2
+    },
+    "draft": {
+      "inputRecordId": 2,
+      "draftId": 2,
+      "generatedCount": 1,
+      "rejectedStatus": "rejected"
+    },
+    "weeklyReport": {
+      "id": 2,
+      "generatedStatus": "pending_confirmation",
+      "rejectedStatus": "rejected",
+      "opportunityProgressCount": 1
+    },
+    "opportunityAnalysis": {
+      "id": 2,
+      "generatedStatus": "pending_confirmation",
+      "rejectedStatus": "rejected",
+      "evidenceCount": 3
+    },
+    "visitPlan": {
+      "id": 2,
+      "generatedStatus": "pending_confirmation",
+      "rejectedStatus": "rejected",
+      "evidenceCount": 3
+    },
+    "communicationRecommendation": {
+      "id": 2,
+      "generatedStatus": "pending_confirmation",
+      "rejectedStatus": "rejected",
+      "evidenceCount": 3
+    },
+    "logs": {
+      "count": 20,
+      "modules": [
+        "communication_recommendation",
+        "draft",
+        "opportunity_analysis",
+        "visit_plan",
+        "weekly_report"
+      ]
+    }
+  }
+}

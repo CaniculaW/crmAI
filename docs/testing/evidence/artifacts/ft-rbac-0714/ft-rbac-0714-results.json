@@ -1,0 +1,403 @@
+{
+  "prefix": "FT-RBAC-0714",
+  "target": "http://120.55.73.23",
+  "completed_at": "2026-07-14T02:54:32.608Z",
+  "test_account": "ft-rbac-0714-user",
+  "objects": {
+    "department_id": 3,
+    "role_id": 3,
+    "user_id": 4,
+    "dict_type_id": 21,
+    "dict_item_id": 77,
+    "ai_config_id": 1
+  },
+  "summary": {
+    "total": 38,
+    "passed": 37,
+    "failed": 1,
+    "network_events": 0
+  },
+  "results": [
+    {
+      "id": "ENV-01",
+      "passed": true,
+      "expected": "HTTP 200",
+      "actual": "HTTP 200",
+      "trace_id": "FT-RBAC-0714-health",
+      "object_id": null,
+      "severity": null,
+      "note": null
+    },
+    {
+      "id": "AUTH-01",
+      "passed": true,
+      "expected": "管理员登录成功",
+      "actual": "HTTP 200",
+      "trace_id": "FT-RBAC-0714-admin-login",
+      "object_id": 1,
+      "severity": null,
+      "note": null
+    },
+    {
+      "id": "AUTH-02",
+      "passed": true,
+      "expected": "管理员具备系统管理权限集",
+      "actual": "HTTP 200; matched 5/5",
+      "trace_id": "FT-RBAC-0714-admin-me",
+      "object_id": 1,
+      "severity": "P0",
+      "note": null
+    },
+    {
+      "id": "ORG-00",
+      "passed": true,
+      "expected": "可读取组织并找到活动上级组织",
+      "actual": "HTTP 200",
+      "trace_id": "FT-RBAC-0714-departments-baseline",
+      "object_id": 1,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "ORG-01",
+      "passed": true,
+      "expected": "二级组织保存成功",
+      "actual": "HTTP 200",
+      "trace_id": "FT-RBAC-0714-department-create",
+      "object_id": 3,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "ORG-02",
+      "passed": true,
+      "expected": "刷新后存在且 parent_id 正确",
+      "actual": "HTTP 200; parent_id=1",
+      "trace_id": "FT-RBAC-0714-department-reload",
+      "object_id": 3,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "ROLE-01",
+      "passed": true,
+      "expected": "角色保存成功",
+      "actual": "HTTP 200",
+      "trace_id": "FT-RBAC-0714-role-create",
+      "object_id": 3,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "ROLE-02",
+      "passed": true,
+      "expected": "权限点列表包含 system.dict.manage",
+      "actual": "HTTP 200; permission_count=70",
+      "trace_id": "FT-RBAC-0714-permission-list",
+      "object_id": null,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "ROLE-03",
+      "passed": true,
+      "expected": "权限保存为且仅为 system.dict.manage",
+      "actual": "HTTP 200; saved=system.dict.manage",
+      "trace_id": "FT-RBAC-0714-role-permission-save",
+      "object_id": 3,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "ROLE-04",
+      "passed": true,
+      "expected": "刷新后权限不丢失",
+      "actual": "HTTP 200; saved=system.dict.manage",
+      "trace_id": "FT-RBAC-0714-role-reload",
+      "object_id": 3,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "USER-01",
+      "passed": true,
+      "expected": "用户创建且分配受限角色",
+      "actual": "HTTP 200; roles=ft_rbac_0714_dict_operator",
+      "trace_id": "FT-RBAC-0714-user-create",
+      "object_id": 4,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "USER-02",
+      "passed": true,
+      "expected": "用户列表展示登录账号且角色正确",
+      "actual": "HTTP 200; login_username=ft-rbac-0714-user",
+      "trace_id": "FT-RBAC-0714-user-reload",
+      "object_id": 4,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "USER-03",
+      "passed": true,
+      "expected": "新用户实际登录成功",
+      "actual": "HTTP 200",
+      "trace_id": "FT-RBAC-0714-restricted-login",
+      "object_id": 4,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "RBAC-01",
+      "passed": true,
+      "expected": "新用户仅持有字典管理权限",
+      "actual": "HTTP 200; permissions=system.dict.manage",
+      "trace_id": "FT-RBAC-0714-restricted-me",
+      "object_id": 4,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "RBAC-02",
+      "passed": true,
+      "expected": "用户管理 API 返回 403",
+      "actual": "HTTP 403",
+      "trace_id": "FT-RBAC-0714-rbac-02",
+      "object_id": null,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "RBAC-03",
+      "passed": true,
+      "expected": "角色管理 API 返回 403",
+      "actual": "HTTP 403",
+      "trace_id": "FT-RBAC-0714-rbac-03",
+      "object_id": null,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "RBAC-04",
+      "passed": true,
+      "expected": "审计日志 API 返回 403",
+      "actual": "HTTP 403",
+      "trace_id": "FT-RBAC-0714-rbac-04",
+      "object_id": null,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "RBAC-05",
+      "passed": true,
+      "expected": "AI 配置 API 返回 403",
+      "actual": "HTTP 403",
+      "trace_id": "FT-RBAC-0714-rbac-05",
+      "object_id": null,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "RBAC-06",
+      "passed": true,
+      "expected": "匿名访问受保护 API 返回 401",
+      "actual": "HTTP 401",
+      "trace_id": "FT-RBAC-0714-anonymous-users",
+      "object_id": null,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "DICT-01",
+      "passed": true,
+      "expected": "受限用户可创建字典类型",
+      "actual": "HTTP 200",
+      "trace_id": "FT-RBAC-0714-dict-type-create",
+      "object_id": 21,
+      "severity": "P2",
+      "note": null
+    },
+    {
+      "id": "DICT-02",
+      "passed": true,
+      "expected": "新增字典项成功",
+      "actual": "HTTP 200",
+      "trace_id": "FT-RBAC-0714-dict-item-create",
+      "object_id": 77,
+      "severity": "P2",
+      "note": null
+    },
+    {
+      "id": "DICT-03",
+      "passed": true,
+      "expected": "字典项编辑与排序生效",
+      "actual": "HTTP 200; sort_order=14",
+      "trace_id": "FT-RBAC-0714-dict-item-update",
+      "object_id": 77,
+      "severity": "P2",
+      "note": null
+    },
+    {
+      "id": "DICT-04",
+      "passed": true,
+      "expected": "停用项从活动查询隐藏且可在含停用查询中追溯",
+      "actual": "PATCH 200; active_visible=false; inactive_visible=true",
+      "trace_id": "FT-RBAC-0714-dict-item-disable",
+      "object_id": 77,
+      "severity": "P2",
+      "note": null
+    },
+    {
+      "id": "USER-04",
+      "passed": true,
+      "expected": "用户停用成功",
+      "actual": "HTTP 200; status=inactive",
+      "trace_id": "FT-RBAC-0714-user-disable",
+      "object_id": 4,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "USER-05",
+      "passed": false,
+      "expected": "停用后旧会话失效且不能重新登录",
+      "actual": "old_session=200; login=401",
+      "trace_id": "FT-RBAC-0714-disabled-login",
+      "object_id": 4,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "USER-06",
+      "passed": true,
+      "expected": "重新启用后可登录",
+      "actual": "enable=200; login=200",
+      "trace_id": "FT-RBAC-0714-enabled-login",
+      "object_id": 4,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "AI-01",
+      "passed": true,
+      "expected": "AI 配置可读取且不返回明文密钥",
+      "actual": "HTTP 200; config_count=0; secret_fields=0",
+      "trace_id": "FT-RBAC-0714-ai-config-list",
+      "object_id": null,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "AI-02",
+      "passed": true,
+      "expected": "非法 URL/空模型名校验失败且不保存",
+      "actual": "HTTP 400; code=VALIDATION_ERROR",
+      "trace_id": "FT-RBAC-0714-ai-validation",
+      "object_id": null,
+      "severity": "P2",
+      "note": null
+    },
+    {
+      "id": "AI-03",
+      "passed": true,
+      "expected": "使用假密钥创建停用配置且仅返回脱敏值",
+      "actual": "HTTP 200; masked=true; enabled=false",
+      "trace_id": "FT-RBAC-0714-ai-config-create",
+      "object_id": 1,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "AI-04",
+      "passed": true,
+      "expected": "假密钥/不可达端点连接测试返回可理解失败且不泄密",
+      "actual": "HTTP 200; status=failed; message_present=true",
+      "trace_id": "FT-RBAC-0714-ai-connection-test",
+      "object_id": 1,
+      "severity": "P1",
+      "note": null
+    },
+    {
+      "id": "AUDIT-01",
+      "passed": true,
+      "expected": "审计日志包含 system.department.create",
+      "actual": "HTTP 200; matched=true",
+      "trace_id": "FT-RBAC-0714-audit-01",
+      "object_id": 3,
+      "severity": "P1",
+      "note": "audit_trace=FT-RBAC-0714-department-create"
+    },
+    {
+      "id": "AUDIT-02",
+      "passed": true,
+      "expected": "审计日志包含 system.role.create",
+      "actual": "HTTP 200; matched=true",
+      "trace_id": "FT-RBAC-0714-audit-02",
+      "object_id": 3,
+      "severity": "P1",
+      "note": "audit_trace=FT-RBAC-0714-role-create"
+    },
+    {
+      "id": "AUDIT-03",
+      "passed": true,
+      "expected": "审计日志包含 system.role.permissions.replace",
+      "actual": "HTTP 200; matched=true",
+      "trace_id": "FT-RBAC-0714-audit-03",
+      "object_id": 3,
+      "severity": "P1",
+      "note": "audit_trace=FT-RBAC-0714-role-permission-save"
+    },
+    {
+      "id": "AUDIT-04",
+      "passed": true,
+      "expected": "审计日志包含 system.user.create",
+      "actual": "HTTP 200; matched=true",
+      "trace_id": "FT-RBAC-0714-audit-04",
+      "object_id": 4,
+      "severity": "P1",
+      "note": "audit_trace=FT-RBAC-0714-user-create"
+    },
+    {
+      "id": "AUDIT-05",
+      "passed": true,
+      "expected": "审计日志包含 system.user.update",
+      "actual": "HTTP 200; matched=true",
+      "trace_id": "FT-RBAC-0714-audit-05",
+      "object_id": 4,
+      "severity": "P1",
+      "note": "audit_trace=FT-RBAC-0714-user-enable"
+    },
+    {
+      "id": "AUDIT-06",
+      "passed": true,
+      "expected": "审计日志包含 system.dict.type.create",
+      "actual": "HTTP 200; matched=true",
+      "trace_id": "FT-RBAC-0714-audit-06",
+      "object_id": 21,
+      "severity": "P1",
+      "note": "audit_trace=FT-RBAC-0714-dict-type-create"
+    },
+    {
+      "id": "AUDIT-07",
+      "passed": true,
+      "expected": "审计日志包含 system.dict.item.update",
+      "actual": "HTTP 200; matched=true",
+      "trace_id": "FT-RBAC-0714-audit-07",
+      "object_id": 77,
+      "severity": "P1",
+      "note": "audit_trace=FT-RBAC-0714-dict-item-disable"
+    },
+    {
+      "id": "AUDIT-08",
+      "passed": true,
+      "expected": "审计日志包含 system.ai_config.test",
+      "actual": "HTTP 200; matched=true",
+      "trace_id": "FT-RBAC-0714-audit-08",
+      "object_id": 1,
+      "severity": "P1",
+      "note": "audit_trace=FT-RBAC-0714-ai-connection-test"
+    }
+  ],
+  "network_events": []
+}
