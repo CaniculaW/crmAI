@@ -1716,6 +1716,23 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("link", { name: "驾驶舱" })).toHaveAttribute("href", "/dashboard");
   });
 
+  it("shows the dashboard parent menu for a child-dashboard-only permission", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch({
+      user: {
+        ...apiData.user,
+        permissions: ["dashboard.funnel.read"]
+      }
+    });
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(screen.getByRole("menuitem", { name: "驾驶舱" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "销售漏斗" })).toHaveAttribute("href", "/dashboard/funnel");
+    expect(screen.queryByRole("link", { name: "经营总览" })).not.toBeInTheDocument();
+  });
+
   it("shows login errors from the unified API layer", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       jsonResponse({ code: "UNAUTHORIZED", message: "用户名或密码错误" }, 401)
@@ -2476,6 +2493,65 @@ describe("CRM frontend V1 workflow", () => {
     expect(await screen.findByRole("heading", { name: "工作台" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "联系人" })).not.toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/contacts"), expect.anything());
+  });
+
+  it.each([
+    { path: "/contacts", permission: "contact.read", heading: "联系人", denied: ["/api/accounts"] },
+    { path: "/opportunities", permission: "opportunity.read", heading: "商机", denied: ["/api/accounts"] },
+    { path: "/solutions", permission: "solution.read", heading: "方案标书", denied: ["/api/accounts", "/api/opportunities"] },
+    { path: "/contracts", permission: "contract.read", heading: "合同", denied: ["/api/accounts", "/api/opportunities"] },
+    { path: "/invoices", permission: "invoice.read", heading: "开票管理", denied: ["/api/accounts", "/api/opportunities", "/api/contracts"] },
+    { path: "/receivables", permission: "receivable.read", heading: "回款管理", denied: ["/api/accounts", "/api/contracts"] },
+    { path: "/payments", permission: "payment.read", heading: "到账流水", denied: ["/api/accounts", "/api/contracts", "/api/receivable-plans"] },
+    { path: "/reconciliations", permission: "reconciliation.read", heading: "核销工作台", denied: ["/api/accounts", "/api/contracts"] },
+    { path: "/activities", permission: "activity.read", heading: "销售行动", denied: ["/api/accounts", "/api/contacts", "/api/opportunities"] },
+    { path: "/weekly-progress", permission: "weekly_progress.read", heading: "周进展", denied: ["/api/accounts", "/api/opportunities"] },
+    { path: "/ai-assistant/opportunities", permission: "ai.opportunity.analyze", heading: "AI商机分析", denied: ["/api/opportunities"] },
+    { path: "/ai-assistant/visit-plans", permission: "ai.visit.plan", heading: "AI拜访计划", denied: ["/api/opportunities"] },
+    { path: "/ai-assistant/communication", permission: "ai.communication.recommend", heading: "AI沟通建议", denied: ["/api/opportunities", "/api/contacts"] }
+  ])("loads $path without cross-module requests for its minimum permission", async ({ path, permission, heading, denied }) => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch({
+      user: {
+        ...apiData.user,
+        permissions: [permission]
+      }
+    });
+    window.history.pushState({}, "", path);
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
+    const requestedPaths = fetchMock.mock.calls.map(([url]) => new URL(String(url), "http://localhost").pathname);
+    denied.forEach((endpoint) => expect(requestedPaths).not.toContain(endpoint));
+  });
+
+  it("loads only the permitted AI workbench resources", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch({
+      user: {
+        ...apiData.user,
+        permissions: ["ai.context.read"]
+      }
+    });
+    window.history.pushState({}, "", "/ai-assistant");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "AI销售作战助手" })).toBeInTheDocument();
+    [
+      "/api/ai-drafts",
+      "/api/ai-weekly-reports",
+      "/api/ai-opportunity-analyses",
+      "/api/ai-visit-plans",
+      "/api/ai-communication-recommendations"
+    ].forEach((endpoint) => {
+      const requestedPaths = fetchMock.mock.calls.map(([url]) => new URL(String(url), "http://localhost").pathname);
+      expect(requestedPaths).not.toContain(endpoint);
+    });
+    expect(screen.queryByRole("button", { name: "生成草稿" })).not.toBeInTheDocument();
   });
 
   it.each([

@@ -138,7 +138,14 @@ const navItems: NavItem[] = [
     key: "/dashboard",
     label: "驾驶舱",
     icon: <BarChart3 size={18} />,
-    permission: "dashboard.read",
+    permissions: [
+      "dashboard.read",
+      "dashboard.funnel.read",
+      "dashboard.contracts.read",
+      "dashboard.invoices.read",
+      "dashboard.receivables.read",
+      "dashboard.risks.read"
+    ],
     children: [
       { key: "/dashboard", label: "经营总览", permission: "dashboard.read" },
       { key: "/dashboard/funnel", label: "销售漏斗", permission: "dashboard.funnel.read" },
@@ -538,22 +545,22 @@ function CrmShell() {
             <Route path="/contracts" element={hasPermission("contract.read") ? <ContractsPage currentUser={user} /> : <Navigate to="/" replace />} />
             <Route path="/invoices" element={hasPermission("invoice.read") ? <InvoicesPage currentUser={user} /> : <Navigate to="/" replace />} />
             <Route path="/receivables" element={hasPermission("receivable.read") ? <ReceivablesPage currentUser={user} /> : <Navigate to="/" replace />} />
-            <Route path="/payments" element={hasPermission("payment.read") ? <PaymentsPage /> : <Navigate to="/" replace />} />
-            <Route path="/reconciliations" element={hasPermission("reconciliation.read") ? <ReconciliationWorkbenchPage /> : <Navigate to="/" replace />} />
+            <Route path="/payments" element={hasPermission("payment.read") ? <PaymentsPage currentUser={user} /> : <Navigate to="/" replace />} />
+            <Route path="/reconciliations" element={hasPermission("reconciliation.read") ? <ReconciliationWorkbenchPage currentUser={user} /> : <Navigate to="/" replace />} />
             <Route path="/activities" element={hasPermission("activity.read") ? <ActivitiesPage currentUser={user} /> : <Navigate to="/" replace />} />
-            <Route path="/weekly-progress" element={hasPermission("weekly_progress.read") ? <WeeklyProgressPage /> : <Navigate to="/" replace />} />
+            <Route path="/weekly-progress" element={hasPermission("weekly_progress.read") ? <WeeklyProgressPage currentUser={user} /> : <Navigate to="/" replace />} />
             <Route
               path="/approvals"
               element={user.permissions.includes("approval.read")
                 ? <ApprovalCenterPage currentUser={user} />
                 : <Navigate to="/" replace />}
             />
-            <Route path="/ai-assistant" element={hasPermission("ai.context.read") ? <AiAssistantPage /> : <Navigate to="/" replace />} />
+            <Route path="/ai-assistant" element={hasPermission("ai.context.read") ? <AiAssistantPage currentUser={user} /> : <Navigate to="/" replace />} />
             <Route path="/ai-assistant/drafts" element={hasPermission("ai.draft.manage") ? <AiDraftsPage /> : <Navigate to="/" replace />} />
             <Route path="/ai-assistant/weekly-report" element={hasPermission("ai.weekly.manage") ? <AiWeeklyReportPage /> : <Navigate to="/" replace />} />
-            <Route path="/ai-assistant/opportunities" element={hasPermission("ai.opportunity.analyze") ? <AiOpportunityAnalysisPage /> : <Navigate to="/" replace />} />
-            <Route path="/ai-assistant/visit-plans" element={hasPermission("ai.visit.plan") ? <AiVisitPlanPage /> : <Navigate to="/" replace />} />
-            <Route path="/ai-assistant/communication" element={hasPermission("ai.communication.recommend") ? <AiCommunicationRecommendationPage /> : <Navigate to="/" replace />} />
+            <Route path="/ai-assistant/opportunities" element={hasPermission("ai.opportunity.analyze") ? <AiOpportunityAnalysisPage currentUser={user} /> : <Navigate to="/" replace />} />
+            <Route path="/ai-assistant/visit-plans" element={hasPermission("ai.visit.plan") ? <AiVisitPlanPage currentUser={user} /> : <Navigate to="/" replace />} />
+            <Route path="/ai-assistant/communication" element={hasPermission("ai.communication.recommend") ? <AiCommunicationRecommendationPage currentUser={user} /> : <Navigate to="/" replace />} />
             <Route path="/ai-assistant/logs" element={hasPermission("ai.log.read") ? <AiLogPage /> : <Navigate to="/" replace />} />
             <Route
               path="/system"
@@ -1123,36 +1130,41 @@ function DashboardRisksPage() {
   );
 }
 
-function AiAssistantPage() {
+function AiAssistantPage({ currentUser }: { currentUser: CurrentUser }) {
+  const canManageDrafts = currentUser.permissions.includes("ai.draft.manage");
+  const canManageWeeklyReports = currentUser.permissions.includes("ai.weekly.manage");
+  const canAnalyzeOpportunities = currentUser.permissions.includes("ai.opportunity.analyze");
+  const canPlanVisits = currentUser.permissions.includes("ai.visit.plan");
+  const canRecommendCommunication = currentUser.permissions.includes("ai.communication.recommend");
   const { data, loading, error, refresh } = useObjectResource<AiContextSummary>(
     crmApi.aiContext.summary,
     emptyAiContextSummary,
     []
   );
   const pendingDrafts = useObjectResource<AiDraft[]>(
-    () => crmApi.aiDrafts.list({ status: "pending_confirmation" }),
+    () => canManageDrafts ? crmApi.aiDrafts.list({ status: "pending_confirmation" }) : Promise.resolve([]),
     () => [],
-    []
+    [canManageDrafts]
   );
   const weeklyReports = useObjectResource<AiWeeklyReport[]>(
-    () => crmApi.aiWeeklyReports.list(),
+    () => canManageWeeklyReports ? crmApi.aiWeeklyReports.list() : Promise.resolve([]),
     () => [],
-    []
+    [canManageWeeklyReports]
   );
   const opportunityAnalyses = useObjectResource<AiOpportunityAnalysis[]>(
-    () => crmApi.aiOpportunityAnalyses.list(),
+    () => canAnalyzeOpportunities ? crmApi.aiOpportunityAnalyses.list() : Promise.resolve([]),
     () => [],
-    []
+    [canAnalyzeOpportunities]
   );
   const visitPlans = useObjectResource<AiVisitPlan[]>(
-    () => crmApi.aiVisitPlans.list(),
+    () => canPlanVisits ? crmApi.aiVisitPlans.list() : Promise.resolve([]),
     () => [],
-    []
+    [canPlanVisits]
   );
   const communicationRecommendations = useObjectResource<AiCommunicationRecommendation[]>(
-    () => crmApi.aiCommunicationRecommendations.list(),
+    () => canRecommendCommunication ? crmApi.aiCommunicationRecommendations.list() : Promise.resolve([]),
     () => [],
-    []
+    [canRecommendCommunication]
   );
   const [sourceText, setSourceText] = useState("");
   const [drafts, setDrafts] = useState<AiDraft[]>([]);
@@ -1280,12 +1292,16 @@ function AiAssistantPage() {
         description="统一处理销售事实录入、待确认建议、周报、商机分析、拜访计划和沟通方式推荐。"
         action={
           <Space>
-            <Link to="/ai-assistant/drafts">
-              <Button icon={<FileText size={16} />}>草稿确认</Button>
-            </Link>
-            <Link to="/ai-assistant/weekly-report">
-              <Button icon={<CalendarCheck size={16} />}>周报生成</Button>
-            </Link>
+            {canManageDrafts ? (
+              <Link to="/ai-assistant/drafts">
+                <Button icon={<FileText size={16} />}>草稿确认</Button>
+              </Link>
+            ) : null}
+            {canManageWeeklyReports ? (
+              <Link to="/ai-assistant/weekly-report">
+                <Button icon={<CalendarCheck size={16} />}>周报生成</Button>
+              </Link>
+            ) : null}
             <RefreshButton onClick={refreshWorkbench} loading={loadingWorkbench} />
           </Space>
         }
@@ -1315,31 +1331,31 @@ function AiAssistantPage() {
 
       <Card title={<Typography.Title level={3}>快捷任务</Typography.Title>} className="dashboard-overview__card">
         <div className="ai-workbench-actions">
-          <a href="#ai-text-input" className="dashboard-overview__flow-step" aria-label="录入销售事实">
-            <Sparkles size={18} />
-            <strong>录入销售事实</strong>
-            <small>把客户、联系人、商机和行动文本转成待确认草稿</small>
-          </a>
-          <Link to="/ai-assistant/weekly-report" className="dashboard-overview__flow-step" aria-label="生成周报">
-            <CalendarCheck size={18} />
-            <strong>生成周报</strong>
-            <small>从销售行动生成个人周报和商机周进展</small>
-          </Link>
-          <Link to="/ai-assistant/opportunities" className="dashboard-overview__flow-step" aria-label="分析商机">
-            <BarChart3 size={18} />
-            <strong>分析商机</strong>
-            <small>识别阶段健康、关系缺口、风险和下一步动作</small>
-          </Link>
-          <Link to="/ai-assistant/visit-plans" className="dashboard-overview__flow-step" aria-label="准备拜访">
-            <BriefcaseBusiness size={18} />
-            <strong>准备拜访</strong>
-            <small>生成拜访目标、议程、材料、问题和跟进动作</small>
-          </Link>
-          <Link to="/ai-assistant/communication" className="dashboard-overview__flow-step" aria-label="推荐沟通方式">
-            <Contact size={18} />
-            <strong>推荐沟通方式</strong>
-            <small>选择渠道、语气、重点、时机和升级路径</small>
-          </Link>
+          {canManageDrafts ? <a href="#ai-text-input" className="dashboard-overview__flow-step" aria-label="录入销售事实">
+              <Sparkles size={18} />
+              <strong>录入销售事实</strong>
+              <small>把客户、联系人、商机和行动文本转成待确认草稿</small>
+            </a> : null}
+          {canManageWeeklyReports ? <Link to="/ai-assistant/weekly-report" className="dashboard-overview__flow-step" aria-label="生成周报">
+              <CalendarCheck size={18} />
+              <strong>生成周报</strong>
+              <small>从销售行动生成个人周报和商机周进展</small>
+            </Link> : null}
+          {canAnalyzeOpportunities ? <Link to="/ai-assistant/opportunities" className="dashboard-overview__flow-step" aria-label="分析商机">
+              <BarChart3 size={18} />
+              <strong>分析商机</strong>
+              <small>识别阶段健康、关系缺口、风险和下一步动作</small>
+            </Link> : null}
+          {canPlanVisits ? <Link to="/ai-assistant/visit-plans" className="dashboard-overview__flow-step" aria-label="准备拜访">
+              <BriefcaseBusiness size={18} />
+              <strong>准备拜访</strong>
+              <small>生成拜访目标、议程、材料、问题和跟进动作</small>
+            </Link> : null}
+          {canRecommendCommunication ? <Link to="/ai-assistant/communication" className="dashboard-overview__flow-step" aria-label="推荐沟通方式">
+              <Contact size={18} />
+              <strong>推荐沟通方式</strong>
+              <small>选择渠道、语气、重点、时机和升级路径</small>
+            </Link> : null}
         </div>
       </Card>
 
@@ -1371,7 +1387,7 @@ function AiAssistantPage() {
         </Card>
       </div>
 
-      <Card
+      {canManageDrafts ? <Card
         id="ai-text-input"
         title={<Typography.Title level={3}>文本录入</Typography.Title>}
         className="dashboard-overview__card"
@@ -1390,7 +1406,7 @@ function AiAssistantPage() {
             <Button onClick={() => setSourceText("")}>清空</Button>
           </Space>
         </Space>
-      </Card>
+      </Card> : null}
 
       {drafts.length > 0 ? (
         <div className="dashboard-grid">
@@ -1656,11 +1672,12 @@ function AiWeeklyReportPage() {
   );
 }
 
-function AiOpportunityAnalysisPage() {
+function AiOpportunityAnalysisPage({ currentUser }: { currentUser: CurrentUser }) {
+  const canReadOpportunities = currentUser.permissions.includes("opportunity.read");
   const opportunities = useObjectResource<Opportunity[]>(
-    () => crmApi.opportunities.list({ default_following: true }),
+    () => canReadOpportunities ? crmApi.opportunities.list({ default_following: true }) : Promise.resolve([]),
     () => [],
-    []
+    [canReadOpportunities]
   );
   const { data, loading, error, refresh, setData } = useObjectResource<AiOpportunityAnalysis[]>(
     () => crmApi.aiOpportunityAnalyses.list(),
@@ -1875,11 +1892,12 @@ function AiOpportunityAnalysisDetail({
   );
 }
 
-function AiVisitPlanPage() {
+function AiVisitPlanPage({ currentUser }: { currentUser: CurrentUser }) {
+  const canReadOpportunities = currentUser.permissions.includes("opportunity.read");
   const opportunities = useObjectResource<Opportunity[]>(
-    () => crmApi.opportunities.list({ default_following: true }),
+    () => canReadOpportunities ? crmApi.opportunities.list({ default_following: true }) : Promise.resolve([]),
     () => [],
-    []
+    [canReadOpportunities]
   );
   const { data, loading, error, refresh, setData } = useObjectResource<AiVisitPlan[]>(
     () => crmApi.aiVisitPlans.list(),
@@ -2083,18 +2101,20 @@ function AiVisitPlanDetail({
   );
 }
 
-function AiCommunicationRecommendationPage() {
+function AiCommunicationRecommendationPage({ currentUser }: { currentUser: CurrentUser }) {
+  const canReadOpportunities = currentUser.permissions.includes("opportunity.read");
+  const canReadContacts = currentUser.permissions.includes("contact.read");
   const opportunities = useObjectResource<Opportunity[]>(
-    () => crmApi.opportunities.list({ default_following: true }),
+    () => canReadOpportunities ? crmApi.opportunities.list({ default_following: true }) : Promise.resolve([]),
     () => [],
-    []
+    [canReadOpportunities]
   );
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<number | undefined>();
   const selectedOpportunity = opportunities.data.find((opportunity) => opportunity.id === selectedOpportunityId);
   const contacts = useObjectResource<CrmContact[]>(
-    () => (selectedOpportunity ? crmApi.contacts.list({ account_id: selectedOpportunity.account_id }) : Promise.resolve([])),
+    () => (canReadContacts && selectedOpportunity ? crmApi.contacts.list({ account_id: selectedOpportunity.account_id }) : Promise.resolve([])),
     () => [],
-    [selectedOpportunity?.account_id]
+    [canReadContacts, selectedOpportunity?.account_id]
   );
   const { data, loading, error, refresh, setData } = useObjectResource<AiCommunicationRecommendation[]>(
     () => crmApi.aiCommunicationRecommendations.list(),
@@ -3531,7 +3551,8 @@ function AccountSummaryItem({ label, value }: { label: string; value: React.Reac
 function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
   const [filters, setFilters] = useState<Record<string, unknown>>({});
   const contacts = useResource(() => crmApi.contacts.list(filters), [filters]);
-  const accounts = useResource(crmApi.accounts.list, []);
+  const canReadAccounts = currentUser.permissions.includes("account.read");
+  const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selected, setSelected] = useState<CrmContact | null>(null);
   const [editing, setEditing] = useState<CrmContact | null>(null);
@@ -3860,7 +3881,8 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
   const initialOpportunityId = numericFilterValue(initialQueryFilters.opportunity_id);
   const [filters, setFilters] = useState<Record<string, unknown>>(() => toOpportunityListFilters(initialQueryFilters));
   const opportunities = useResource(() => crmApi.opportunities.list(filters), [filters]);
-  const accounts = useResource(crmApi.accounts.list, []);
+  const canReadAccounts = currentUser.permissions.includes("account.read");
+  const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selected, setSelected] = useState<Opportunity | null>(null);
   const [editing, setEditing] = useState<Opportunity | null>(null);
@@ -4259,8 +4281,10 @@ function SolutionDocumentsPage({ currentUser }: { currentUser: CurrentUser }) {
   const initialFilters = useInitialQueryFilters(["account_id", "opportunity_id"]);
   const [filters, setFilters] = useState<Record<string, unknown>>(initialFilters);
   const solutions = useResource(() => crmApi.solutions.list(filters), [filters]);
-  const accounts = useResource(crmApi.accounts.list, []);
-  const opportunities = useResource(crmApi.opportunities.list, []);
+  const canReadAccounts = currentUser.permissions.includes("account.read");
+  const canReadOpportunities = currentUser.permissions.includes("opportunity.read");
+  const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
+  const opportunities = useResource(() => canReadOpportunities ? crmApi.opportunities.list() : Promise.resolve([]), [canReadOpportunities]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selected, setSelected] = useState<SolutionDocument | null>(null);
   const [editing, setEditing] = useState<SolutionDocument | null>(null);
@@ -4531,8 +4555,10 @@ function ContractsPage({ currentUser }: { currentUser: CurrentUser }) {
   const initialContractId = numericFilterValue(initialFilters.contract_id);
   const [filters, setFilters] = useState<Record<string, unknown>>(() => toContractListFilters(initialFilters));
   const contracts = useResource(() => crmApi.contracts.list(filters), [filters]);
-  const accounts = useResource(crmApi.accounts.list, []);
-  const opportunities = useResource(crmApi.opportunities.list, []);
+  const canReadAccounts = currentUser.permissions.includes("account.read");
+  const canReadOpportunities = currentUser.permissions.includes("opportunity.read");
+  const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
+  const opportunities = useResource(() => canReadOpportunities ? crmApi.opportunities.list() : Promise.resolve([]), [canReadOpportunities]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selected, setSelected] = useState<CrmContract | null>(null);
   const [editing, setEditing] = useState<CrmContract | null>(null);
@@ -4910,9 +4936,12 @@ function InvoicesPage({ currentUser }: { currentUser: CurrentUser }) {
   const initialInvoiceId = numericFilterValue(initialFilters.invoice_id);
   const [filters, setFilters] = useState<Record<string, unknown>>(() => toInvoiceListFilters(initialFilters));
   const invoices = useResource(() => crmApi.invoices.list(filters), [filters]);
-  const accounts = useResource(crmApi.accounts.list, []);
-  const opportunities = useResource(crmApi.opportunities.list, []);
-  const contracts = useResource(crmApi.contracts.list, []);
+  const canReadAccounts = currentUser.permissions.includes("account.read");
+  const canReadOpportunities = currentUser.permissions.includes("opportunity.read");
+  const canReadContracts = currentUser.permissions.includes("contract.read");
+  const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
+  const opportunities = useResource(() => canReadOpportunities ? crmApi.opportunities.list() : Promise.resolve([]), [canReadOpportunities]);
+  const contracts = useResource(() => canReadContracts ? crmApi.contracts.list() : Promise.resolve([]), [canReadContracts]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selected, setSelected] = useState<Invoice | null>(null);
   const [editing, setEditing] = useState<Invoice | null>(null);
@@ -5406,8 +5435,10 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
   const initialPlanId = numericFilterValue(initialQueryFilters.receivable_plan_id);
   const [filters, setFilters] = useState<Record<string, unknown>>(() => toReceivableListFilters(initialQueryFilters));
   const receivables = useResource(() => crmApi.receivablePlans.list(filters), [filters]);
-  const accounts = useResource(crmApi.accounts.list, []);
-  const contracts = useResource(crmApi.contracts.list, []);
+  const canReadAccounts = currentUser.permissions.includes("account.read");
+  const canReadContracts = currentUser.permissions.includes("contract.read");
+  const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
+  const contracts = useResource(() => canReadContracts ? crmApi.contracts.list() : Promise.resolve([]), [canReadContracts]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selected, setSelected] = useState<ReceivablePlan | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -5822,7 +5853,7 @@ function ReceivablesPage({ currentUser }: { currentUser: CurrentUser }) {
   );
 }
 
-function PaymentsPage() {
+function PaymentsPage({ currentUser }: { currentUser: CurrentUser }) {
   const initialQueryFilters = useInitialQueryFilters([
     "account_id",
     "opportunity_id",
@@ -5840,9 +5871,12 @@ function PaymentsPage() {
   ]);
   const [filters, setFilters] = useState<Record<string, unknown>>(() => toPaymentListFilters(initialQueryFilters));
   const payments = useResource(() => crmApi.payments.list(filters), [filters]);
-  const accounts = useResource(crmApi.accounts.list, []);
-  const contracts = useResource(crmApi.contracts.list, []);
-  const receivables = useResource(crmApi.receivablePlans.list, []);
+  const canReadAccounts = currentUser.permissions.includes("account.read");
+  const canReadContracts = currentUser.permissions.includes("contract.read");
+  const canReadReceivables = currentUser.permissions.includes("receivable.read");
+  const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
+  const contracts = useResource(() => canReadContracts ? crmApi.contracts.list() : Promise.resolve([]), [canReadContracts]);
+  const receivables = useResource(() => canReadReceivables ? crmApi.receivablePlans.list() : Promise.resolve([]), [canReadReceivables]);
   const accountOptions = toAccountOptions(accounts.data);
   const contractOptions = contracts.data.map((contract) => ({ label: contract.contract_name, value: contract.id }));
   const receivableById = useMemo(() => new Map(receivables.data.map((plan) => [plan.id, plan])), [receivables.data]);
@@ -5903,7 +5937,7 @@ function PaymentsPage() {
   );
 }
 
-function ReconciliationWorkbenchPage() {
+function ReconciliationWorkbenchPage({ currentUser }: { currentUser: CurrentUser }) {
   const initialQueryFilters = useInitialQueryFilters([
     "account_id",
     "opportunity_id",
@@ -5920,8 +5954,10 @@ function ReconciliationWorkbenchPage() {
   const [workbench, setWorkbench] = useState<ReconciliationWorkbench>(() => emptyReconciliationWorkbench());
   const [loadingWorkbench, setLoadingWorkbench] = useState(false);
   const [workbenchError, setWorkbenchError] = useState("");
-  const accounts = useResource(crmApi.accounts.list, []);
-  const contracts = useResource(crmApi.contracts.list, []);
+  const canReadAccounts = currentUser.permissions.includes("account.read");
+  const canReadContracts = currentUser.permissions.includes("contract.read");
+  const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
+  const contracts = useResource(() => canReadContracts ? crmApi.contracts.list() : Promise.resolve([]), [canReadContracts]);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
   const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(initialPaymentId ?? null);
   const [voiding, setVoiding] = useState<Reconciliation | null>(null);
@@ -6413,9 +6449,12 @@ function SolutionDocumentDetail({
 function ActivitiesPage({ currentUser }: { currentUser: CurrentUser }) {
   const [filters, setFilters] = useState<Record<string, unknown>>({});
   const activities = useResource(() => crmApi.activities.list(filters), [filters]);
-  const accounts = useResource(crmApi.accounts.list, []);
-  const contacts = useResource(crmApi.contacts.list, []);
-  const opportunities = useResource(crmApi.opportunities.list, []);
+  const canReadAccounts = currentUser.permissions.includes("account.read");
+  const canReadContacts = currentUser.permissions.includes("contact.read");
+  const canReadOpportunities = currentUser.permissions.includes("opportunity.read");
+  const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
+  const contacts = useResource(() => canReadContacts ? crmApi.contacts.list() : Promise.resolve([]), [canReadContacts]);
+  const opportunities = useResource(() => canReadOpportunities ? crmApi.opportunities.list() : Promise.resolve([]), [canReadOpportunities]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selected, setSelected] = useState<Activity | null>(null);
   const [editing, setEditing] = useState<Activity | null>(null);
@@ -6757,11 +6796,13 @@ function ActivitySummaryItem({ label, value }: { label: string; value: React.Rea
   );
 }
 
-function WeeklyProgressPage() {
+function WeeklyProgressPage({ currentUser }: { currentUser: CurrentUser }) {
   const [filters, setFilters] = useState<Record<string, unknown>>({});
   const progress = useResource(() => crmApi.weeklyProgress.list(filters), [filters]);
-  const accounts = useResource(crmApi.accounts.list, []);
-  const opportunities = useResource(crmApi.opportunities.list, []);
+  const canReadAccounts = currentUser.permissions.includes("account.read");
+  const canReadOpportunities = currentUser.permissions.includes("opportunity.read");
+  const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
+  const opportunities = useResource(() => canReadOpportunities ? crmApi.opportunities.list() : Promise.resolve([]), [canReadOpportunities]);
   const [selected, setSelected] = useState<WeeklyProgress | null>(null);
   const accountOptions = toAccountOptions(accounts.data);
   const opportunityOptions = toOpportunityOptions(opportunities.data);
