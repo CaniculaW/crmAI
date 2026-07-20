@@ -16,7 +16,7 @@
 - Create: `frontend/src/styles.test.ts`
 - Test: `frontend/src/styles.test.ts`
 
-- [ ] **Step 1: Write failing global density token tests**
+- [x] **Step 1: Write failing global density token tests**
 
 Create a Vitest test that reads the production stylesheet and requires the agreed density tokens:
 
@@ -46,13 +46,13 @@ describe("compact UI density contract", () => {
 });
 ```
 
-- [ ] **Step 2: Run the density tests and confirm RED**
+- [x] **Step 2: Run the density tests and confirm RED**
 
 Run: `cd frontend && npm test -- --run src/styles.test.ts`
 
 Expected: FAIL because the density variables and compact component rules do not exist.
 
-- [ ] **Step 3: Commit the RED contract**
+- [x] **Step 3: Commit the RED contract**
 
 ```bash
 git add frontend/src/styles.test.ts
@@ -66,7 +66,7 @@ git commit -m "test: define compact UI density contract"
 - Modify: `frontend/src/App.tsx`
 - Test: `frontend/src/styles.test.ts`
 
-- [ ] **Step 1: Add global density variables**
+- [x] **Step 1: Add global density variables**
 
 Add these variables to `:root`:
 
@@ -85,11 +85,11 @@ Add these variables to `:root`:
 
 Set body font size and line height to `13px` and `1.45`. Change `Sider width={232}` to `Sider width={216}` so layout geometry matches CSS.
 
-- [ ] **Step 2: Compact the desktop application frame**
+- [x] **Step 2: Compact the desktop application frame**
 
 Apply the density variables to `.brand-block`, `.app-header`, `.app-content`, `.workspace-header`, page title and helper text. Preserve the existing fixed sidebar and independently scrolling content layout.
 
-- [ ] **Step 3: Add the mobile density override**
+- [x] **Step 3: Add the mobile density override**
 
 Inside `@media (max-width: 900px)`, set:
 
@@ -102,7 +102,7 @@ Inside `@media (max-width: 900px)`, set:
 
 Keep the mobile drawer layout, restore button/input minimum height to 36px, and allow header actions to wrap.
 
-- [ ] **Step 4: Run tests and build**
+- [x] **Step 4: Run tests and build**
 
 Run: `cd frontend && npm test -- --run src/styles.test.ts src/App.test.tsx`
 
@@ -112,7 +112,7 @@ Run: `cd frontend && npm run build`
 
 Expected: TypeScript and Vite production build succeed.
 
-- [ ] **Step 5: Commit the frame update**
+- [x] **Step 5: Commit the frame update**
 
 ```bash
 git add frontend/src/styles.css frontend/src/App.tsx frontend/src/styles.test.ts
@@ -125,25 +125,25 @@ git commit -m "style: compact the application frame"
 - Modify: `frontend/src/styles.css`
 - Test: `frontend/src/styles.test.ts`
 
-- [ ] **Step 1: Compact controls and forms**
+- [x] **Step 1: Compact controls and forms**
 
 Add global selectors for buttons, inputs, selects, date pickers, number inputs and form items. Desktop controls use 32px height; labels and field text use 13px; form items use 12px bottom margin. Do not reduce icon-only hit areas below the active control height.
 
-- [ ] **Step 2: Compact tables and pagination**
+- [x] **Step 2: Compact tables and pagination**
 
 Set table header/body font size to 13px, cells to `padding: 9px 10px`, compact table cells to `7px 8px`, and pagination controls to the density control height. Keep horizontal overflow on `.ant-table-wrapper`.
 
-- [ ] **Step 3: Compact cards, drawers, modals and alerts**
+- [x] **Step 3: Compact cards, drawers, modals and alerts**
 
 Set card head/body, modal body, drawer body, alert, descriptions and empty state spacing from the shared variables. Card titles use 15-16px; cards retain the existing maximum 8px radius.
 
-- [ ] **Step 4: Run density and App tests**
+- [x] **Step 4: Run density and App tests**
 
 Run: `cd frontend && npm test -- --run src/styles.test.ts src/App.test.tsx`
 
 Expected: all selected tests pass.
 
-- [ ] **Step 5: Commit shared component density**
+- [x] **Step 5: Commit shared component density**
 
 ```bash
 git add frontend/src/styles.css frontend/src/styles.test.ts
@@ -156,19 +156,19 @@ git commit -m "style: compact shared CRM components"
 - Modify: `frontend/src/styles.css`
 - Test: `frontend/src/styles.test.ts`
 
-- [ ] **Step 1: Compact workspace filters and guides**
+- [x] **Step 1: Compact workspace filters and guides**
 
 Reduce `.filter-bar`, `.page-guide`, `.section-title-row`, `.summary-grid` and workspace gap values to the 10-12px range. Preserve wrapping for long filter rows.
 
-- [ ] **Step 2: Compact dashboard and AI cards**
+- [x] **Step 2: Compact dashboard and AI cards**
 
 Reduce metric-card minimum heights, card padding, grid gaps and oversized metric typography. Keep key metric values visually stronger than labels and never scale type with viewport width.
 
-- [ ] **Step 3: Compact detail sections and system management**
+- [x] **Step 3: Compact detail sections and system management**
 
 Reduce `.drawer-section`, `.record-details`, `.system-grid`, `.system-module-grid`, `.ai-draft-fields` and list-row spacing. Keep long Chinese names wrapping or truncating within their containers.
 
-- [ ] **Step 4: Run the complete frontend suite**
+- [x] **Step 4: Run the complete frontend suite**
 
 Run: `cd frontend && npm test`
 
@@ -178,7 +178,7 @@ Run: `cd frontend && npm run build`
 
 Expected: production build succeeds.
 
-- [ ] **Step 5: Commit business surface density**
+- [x] **Step 5: Commit business surface density**
 
 ```bash
 git add frontend/src/styles.css
@@ -192,27 +192,27 @@ git commit -m "style: compact business workspaces"
 - Create: `docs/testing/evidence/artifacts/compact-ui-density-20260720/`
 - Modify: `docs/superpowers/plans/2026-07-20-compact-ui-density.md`
 
-- [ ] **Step 1: Start or reuse the local application**
+- [x] **Step 1: Start or reuse the local application**
 
 Use the current Docker/local backend and start the frontend on the first free local port with the API proxy configured. Record the final URL in the validation report.
 
-- [ ] **Step 2: Capture representative desktop pages**
+- [x] **Step 2: Capture representative desktop pages**
 
 At 1440x1000, verify and capture `/accounts`, `/contracts`, `/approvals`, `/system/users`, and `/dashboard`. Confirm fixed sidebar, independent content scrolling, compact tables and controls, and no overlap.
 
-- [ ] **Step 3: Capture representative mobile pages**
+- [x] **Step 3: Capture representative mobile pages**
 
 At 390x844, verify the same five routes. Confirm the navigation drawer, 36px controls, wrapped title actions, horizontally scrollable tables and no body overflow.
 
-- [ ] **Step 4: Run automated browser smoke**
+- [x] **Step 4: Run automated browser smoke**
 
 Run the existing V2 and V4 browser smoke scripts against the local URL. Expected: all route/viewport checks pass with zero console failures and zero failed responses.
 
-- [ ] **Step 5: Record evidence**
+- [x] **Step 5: Record evidence**
 
 Write the tested commit, URL, viewport list, route results, test counts, build result and any non-blocking residual risk to `docs/testing/evidence/compact-ui-density-validation-2026-07-20.md`.
 
-- [ ] **Step 6: Commit validation evidence**
+- [x] **Step 6: Commit validation evidence**
 
 ```bash
 git add docs/superpowers/plans/2026-07-20-compact-ui-density.md docs/testing/evidence/compact-ui-density-validation-2026-07-20.md docs/testing/evidence/artifacts/compact-ui-density-20260720
@@ -224,7 +224,7 @@ git commit -m "test: validate compact UI density"
 **Files:**
 - Verify: all changed frontend and evidence files
 
-- [ ] **Step 1: Run final verification**
+- [x] **Step 1: Run final verification**
 
 Run: `cd frontend && npm test`
 
@@ -234,7 +234,7 @@ Run: `git diff --check`
 
 Expected: all commands exit successfully with no failures.
 
-- [ ] **Step 2: Inspect final repository state**
+- [x] **Step 2: Inspect final repository state**
 
 Run: `git status --short` and `git log -5 --oneline`.
 
