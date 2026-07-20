@@ -1207,7 +1207,7 @@ describe("CRM frontend V1 workflow", () => {
 
     expect(await screen.findByRole("dialog", { name: "导航菜单" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "工作台" })).toHaveLength(2);
-    expect(stylesCss).toMatch(/@media\s*\(max-width:\s*860px\)[\s\S]*?\.app-sidebar\s*{[^}]*display:\s*none\s*!important;/s);
+    expect(stylesCss).toMatch(/@media\s*\(max-width:\s*900px\)[\s\S]*?\.app-sidebar\s*{[^}]*display:\s*none\s*!important;/s);
   });
 
   it("shows a dashboard command center with priority and quick entries", async () => {

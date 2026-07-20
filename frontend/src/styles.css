@@ -1,4 +1,14 @@
 :root {
+  --crm-font-size: 13px;
+  --crm-page-title-size: 20px;
+  --crm-section-title-size: 16px;
+  --crm-helper-size: 12px;
+  --crm-header-height: 52px;
+  --crm-sidebar-width: 216px;
+  --crm-content-padding: 18px;
+  --crm-section-gap: 12px;
+  --crm-card-padding: 14px;
+  --crm-control-height: 32px;
   color: #172033;
   background: #f5f7fb;
   font-family:
@@ -21,6 +31,8 @@ body {
   height: 100vh;
   min-height: 100vh;
   overflow: hidden;
+  font-size: var(--crm-font-size);
+  line-height: 1.45;
 }
 
 .boot-screen,
@@ -59,6 +71,10 @@ body {
   overflow-y: auto;
   background: #ffffff;
   border-right: 1px solid #e6eaf2;
+  flex: 0 0 var(--crm-sidebar-width) !important;
+  width: var(--crm-sidebar-width) !important;
+  min-width: var(--crm-sidebar-width) !important;
+  max-width: var(--crm-sidebar-width) !important;
 }
 
 .app-shell > .ant-layout {
@@ -69,9 +85,9 @@ body {
 
 .brand-block {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
-  padding: 22px 20px 18px;
+  padding: 14px 14px 12px;
 }
 
 .brand-block h1.ant-typography {
@@ -90,8 +106,8 @@ body {
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   background: #1f5eff;
   color: #ffffff;
@@ -113,12 +129,12 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 64px;
-  height: auto;
-  gap: 16px;
-  flex-wrap: wrap;
+  min-height: var(--crm-header-height);
+  height: var(--crm-header-height);
+  gap: 12px;
+  flex-wrap: nowrap;
   line-height: 1.4;
-  padding: 0 24px;
+  padding: 0 var(--crm-content-padding);
   background: #ffffff;
   border-bottom: 1px solid #e6eaf2;
 }
@@ -130,7 +146,7 @@ body {
 .app-header > div:first-child span {
   display: block;
   color: #667085;
-  font-size: 13px;
+  font-size: var(--crm-helper-size);
 }
 
 .header-identity {
@@ -175,48 +191,52 @@ body {
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .app-content {
   min-height: 0;
   overflow-y: auto;
-  padding: 24px;
+  padding: var(--crm-content-padding);
 }
 
 .workspace {
-  max-width: 1240px;
+  width: 100%;
+  max-width: none;
 }
 
 .workspace-header {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .workspace h2.ant-typography {
-  margin: 0 0 6px;
-  font-size: 24px;
+  margin: 0 0 4px;
+  font-size: var(--crm-page-title-size);
+  line-height: 1.35;
 }
 
 .workspace p {
   margin: 0;
   color: #667085;
+  font-size: var(--crm-helper-size);
+  line-height: 1.5;
 }
 
 .page-guide {
   display: flex;
   gap: 10px;
   align-items: center;
-  margin: -4px 0 16px;
-  padding: 10px 12px;
+  margin: 0 0 12px;
+  padding: 8px 10px;
   border: 1px solid #d8e7ff;
   border-radius: 8px;
   background: #f4f8ff;
   color: #31415f;
-  font-size: 13px;
+  font-size: var(--crm-helper-size);
 }
 
 .page-guide strong {
@@ -1504,11 +1524,397 @@ body {
   width: 100%;
 }
 
+/* Shared compact-density layer for every authenticated workspace. */
+.app-shell .ant-menu {
+  font-size: var(--crm-font-size);
+}
+
+.app-shell .ant-menu-item,
+.app-shell .ant-menu-submenu-title {
+  height: 40px;
+  margin-block: 1px;
+  line-height: 40px;
+}
+
+.app-shell .ant-menu-inline .ant-menu-item,
+.app-shell .ant-menu-inline .ant-menu-submenu-title {
+  width: calc(100% - 8px);
+  margin-inline: 4px;
+}
+
+.app-shell .ant-btn {
+  height: var(--crm-control-height);
+  padding-inline: 12px;
+  font-size: var(--crm-font-size);
+}
+
+.app-shell .ant-btn-sm {
+  height: 26px;
+  padding-inline: 8px;
+  font-size: var(--crm-helper-size);
+}
+
+.app-shell .ant-input,
+.app-shell .ant-input-affix-wrapper,
+.app-shell .ant-input-number,
+.app-shell .ant-picker,
+.app-shell .ant-select-single,
+.app-shell .ant-select-single .ant-select-selector {
+  min-height: var(--crm-control-height);
+  font-size: var(--crm-font-size);
+}
+
+.app-shell .ant-input,
+.app-shell .ant-input-affix-wrapper,
+.app-shell .ant-picker,
+.app-shell .ant-select-single .ant-select-selector {
+  padding-block: 4px;
+  padding-inline: 10px;
+}
+
+.app-shell .ant-input-number-input {
+  height: calc(var(--crm-control-height) - 2px);
+  font-size: var(--crm-font-size);
+}
+
+.app-shell .ant-select-single .ant-select-selector .ant-select-selection-item,
+.app-shell .ant-select-single .ant-select-selector .ant-select-selection-placeholder {
+  line-height: calc(var(--crm-control-height) - 2px);
+}
+
+.app-shell .ant-form-item {
+  margin-bottom: 12px;
+}
+
+.app-shell .ant-form-item-label > label,
+.app-shell .ant-form-item-explain,
+.app-shell .ant-form-item-extra {
+  font-size: var(--crm-font-size);
+}
+
+.app-shell .ant-form-item-label > label {
+  height: 30px;
+}
+
+.app-shell .ant-card-head {
+  min-height: 40px;
+  padding-inline: var(--crm-card-padding);
+}
+
+.app-shell .ant-card-head-title,
+.app-shell .ant-card-extra {
+  padding-block: 9px;
+}
+
+.app-shell .ant-card-head-title {
+  font-size: 15px;
+}
+
+.app-shell .ant-card-body {
+  padding: var(--crm-card-padding);
+}
+
+.app-shell .ant-alert {
+  padding: 8px 12px;
+}
+
+.app-shell .ant-alert-message,
+.app-shell .ant-alert-description,
+.app-shell .ant-descriptions,
+.app-shell .ant-list,
+.app-shell .ant-tabs,
+.app-shell .ant-pagination {
+  font-size: var(--crm-font-size);
+}
+
+.app-shell .ant-empty {
+  margin-block: 20px;
+  font-size: var(--crm-font-size);
+}
+
+.app-shell .ant-pagination .ant-pagination-item,
+.app-shell .ant-pagination .ant-pagination-prev,
+.app-shell .ant-pagination .ant-pagination-next {
+  min-width: var(--crm-control-height);
+  height: var(--crm-control-height);
+  line-height: calc(var(--crm-control-height) - 2px);
+}
+
+.app-shell .ant-tabs .ant-tabs-tab {
+  padding-block: 8px;
+}
+
+.app-shell .ant-tabs-top > .ant-tabs-nav {
+  margin-bottom: 12px;
+}
+
+.app-shell .ant-descriptions .ant-descriptions-row > th,
+.app-shell .ant-descriptions .ant-descriptions-row > td {
+  padding-bottom: 10px;
+}
+
+.ant-modal .ant-modal-header,
+.ant-drawer .ant-drawer-header {
+  padding: 12px 16px;
+}
+
+.ant-modal .ant-modal-title,
+.ant-drawer .ant-drawer-title {
+  font-size: var(--crm-section-title-size);
+}
+
+.ant-modal .ant-modal-body,
+.ant-drawer .ant-drawer-body {
+  padding: 14px 16px;
+}
+
+.ant-modal .ant-modal-footer {
+  margin-top: 12px;
+}
+
+.ant-table-wrapper {
+  overflow-x: auto;
+  font-size: var(--crm-font-size);
+}
+
+.ant-table-wrapper .ant-table-cell {
+  padding: 9px 10px;
+}
+
+.ant-table-wrapper .ant-table-small .ant-table-cell {
+  padding: 7px 8px;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th {
+  color: #667085;
+  font-size: var(--crm-helper-size);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ant-form-item {
+  margin-bottom: 12px;
+}
+
+.summary-grid,
+.dashboard-grid,
+.dictionary-grid,
+.system-grid,
+.system-module-grid,
+.reconciliation-workbench-grid,
+.relationship-grid {
+  gap: 10px;
+}
+
+.summary-grid,
+.system-grid,
+.system-module-grid,
+.relationship-view {
+  margin-bottom: 12px;
+}
+
+.summary-panel {
+  padding: var(--crm-card-padding);
+}
+
+.summary-panel strong {
+  margin-top: 6px;
+  font-size: 22px;
+}
+
+.dashboard-command-center {
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: var(--crm-card-padding);
+}
+
+.dashboard-command-center h3.ant-typography,
+.dashboard-overview__section h3.ant-typography,
+.dashboard-overview__card h3.ant-typography,
+.relationship-view h3.ant-typography {
+  margin-bottom: 6px;
+  font-size: var(--crm-section-title-size);
+}
+
+.dashboard-overview,
+.dashboard-overview__section {
+  gap: var(--crm-section-gap);
+}
+
+.dashboard-overview__metrics,
+.dashboard-overview__flow,
+.ai-workbench-summary,
+.ai-workbench-actions,
+.dashboard-overview__columns,
+.dashboard-funnel__layout {
+  gap: 10px;
+}
+
+.dashboard-overview__metric {
+  gap: 6px;
+  min-height: 82px;
+  padding: 12px;
+}
+
+.dashboard-overview__metric strong {
+  font-size: 20px;
+}
+
+.dashboard-overview__flow-step {
+  gap: 6px;
+  min-height: 82px;
+  padding: 12px;
+}
+
+.dashboard-overview__flow-step strong {
+  font-size: 15px;
+}
+
+.ai-workbench-summary .ant-card-body {
+  gap: 5px;
+}
+
+.ai-workbench-summary strong {
+  font-size: 20px;
+}
+
+.ai-workbench-actions .dashboard-overview__flow-step {
+  min-height: 100px;
+}
+
+.dashboard-overview__risk-row,
+.dashboard-overview__top-risk,
+.dashboard-funnel__stage,
+.dashboard-funnel__attention-row,
+.dashboard-contracts__status-row,
+.dashboard-contracts__milestone,
+.dashboard-invoices__status-row,
+.dashboard-invoices__risk-row,
+.dashboard-receivables__status-row,
+.dashboard-receivables__summary-row,
+.dashboard-risks__trend-row,
+.dashboard-risks__owner-row,
+.dashboard-risks__work-item,
+.dashboard-funnel__trend-row {
+  gap: 6px;
+  padding: 10px;
+}
+
+.system-module-card p {
+  margin: 6px 0 10px;
+  font-size: var(--crm-helper-size);
+}
+
+.system-module-card strong {
+  font-size: 18px;
+}
+
+.section-card {
+  margin-top: var(--crm-section-gap);
+}
+
+.filter-bar {
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+}
+
+.drawer-section {
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.section-title-row {
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.section-title-row h4.ant-typography,
+.account-operation h3.ant-typography,
+.account-operation h4.ant-typography,
+.contact-operation h3.ant-typography,
+.contact-operation h4.ant-typography,
+.opportunity-progress h3.ant-typography,
+.opportunity-progress h4.ant-typography,
+.activity-execution h3.ant-typography,
+.activity-execution h4.ant-typography,
+.weekly-review h3.ant-typography,
+.weekly-review h4.ant-typography {
+  margin-bottom: 6px;
+  font-size: var(--crm-section-title-size);
+}
+
+.inline-create-form {
+  margin-top: 12px;
+  padding: 12px;
+}
+
+.account-operation,
+.contact-operation,
+.opportunity-progress,
+.solution-detail,
+.activity-execution,
+.weekly-review {
+  gap: var(--crm-section-gap);
+}
+
+.account-operation-hero,
+.contact-operation-hero,
+.opportunity-progress-hero,
+.activity-execution-hero,
+.weekly-review-hero {
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.account-entry-grid,
+.contact-entry-grid,
+.opportunity-entry-grid,
+.activity-entry-grid,
+.weekly-review-entry-grid {
+  gap: 10px;
+}
+
+.account-entry-link,
+.contact-entry-link,
+.opportunity-entry-link,
+.activity-entry-link,
+.weekly-review-entry-link {
+  min-height: 88px;
+  padding: 12px;
+}
+
+.account-follow-up-panel,
+.contact-communication-panel,
+.opportunity-progress-panel,
+.activity-process-panel,
+.weekly-review-item,
+.account-next-step {
+  gap: 8px;
+  padding: 12px;
+}
+
+.record-details,
+.detail-stack {
+  gap: 10px;
+}
+
+.record-details div,
+.detail-item {
+  gap: 10px;
+  padding-bottom: 10px;
+}
+
 .ant-table-wrapper {
   overflow-x: auto;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 900px) {
+  :root {
+    --crm-control-height: 36px;
+    --crm-content-padding: 12px;
+  }
+
   .app-shell > .ant-layout {
     width: 100% !important;
     max-width: 100% !important;
@@ -1523,12 +1929,16 @@ body {
   }
 
   .app-header,
-  .app-header.ant-layout-header,
-  .workspace-header {
+  .app-header.ant-layout-header {
     align-items: stretch;
     flex-direction: column;
     height: auto;
-    padding: 16px;
+    padding: 12px;
+  }
+
+  .workspace-header {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .app-header {
@@ -1540,7 +1950,7 @@ body {
   }
 
   .app-content {
-    padding: 16px;
+    padding: var(--crm-content-padding);
   }
 
   .workspace {

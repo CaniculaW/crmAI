@@ -489,7 +489,7 @@ function CrmShell() {
   return (
     <Layout className="app-shell">
       {contextHolder}
-      <Sider width={232} className="app-sidebar">
+      <Sider width={216} className="app-sidebar">
         <div className="brand-block">
           <div className="brand-mark">C</div>
           <div>
