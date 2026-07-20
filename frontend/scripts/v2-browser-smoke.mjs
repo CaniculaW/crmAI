@@ -11,6 +11,7 @@ const REPO_ROOT = path.resolve(FRONTEND_ROOT, "..");
 
 export const DEFAULT_V2_PAGE_CHECKS = [
   { path: "/", expectedTexts: ["工作台"] },
+  { path: "/dashboard", expectedTexts: ["经营总览"] },
   { path: "/accounts", expectedTexts: ["客户"] },
   { path: "/contacts", expectedTexts: ["联系人"] },
   { path: "/opportunities", expectedTexts: ["商机"] },
@@ -22,6 +23,7 @@ export const DEFAULT_V2_PAGE_CHECKS = [
   { path: "/invoices", expectedTexts: ["开票"] },
   { path: "/receivables", expectedTexts: ["回款"] },
   { path: "/reconciliations", expectedTexts: ["核销"] },
+  { path: "/approvals", expectedTexts: ["审批"] },
   { path: "/system", expectedTexts: ["系统"] },
   { path: "/system/departments", expectedTexts: ["组织"] },
   { path: "/system/users", expectedTexts: ["用户"] },

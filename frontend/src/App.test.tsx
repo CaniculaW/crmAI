@@ -8,6 +8,7 @@ import { App } from "./App";
 import type { AiDraft } from "./api/crm";
 
 const stylesCss = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "styles.css"), "utf8");
+const appSource = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "App.tsx"), "utf8");
 
 const apiData = {
   user: {
@@ -1143,6 +1144,10 @@ const apiData = {
 };
 
 describe("CRM frontend V1 workflow", () => {
+  it("uses the supported Ant Design Alert title API", () => {
+    expect(appSource).not.toMatch(/<Alert[^>]*\bmessage=/);
+  });
+
   beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();

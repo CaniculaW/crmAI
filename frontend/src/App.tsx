@@ -1333,7 +1333,7 @@ function AiAssistantPage({ currentUser }: { currentUser: CurrentUser }) {
       />
       {workbenchError ? <div className="error-banner">{workbenchError}</div> : null}
       {data.generation_notice ? (
-        <Alert type="info" showIcon message={data.generation_notice} />
+        <Alert type="info" showIcon title={data.generation_notice} />
       ) : null}
 
       <div className="ai-workbench-summary">

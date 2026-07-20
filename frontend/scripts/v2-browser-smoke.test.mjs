@@ -21,11 +21,13 @@ describe("v2 browser smoke script helpers", () => {
     expect(DEFAULT_V2_PAGE_CHECKS).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ path: "/", expectedTexts: expect.arrayContaining(["工作台"]) }),
+        expect.objectContaining({ path: "/dashboard", expectedTexts: expect.arrayContaining(["经营总览"]) }),
         expect.objectContaining({ path: "/solutions", expectedTexts: expect.arrayContaining(["方案"]) }),
         expect.objectContaining({ path: "/contracts", expectedTexts: expect.arrayContaining(["合同"]) }),
         expect.objectContaining({ path: "/invoices", expectedTexts: expect.arrayContaining(["开票"]) }),
         expect.objectContaining({ path: "/receivables", expectedTexts: expect.arrayContaining(["回款"]) }),
         expect.objectContaining({ path: "/reconciliations", expectedTexts: expect.arrayContaining(["核销"]) }),
+        expect.objectContaining({ path: "/approvals", expectedTexts: expect.arrayContaining(["审批"]) }),
         expect.objectContaining({ path: "/system/roles", expectedTexts: expect.arrayContaining(["角色权限"]) }),
         expect.objectContaining({ path: "/system/dictionaries", expectedTexts: expect.arrayContaining(["字典"]) })
       ])
