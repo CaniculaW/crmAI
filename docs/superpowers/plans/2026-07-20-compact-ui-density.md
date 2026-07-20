@@ -240,7 +240,7 @@ Run: `git status --short` and `git log -5 --oneline`.
 
 Expected: only intentional evidence files are present and all implementation commits are recorded.
 
-- [ ] **Step 3: Push the feature branch**
+- [x] **Step 3: Push the feature branch**
 
 ```bash
 git push -u origin codex/compact-ui-density
