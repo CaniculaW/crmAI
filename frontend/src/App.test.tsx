@@ -2120,6 +2120,112 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
+  it("does not show stale account relations after switching customers", async () => {
+    const account1Contacts = deferred<Response>();
+    const account1Opportunities = deferred<Response>();
+    const account2Contacts = deferred<Response>();
+    const account2Opportunities = deferred<Response>();
+    const account2 = { ...apiData.accounts[0], id: 2, account_name: "测试客户B" };
+    const account2Contact = { ...apiData.contacts[0], id: 23, account_id: 2, name: "王新客户" };
+    const account2Opportunity = { ...apiData.opportunities[0], id: 11, account_id: 2, opportunity_name: "测试商机B" };
+    const fetchMock = mockCrmFetch({ accounts: [apiData.accounts[0], account2] });
+    const defaultFetch = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation((input, init) => {
+      const url = new URL(String(input), "http://localhost");
+      const accountId = url.searchParams.get("account_id");
+      if (url.pathname.endsWith("/api/contacts") && accountId === "1") {
+        return account1Contacts.promise;
+      }
+      if (url.pathname.endsWith("/api/opportunities") && accountId === "1") {
+        return account1Opportunities.promise;
+      }
+      if (url.pathname.endsWith("/api/contacts") && accountId === "2") {
+        return account2Contacts.promise;
+      }
+      if (url.pathname.endsWith("/api/opportunities") && accountId === "2") {
+        return account2Opportunities.promise;
+      }
+      return defaultFetch!(input, init);
+    });
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+    await user.click(screen.getByRole("link", { name: "客户池" }));
+    await screen.findByText("测试客户B");
+    await user.click(screen.getAllByRole("button", { name: /查看经营/ })[0]);
+
+    await act(async () => {
+      account1Contacts.resolve(jsonResponse({ code: "OK", data: [apiData.contacts[0]] }));
+      await account1Contacts.promise;
+    });
+    expect(await screen.findByRole("link", { name: "查看联系人 张决策" })).toHaveAttribute(
+      "href",
+      "/contacts?account_id=1&contact_id=21"
+    );
+
+    await user.click(screen.getAllByRole("button", { name: /查看经营/ })[1]);
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/contacts?account_id=2", expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith("/api/opportunities?account_id=2", expect.anything());
+    });
+    expect(screen.queryByRole("link", { name: "查看联系人 张决策" })).not.toBeInTheDocument();
+
+    await act(async () => {
+      account2Contacts.resolve(jsonResponse({ code: "OK", data: [account2Contact] }));
+      account2Opportunities.resolve(jsonResponse({ code: "OK", data: [account2Opportunity] }));
+      await Promise.all([account2Contacts.promise, account2Opportunities.promise]);
+    });
+    expect(await screen.findByRole("link", { name: "查看联系人 王新客户" })).toHaveAttribute(
+      "href",
+      "/contacts?account_id=2&contact_id=23"
+    );
+    expect(await screen.findByRole("link", { name: "查看商机 测试商机B" })).toHaveAttribute(
+      "href",
+      "/opportunities?account_id=2&opportunity_id=11"
+    );
+
+    await act(async () => {
+      account1Opportunities.resolve(jsonResponse({ code: "OK", data: [apiData.opportunities[0]] }));
+      await account1Opportunities.promise;
+    });
+    expect(screen.queryByRole("link", { name: "查看商机 测试商机A" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看商机 测试商机B" })).toBeInTheDocument();
+  });
+
+  it("shows contact relation errors without disabling opportunities", async () => {
+    const fetchMock = mockCrmFetch();
+    const defaultFetch = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation((input, init) => {
+      const url = new URL(String(input), "http://localhost");
+      if (url.pathname.endsWith("/api/contacts") && url.searchParams.get("account_id") === "1") {
+        return Promise.resolve(jsonResponse({ code: "ERROR", message: "联系人服务不可用" }, 500));
+      }
+      return defaultFetch!(input, init);
+    });
+    const user = userEvent.setup();
+
+    render(<App />);
+    await loginThroughUi(user);
+    await user.click(screen.getByRole("link", { name: "客户池" }));
+    await screen.findByText("测试客户A");
+    await user.click(screen.getByRole("button", { name: /查看经营/ }));
+
+    const relatedRecords = await screen.findByRole("region", { name: "客户关联记录" });
+    const contactPanel = within(relatedRecords).getByRole("heading", { name: "关联联系人" }).closest("section")!;
+    const contactAlert = await within(contactPanel).findByRole("alert");
+    expect(within(contactAlert).getByText("关联联系人加载失败")).toBeInTheDocument();
+    expect(within(contactAlert).getByText("联系人服务不可用")).toBeInTheDocument();
+    expect(within(contactPanel).getByText("暂无关联联系人")).toBeInTheDocument();
+
+    expect(await within(relatedRecords).findByRole("link", { name: "查看商机 测试商机A" })).toHaveAttribute(
+      "href",
+      "/opportunities?account_id=1&opportunity_id=10"
+    );
+    const opportunityPanel = within(relatedRecords).getByRole("heading", { name: "关联商机" }).closest("section")!;
+    expect(within(opportunityPanel).queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("shows the customer V2 business snapshot with scoped links", async () => {
     const user = userEvent.setup();
     const fetchMock = mockCrmFetch();

@@ -3558,7 +3558,7 @@ function AccountOperationDrawer({ account, currentUser }: { account: Account | n
         <small>{lastActivityAt === "-" ? "暂无跟进时间" : lastActivityAt}</small>
       </section>
 
-      <AccountRelatedRecords accountId={account.id} permissions={currentUser.permissions} />
+      <AccountRelatedRecords key={account.id} accountId={account.id} permissions={currentUser.permissions} />
 
       <section>
         <Typography.Title level={4}>关联业务入口</Typography.Title>
@@ -3590,11 +3590,11 @@ function AccountOperationDrawer({ account, currentUser }: { account: Account | n
 function AccountRelatedRecords({ accountId, permissions }: { accountId: number; permissions: string[] }) {
   const canReadContacts = permissions.includes("contact.read");
   const canReadOpportunities = permissions.includes("opportunity.read");
-  const contacts = useResource(
+  const contacts = useLatestResource(
     () => canReadContacts ? crmApi.contacts.list({ account_id: accountId }) : Promise.resolve([]),
     [accountId, canReadContacts]
   );
-  const opportunities = useResource(
+  const opportunities = useLatestResource(
     () => canReadOpportunities ? crmApi.opportunities.list({ account_id: accountId }) : Promise.resolve([]),
     [accountId, canReadOpportunities]
   );
@@ -3649,6 +3649,9 @@ function AccountRelatedRecords({ accountId, permissions }: { accountId: number; 
             <span>{contacts.data.length} 人</span>
             <Link to={`/contacts?account_id=${accountId}`} aria-label="查看全部联系人">查看全部</Link>
           </Space>
+          {contacts.error ? (
+            <Alert type="error" showIcon title="关联联系人加载失败" description={contacts.error} />
+          ) : null}
           <Table
             rowKey="id"
             size="small"
@@ -3656,7 +3659,7 @@ function AccountRelatedRecords({ accountId, permissions }: { accountId: number; 
             columns={contactColumns}
             loading={contacts.loading}
             pagination={false}
-            locale={{ emptyText: contacts.error || "暂无关联联系人" }}
+            locale={{ emptyText: "暂无关联联系人" }}
           />
         </section>
       ) : null}
@@ -3667,6 +3670,9 @@ function AccountRelatedRecords({ accountId, permissions }: { accountId: number; 
             <span>{opportunities.data.length} 个</span>
             <Link to={`/opportunities?account_id=${accountId}`} aria-label="查看全部商机">查看全部</Link>
           </Space>
+          {opportunities.error ? (
+            <Alert type="error" showIcon title="关联商机加载失败" description={opportunities.error} />
+          ) : null}
           <Table
             rowKey="id"
             size="small"
@@ -3674,7 +3680,7 @@ function AccountRelatedRecords({ accountId, permissions }: { accountId: number; 
             columns={opportunityColumns}
             loading={opportunities.loading}
             pagination={false}
-            locale={{ emptyText: opportunities.error || "暂无关联商机" }}
+            locale={{ emptyText: "暂无关联商机" }}
           />
         </section>
       ) : null}
