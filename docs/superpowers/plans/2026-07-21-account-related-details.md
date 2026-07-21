@@ -129,7 +129,7 @@ git commit -m "feat: add contact detail deep links"
 - Modify: `frontend/src/App.test.tsx`
 - Modify: `frontend/src/App.tsx`
 
-- [ ] **Step 1: Write the failing customer-related-records test**
+- [x] **Step 1: Write the failing customer-related-records test**
 
 在客户经营用例附近增加：
 
@@ -177,7 +177,7 @@ it("shows related contacts and opportunities with detail links", async () => {
 });
 ```
 
-- [ ] **Step 2: Run the related-records test and confirm RED**
+- [x] **Step 2: Run the related-records test and confirm RED**
 
 Run:
 
@@ -187,7 +187,7 @@ cd frontend && npm test -- --run src/App.test.tsx -t "shows related contacts and
 
 Expected: FAIL because the customer drawer has no related-record sections.
 
-- [ ] **Step 3: Add the permission-aware relation component**
+- [x] **Step 3: Add the permission-aware relation component**
 
 在 `AccountOperationDrawer` 后新增 `AccountRelatedRecords`。组件必须始终调用两个 `useResource` Hook，但无权限时返回空 Promise，避免条件 Hook：
 
@@ -297,7 +297,7 @@ function AccountRelatedRecords({ accountId, permissions }: { accountId: number; 
 }
 ```
 
-- [ ] **Step 4: Mount the relation component in customer details**
+- [x] **Step 4: Mount the relation component in customer details**
 
 在最近跟进区域后加入：
 
@@ -305,7 +305,7 @@ function AccountRelatedRecords({ accountId, permissions }: { accountId: number; 
 <AccountRelatedRecords accountId={account.id} permissions={currentUser.permissions} />
 ```
 
-- [ ] **Step 5: Run the related-records test and confirm GREEN**
+- [x] **Step 5: Run the related-records test and confirm GREEN**
 
 Run:
 
@@ -315,7 +315,7 @@ cd frontend && npm test -- --run src/App.test.tsx -t "shows related contacts and
 
 Expected: 1 test passes.
 
-- [ ] **Step 6: Commit the related records**
+- [x] **Step 6: Commit the related records**
 
 ```bash
 git add frontend/src/App.tsx frontend/src/App.test.tsx
