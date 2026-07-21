@@ -41,7 +41,7 @@ import {
   Users,
   XCircle
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import {
   type Account,
@@ -3595,15 +3595,18 @@ function AccountSummaryItem({ label, value }: { label: string; value: React.Reac
 }
 
 function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
+  const location = useLocation();
   const initialQueryFilters = useInitialQueryFilters(["account_id", "contact_id"]);
   const initialContactId = numericFilterValue(initialQueryFilters.contact_id);
   const [filters, setFilters] = useState<Record<string, unknown>>(() => toContactListFilters(initialQueryFilters));
+  const previousQuerySearch = useRef(location.search);
   const contacts = useResource(() => crmApi.contacts.list(filters), [filters]);
   const canReadAccounts = currentUser.permissions.includes("account.read");
   const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selected, setSelected] = useState<CrmContact | null>(null);
   const [detailError, setDetailError] = useState("");
+  const detailRequestGeneration = useRef(0);
   const [editing, setEditing] = useState<CrmContact | null>(null);
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
@@ -3614,11 +3617,18 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
   const heatGroups = useMemo(() => groupContactsByField(contacts.data, "relationship_heat"), [contacts.data]);
 
   const loadContactDetail = useCallback(async (contactId: number) => {
+    const requestGeneration = ++detailRequestGeneration.current;
     setDetailError("");
     try {
       const nextContact = await crmApi.contacts.detail(contactId);
+      if (requestGeneration !== detailRequestGeneration.current) {
+        return;
+      }
       setSelected(nextContact);
     } catch (error) {
+      if (requestGeneration !== detailRequestGeneration.current) {
+        return;
+      }
       setDetailError(error instanceof Error ? error.message : "联系人详情加载失败");
     }
   }, []);
@@ -3626,15 +3636,33 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
   useEffect(() => {
     if (initialContactId) {
       void loadContactDetail(initialContactId);
+    } else {
+      detailRequestGeneration.current += 1;
+      setSelected(null);
+      setDetailError("");
     }
-  }, [initialContactId, loadContactDetail]);
+  }, [initialContactId, loadContactDetail, location.search]);
+
+  useEffect(() => {
+    if (previousQuerySearch.current === location.search) {
+      return;
+    }
+    previousQuerySearch.current = location.search;
+    setFilters(toContactListFilters(initialQueryFilters));
+  }, [initialQueryFilters, location.search]);
+
+  const selectContact = (contact: CrmContact | null) => {
+    detailRequestGeneration.current += 1;
+    setDetailError("");
+    setSelected(contact);
+  };
 
   const columns: ColumnsType<CrmContact> = [
     {
       title: "姓名",
       dataIndex: "name",
       render: (value, record) => (
-        <Button type="link" className="inline-action" onClick={() => setSelected(record)}>
+        <Button type="link" className="inline-action" onClick={() => selectContact(record)}>
           {value}
         </Button>
       )
@@ -3648,7 +3676,7 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
       title: "操作",
       render: (_, record) => (
         <Space>
-          <Button size="small" onClick={() => setSelected(record)}>
+          <Button size="small" onClick={() => selectContact(record)}>
             查看关系
           </Button>
           <Button
@@ -3749,7 +3777,7 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
           <Button type="primary" htmlType="submit" block>保存联系人</Button>
         </Form>
       </Drawer>
-      <Drawer title="联系人经营" open={!!selected} onClose={() => setSelected(null)} size="large">
+      <Drawer title="联系人经营" open={!!selected} onClose={() => selectContact(null)} size="large">
         <ContactOperationDrawer contact={selected} account={selected ? accountById.get(selected.account_id) : undefined} />
       </Drawer>
       <Modal title="编辑联系人" open={!!editing} onCancel={() => setEditing(null)} footer={null}>

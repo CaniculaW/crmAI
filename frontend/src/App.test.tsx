@@ -1654,8 +1654,169 @@ describe("CRM frontend V1 workflow", () => {
     expect(await screen.findByRole("heading", { name: "联系人经营入口" })).toBeInTheDocument();
     expect(screen.getAllByText(/张决策/).length).toBeGreaterThan(0);
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/contacts?account_id=1"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith("/api/contacts?account_id=1", expect.anything());
       expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/contacts/21"), expect.anything());
+    });
+  });
+
+  it("synchronizes contact filters and closes detail when same-route query parameters change", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/contacts?account_id=1&contact_id=21");
+
+    render(<App />);
+    await loginThroughUi(user);
+    expect(await screen.findByText(/张决策 ·/)).toBeInTheDocument();
+
+    act(() => {
+      window.history.pushState({}, "", "/contacts?account_id=2&contact_id=22");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    expect(await screen.findByText(/李采购 ·/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/contacts?account_id=2", expect.anything());
+    });
+
+    act(() => {
+      window.history.pushState({}, "", "/contacts?account_id=2");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("heading", { name: "联系人经营入口" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("ignores an older contact detail response after a newer deep link resolves", async () => {
+    const contact21Response = deferred<Response>();
+    const contact22Response = deferred<Response>();
+    const fetchMock = mockCrmFetch();
+    const defaultFetch = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation((input, init) => {
+      const path = String(input).split("?")[0];
+      if (path.endsWith("/api/contacts/21")) {
+        return contact21Response.promise;
+      }
+      if (path.endsWith("/api/contacts/22")) {
+        return contact22Response.promise;
+      }
+      return defaultFetch!(input, init);
+    });
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/contacts?account_id=1&contact_id=21");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    act(() => {
+      window.history.pushState({}, "", "/contacts?account_id=1&contact_id=22");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/contacts/22", expect.anything());
+    });
+
+    await act(async () => {
+      contact22Response.resolve(jsonResponse({ code: "OK", data: apiData.contacts[1] }));
+      await contact22Response.promise;
+    });
+    expect(await screen.findByText(/李采购 ·/)).toBeInTheDocument();
+
+    await act(async () => {
+      contact21Response.resolve(jsonResponse({ code: "OK", data: apiData.contacts[0] }));
+      await contact21Response.promise;
+    });
+
+    expect(latestDialog().getByText(/李采购 ·/)).toBeInTheDocument();
+    expect(latestDialog().queryByText(/张决策 ·/)).not.toBeInTheDocument();
+  });
+
+  it("keeps a manual contact selection when a pending deep link resolves", async () => {
+    const contact21Response = deferred<Response>();
+    const fetchMock = mockCrmFetch();
+    const defaultFetch = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation((input, init) => {
+      if (String(input).split("?")[0].endsWith("/api/contacts/21")) {
+        return contact21Response.promise;
+      }
+      return defaultFetch!(input, init);
+    });
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/contacts?account_id=1&contact_id=21");
+
+    render(<App />);
+    await loginThroughUi(user);
+    await user.click(await screen.findByRole("button", { name: "李采购" }));
+    expect(await screen.findByText(/李采购 ·/)).toBeInTheDocument();
+
+    await act(async () => {
+      contact21Response.resolve(jsonResponse({ code: "OK", data: apiData.contacts[0] }));
+      await contact21Response.promise;
+    });
+
+    expect(latestDialog().getByText(/李采购 ·/)).toBeInTheDocument();
+    expect(latestDialog().queryByText(/张决策 ·/)).not.toBeInTheDocument();
+  });
+
+  it("keeps the contact drawer closed when a pending deep link resolves", async () => {
+    const contact22Response = deferred<Response>();
+    const fetchMock = mockCrmFetch();
+    const defaultFetch = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation((input, init) => {
+      if (String(input).split("?")[0].endsWith("/api/contacts/22")) {
+        return contact22Response.promise;
+      }
+      return defaultFetch!(input, init);
+    });
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/contacts?account_id=1&contact_id=21");
+
+    render(<App />);
+    await loginThroughUi(user);
+    expect(await screen.findByText(/张决策 ·/)).toBeInTheDocument();
+
+    act(() => {
+      window.history.pushState({}, "", "/contacts?account_id=1&contact_id=22");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/contacts/22", expect.anything());
+    });
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("heading", { name: "联系人经营入口" })).not.toBeInTheDocument();
+    });
+
+    await act(async () => {
+      contact22Response.resolve(jsonResponse({ code: "OK", data: apiData.contacts[1] }));
+      await contact22Response.promise;
+    });
+
+    expect(screen.queryByRole("heading", { name: "联系人经营入口" })).not.toBeInTheDocument();
+  });
+
+  it("clears a contact detail error when a contact is selected manually", async () => {
+    const fetchMock = mockCrmFetch();
+    const defaultFetch = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation((input, init) => {
+      if (String(input).split("?")[0].endsWith("/api/contacts/21")) {
+        return Promise.resolve(jsonResponse({ code: "ERROR", message: "联系人详情失败" }, 500));
+      }
+      return defaultFetch!(input, init);
+    });
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/contacts?account_id=1&contact_id=21");
+
+    render(<App />);
+    await loginThroughUi(user);
+    expect(await screen.findByText("联系人详情失败")).toBeInTheDocument();
+
+    await user.click(await screen.findByRole("button", { name: "李采购" }));
+
+    expect(await screen.findByText(/李采购 ·/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("联系人详情失败")).not.toBeInTheDocument();
     });
   });
 
@@ -3272,6 +3433,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     if (path.endsWith("/api/contacts/21")) {
       return jsonResponse({ code: "OK", data: data.contacts[0] });
     }
+    if (path.endsWith("/api/contacts/22")) {
+      return jsonResponse({ code: "OK", data: data.contacts[1] });
+    }
     if (path.endsWith("/api/contacts")) {
       return jsonResponse({ code: "OK", data: data.contacts });
     }
@@ -3464,4 +3628,12 @@ function jsonResponse(payload: unknown, status = 200) {
     status,
     headers: { "Content-Type": "application/json" }
   });
+}
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((next) => {
+    resolve = next;
+  });
+  return { promise, resolve };
 }
