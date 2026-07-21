@@ -1732,6 +1732,85 @@ describe("CRM frontend V1 workflow", () => {
     expect(latestDialog().queryByText(/张决策 ·/)).not.toBeInTheDocument();
   });
 
+  it("closes a query-selected contact when the replacement detail fails", async () => {
+    const fetchMock = mockCrmFetch();
+    const defaultFetch = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation((input, init) => {
+      if (String(input).split("?")[0].endsWith("/api/contacts/22")) {
+        return Promise.resolve(jsonResponse({ code: "ERROR", message: "联系人详情失败" }, 500));
+      }
+      return defaultFetch!(input, init);
+    });
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/contacts?account_id=1&contact_id=21");
+
+    render(<App />);
+    await loginThroughUi(user);
+    expect(await screen.findByText(/张决策 ·/)).toBeInTheDocument();
+
+    act(() => {
+      window.history.pushState({}, "", "/contacts?account_id=1&contact_id=22");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    expect(await screen.findByText("联系人详情失败")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "联系人经营入口" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/张决策 ·/)).not.toBeInTheDocument();
+  });
+
+  it("ignores a stale contact list after the account filter changes", async () => {
+    const account1Response = deferred<Response>();
+    const account2Response = deferred<Response>();
+    const account2Contact = {
+      ...apiData.contacts[1],
+      id: 23,
+      account_id: 2,
+      name: "王新客户"
+    };
+    const fetchMock = mockCrmFetch();
+    const defaultFetch = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation((input, init) => {
+      const url = new URL(String(input), "http://localhost");
+      if (url.pathname.endsWith("/api/contacts") && url.searchParams.get("account_id") === "1") {
+        return account1Response.promise;
+      }
+      if (url.pathname.endsWith("/api/contacts") && url.searchParams.get("account_id") === "2") {
+        return account2Response.promise;
+      }
+      return defaultFetch!(input, init);
+    });
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/contacts?account_id=1");
+
+    render(<App />);
+    await loginThroughUi(user);
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/contacts?account_id=1", expect.anything());
+    });
+
+    act(() => {
+      window.history.pushState({}, "", "/contacts?account_id=2");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/contacts?account_id=2", expect.anything());
+    });
+
+    await act(async () => {
+      account2Response.resolve(jsonResponse({ code: "OK", data: [account2Contact] }));
+      await account2Response.promise;
+    });
+    expect(await screen.findByRole("button", { name: "王新客户" })).toBeInTheDocument();
+
+    await act(async () => {
+      account1Response.resolve(jsonResponse({ code: "OK", data: [apiData.contacts[0]] }));
+      await account1Response.promise;
+    });
+
+    expect(screen.getByRole("button", { name: "王新客户" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "张决策" })).not.toBeInTheDocument();
+  });
+
   it("keeps a manual contact selection when a pending deep link resolves", async () => {
     const contact21Response = deferred<Response>();
     const fetchMock = mockCrmFetch();
@@ -1770,10 +1849,11 @@ describe("CRM frontend V1 workflow", () => {
       return defaultFetch!(input, init);
     });
     const user = userEvent.setup();
-    window.history.pushState({}, "", "/contacts?account_id=1&contact_id=21");
+    window.history.pushState({}, "", "/contacts?account_id=1");
 
     render(<App />);
     await loginThroughUi(user);
+    await user.click(await screen.findByRole("button", { name: "张决策" }));
     expect(await screen.findByText(/张决策 ·/)).toBeInTheDocument();
 
     act(() => {

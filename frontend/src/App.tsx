@@ -3605,6 +3605,7 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
   const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selected, setSelected] = useState<CrmContact | null>(null);
+  const selectionSource = useRef<"query" | "manual" | null>(null);
   const [detailError, setDetailError] = useState("");
   const detailRequestGeneration = useRef(0);
   const [editing, setEditing] = useState<CrmContact | null>(null);
@@ -3618,12 +3619,17 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
 
   const loadContactDetail = useCallback(async (contactId: number) => {
     const requestGeneration = ++detailRequestGeneration.current;
+    if (selectionSource.current === "query") {
+      selectionSource.current = null;
+      setSelected(null);
+    }
     setDetailError("");
     try {
       const nextContact = await crmApi.contacts.detail(contactId);
       if (requestGeneration !== detailRequestGeneration.current) {
         return;
       }
+      selectionSource.current = "query";
       setSelected(nextContact);
     } catch (error) {
       if (requestGeneration !== detailRequestGeneration.current) {
@@ -3638,6 +3644,7 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
       void loadContactDetail(initialContactId);
     } else {
       detailRequestGeneration.current += 1;
+      selectionSource.current = null;
       setSelected(null);
       setDetailError("");
     }
@@ -3653,6 +3660,7 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
 
   const selectContact = (contact: CrmContact | null) => {
     detailRequestGeneration.current += 1;
+    selectionSource.current = contact ? "manual" : null;
     setDetailError("");
     setSelected(contact);
   };
@@ -8116,21 +8124,33 @@ function useResource<T>(loader: () => Promise<T[]>, deps: React.DependencyList) 
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const refreshGeneration = useRef(0);
 
   const refresh = useCallback(async () => {
+    const generation = ++refreshGeneration.current;
     setLoading(true);
     setError("");
     try {
-      setData(await loader());
+      const nextData = await loader();
+      if (generation === refreshGeneration.current) {
+        setData(nextData);
+      }
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "加载失败");
+      if (generation === refreshGeneration.current) {
+        setError(loadError instanceof Error ? loadError.message : "加载失败");
+      }
     } finally {
-      setLoading(false);
+      if (generation === refreshGeneration.current) {
+        setLoading(false);
+      }
     }
   }, deps);
 
   useEffect(() => {
     void refresh();
+    return () => {
+      refreshGeneration.current += 1;
+    };
   }, [refresh]);
 
   return { data, loading, error, refresh, setData };
