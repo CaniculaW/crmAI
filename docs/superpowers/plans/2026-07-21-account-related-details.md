@@ -16,7 +16,7 @@
 - Modify: `frontend/src/App.test.tsx`
 - Modify: `frontend/src/App.tsx`
 
-- [ ] **Step 1: Add contact-detail mock support**
+- [x] **Step 1: Add contact-detail mock support**
 
 在 `mockCrmFetch` 的联系人列表分支之前增加详情响应，保证 `/api/contacts/21` 不会被列表分支吞掉：
 
@@ -29,7 +29,7 @@ if (path.endsWith("/api/contacts")) {
 }
 ```
 
-- [ ] **Step 2: Write the failing deep-link test**
+- [x] **Step 2: Write the failing deep-link test**
 
 在 `CRM frontend V1 workflow` 中增加：
 
@@ -57,7 +57,7 @@ it("opens a contact detail from the contact_id deep link", async () => {
 });
 ```
 
-- [ ] **Step 3: Run the deep-link test and confirm RED**
+- [x] **Step 3: Run the deep-link test and confirm RED**
 
 Run:
 
@@ -67,7 +67,7 @@ cd frontend && npm test -- --run src/App.test.tsx -t "opens a contact detail fro
 
 Expected: FAIL because `ContactsPage` does not parse `contact_id` or request contact detail.
 
-- [ ] **Step 4: Implement query filtering and detail loading**
+- [x] **Step 4: Implement query filtering and detail loading**
 
 在 `ContactsPage` 开头使用查询参数初始化列表筛选和详情 ID：
 
@@ -106,7 +106,7 @@ function toContactListFilters(query: Record<string, unknown>) {
 }
 ```
 
-- [ ] **Step 5: Run the deep-link test and confirm GREEN**
+- [x] **Step 5: Run the deep-link test and confirm GREEN**
 
 Run:
 
@@ -116,7 +116,7 @@ cd frontend && npm test -- --run src/App.test.tsx -t "opens a contact detail fro
 
 Expected: 1 test passes.
 
-- [ ] **Step 6: Commit the contact deep link**
+- [x] **Step 6: Commit the contact deep link**
 
 ```bash
 git add frontend/src/App.tsx frontend/src/App.test.tsx
