@@ -5,14 +5,23 @@
 - 分支：`codex/account-related-details`
 - 前端本地地址：`http://127.0.0.1:5175`
 - 后端本地地址：`http://127.0.0.1:8080`
-- 验收账号：`demo_admin`
 - 最终验收数据：客户 `1`（V1演示客户-上海智造集团）、联系人 `1`（王敏）、商机 `1`（智能制造CRM一期试点）。
 
-## 数据说明
+## 最终数据说明
 
-- 初始任务给出的测试 fixture“测试客户A / 张决策 / 测试商机A”及 ID `21`、`10` 不存在于当前真实数据库；初次筛选“测试客户A”返回 HTTP `200`、`data: []`。
 - 产品按当前数据库动态展示关系记录。本次最终验收改用当前 V1 演示种子中的真实关联数据，未修改生产代码、测试代码或数据库。
-- 初始无数据截图保留为过程追溯，不作为最终失败结论。
+
+## 可复现步骤
+
+1. 启动前端 `http://127.0.0.1:5175` 和后端 `http://127.0.0.1:8080`，使用运行环境提供的授权演示凭据在 UI 登录；凭据不写入报告或原始证据。
+2. 分别设置 `1440x1000`、`390x844` 视口，进入 `/accounts`，在“V1演示客户-上海智造集团”行点击“查看经营”，核对关联联系人 `1 人`、关联商机 `1 个` 及两个 scoped“查看全部”链接。
+3. 点击“王敏”，等待 URL 为 `/contacts?account_id=1&contact_id=1` 且“联系人经营入口”可见；重新进入客户经营后点击“智能制造CRM一期试点”，等待 URL 为 `/opportunities?account_id=1&opportunity_id=1` 且“商机推进入口”可见。
+4. 每个页面独立记录 `document.body.scrollWidth`、`document.documentElement.scrollWidth`、`document.documentElement.clientWidth`；抽屉记录 `document.querySelector('.ant-drawer-body')?.clientWidth` 和 `document.querySelector('.ant-drawer-body')?.scrollWidth`。页面级无横向溢出的判定为两个 scroll width 均不大于 viewport width。
+5. 控制台错误通过 CDP 的 `Runtime.consoleAPICalled(type=error)`、`Runtime.exceptionThrown`、`Log.entryAdded(level=error)` 计数；失败响应通过 `Network.responseReceived(status>=400)` 和 `Network.loadingFailed` 对同源 `/api/` 请求计数。每项计数均按六个页面各自的采集区间重置。
+6. 重叠检查对当前抽屉内可见且同父级的 `section`、`article`、`table`、`h3`、`h4`、`.ant-card` 做矩形两两相交检查，并结合六张截图目视复核。
+7. API 依次检查：`POST /api/auth/login`、`GET /api/accounts/1`、`GET /api/contacts?account_id=1`、`GET /api/contacts/1`、`GET /api/opportunities?account_id=1`、`GET /api/opportunities/1`；均期望 HTTP `200`，对象 ID 为 `1`，两个 scoped 列表各 `1` 条且名称分别为“王敏”“智能制造CRM一期试点”。
+
+原始结果：[api-checks.json](artifacts/account-related-details-20260721/api-checks.json)、[browser-checks.json](artifacts/account-related-details-20260721/browser-checks.json)。两份 JSON 均不含令牌、密码、请求头、Cookie 或其他秘密值。
 
 ## 自动化验证
 
@@ -74,6 +83,11 @@
 - 定向复核登录、客户详情、联系人 scoped 列表、联系人详情、商机 scoped 列表和商机详情，共 `6` 个请求，全部返回 HTTP `200`，失败 API 数为 `0`。
 - `GET /api/contacts?account_id=1` 返回 `1` 条记录；`GET /api/opportunities?account_id=1` 返回 `1` 条记录。
 - 浏览器矩阵控制台错误合计：`0`；失败 API 合计：`0`。
+
+## 历史阻塞（不影响最终结论）
+
+- 初始任务给出的测试 fixture“测试客户A / 张决策 / 测试商机A”及 ID `21`、`10` 不存在于当前真实数据库；初次筛选“测试客户A”返回 HTTP `200`、`data: []`。
+- 初始无数据截图仅保留为过程追溯，最终验收使用当前真实演示种子 ID `1`。
 
 ## 截图证据
 

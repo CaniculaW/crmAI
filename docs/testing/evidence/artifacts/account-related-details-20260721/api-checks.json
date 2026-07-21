@@ -1,0 +1,115 @@
+{
+  "generatedAt": "2026-07-21T06:51:39.790Z",
+  "branch": "codex/account-related-details",
+  "baseUrl": "http://127.0.0.1:8080",
+  "sanitization": "No access tokens, credentials, headers, cookies, or secret values are stored.",
+  "checks": [
+    {
+      "name": "login",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200,
+      "expected": {
+        "status": 200,
+        "code": "OK",
+        "accessTokenPresent": true
+      },
+      "result": {
+        "code": "OK",
+        "accessTokenPresent": true
+      }
+    },
+    {
+      "name": "account-detail",
+      "method": "GET",
+      "path": "/api/accounts/1",
+      "status": 200,
+      "expected": {
+        "status": 200,
+        "id": 1,
+        "accountName": "V1演示客户-上海智造集团"
+      },
+      "result": {
+        "code": "OK",
+        "id": 1,
+        "accountName": "V1演示客户-上海智造集团"
+      }
+    },
+    {
+      "name": "contacts-scoped-list",
+      "method": "GET",
+      "path": "/api/contacts?account_id=1",
+      "status": 200,
+      "expected": {
+        "status": 200,
+        "count": 1,
+        "accountId": 1,
+        "ids": [1],
+        "names": ["王敏"]
+      },
+      "result": {
+        "code": "OK",
+        "count": 1,
+        "accountIds": [1],
+        "ids": [1],
+        "names": ["王敏"]
+      }
+    },
+    {
+      "name": "contact-detail",
+      "method": "GET",
+      "path": "/api/contacts/1",
+      "status": 200,
+      "expected": {
+        "status": 200,
+        "id": 1,
+        "accountId": 1,
+        "name": "王敏"
+      },
+      "result": {
+        "code": "OK",
+        "id": 1,
+        "accountId": 1,
+        "name": "王敏"
+      }
+    },
+    {
+      "name": "opportunities-scoped-list",
+      "method": "GET",
+      "path": "/api/opportunities?account_id=1",
+      "status": 200,
+      "expected": {
+        "status": 200,
+        "count": 1,
+        "accountId": 1,
+        "ids": [1],
+        "names": ["智能制造CRM一期试点"]
+      },
+      "result": {
+        "code": "OK",
+        "count": 1,
+        "accountIds": [1],
+        "ids": [1],
+        "names": ["智能制造CRM一期试点"]
+      }
+    },
+    {
+      "name": "opportunity-detail",
+      "method": "GET",
+      "path": "/api/opportunities/1",
+      "status": 200,
+      "expected": {
+        "status": 200,
+        "id": 1,
+        "accountId": 1,
+        "name": "智能制造CRM一期试点"
+      },
+      "result": {
+        "code": "OK",
+        "id": 1,
+        "accountId": 1,
+        "name": "智能制造CRM一期试点"
+      }
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "generatedAt": "2026-07-21T06:50:31.038Z",
+  "branch": "codex/account-related-details",
+  "baseUrl": "http://127.0.0.1:5175",
+  "collection": {
+    "consoleErrors": "Runtime.consoleAPICalled(type=error), Runtime.exceptionThrown, and Log.entryAdded(level=error), scoped to each check interval",
+    "failedResponses": "Network.responseReceived(status>=400) and Network.loadingFailed for same-origin /api/ requests, scoped to each check interval",
+    "overlap": "Pairwise intersection check for visible sibling section/article/table/h3/h4/.ant-card elements within the active drawer"
+  },
+  "checks": [
+    {
+      "page": "desktop-customer",
+      "viewport": { "width": 1440, "height": 1000 },
+      "finalUrl": "http://127.0.0.1:5175/accounts",
+      "bodyScrollWidth": 1440,
+      "documentElementScrollWidth": 1440,
+      "viewportWidth": 1440,
+      "drawerClientWidth": 736,
+      "drawerScrollWidth": 736,
+      "overlap": { "result": "none", "issueCount": 0, "issues": [] },
+      "consoleErrorCount": 0,
+      "failedResponseCount": 0
+    },
+    {
+      "page": "desktop-contact",
+      "viewport": { "width": 1440, "height": 1000 },
+      "finalUrl": "http://127.0.0.1:5175/contacts?account_id=1&contact_id=1",
+      "bodyScrollWidth": 1440,
+      "documentElementScrollWidth": 1440,
+      "viewportWidth": 1440,
+      "drawerClientWidth": 736,
+      "drawerScrollWidth": 736,
+      "overlap": { "result": "none", "issueCount": 0, "issues": [] },
+      "consoleErrorCount": 0,
+      "failedResponseCount": 0
+    },
+    {
+      "page": "desktop-opportunity",
+      "viewport": { "width": 1440, "height": 1000 },
+      "finalUrl": "http://127.0.0.1:5175/opportunities?account_id=1&opportunity_id=1",
+      "bodyScrollWidth": 1440,
+      "documentElementScrollWidth": 1440,
+      "viewportWidth": 1440,
+      "drawerClientWidth": 736,
+      "drawerScrollWidth": 736,
+      "overlap": { "result": "none", "issueCount": 0, "issues": [] },
+      "consoleErrorCount": 0,
+      "failedResponseCount": 0
+    },
+    {
+      "page": "mobile-customer",
+      "viewport": { "width": 390, "height": 844 },
+      "finalUrl": "http://127.0.0.1:5175/accounts",
+      "bodyScrollWidth": 390,
+      "documentElementScrollWidth": 390,
+      "viewportWidth": 390,
+      "drawerClientWidth": 390,
+      "drawerScrollWidth": 390,
+      "overlap": { "result": "none", "issueCount": 0, "issues": [] },
+      "consoleErrorCount": 0,
+      "failedResponseCount": 0
+    },
+    {
+      "page": "mobile-contact",
+      "viewport": { "width": 390, "height": 844 },
+      "finalUrl": "http://127.0.0.1:5175/contacts?account_id=1&contact_id=1",
+      "bodyScrollWidth": 390,
+      "documentElementScrollWidth": 390,
+      "viewportWidth": 390,
+      "drawerClientWidth": 390,
+      "drawerScrollWidth": 390,
+      "overlap": { "result": "none", "issueCount": 0, "issues": [] },
+      "consoleErrorCount": 0,
+      "failedResponseCount": 0
+    },
+    {
+      "page": "mobile-opportunity",
+      "viewport": { "width": 390, "height": 844 },
+      "finalUrl": "http://127.0.0.1:5175/opportunities?account_id=1&opportunity_id=1",
+      "bodyScrollWidth": 390,
+      "documentElementScrollWidth": 390,
+      "viewportWidth": 390,
+      "drawerClientWidth": 390,
+      "drawerScrollWidth": 390,
+      "overlap": { "result": "none", "issueCount": 0, "issues": [] },
+      "consoleErrorCount": 0,
+      "failedResponseCount": 0
+    }
+  ]
+}
