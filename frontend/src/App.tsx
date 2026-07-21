@@ -3558,6 +3558,8 @@ function AccountOperationDrawer({ account, currentUser }: { account: Account | n
         <small>{lastActivityAt === "-" ? "暂无跟进时间" : lastActivityAt}</small>
       </section>
 
+      <AccountRelatedRecords accountId={account.id} permissions={currentUser.permissions} />
+
       <section>
         <Typography.Title level={4}>关联业务入口</Typography.Title>
         <div className="account-entry-grid">
@@ -3582,6 +3584,101 @@ function AccountOperationDrawer({ account, currentUser }: { account: Account | n
         <p>先确认联系人角色和态度，再推进商机阶段；所有拜访、会议和风险变化统一沉淀到销售行动。</p>
       </section>
     </div>
+  );
+}
+
+function AccountRelatedRecords({ accountId, permissions }: { accountId: number; permissions: string[] }) {
+  const canReadContacts = permissions.includes("contact.read");
+  const canReadOpportunities = permissions.includes("opportunity.read");
+  const contacts = useResource(
+    () => canReadContacts ? crmApi.contacts.list({ account_id: accountId }) : Promise.resolve([]),
+    [accountId, canReadContacts]
+  );
+  const opportunities = useResource(
+    () => canReadOpportunities ? crmApi.opportunities.list({ account_id: accountId }) : Promise.resolve([]),
+    [accountId, canReadOpportunities]
+  );
+
+  if (!canReadContacts && !canReadOpportunities) {
+    return null;
+  }
+
+  const contactColumns: ColumnsType<CrmContact> = [
+    {
+      title: "姓名",
+      dataIndex: "name",
+      render: (value, record) => (
+        <Link
+          to={`/contacts?account_id=${accountId}&contact_id=${record.id}`}
+          aria-label={`查看联系人 ${value}`}
+        >
+          {value}
+        </Link>
+      )
+    },
+    { title: "职务", dataIndex: "title", render: textOrDash },
+    { title: "联系人类型", dataIndex: "contact_type", render: contactTypeText },
+    { title: "态度", dataIndex: "attitude", render: contactAttitudeTag },
+    { title: "关系热度", dataIndex: "relationship_heat", render: contactHeatTag }
+  ];
+  const opportunityColumns: ColumnsType<Opportunity> = [
+    {
+      title: "商机名称",
+      dataIndex: "opportunity_name",
+      render: (value, record) => (
+        <Link
+          to={`/opportunities?account_id=${accountId}&opportunity_id=${record.id}`}
+          aria-label={`查看商机 ${value}`}
+        >
+          {value}
+        </Link>
+      )
+    },
+    { title: "阶段", dataIndex: "stage", render: opportunityStageText },
+    { title: "状态", dataIndex: "status", render: opportunityStatusTag },
+    { title: "风险", dataIndex: "risk_status", render: opportunityRiskTag },
+    { title: "金额", dataIndex: "estimated_contract_amount", render: moneyText }
+  ];
+
+  return (
+    <section className="account-related-records" aria-label="客户关联记录">
+      {canReadContacts ? (
+        <section className="account-related-panel">
+          <Space>
+            <Typography.Title level={4}>关联联系人</Typography.Title>
+            <span>{contacts.data.length} 人</span>
+            <Link to={`/contacts?account_id=${accountId}`} aria-label="查看全部联系人">查看全部</Link>
+          </Space>
+          <Table
+            rowKey="id"
+            size="small"
+            dataSource={contacts.data}
+            columns={contactColumns}
+            loading={contacts.loading}
+            pagination={false}
+            locale={{ emptyText: contacts.error || "暂无关联联系人" }}
+          />
+        </section>
+      ) : null}
+      {canReadOpportunities ? (
+        <section className="account-related-panel">
+          <Space>
+            <Typography.Title level={4}>关联商机</Typography.Title>
+            <span>{opportunities.data.length} 个</span>
+            <Link to={`/opportunities?account_id=${accountId}`} aria-label="查看全部商机">查看全部</Link>
+          </Space>
+          <Table
+            rowKey="id"
+            size="small"
+            dataSource={opportunities.data}
+            columns={opportunityColumns}
+            loading={opportunities.loading}
+            pagination={false}
+            locale={{ emptyText: opportunities.error || "暂无关联商机" }}
+          />
+        </section>
+      ) : null}
+    </section>
   );
 }
 

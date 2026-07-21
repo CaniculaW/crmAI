@@ -2076,6 +2076,50 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByText("下一步建议")).toBeInTheDocument();
   });
 
+  it("shows related contacts and opportunities with detail links", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await user.click(screen.getByRole("link", { name: "客户池" }));
+    await screen.findByText("测试客户A");
+    await user.click(screen.getByRole("button", { name: /查看经营/ }));
+
+    const relatedRecords = await screen.findByRole("region", { name: "客户关联记录" });
+    expect(within(relatedRecords).getByRole("heading", { name: "关联联系人" })).toBeInTheDocument();
+    expect(await within(relatedRecords).findByText("2 人")).toBeInTheDocument();
+    expect(await within(relatedRecords).findByRole("link", { name: "查看联系人 张决策" })).toHaveAttribute(
+      "href",
+      "/contacts?account_id=1&contact_id=21"
+    );
+    expect(await within(relatedRecords).findByRole("link", { name: "查看联系人 李采购" })).toHaveAttribute(
+      "href",
+      "/contacts?account_id=1&contact_id=22"
+    );
+    expect(within(relatedRecords).getByRole("link", { name: "查看全部联系人" })).toHaveAttribute(
+      "href",
+      "/contacts?account_id=1"
+    );
+
+    expect(within(relatedRecords).getByRole("heading", { name: "关联商机" })).toBeInTheDocument();
+    expect(await within(relatedRecords).findByText("1 个")).toBeInTheDocument();
+    expect(await within(relatedRecords).findByRole("link", { name: "查看商机 测试商机A" })).toHaveAttribute(
+      "href",
+      "/opportunities?account_id=1&opportunity_id=10"
+    );
+    expect(within(relatedRecords).getByRole("link", { name: "查看全部商机" })).toHaveAttribute(
+      "href",
+      "/opportunities?account_id=1"
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/contacts?account_id=1", expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith("/api/opportunities?account_id=1", expect.anything());
+    });
+  });
+
   it("shows the customer V2 business snapshot with scoped links", async () => {
     const user = userEvent.setup();
     const fetchMock = mockCrmFetch();
