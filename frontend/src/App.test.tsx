@@ -1661,7 +1661,7 @@ describe("CRM frontend V1 workflow", () => {
 
   it("keeps the contact list visible when a contact deep link fails", async () => {
     const user = userEvent.setup();
-    mockCrmFetch({}, { failPaths: ["/api/contacts/21"] });
+    const fetchMock = mockCrmFetch({}, { failPaths: ["/api/contacts/21"] });
     window.history.pushState({}, "", "/contacts?account_id=1&contact_id=21");
 
     render(<App />);
@@ -1669,6 +1669,10 @@ describe("CRM frontend V1 workflow", () => {
 
     expect(await screen.findByText("/api/contacts/21 加载失败")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "联系人" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "张决策" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/contacts?account_id=1", expect.anything());
+    });
     expect(screen.queryByRole("heading", { name: "联系人经营入口" })).not.toBeInTheDocument();
   });
 
@@ -2155,7 +2159,7 @@ describe("CRM frontend V1 workflow", () => {
 
   it("shows independent empty states for account relations", async () => {
     const user = userEvent.setup();
-    mockCrmFetch({ contacts: [], opportunities: [] });
+    const fetchMock = mockCrmFetch({ contacts: [], opportunities: [] });
 
     render(<App />);
     await loginThroughUi(user);
@@ -2164,6 +2168,10 @@ describe("CRM frontend V1 workflow", () => {
     await user.click(screen.getByRole("button", { name: /查看经营/ }));
 
     const relatedRecords = await screen.findByRole("region", { name: "客户关联记录" });
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/contacts?account_id=1", expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith("/api/opportunities?account_id=1", expect.anything());
+    });
     expect(await within(relatedRecords).findByText("暂无关联联系人")).toBeInTheDocument();
     expect(await within(relatedRecords).findByText("暂无关联商机")).toBeInTheDocument();
   });
@@ -2253,7 +2261,10 @@ describe("CRM frontend V1 workflow", () => {
 
     const relatedRecords = await screen.findByRole("region", { name: "客户关联记录" });
     const contactPanel = within(relatedRecords).getByRole("heading", { name: "关联联系人" }).closest("section")!;
-    expect(await within(contactPanel).findByText("/api/contacts 加载失败")).toBeInTheDocument();
+    const contactAlert = await within(contactPanel).findByRole("alert");
+    expect(within(contactAlert).getByText("关联联系人加载失败")).toBeInTheDocument();
+    expect(within(contactAlert).getByText("/api/contacts 加载失败")).toBeInTheDocument();
+    expect(within(contactPanel).getByText("暂无关联联系人")).toBeInTheDocument();
 
     expect(await within(relatedRecords).findByRole("link", { name: "查看商机 测试商机A" })).toHaveAttribute(
       "href",

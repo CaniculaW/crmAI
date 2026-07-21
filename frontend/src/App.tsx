@@ -3644,7 +3644,7 @@ function AccountRelatedRecords({ accountId, permissions }: { accountId: number; 
     <section className="account-related-records" aria-label="客户关联记录">
       {canReadContacts ? (
         <section className="account-related-panel">
-          <Space>
+          <Space className="section-title-row">
             <Typography.Title level={4}>关联联系人</Typography.Title>
             <span>{contacts.data.length} 人</span>
             <Link to={`/contacts?account_id=${accountId}`} aria-label="查看全部联系人">查看全部</Link>
@@ -3665,7 +3665,7 @@ function AccountRelatedRecords({ accountId, permissions }: { accountId: number; 
       ) : null}
       {canReadOpportunities ? (
         <section className="account-related-panel">
-          <Space>
+          <Space className="section-title-row">
             <Typography.Title level={4}>关联商机</Typography.Title>
             <span>{opportunities.data.length} 个</span>
             <Link to={`/opportunities?account_id=${accountId}`} aria-label="查看全部商机">查看全部</Link>
