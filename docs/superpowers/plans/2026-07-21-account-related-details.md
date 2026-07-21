@@ -569,7 +569,7 @@ git commit -m "test: validate account related details"
 **Files:**
 - Verify: all changed source, test, plan, and evidence files
 
-- [ ] **Step 1: Run final checks**
+- [x] **Step 1: Run final checks**
 
 Run:
 
@@ -582,18 +582,18 @@ git status --short
 
 Expected: tests and build exit successfully, `git diff --check` has no output, and only intentional files are present.
 
-- [ ] **Step 2: Update this implementation checklist**
+- [x] **Step 2: Update this implementation checklist**
 
 Mark each completed checkbox in this plan. Keep an item unchecked only if its verification evidence is missing.
 
-- [ ] **Step 3: Commit the completed checklist**
+- [x] **Step 3: Commit the completed checklist**
 
 ```bash
 git add docs/superpowers/plans/2026-07-21-account-related-details.md
 git commit -m "docs: complete account relation rollout checklist"
 ```
 
-- [ ] **Step 4: Push the feature branch**
+- [x] **Step 4: Push the feature branch**
 
 ```bash
 git push -u origin codex/account-related-details
