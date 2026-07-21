@@ -3659,6 +3659,7 @@ function AccountRelatedRecords({ accountId, permissions }: { accountId: number; 
             columns={contactColumns}
             loading={contacts.loading}
             pagination={false}
+            scroll={{ x: 620 }}
             locale={{ emptyText: "暂无关联联系人" }}
           />
         </section>
@@ -3680,6 +3681,7 @@ function AccountRelatedRecords({ accountId, permissions }: { accountId: number; 
             columns={opportunityColumns}
             loading={opportunities.loading}
             pagination={false}
+            scroll={{ x: 680 }}
             locale={{ emptyText: "暂无关联商机" }}
           />
         </section>
@@ -4081,7 +4083,10 @@ function toRelationshipBuckets(buckets: Map<string, CrmContact[]>): Relationship
 }
 
 function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
-  const initialQueryFilters = useInitialQueryFilters(["account_id", "opportunity_id"], { default_following: true });
+  const queryFilters = useInitialQueryFilters(["account_id", "opportunity_id"]);
+  const initialQueryFilters = queryFilters.account_id === undefined
+    ? { default_following: true, ...queryFilters }
+    : queryFilters;
   const initialOpportunityId = numericFilterValue(initialQueryFilters.opportunity_id);
   const [filters, setFilters] = useState<Record<string, unknown>>(() => toOpportunityListFilters(initialQueryFilters));
   const opportunities = useResource(() => crmApi.opportunities.list(filters), [filters]);
@@ -8146,7 +8151,10 @@ function FilterBar({
   const [form] = Form.useForm();
 
   useEffect(() => {
-    form.setFieldsValue(initialValues);
+    const clearedValues = Object.fromEntries(
+      Object.keys(form.getFieldsValue()).map((fieldName) => [fieldName, undefined])
+    );
+    form.setFieldsValue({ ...clearedValues, ...initialValues });
   }, [form, initialValues]);
 
   return (

@@ -1705,6 +1705,40 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
+  it("clears the contact account filter when same-route navigation removes the query", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/contacts?account_id=1");
+
+    render(<App />);
+    await loginThroughUi(user);
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/contacts?account_id=1", expect.anything());
+    });
+    const accountFilter = screen.getByRole("combobox", { name: "客户" });
+    expect(accountFilter.parentElement).toHaveClass("ant-select-content-has-value");
+    expect(accountFilter.parentElement).toHaveAttribute("title", "测试客户A");
+
+    act(() => {
+      window.history.pushState({}, "", "/contacts");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/contacts", expect.anything());
+      expect(accountFilter.parentElement).not.toHaveClass("ant-select-content-has-value");
+      expect(accountFilter.parentElement).not.toHaveAttribute("title");
+    });
+
+    fetchMock.mockClear();
+    await user.click(screen.getByRole("button", { name: /筛\s*选/ }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/contacts", expect.anything());
+    });
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/contacts?account_id=1", expect.anything());
+  });
+
   it("ignores an older contact detail response after a newer deep link resolves", async () => {
     const contact21Response = deferred<Response>();
     const contact22Response = deferred<Response>();
@@ -2107,6 +2141,9 @@ describe("CRM frontend V1 workflow", () => {
     const relatedRecords = await screen.findByRole("region", { name: "客户关联记录" });
     const contactHeading = within(relatedRecords).getByRole("heading", { name: "关联联系人" });
     expect(contactHeading.closest(".section-title-row")).toBeInTheDocument();
+    const contactTableScroll = contactHeading.closest(".account-related-panel")?.querySelector(".ant-table-content");
+    expect(contactTableScroll).toHaveStyle({ overflowX: "auto" });
+    expect(contactTableScroll?.querySelector("table")).toHaveStyle({ width: "620px", minWidth: "100%" });
     expect(await within(relatedRecords).findByText("2 人")).toBeInTheDocument();
     expect(await within(relatedRecords).findByRole("link", { name: "查看联系人 张决策" })).toHaveAttribute(
       "href",
@@ -2123,6 +2160,9 @@ describe("CRM frontend V1 workflow", () => {
 
     const opportunityHeading = within(relatedRecords).getByRole("heading", { name: "关联商机" });
     expect(opportunityHeading.closest(".section-title-row")).toBeInTheDocument();
+    const opportunityTableScroll = opportunityHeading.closest(".account-related-panel")?.querySelector(".ant-table-content");
+    expect(opportunityTableScroll).toHaveStyle({ overflowX: "auto" });
+    expect(opportunityTableScroll?.querySelector("table")).toHaveStyle({ width: "680px", minWidth: "100%" });
     expect(await within(relatedRecords).findByText("1 个")).toBeInTheDocument();
     expect(await within(relatedRecords).findByRole("link", { name: "查看商机 测试商机A" })).toHaveAttribute(
       "href",
@@ -2136,6 +2176,45 @@ describe("CRM frontend V1 workflow", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("/api/contacts?account_id=1", expect.anything());
       expect(fetchMock).toHaveBeenCalledWith("/api/opportunities?account_id=1", expect.anything());
+    });
+  });
+
+  it("opens all account opportunities without the normal following-only default", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch();
+
+    render(<App />);
+    await loginThroughUi(user);
+    await user.click(screen.getByRole("link", { name: "客户池" }));
+    await screen.findByText("测试客户A");
+    await user.click(screen.getByRole("button", { name: /查看经营/ }));
+
+    const relatedRecords = await screen.findByRole("region", { name: "客户关联记录" });
+    const viewAllOpportunities = within(relatedRecords).getByRole("link", { name: "查看全部商机" });
+    expect(viewAllOpportunities).toHaveAttribute("href", "/opportunities?account_id=1");
+
+    fetchMock.mockClear();
+    await user.click(viewAllOpportunities);
+
+    expect(`${window.location.pathname}${window.location.search}`).toBe("/opportunities?account_id=1");
+    await waitFor(() => {
+      const opportunityListRequests = fetchMock.mock.calls
+        .map(([input]) => String(input))
+        .filter((url) => new URL(url, "http://localhost").pathname.endsWith("/api/opportunities"));
+      expect(opportunityListRequests).toEqual(["/api/opportunities?account_id=1"]);
+    });
+  });
+
+  it("keeps the following-only default on the unscoped opportunities page", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch();
+    window.history.pushState({}, "", "/opportunities");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/opportunities?default_following=true", expect.anything());
     });
   });
 
