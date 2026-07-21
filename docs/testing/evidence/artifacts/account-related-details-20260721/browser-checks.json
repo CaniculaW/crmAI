@@ -1,11 +1,18 @@
 {
-  "generatedAt": "2026-07-21T06:50:31.038Z",
+  "generatedAt": "2026-07-21T07:58:10Z",
   "branch": "codex/account-related-details",
+  "testedCommit": "f7582b23d0400f41e69320344fda93ee1b0e8bc7",
   "baseUrl": "http://127.0.0.1:5175",
+  "seedObjects": {
+    "accountId": 1,
+    "contactId": 1,
+    "opportunityId": 1
+  },
   "collection": {
-    "consoleErrors": "Runtime.consoleAPICalled(type=error), Runtime.exceptionThrown, and Log.entryAdded(level=error), scoped to each check interval",
-    "failedResponses": "Network.responseReceived(status>=400) and Network.loadingFailed for same-origin /api/ requests, scoped to each check interval",
-    "overlap": "Pairwise intersection check for visible sibling section/article/table/h3/h4/.ant-card elements within the active drawer"
+    "consoleErrors": "Browser tab error logs, collected after each current-page check.",
+    "failedResponses": "Authenticated re-requests of every current-page API path; HTTP status >= 400 is counted as a failed response. Sanitized raw results are in api-checks.json.",
+    "widths": "Read from document.body, document.documentElement, the active .ant-drawer-body, and each relationship .ant-table-content element.",
+    "requestContracts": "Verified from the live route/filter state and an authenticated replay of the exact scoped or unscoped API path."
   },
   "checks": [
     {
@@ -17,9 +24,13 @@
       "viewportWidth": 1440,
       "drawerClientWidth": 736,
       "drawerScrollWidth": 736,
-      "overlap": { "result": "none", "issueCount": 0, "issues": [] },
+      "relationTables": [
+        { "name": "contacts", "clientWidth": 704, "scrollWidth": 704, "overflowX": "auto" },
+        { "name": "opportunities", "clientWidth": 704, "scrollWidth": 704, "overflowX": "auto" }
+      ],
       "consoleErrorCount": 0,
-      "failedResponseCount": 0
+      "failedResponseCount": 0,
+      "visualOverlapResult": "none"
     },
     {
       "page": "desktop-contact",
@@ -30,9 +41,9 @@
       "viewportWidth": 1440,
       "drawerClientWidth": 736,
       "drawerScrollWidth": 736,
-      "overlap": { "result": "none", "issueCount": 0, "issues": [] },
       "consoleErrorCount": 0,
-      "failedResponseCount": 0
+      "failedResponseCount": 0,
+      "visualOverlapResult": "none"
     },
     {
       "page": "desktop-opportunity",
@@ -43,9 +54,9 @@
       "viewportWidth": 1440,
       "drawerClientWidth": 736,
       "drawerScrollWidth": 736,
-      "overlap": { "result": "none", "issueCount": 0, "issues": [] },
       "consoleErrorCount": 0,
-      "failedResponseCount": 0
+      "failedResponseCount": 0,
+      "visualOverlapResult": "none"
     },
     {
       "page": "mobile-customer",
@@ -56,9 +67,19 @@
       "viewportWidth": 390,
       "drawerClientWidth": 390,
       "drawerScrollWidth": 390,
-      "overlap": { "result": "none", "issueCount": 0, "issues": [] },
+      "relationPanel": { "left": 16, "right": 374, "width": 358 },
+      "relationTables": [
+        { "name": "contacts", "clientWidth": 358, "scrollWidth": 620, "overflowX": "auto", "testedScrollLeft": 220 },
+        { "name": "opportunities", "clientWidth": 358, "scrollWidth": 680, "overflowX": "auto", "testedScrollLeft": 240 }
+      ],
+      "widthsWhileInternallyScrolled": {
+        "bodyScrollWidth": 390,
+        "documentElementScrollWidth": 390,
+        "drawerScrollWidth": 390
+      },
       "consoleErrorCount": 0,
-      "failedResponseCount": 0
+      "failedResponseCount": 0,
+      "visualOverlapResult": "none"
     },
     {
       "page": "mobile-contact",
@@ -69,9 +90,9 @@
       "viewportWidth": 390,
       "drawerClientWidth": 390,
       "drawerScrollWidth": 390,
-      "overlap": { "result": "none", "issueCount": 0, "issues": [] },
       "consoleErrorCount": 0,
-      "failedResponseCount": 0
+      "failedResponseCount": 0,
+      "visualOverlapResult": "none"
     },
     {
       "page": "mobile-opportunity",
@@ -82,9 +103,54 @@
       "viewportWidth": 390,
       "drawerClientWidth": 390,
       "drawerScrollWidth": 390,
-      "overlap": { "result": "none", "issueCount": 0, "issues": [] },
       "consoleErrorCount": 0,
-      "failedResponseCount": 0
+      "failedResponseCount": 0,
+      "visualOverlapResult": "none"
     }
-  ]
+  ],
+  "releaseGapChecks": [
+    {
+      "name": "view-all-opportunities-keeps-account-scope",
+      "sourceUrl": "http://127.0.0.1:5175/accounts",
+      "linkHref": "/opportunities?account_id=1",
+      "finalUrl": "http://127.0.0.1:5175/opportunities?account_id=1",
+      "accountControl": "V1演示客户-上海智造集团",
+      "requestPath": "/api/opportunities?account_id=1",
+      "defaultFollowingParameterPresent": false,
+      "responseStatus": 200,
+      "resultCount": 1,
+      "result": "pass"
+    },
+    {
+      "name": "contacts-same-route-query-clear",
+      "scopedUrl": "http://127.0.0.1:5175/contacts?account_id=1",
+      "scopedAccountControl": "V1演示客户-上海智造集团",
+      "scopedRequestPath": "/api/contacts?account_id=1",
+      "finalUrl": "http://127.0.0.1:5175/contacts",
+      "finalAccountControl": null,
+      "unscopedRequestPath": "/api/contacts",
+      "responseStatus": 200,
+      "resultCount": 1,
+      "result": "pass"
+    },
+    {
+      "name": "opportunities-same-route-query-clear",
+      "scopedUrl": "http://127.0.0.1:5175/opportunities?account_id=1",
+      "scopedAccountControl": "V1演示客户-上海智造集团",
+      "scopedRequestPath": "/api/opportunities?account_id=1",
+      "finalUrl": "http://127.0.0.1:5175/opportunities",
+      "finalAccountControl": null,
+      "unscopedRequestPath": "/api/opportunities?default_following=true",
+      "responseStatus": 200,
+      "resultCount": 1,
+      "result": "pass"
+    }
+  ],
+  "summary": {
+    "matrixChecks": 6,
+    "releaseGapChecks": 3,
+    "consoleErrorCount": 0,
+    "failedResponseCount": 0,
+    "result": "pass"
+  }
 }
