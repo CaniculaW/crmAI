@@ -498,7 +498,7 @@ git commit -m "test: cover account relation permissions and layout"
 - Create: `docs/testing/evidence/account-related-details-validation-2026-07-21.md`
 - Create: `docs/testing/evidence/artifacts/account-related-details-20260721/`
 
-- [ ] **Step 1: Run the complete frontend suite**
+- [x] **Step 1: Run the complete frontend suite**
 
 Run:
 
@@ -508,7 +508,7 @@ cd frontend && npm test
 
 Expected: all frontend tests pass with zero failures.
 
-- [ ] **Step 2: Run the production build**
+- [x] **Step 2: Run the production build**
 
 Run:
 
@@ -518,7 +518,7 @@ cd frontend && npm run build
 
 Expected: TypeScript and Vite build succeed.
 
-- [ ] **Step 3: Start or reuse the local frontend**
+- [x] **Step 3: Start or reuse the local frontend**
 
 Run the current branch on port 5175 with the existing backend proxy:
 
@@ -528,7 +528,7 @@ cd frontend && VITE_API_PROXY_TARGET=http://127.0.0.1:8080 npm run dev -- --host
 
 Expected: `http://127.0.0.1:5175/` returns HTTP 200.
 
-- [ ] **Step 4: Verify customer relations in Chrome**
+- [x] **Step 4: Verify customer relations in Chrome**
 
 At 1440x1000 and 390x844:
 
@@ -539,7 +539,7 @@ At 1440x1000 and 390x844:
 5. Return to customer detail, click a related opportunity, and confirm `/opportunities?account_id=...&opportunity_id=...` automatically opens opportunity detail.
 6. Confirm no browser console errors, failed API responses, overlapping content, or page-level horizontal overflow.
 
-- [ ] **Step 5: Record validation evidence**
+- [x] **Step 5: Record validation evidence**
 
 Write `docs/testing/evidence/account-related-details-validation-2026-07-21.md` with this structure:
 
@@ -557,7 +557,7 @@ Write `docs/testing/evidence/account-related-details-validation-2026-07-21.md` w
 - 结论：通过
 ```
 
-- [ ] **Step 6: Commit validation evidence**
+- [x] **Step 6: Commit validation evidence**
 
 ```bash
 git add docs/testing/evidence/account-related-details-validation-2026-07-21.md docs/testing/evidence/artifacts/account-related-details-20260721
