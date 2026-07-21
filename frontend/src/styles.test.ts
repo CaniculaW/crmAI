@@ -21,4 +21,9 @@ describe("compact UI density contract", () => {
     expect(css).toMatch(/\.ant-table-wrapper[\s\S]*\.ant-table-cell[\s\S]*padding:\s*9px 10px/);
     expect(css).toMatch(/\.ant-form-item\s*\{[\s\S]*margin-bottom:\s*12px/);
   });
+
+  it("keeps account relation tables contained in the detail drawer", () => {
+    expect(css).toMatch(/\.account-related-records\s*\{[^}]*display:\s*grid/);
+    expect(css).toMatch(/\.account-related-panel\s*\{[^}]*min-width:\s*0/);
+  });
 });

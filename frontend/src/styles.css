@@ -834,6 +834,24 @@ body {
   margin: 0 0 10px;
 }
 
+.account-related-records {
+  display: grid;
+  gap: 14px;
+}
+
+.account-related-panel {
+  min-width: 0;
+}
+
+.account-related-panel + .account-related-panel {
+  padding-top: 14px;
+  border-top: 1px solid #e6eaf2;
+}
+
+.account-related-panel .section-title-row {
+  margin-bottom: 8px;
+}
+
 .account-operation-hero {
   display: flex;
   align-items: flex-start;

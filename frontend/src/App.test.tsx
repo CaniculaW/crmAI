@@ -1659,6 +1659,19 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
+  it("keeps the contact list visible when a contact deep link fails", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch({}, { failPaths: ["/api/contacts/21"] });
+    window.history.pushState({}, "", "/contacts?account_id=1&contact_id=21");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByText("/api/contacts/21 加载失败")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "联系人" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "联系人经营入口" })).not.toBeInTheDocument();
+  });
+
   it("synchronizes contact filters and closes detail when same-route query parameters change", async () => {
     const fetchMock = mockCrmFetch();
     const user = userEvent.setup();
@@ -2120,6 +2133,41 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
+  it("does not load account relations without relation permissions", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch({
+      user: { ...apiData.user, permissions: ["account.read"] }
+    });
+
+    render(<App />);
+    await loginThroughUi(user);
+    await user.click(screen.getByRole("link", { name: "客户池" }));
+    await screen.findByText("测试客户A");
+
+    fetchMock.mockClear();
+    await user.click(screen.getByRole("button", { name: /查看经营/ }));
+
+    expect(await screen.findByRole("heading", { name: "客户经营入口" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "客户关联记录" })).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/contacts"), expect.anything());
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/api/opportunities"), expect.anything());
+  });
+
+  it("shows independent empty states for account relations", async () => {
+    const user = userEvent.setup();
+    mockCrmFetch({ contacts: [], opportunities: [] });
+
+    render(<App />);
+    await loginThroughUi(user);
+    await user.click(screen.getByRole("link", { name: "客户池" }));
+    await screen.findByText("测试客户A");
+    await user.click(screen.getByRole("button", { name: /查看经营/ }));
+
+    const relatedRecords = await screen.findByRole("region", { name: "客户关联记录" });
+    expect(await within(relatedRecords).findByText("暂无关联联系人")).toBeInTheDocument();
+    expect(await within(relatedRecords).findByText("暂无关联商机")).toBeInTheDocument();
+  });
+
   it("does not show stale account relations after switching customers", async () => {
     const account1Contacts = deferred<Response>();
     const account1Opportunities = deferred<Response>();
@@ -2193,16 +2241,8 @@ describe("CRM frontend V1 workflow", () => {
     expect(screen.getByRole("link", { name: "查看商机 测试商机B" })).toBeInTheDocument();
   });
 
-  it("shows contact relation errors without disabling opportunities", async () => {
-    const fetchMock = mockCrmFetch();
-    const defaultFetch = fetchMock.getMockImplementation();
-    fetchMock.mockImplementation((input, init) => {
-      const url = new URL(String(input), "http://localhost");
-      if (url.pathname.endsWith("/api/contacts") && url.searchParams.get("account_id") === "1") {
-        return Promise.resolve(jsonResponse({ code: "ERROR", message: "联系人服务不可用" }, 500));
-      }
-      return defaultFetch!(input, init);
-    });
+  it("keeps opportunities usable when related contacts fail", async () => {
+    mockCrmFetch({}, { failPaths: ["/api/contacts"] });
     const user = userEvent.setup();
 
     render(<App />);
@@ -2213,10 +2253,7 @@ describe("CRM frontend V1 workflow", () => {
 
     const relatedRecords = await screen.findByRole("region", { name: "客户关联记录" });
     const contactPanel = within(relatedRecords).getByRole("heading", { name: "关联联系人" }).closest("section")!;
-    const contactAlert = await within(contactPanel).findByRole("alert");
-    expect(within(contactAlert).getByText("关联联系人加载失败")).toBeInTheDocument();
-    expect(within(contactAlert).getByText("联系人服务不可用")).toBeInTheDocument();
-    expect(within(contactPanel).getByText("暂无关联联系人")).toBeInTheDocument();
+    expect(await within(contactPanel).findByText("/api/contacts 加载失败")).toBeInTheDocument();
 
     expect(await within(relatedRecords).findByRole("link", { name: "查看商机 测试商机A" })).toHaveAttribute(
       "href",
@@ -3501,11 +3538,16 @@ async function loginThroughUi(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByRole("link", { name: "工作台" });
 }
 
-function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
+type MockCrmFetchOptions = { failPaths?: string[] };
+
+function mockCrmFetch(overrides: Partial<typeof apiData> = {}, options: MockCrmFetchOptions = {}) {
   const data = { ...apiData, ...overrides };
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
     const path = url.split("?")[0];
+    if (options.failPaths?.includes(path)) {
+      throw new Error(`${path} 加载失败`);
+    }
     const method = init?.method ?? "GET";
     if (path.endsWith("/api/auth/login")) {
       return jsonResponse({ code: "OK", data: { access_token: "token-001", token_type: "Bearer", user: data.user } });
