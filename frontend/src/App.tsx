@@ -3595,12 +3595,15 @@ function AccountSummaryItem({ label, value }: { label: string; value: React.Reac
 }
 
 function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
-  const [filters, setFilters] = useState<Record<string, unknown>>({});
+  const initialQueryFilters = useInitialQueryFilters(["account_id", "contact_id"]);
+  const initialContactId = numericFilterValue(initialQueryFilters.contact_id);
+  const [filters, setFilters] = useState<Record<string, unknown>>(() => toContactListFilters(initialQueryFilters));
   const contacts = useResource(() => crmApi.contacts.list(filters), [filters]);
   const canReadAccounts = currentUser.permissions.includes("account.read");
   const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selected, setSelected] = useState<CrmContact | null>(null);
+  const [detailError, setDetailError] = useState("");
   const [editing, setEditing] = useState<CrmContact | null>(null);
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
@@ -3609,6 +3612,22 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
   const roleGroups = useMemo(() => groupContactsByRoles(contacts.data), [contacts.data]);
   const attitudeGroups = useMemo(() => groupContactsByField(contacts.data, "attitude"), [contacts.data]);
   const heatGroups = useMemo(() => groupContactsByField(contacts.data, "relationship_heat"), [contacts.data]);
+
+  const loadContactDetail = useCallback(async (contactId: number) => {
+    setDetailError("");
+    try {
+      const nextContact = await crmApi.contacts.detail(contactId);
+      setSelected(nextContact);
+    } catch (error) {
+      setDetailError(error instanceof Error ? error.message : "联系人详情加载失败");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (initialContactId) {
+      void loadContactDetail(initialContactId);
+    }
+  }, [initialContactId, loadContactDetail]);
 
   const columns: ColumnsType<CrmContact> = [
     {
@@ -3682,7 +3701,7 @@ function ContactsPage({ currentUser }: { currentUser: CurrentUser }) {
       description="维护客户干系人关系，识别关键角色、态度和经营动作。"
       guide="先按客户、态度或关系热度定位关键人；通过关系判断查看角色覆盖，再进入联系人经营补动作。"
       loading={contacts.loading}
-      error={contacts.error}
+      error={contacts.error || detailError}
       action={<Button icon={<Plus size={16} />} type="primary" onClick={() => setDrawerOpen(true)}>新建联系人</Button>}
       refresh={contacts.refresh}
     >
@@ -8228,6 +8247,12 @@ function queryFiltersFromSearch(search: string, keys: string[]) {
 
 function numericFilterValue(value: unknown) {
   return typeof value === "number" ? value : undefined;
+}
+
+function toContactListFilters(query: Record<string, unknown>) {
+  const filters = { ...query };
+  delete filters.contact_id;
+  return filters;
 }
 
 function toOpportunityListFilters(query: Record<string, unknown>) {

@@ -1643,6 +1643,22 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
+  it("opens a contact detail from the contact_id deep link", async () => {
+    const fetchMock = mockCrmFetch();
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/contacts?account_id=1&contact_id=21");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    expect(await screen.findByRole("heading", { name: "联系人经营入口" })).toBeInTheDocument();
+    expect(screen.getAllByText(/张决策/).length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/contacts?account_id=1"), expect.anything());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/contacts/21"), expect.anything());
+    });
+  });
+
   it("opens contract drilldown links with the contract detail selected", async () => {
     const fetchMock = mockCrmFetch();
     const user = userEvent.setup();
@@ -3252,6 +3268,9 @@ function mockCrmFetch(overrides: Partial<typeof apiData> = {}) {
     }
     if (path.endsWith("/api/accounts")) {
       return jsonResponse({ code: "OK", data: data.accounts });
+    }
+    if (path.endsWith("/api/contacts/21")) {
+      return jsonResponse({ code: "OK", data: data.contacts[0] });
     }
     if (path.endsWith("/api/contacts")) {
       return jsonResponse({ code: "OK", data: data.contacts });
