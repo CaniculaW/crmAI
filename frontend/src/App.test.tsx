@@ -2105,7 +2105,8 @@ describe("CRM frontend V1 workflow", () => {
     await user.click(screen.getByRole("button", { name: /查看经营/ }));
 
     const relatedRecords = await screen.findByRole("region", { name: "客户关联记录" });
-    expect(within(relatedRecords).getByRole("heading", { name: "关联联系人" })).toBeInTheDocument();
+    const contactHeading = within(relatedRecords).getByRole("heading", { name: "关联联系人" });
+    expect(contactHeading.closest(".section-title-row")).toBeInTheDocument();
     expect(await within(relatedRecords).findByText("2 人")).toBeInTheDocument();
     expect(await within(relatedRecords).findByRole("link", { name: "查看联系人 张决策" })).toHaveAttribute(
       "href",
@@ -2120,7 +2121,8 @@ describe("CRM frontend V1 workflow", () => {
       "/contacts?account_id=1"
     );
 
-    expect(within(relatedRecords).getByRole("heading", { name: "关联商机" })).toBeInTheDocument();
+    const opportunityHeading = within(relatedRecords).getByRole("heading", { name: "关联商机" });
+    expect(opportunityHeading.closest(".section-title-row")).toBeInTheDocument();
     expect(await within(relatedRecords).findByText("1 个")).toBeInTheDocument();
     expect(await within(relatedRecords).findByRole("link", { name: "查看商机 测试商机A" })).toHaveAttribute(
       "href",

@@ -3,7 +3,6 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const css = readFileSync(path.join(process.cwd(), "src/styles.css"), "utf8");
-const appSource = readFileSync(path.join(process.cwd(), "src/App.tsx"), "utf8");
 
 describe("compact UI density contract", () => {
   it("defines the desktop density tokens", () => {
@@ -30,6 +29,5 @@ describe("compact UI density contract", () => {
       /\.account-related-panel\s*\+\s*\.account-related-panel\s*\{[^}]*padding-top:\s*14px[^}]*border-top:\s*1px solid #e6eaf2/
     );
     expect(css).toMatch(/\.account-related-panel\s+\.section-title-row\s*\{[^}]*margin-bottom:\s*8px/);
-    expect(appSource.match(/<Space className="section-title-row">/g) ?? []).toHaveLength(2);
   });
 });
