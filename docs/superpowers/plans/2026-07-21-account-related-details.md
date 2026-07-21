@@ -329,7 +329,7 @@ git commit -m "feat: show account contacts and opportunities"
 - Modify: `frontend/src/styles.test.ts`
 - Modify: `frontend/src/styles.css`
 
-- [ ] **Step 1: Add controllable API failures to the test helper**
+- [x] **Step 1: Add controllable API failures to the test helper**
 
 扩展测试助手，使单项接口可以稳定失败，而不影响其他 mock 响应。先按以下补丁替换函数签名：
 
@@ -357,7 +357,7 @@ if (options.failPaths?.includes(path)) {
 const method = init?.method ?? "GET";
 ```
 
-- [ ] **Step 2: Write the permission and error-isolation tests**
+- [x] **Step 2: Write the permission and error-isolation tests**
 
 增加只允许读取客户的测试，打开客户详情后清空此前请求记录，再确认不请求关联资源：
 
@@ -422,7 +422,7 @@ it("keeps the contact list visible when a contact deep link fails", async () => 
 });
 ```
 
-- [ ] **Step 3: Run the permission and error-isolation tests**
+- [x] **Step 3: Run the permission and error-isolation tests**
 
 Run:
 
@@ -432,7 +432,7 @@ cd frontend && npm test -- --run src/App.test.tsx -t "relation permissions|relat
 
 Expected: four tests pass; permissions block requests, empty states are explicit, relation failures are isolated, and a failed deep link leaves the list usable.
 
-- [ ] **Step 4: Write and run the failing style contract**
+- [x] **Step 4: Write and run the failing style contract**
 
 在 `frontend/src/styles.test.ts` 增加：
 
@@ -451,7 +451,7 @@ cd frontend && npm test -- --run src/styles.test.ts -t "keeps account relation t
 
 Expected: FAIL because the account relation layout selectors do not exist.
 
-- [ ] **Step 5: Add compact relation layout styles**
+- [x] **Step 5: Add compact relation layout styles**
 
 在业务详情样式区域增加：
 
@@ -475,7 +475,7 @@ Expected: FAIL because the account relation layout selectors do not exist.
 }
 ```
 
-- [ ] **Step 6: Run relation, permission, error-isolation, and style tests**
+- [x] **Step 6: Run relation, permission, error-isolation, and style tests**
 
 Run:
 
@@ -485,7 +485,7 @@ cd frontend && npm test -- --run src/styles.test.ts src/App.test.tsx -t "account
 
 Expected: all selected tests pass.
 
-- [ ] **Step 7: Commit permission and layout coverage**
+- [x] **Step 7: Commit permission and layout coverage**
 
 ```bash
 git add frontend/src/App.test.tsx frontend/src/styles.test.ts frontend/src/styles.css
