@@ -4083,12 +4083,15 @@ function toRelationshipBuckets(buckets: Map<string, CrmContact[]>): Relationship
 }
 
 function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
+  const location = useLocation();
   const queryFilters = useInitialQueryFilters(["account_id", "opportunity_id"]);
-  const initialQueryFilters = queryFilters.account_id === undefined
-    ? { default_following: true, ...queryFilters }
-    : queryFilters;
+  const initialQueryFilters = useMemo(
+    () => queryFilters.account_id === undefined ? { default_following: true, ...queryFilters } : queryFilters,
+    [queryFilters]
+  );
   const initialOpportunityId = numericFilterValue(initialQueryFilters.opportunity_id);
   const [filters, setFilters] = useState<Record<string, unknown>>(() => toOpportunityListFilters(initialQueryFilters));
+  const previousQuerySearch = useRef(location.search);
   const opportunities = useResource(() => crmApi.opportunities.list(filters), [filters]);
   const canReadAccounts = currentUser.permissions.includes("account.read");
   const accounts = useResource(() => canReadAccounts ? crmApi.accounts.list() : Promise.resolve([]), [canReadAccounts]);
@@ -4112,6 +4115,14 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
       void loadOpportunityDetail(initialOpportunityId);
     }
   }, [initialOpportunityId, loadOpportunityDetail]);
+
+  useEffect(() => {
+    if (previousQuerySearch.current === location.search) {
+      return;
+    }
+    previousQuerySearch.current = location.search;
+    setFilters(toOpportunityListFilters(initialQueryFilters));
+  }, [initialQueryFilters, location.search]);
 
   const columns: ColumnsType<Opportunity> = [
     {
@@ -4209,7 +4220,10 @@ function OpportunitiesPage({ currentUser }: { currentUser: CurrentUser }) {
     >
       <FilterBar
         initialValues={filters}
-        onSearch={(values) => setFilters(withoutEmpty(values, []))}
+        onSearch={(values) => setFilters({
+          ...(initialQueryFilters.default_following === true ? { default_following: true } : {}),
+          ...withoutEmpty(values, [])
+        })}
         onReset={() => setFilters({ default_following: true })}
       >
         <Form.Item name="keyword" label="关键词">

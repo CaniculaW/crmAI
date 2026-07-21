@@ -2205,6 +2205,45 @@ describe("CRM frontend V1 workflow", () => {
     });
   });
 
+  it("restores normal opportunity defaults when same-route navigation removes the account scope", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockCrmFetch();
+    window.history.pushState({}, "", "/opportunities?account_id=1");
+
+    render(<App />);
+    await loginThroughUi(user);
+
+    await waitFor(() => {
+      const opportunityListRequests = fetchMock.mock.calls
+        .map(([input]) => String(input))
+        .filter((url) => new URL(url, "http://localhost").pathname.endsWith("/api/opportunities"));
+      expect(opportunityListRequests).toEqual(["/api/opportunities?account_id=1"]);
+    });
+    const accountFilter = screen.getByRole("combobox", { name: "客户" });
+    expect(accountFilter.parentElement).toHaveClass("ant-select-content-has-value");
+    expect(accountFilter.parentElement).toHaveAttribute("title", "测试客户A");
+
+    fetchMock.mockClear();
+    act(() => {
+      window.history.pushState({}, "", "/opportunities");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/opportunities?default_following=true", expect.anything());
+      expect(accountFilter.parentElement).not.toHaveClass("ant-select-content-has-value");
+      expect(accountFilter.parentElement).not.toHaveAttribute("title");
+    });
+
+    fetchMock.mockClear();
+    await user.click(screen.getByRole("button", { name: /筛\s*选/ }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/opportunities?default_following=true", expect.anything());
+    });
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/opportunities?account_id=1", expect.anything());
+  });
+
   it("keeps the following-only default on the unscoped opportunities page", async () => {
     const user = userEvent.setup();
     const fetchMock = mockCrmFetch();
